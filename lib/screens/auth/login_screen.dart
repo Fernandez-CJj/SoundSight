@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/screens/assessment/assessment_screen.dart';
 import 'package:soundsight/screens/auth/register_screen.dart';
 import 'package:soundsight/screens/auth/widgets/app_text_form_field.dart';
 import 'package:soundsight/screens/homescreen/home_screen.dart';
@@ -52,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Gap(AppSpacing.xxl),
                   Center(
                     child: Image.asset(
-                      'assets/images/logo_image.png',
+                      'assets/images/logo_image_light.png',
                       width: 92,
                       height: 92,
                       fit: BoxFit.contain,
@@ -274,14 +276,28 @@ class _LoginScreenState extends State<LoginScreen> {
   void firebaseLogin() async {
     showLoginLoadingDialog();
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailCtrl.text,
-        password: passwordCtrl.text,
-      );
+      UserCredential userCred = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: emailCtrl.text,
+            password: passwordCtrl.text,
+          );
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCred.user!.uid)
+          .get();
+
+      final isAssessed = userDoc.data()?['skillAssessmentCompleted'] ?? false;
+
       Navigator.of(context).pop();
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => HomeScreen()));
+      if (isAssessed == true) {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => HomeScreen()));
+      } else {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => AssessmentScreen()));
+      }
     } on FirebaseAuthException catch (e) {
       Navigator.of(context).pop();
 

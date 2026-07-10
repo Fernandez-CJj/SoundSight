@@ -58,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const Gap(AppSpacing.xxl),
                   Center(
                     child: Image.asset(
-                      'assets/images/logo_image.png',
+                      'assets/images/logo_image_light.png',
                       width: 92,
                       height: 92,
                       fit: BoxFit.contain,
@@ -470,6 +470,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               'username': usernameCtrl.text.trim(),
               'email': emailCtrl.text.trim(),
               'role': 'piano_player',
+              'theme': 'light',
               'skillAssessmentCompleted': false,
               'skillLevel': null,
               'preferredNotation': null,
