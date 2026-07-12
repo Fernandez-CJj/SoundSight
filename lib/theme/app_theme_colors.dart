@@ -3,6 +3,7 @@ import 'package:soundsight/theme/app_colors.dart';
 
 class AppThemeColors {
   const AppThemeColors({
+    required this.isDarkMode,
     required this.backgroundColor,
     required this.surfaceColor,
     required this.primaryColor,
@@ -11,6 +12,7 @@ class AppThemeColors {
     required this.logoPath,
   });
 
+  final bool isDarkMode;
   final Color backgroundColor;
   final Color surfaceColor;
   final Color primaryColor;
@@ -21,6 +23,7 @@ class AppThemeColors {
   factory AppThemeColors.fromDarkMode(bool isDarkMode) {
     return isDarkMode
         ? const AppThemeColors(
+            isDarkMode: true,
             backgroundColor: AppColors.darkBackground,
             surfaceColor: AppColors.darkSurface,
             primaryColor: AppColors.darkPrimary,
@@ -29,6 +32,7 @@ class AppThemeColors {
             logoPath: 'assets/images/logo_image_dark.png',
           )
         : const AppThemeColors(
+            isDarkMode: false,
             backgroundColor: AppColors.lightBackground,
             surfaceColor: AppColors.lightSurface,
             primaryColor: AppColors.lightPrimary,

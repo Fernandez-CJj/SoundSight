@@ -10,12 +10,14 @@ class PracticeContainer extends StatelessWidget {
     required this.practiceTextColor,
     required this.practiceButtonColor,
     required this.practiceButtonTextColor,
+    required this.borderColor,
   });
 
   final String practiceImage;
   final Color practiceTextColor;
   final Color practiceButtonColor;
   final Color practiceButtonTextColor;
+  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +27,8 @@ class PracticeContainer extends StatelessWidget {
         width: double.infinity,
         height: 150,
         decoration: BoxDecoration(
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           image: DecorationImage(
             image: AssetImage(practiceImage),
             fit: BoxFit.cover,

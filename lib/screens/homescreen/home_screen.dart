@@ -6,23 +6,27 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/homescreen/level_card.dart';
 import 'package:soundsight/screens/homescreen/practice_container.dart';
 import 'package:soundsight/screens/homescreen/quick_actions.dart';
+import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.isDarkMode});
+
+  final bool? isDarkMode;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isDarkMode = false;
+  late bool isDarkMode;
   String username = '';
   String skillLevel = '';
   @override
   void initState() {
     super.initState();
+    isDarkMode = widget.isDarkMode ?? false;
     loadTheme();
     loadUser();
   }
@@ -64,11 +68,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.person, size: 30)),
+          IconButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => ProfileScreen(colors: colors)));
+            },
+            icon: Icon(Icons.person, size: 30),
+          ),
         ],
       ),
       drawer: AppDrawer(
         isDarkMode: isDarkMode,
+        activeItem: DrawerItem.home,
         onDarkModeChanged: (value) {
           setState(() {
             isDarkMode = value;
@@ -104,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
               practiceTextColor: practiceTextColor,
               practiceButtonColor: practiceButtonColor,
               practiceButtonTextColor: practiceButtonTextColor,
+              borderColor: colors.borderColor,
             ),
             Gap(AppSpacing.md),
             QuickActions(colors: colors),

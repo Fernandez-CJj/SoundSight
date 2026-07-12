@@ -356,6 +356,8 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       await FirebaseFirestore.instance.collection('users').doc(userId).update({
         'skillLevel': skillLevel,
         'skillAssessmentCompleted': true,
+        'assessmentScore': totalScore,
+        'assessmentDate': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 

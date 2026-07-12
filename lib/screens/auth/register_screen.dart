@@ -472,9 +472,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               'role': 'piano_player',
               'theme': 'light',
               'skillAssessmentCompleted': false,
+              'assessmentScore': null,
               'skillLevel': null,
               'preferredNotation': null,
               'accountStatus': 'active',
+              'assessmentDate': null,
               'createdAt': FieldValue.serverTimestamp(),
               'updatedAt': FieldValue.serverTimestamp(),
             });

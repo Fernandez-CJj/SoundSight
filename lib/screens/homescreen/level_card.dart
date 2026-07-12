@@ -16,16 +16,14 @@ class TopCard extends StatelessWidget {
       elevation: 0,
       color: colors.surfaceColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         side: BorderSide(color: colors.borderColor),
       ),
       child: ListTile(
-        contentPadding: EdgeInsets.symmetric(
-          vertical: AppSpacing.sm,
-          horizontal: AppSpacing.sm,
-        ),
+        horizontalTitleGap: AppSpacing.sm,
+        contentPadding: EdgeInsets.all(AppSpacing.md),
         leading: CircleAvatar(
-          radius: AppRadius.xxl,
+          radius: AppRadius.xl,
           backgroundColor: colors.backgroundColor,
           child: Icon(
             Icons.signal_cellular_alt_rounded,
@@ -49,10 +47,14 @@ class TopCard extends StatelessWidget {
             color: colors.secondaryTextColor,
           ),
         ),
-        trailing: Icon(
-          Icons.workspace_premium_outlined,
-          color: colors.primaryColor,
-          size: 40,
+        trailing: CircleAvatar(
+          radius: 24,
+          backgroundColor: colors.backgroundColor,
+          child: Icon(
+            Icons.workspace_premium_outlined,
+            color: colors.primaryColor,
+            size: 32,
+          ),
         ),
       ),
     );

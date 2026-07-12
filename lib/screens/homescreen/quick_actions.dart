@@ -11,12 +11,16 @@ class QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const quickActions = [
-      _QuickAction('Music Sheets', Icons.queue_music),
-      _QuickAction('Upload Sheet', Icons.upload),
-      _QuickAction('Capture Sheet', Icons.camera_alt_outlined),
-      _QuickAction('Saved Sheets', Icons.folder_open),
-      _QuickAction('Composition', Icons.edit_outlined),
-      _QuickAction('Practice Results', Icons.bar_chart),
+      _QuickAction('Music Sheets', Icons.queue_music, Color(0xFF3B82F6)),
+      _QuickAction('Upload Sheet', Icons.upload, Color(0xFF22C55E)),
+      _QuickAction(
+        'Capture Sheet',
+        Icons.camera_alt_outlined,
+        Color(0xFFF59E0B),
+      ),
+      _QuickAction('Saved Sheets', Icons.folder_open, Color(0xFF8B5CF6)),
+      _QuickAction('Composition', Icons.edit_outlined, Color(0xFFEC4899)),
+      _QuickAction('Practice Results', Icons.bar_chart, Color(0xFF06B6D4)),
     ];
 
     return Column(
@@ -60,7 +64,15 @@ class QuickActions extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(action.icon, color: colors.primaryColor, size: 24),
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: action.color.withOpacity(0.14),
+                          child: Icon(
+                            action.icon,
+                            color: action.color,
+                            size: 24,
+                          ),
+                        ),
                         Gap(AppSpacing.xs),
                         Text(
                           action.label,
@@ -87,8 +99,9 @@ class QuickActions extends StatelessWidget {
 }
 
 class _QuickAction {
-  const _QuickAction(this.label, this.icon);
+  const _QuickAction(this.label, this.icon, this.color);
 
   final String label;
   final IconData icon;
+  final Color color;
 }

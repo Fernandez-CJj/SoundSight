@@ -4,17 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/auth/login_screen.dart';
+import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
+import 'package:soundsight/screens/homescreen/home_screen.dart';
+import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+
+enum DrawerItem {
+  home,
+  musicSheets,
+  captureUpload,
+  arPractice,
+  savedSheets,
+  composition,
+  practiceResults,
+  profile,
+}
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({
     super.key,
     required this.isDarkMode,
     required this.onDarkModeChanged,
+    this.activeItem = DrawerItem.home,
   });
 
   final bool isDarkMode;
   final ValueChanged<bool> onDarkModeChanged;
+  final DrawerItem activeItem;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +39,6 @@ class AppDrawer extends StatelessWidget {
     return Drawer(
       backgroundColor: colors.surfaceColor,
       width: 265,
-
       child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -99,113 +114,97 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
             const Gap(AppSpacing.lg),
-            ListTile(
-              leading: Icon(Icons.home_outlined, color: colors.primaryColor),
-              title: Text(
-                'Home',
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              tileColor: colors.backgroundColor,
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.home,
+              icon: Icons.home_outlined,
+              title: 'Home',
+              onTap: () {
+                Navigator.pop(context);
+                if (activeItem != DrawerItem.home) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => HomeScreen(isDarkMode: isDarkMode),
+                    ),
+                  );
+                }
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.musicSheets,
+              icon: Icons.library_music_outlined,
+              title: 'Music Sheets',
               onTap: () {
                 Navigator.pop(context);
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.library_music_outlined,
-                color: colors.primaryColor,
-              ),
-              title: Text(
-                'Music Sheets',
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
-                ),
-              ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.captureUpload,
+              icon: Icons.add_photo_alternate_outlined,
+              title: 'Upload / Capture Sheet',
               onTap: () {
                 Navigator.pop(context);
+                if (activeItem != DrawerItem.captureUpload) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          CaptureUploadSheetScreen(isDarkMode: isDarkMode),
+                    ),
+                  );
+                }
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.add_photo_alternate_outlined,
-                color: colors.primaryColor,
-              ),
-              title: Text(
-                'Upload / Capture Sheet',
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.view_in_ar_outlined,
-                color: colors.primaryColor,
-              ),
-              title: Text(
-                'AR Practice',
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
-                ),
-              ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.arPractice,
+              icon: Icons.view_in_ar_outlined,
+              title: 'AR Practice',
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             Divider(color: colors.borderColor),
-            ListTile(
-              leading: Icon(Icons.bookmark_border, color: colors.primaryColor),
-              title: Text(
-                'Saved Sheets',
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
-                ),
-              ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.savedSheets,
+              icon: Icons.bookmark_border,
+              title: 'Saved Sheets',
               onTap: () {
                 Navigator.pop(context);
               },
             ),
-            ListTile(
-              leading: Icon(Icons.edit_outlined, color: colors.primaryColor),
-              title: Text(
-                'Composition',
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
-                ),
-              ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.composition,
+              icon: Icons.edit_outlined,
+              title: 'Composition',
               onTap: () {
                 Navigator.pop(context);
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.bar_chart_outlined,
-                color: colors.primaryColor,
-              ),
-              title: Text(
-                'Practice Results',
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
-                ),
-              ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.practiceResults,
+              icon: Icons.bar_chart_outlined,
+              title: 'Practice Results',
               onTap: () {
                 Navigator.pop(context);
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.profile,
+              icon: Icons.person_outline,
+              title: 'Profile',
+              onTap: () {
+                Navigator.pop(context);
+                if (activeItem != DrawerItem.profile) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => ProfileScreen(colors: colors)),
+                  );
+                }
               },
             ),
             Divider(color: colors.borderColor),
@@ -380,5 +379,41 @@ class AppDrawer extends StatelessWidget {
           },
         ) ??
         false;
+  }
+}
+
+class _DrawerTile extends StatelessWidget {
+  const _DrawerTile({
+    required this.colors,
+    required this.active,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final AppThemeColors colors;
+  final bool active;
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: colors.primaryColor),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: AppTextSizes.body,
+          color: colors.primaryColor,
+          fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      tileColor: active ? colors.backgroundColor : null,
+      onTap: onTap,
+    );
   }
 }
