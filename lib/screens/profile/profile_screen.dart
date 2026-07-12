@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/screens/profile/account_container.dart';
 import 'package:soundsight/screens/profile/assessment_container.dart';
+import 'package:soundsight/screens/profile/edit_profile_sheet.dart';
 import 'package:soundsight/screens/profile/logout_container.dart';
 import 'package:soundsight/screens/profile/player_progress_container.dart';
 import 'package:soundsight/screens/profile/preferences_container.dart';
@@ -27,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String username = '';
   String skillLevel = '';
   String email = '';
+  String? profileImageUrl;
   int? assessmentScore;
   DateTime? assessmentDate;
   int level = 1;
@@ -79,7 +81,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.edit, size: 30)),
+          IconButton(
+            onPressed: () => showEditProfileSheet(colors),
+            icon: Icon(Icons.edit, size: 30),
+          ),
         ],
       ),
       drawer: AppDrawer(
@@ -95,7 +100,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: EdgeInsets.all(AppSpacing.md),
         child: ListView(
           children: [
-            ProfileContainer(colors: colors, username: username, email: email),
+            ProfileContainer(
+              colors: colors,
+              username: username,
+              email: email,
+              profileImageUrl: profileImageUrl,
+            ),
             Gap(AppSpacing.md),
             PlayerProgressContainer(
               colors: colors,
@@ -118,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Gap(AppSpacing.md),
             AccountContainer(
               colors: colors,
-              onEditProfile: () {},
+              onEditProfile: () => showEditProfileSheet(colors),
               onChangePassword: () {},
             ),
             Gap(AppSpacing.md),
@@ -152,6 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       username = data?['username'] ?? '';
       skillLevel = data?['skillLevel'] ?? '';
       email = data?['email'] ?? '';
+      profileImageUrl = data?['profileImageUrl'];
       assessmentScore = (data?['assessmentScore'] as num?)?.toInt();
       assessmentDate = (data?['assessmentDate'] as Timestamp?)?.toDate();
       level = (data?['level'] as num?)?.toInt() ?? 1;
@@ -173,5 +184,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'theme': value ? 'dark' : 'light',
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> showEditProfileSheet(AppThemeColors colors) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: EditProfileSheet(
+            colors: colors,
+            username: username,
+            email: email,
+            profileImageUrl: profileImageUrl,
+          ),
+        );
+      },
+    );
+
+    if (!mounted || result == null) return;
+
+    setState(() {
+      username = result['username'] ?? username;
+      profileImageUrl = result['profileImageUrl'] ?? profileImageUrl;
+    });
   }
 }

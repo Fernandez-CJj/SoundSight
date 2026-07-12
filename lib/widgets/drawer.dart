@@ -8,6 +8,7 @@ import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_scr
 import 'package:soundsight/screens/homescreen/home_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/widgets/drawer_profile_header.dart';
 
 enum DrawerItem {
   home,
@@ -31,6 +32,7 @@ class AppDrawer extends StatelessWidget {
   final bool isDarkMode;
   final ValueChanged<bool> onDarkModeChanged;
   final DrawerItem activeItem;
+  static const Color _logoutColor = Color(0xFFDC2626);
 
   @override
   Widget build(BuildContext context) {
@@ -43,75 +45,18 @@ class AppDrawer extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
-            Row(
-              children: [
-                Image.asset(
-                  colors.logoPath,
-                  width: 52,
-                  height: 52,
-                  fit: BoxFit.contain,
-                ),
-                const Gap(AppSpacing.sm),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SoundSight',
-                      style: TextStyle(
-                        fontSize: AppTextSizes.sectionTitle,
-                        fontWeight: FontWeight.w700,
-                        color: colors.primaryColor,
-                      ),
+            DrawerProfileHeader(
+              colors: colors,
+              onTap: () {
+                Navigator.pop(context);
+                if (activeItem != DrawerItem.profile) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(colors: colors),
                     ),
-                    Text(
-                      'Piano Player',
-                      style: TextStyle(
-                        fontSize: AppTextSizes.label,
-                        color: colors.secondaryTextColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const Gap(AppSpacing.lg),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.backgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: colors.borderColor),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.star_outline,
-                    color: colors.primaryColor,
-                    size: AppIconSizes.md,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Skill Level',
-                        style: TextStyle(
-                          fontSize: AppTextSizes.caption,
-                          color: colors.secondaryTextColor,
-                        ),
-                      ),
-                      Text(
-                        'Beginner',
-                        style: TextStyle(
-                          fontSize: AppTextSizes.body,
-                          fontWeight: FontWeight.w700,
-                          color: colors.primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                  );
+                }
+              },
             ),
             const Gap(AppSpacing.lg),
             _DrawerTile(
@@ -193,20 +138,6 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.profile,
-              icon: Icons.person_outline,
-              title: 'Profile',
-              onTap: () {
-                Navigator.pop(context);
-                if (activeItem != DrawerItem.profile) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => ProfileScreen(colors: colors)),
-                  );
-                }
-              },
-            ),
             Divider(color: colors.borderColor),
             SwitchListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -231,12 +162,12 @@ class AppDrawer extends StatelessWidget {
               onChanged: _updateTheme,
             ),
             ListTile(
-              leading: Icon(Icons.logout, color: colors.primaryColor),
+              leading: Icon(Icons.logout, color: _logoutColor),
               title: Text(
                 'Logout',
                 style: TextStyle(
                   fontSize: AppTextSizes.body,
-                  color: colors.primaryColor,
+                  color: _logoutColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -292,12 +223,12 @@ class AppDrawer extends StatelessWidget {
                     width: AppSpacing.xl,
                     height: AppSpacing.xl,
                     decoration: BoxDecoration(
-                      color: colors.primaryColor,
+                      color: _logoutColor,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Icon(
                       Icons.logout,
-                      color: colors.surfaceColor,
+                      color: Colors.white,
                       size: AppIconSizes.sm,
                     ),
                   ),
@@ -306,7 +237,7 @@ class AppDrawer extends StatelessWidget {
                     child: Text(
                       'Logout?',
                       style: TextStyle(
-                        color: colors.primaryColor,
+                        color: _logoutColor,
                         fontSize: AppTextSizes.sectionTitle,
                         fontWeight: FontWeight.w600,
                       ),
@@ -361,8 +292,8 @@ class AppDrawer extends StatelessWidget {
                             Navigator.pop(dialogContext, true);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primaryColor,
-                            foregroundColor: colors.surfaceColor,
+                            backgroundColor: _logoutColor,
+                            foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppRadius.lg),

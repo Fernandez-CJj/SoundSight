@@ -468,6 +468,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .set({
               'uid': userCred.user!.uid,
               'username': usernameCtrl.text.trim(),
+              'profileImageUrl': null,
               'email': emailCtrl.text.trim(),
               'role': 'piano_player',
               'theme': 'light',
