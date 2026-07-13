@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function validMusicSheet(data) {
+      return data.title is string
+             && data.title.size() > 0
+             && data.title.size() <= 80
+             && data.type is string
+             && data.pageCount is int
+             && data.pageCount > 0
+             && data.pageCount <= 20
+             && data.files is list
+             && data.files.size() > 0
+             && data.files.size() <= 20
+             && (
+               (data.type == 'pdf' && data.files.size() == 1)
+               ||
+               (data.type == 'images' && data.files.size() == data.pageCount)
+             );
+    }
+
+    match /users/{userId} {
+      allow create, read, update, delete: if request.auth != null
+                                          && request.auth.uid == userId;
+    }
+
+    match /musicSheets/{sheetId} {
+      allow create: if request.auth != null
+                    && request.resource.data.ownerId == request.auth.uid
+                    && validMusicSheet(request.resource.data);
+
+      allow read, delete: if request.auth != null
+                          && resource.data.ownerId == request.auth.uid;
+
+      allow update: if request.auth != null
+                    && resource.data.ownerId == request.auth.uid
+                    && request.resource.data.ownerId == resource.data.ownerId
+                    && validMusicSheet(request.resource.data);
+    }
+  }
+}

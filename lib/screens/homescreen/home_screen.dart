@@ -3,9 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/homescreen/level_card.dart';
 import 'package:soundsight/screens/homescreen/practice_container.dart';
 import 'package:soundsight/screens/homescreen/quick_actions.dart';
+import 'package:soundsight/screens/music_sheet/music_sheet_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
@@ -119,7 +121,12 @@ class _HomeScreenState extends State<HomeScreen> {
               borderColor: colors.borderColor,
             ),
             Gap(AppSpacing.md),
-            QuickActions(colors: colors),
+            QuickActions(
+              colors: colors,
+              onMusicSheets: openMusicSheets,
+              onUploadSheet: () => openAddSheet(SheetInputAction.upload),
+              onCaptureSheet: () => openAddSheet(SheetInputAction.capture),
+            ),
           ],
         ),
       ),
@@ -159,5 +166,24 @@ class _HomeScreenState extends State<HomeScreen> {
       username = userDoc.data()?['username'] ?? '';
       skillLevel = userDoc.data()?['skillLevel'] ?? '';
     });
+  }
+
+  void openMusicSheets() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MusicSheetScreen(isDarkMode: isDarkMode),
+      ),
+    );
+  }
+
+  void openAddSheet(SheetInputAction initialAction) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CaptureUploadSheetScreen(
+          isDarkMode: isDarkMode,
+          initialAction: initialAction,
+        ),
+      ),
+    );
   }
 }

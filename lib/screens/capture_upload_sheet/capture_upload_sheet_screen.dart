@@ -6,13 +6,27 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/screens/capture_upload_sheet/capture_tips_container.dart';
+import 'package:soundsight/screens/capture_upload_sheet/capture_upload_dialogs.dart';
+import 'package:soundsight/screens/capture_upload_sheet/capture_upload_header.dart';
+import 'package:soundsight/screens/capture_upload_sheet/music_sheet_upload_service.dart';
+import 'package:soundsight/screens/capture_upload_sheet/save_sheet_container.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_preview_dialog.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_sheets_container.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
 
+enum SheetInputAction { none, upload, capture }
+
 class CaptureUploadSheetScreen extends StatefulWidget {
-  const CaptureUploadSheetScreen({super.key, this.isDarkMode});
+  const CaptureUploadSheetScreen({
+    super.key,
+    this.isDarkMode,
+    this.initialAction = SheetInputAction.none,
+  });
 
   final bool? isDarkMode;
+  final SheetInputAction initialAction;
 
   @override
   State<CaptureUploadSheetScreen> createState() =>
@@ -20,423 +34,129 @@ class CaptureUploadSheetScreen extends StatefulWidget {
 }
 
 class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
+  static const int maxSheetPages = MusicSheetUploadService.maxSheetPages;
+  static const int maxImageFileSize = MusicSheetUploadService.maxImageFileSize;
+  static const int maxPdfFileSize = MusicSheetUploadService.maxPdfFileSize;
+
   late bool isDarkMode;
   List<PlatformFile> selectedSheets = [];
+  int? selectedPdfPageCount;
   bool isPickingFiles = false;
+  bool isSavingSheet = false;
+  double uploadProgress = 0;
+
   final ImagePicker imagePicker = ImagePicker();
+  final MusicSheetUploadService uploadService = MusicSheetUploadService();
 
   @override
   void initState() {
     super.initState();
     isDarkMode = widget.isDarkMode ?? false;
     loadTheme();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (widget.initialAction == SheetInputAction.upload) {
+        pickSheets();
+      } else if (widget.initialAction == SheetInputAction.capture) {
+        captureSheet();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
-    final iconBackground = isDarkMode
-        ? Colors.white.withOpacity(0.08)
-        : Colors.black.withOpacity(0.04);
-    final cardBorder = isDarkMode
-        ? Colors.white.withOpacity(0.12)
-        : Colors.black.withOpacity(0.07);
-    final cardShadow = isDarkMode
-        ? Colors.black.withOpacity(0.30)
-        : Colors.black.withOpacity(0.08);
 
-    return Scaffold(
-      backgroundColor: colors.backgroundColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: !isSavingSheet,
+      child: Scaffold(
         backgroundColor: colors.backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        foregroundColor: colors.primaryColor,
-        centerTitle: true,
-        title: Text(
-          'Add Sheet',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: AppTextSizes.sectionTitle,
+        appBar: AppBar(
+          backgroundColor: colors.backgroundColor,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          foregroundColor: colors.primaryColor,
+          centerTitle: true,
+          title: Text(
+            'Add Sheet',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: AppTextSizes.sectionTitle,
+            ),
           ),
+          actions: [
+            if (selectedSheets.isNotEmpty)
+              IconButton(
+                tooltip: 'Delete all selected files',
+                onPressed: isSavingSheet
+                    ? null
+                    : () => confirmDeleteAllSelectedFiles(colors),
+                icon: Icon(
+                  Icons.delete_sweep_outlined,
+                  color: isSavingSheet
+                      ? colors.secondaryTextColor
+                      : const Color(0xFFDC2626),
+                ),
+              ),
+          ],
         ),
-      ),
-      drawer: AppDrawer(
-        isDarkMode: isDarkMode,
-        activeItem: DrawerItem.captureUpload,
-        onDarkModeChanged: (value) {
-          setState(() {
-            isDarkMode = value;
-          });
-        },
-      ),
-      body: Container(
-        width: double.infinity,
-        color: colors.backgroundColor,
-        child: SafeArea(
+        drawer: isSavingSheet
+            ? null
+            : AppDrawer(
+                isDarkMode: isDarkMode,
+                activeItem: DrawerItem.captureUpload,
+                onDarkModeChanged: (value) {
+                  setState(() {
+                    isDarkMode = value;
+                  });
+                },
+              ),
+        body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.xl,
+            ),
             children: [
-              Text(
-                'Choose how you want to add your sheet music.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: colors.secondaryTextColor,
-                  fontSize: AppTextSizes.label,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const Gap(AppSpacing.xl),
-              SizedBox(
-                height: 132,
-                child: Card(
-                  margin: EdgeInsets.zero,
-                  elevation: 0,
-                  color: colors.surfaceColor,
-                  shadowColor: cardShadow,
-                  surfaceTintColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    side: BorderSide(color: cardBorder),
-                  ),
-                  child: InkWell(
-                    onTap: pickSheets,
-
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: iconBackground,
-                            child: Icon(
-                              Icons.upload_file_outlined,
-                              color: colors.primaryColor,
-                              size: 34,
-                            ),
-                          ),
-                          const Gap(AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Upload Sheet',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: colors.primaryColor,
-                                    fontSize: AppTextSizes.body,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const Gap(AppSpacing.xs),
-                                Text(
-                                  'Import images or PDFs\nfrom your device.',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: colors.secondaryTextColor,
-                                    fontSize: AppTextSizes.caption,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: colors.primaryColor,
-                            size: 30,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const Gap(AppSpacing.lg),
-              SizedBox(
-                height: 132,
-                child: Card(
-                  margin: EdgeInsets.zero,
-                  elevation: 0,
-                  color: colors.surfaceColor,
-                  shadowColor: cardShadow,
-                  surfaceTintColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    side: BorderSide(color: cardBorder),
-                  ),
-                  child: InkWell(
-                    onTap: captureSheet,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: iconBackground,
-                            child: Icon(
-                              Icons.camera_alt_outlined,
-                              color: colors.primaryColor,
-                              size: 34,
-                            ),
-                          ),
-                          const Gap(AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Capture Sheet',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: colors.primaryColor,
-                                    fontSize: AppTextSizes.body,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const Gap(AppSpacing.xs),
-                                Text(
-                                  'Take a photo of printed\nsheet music.',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: colors.secondaryTextColor,
-                                    fontSize: AppTextSizes.caption,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: colors.primaryColor,
-                            size: 30,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              CaptureUploadHeader(
+                colors: colors,
+                isPickingFiles: isPickingFiles,
+                isSavingSheet: isSavingSheet,
+                onUpload: pickSheets,
+                onCapture: captureSheet,
               ),
               if (selectedSheets.isNotEmpty) ...[
-                const Gap(AppSpacing.xl),
-
-                Text(
-                  'Selected Files',
-                  style: TextStyle(
-                    color: colors.primaryColor,
-                    fontSize: AppTextSizes.body,
-                    fontWeight: FontWeight.w800,
-                  ),
+                Gap(AppSpacing.xl),
+                SelectedSheetsContainer(
+                  colors: colors,
+                  selectedSheets: selectedSheets,
+                  selectedPdfPageCount: selectedPdfPageCount,
+                  isSavingSheet: isSavingSheet,
+                  onView: (file) => viewSelectedSheet(file, colors),
+                  onRemove: removeSelectedSheet,
                 ),
-
-                const Gap(AppSpacing.sm),
-
-                ...List.generate(selectedSheets.length, (index) {
-                  final file = selectedSheets[index];
-                  final isPdf = file.extension?.toLowerCase() == 'pdf';
-
-                  return Dismissible(
-                    key: ValueKey('${file.name}-$index'),
-                    direction: DismissDirection.startToEnd,
-
-                    background: Container(
-                      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      padding: const EdgeInsets.only(left: AppSpacing.md),
-                      alignment: Alignment.centerLeft,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                      ),
-                    ),
-
-                    confirmDismiss: (direction) async {
-                      final shouldDelete = await showDialog<bool>(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            backgroundColor: colors.surfaceColor,
-                            title: Text(
-                              'Remove file?',
-                              style: TextStyle(
-                                color: colors.primaryColor,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            content: Text(
-                              'Do you want to remove ${file.name}?',
-                              style: TextStyle(
-                                color: colors.secondaryTextColor,
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context, false);
-                                },
-                                child: Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    color: colors.secondaryTextColor,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context, true);
-                                },
-                                child: const Text(
-                                  'Remove',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-
-                      return shouldDelete ?? false;
-                    },
-
-                    onDismissed: (direction) {
-                      setState(() {
-                        selectedSheets.removeAt(index);
-                      });
-                    },
-
-                    child: Card(
-                      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      color: colors.surfaceColor,
-                      surfaceTintColor: Colors.transparent,
-                      child: ListTile(
-                        onTap: () {
-                          viewSelectedSheet(file);
-                        },
-                        leading: Icon(
-                          isPdf
-                              ? Icons.picture_as_pdf_outlined
-                              : Icons.image_outlined,
-                          color: colors.primaryColor,
-                        ),
-                        title: Text(
-                          file.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: colors.primaryColor,
-                            fontSize: AppTextSizes.label,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${(file.size / 1024).toStringAsFixed(1)} KB',
-                          style: TextStyle(
-                            color: colors.secondaryTextColor,
-                            fontSize: AppTextSizes.caption,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
               ],
-              const Gap(AppSpacing.xl),
-              Row(
-                children: [
-                  Icon(
-                    Icons.lightbulb_outline,
-                    color: colors.primaryColor,
-                    size: 22,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  Text(
-                    'For better results',
-                    style: TextStyle(
-                      color: colors.primaryColor,
-                      fontSize: AppTextSizes.label,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(AppSpacing.md),
-              Row(
-                children: [
-                  Icon(
-                    Icons.wb_sunny_outlined,
-                    color: colors.secondaryTextColor,
-                    size: 17,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  Text(
-                    'Use good, even lighting.',
-                    style: TextStyle(
-                      color: colors.secondaryTextColor,
-                      fontSize: AppTextSizes.caption,
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(AppSpacing.sm),
-              Row(
-                children: [
-                  Icon(
-                    Icons.table_bar_outlined,
-                    color: colors.secondaryTextColor,
-                    size: 17,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Place the sheet music flat on a surface.',
-                      style: TextStyle(
-                        color: colors.secondaryTextColor,
-                        fontSize: AppTextSizes.caption,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(AppSpacing.sm),
-              Row(
-                children: [
-                  Icon(
-                    Icons.center_focus_strong_outlined,
-                    color: colors.secondaryTextColor,
-                    size: 17,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Ensure the entire page is visible and clear.',
-                      style: TextStyle(
-                        color: colors.secondaryTextColor,
-                        fontSize: AppTextSizes.caption,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              Gap(AppSpacing.xl),
+              CaptureTipsContainer(colors: colors),
             ],
           ),
         ),
+        bottomNavigationBar: selectedSheets.isEmpty
+            ? null
+            : SaveSheetContainer(
+                colors: colors,
+                isSavingSheet: isSavingSheet,
+                uploadProgress: uploadProgress,
+                onSave: isPickingFiles
+                    ? null
+                    : () => saveSelectedSheets(colors),
+              ),
       ),
     );
   }
@@ -449,7 +169,6 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
         .collection('users')
         .doc(user.uid)
         .get();
-
     final theme = userDoc.data()?['theme'] ?? 'light';
 
     if (!mounted) return;
@@ -459,7 +178,132 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     });
   }
 
+  Future<void> saveSelectedSheets(AppThemeColors colors) async {
+    if (selectedSheets.isEmpty || isSavingSheet || isPickingFiles) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      showSelectionMessage('You need to sign in before saving a sheet.');
+      return;
+    }
+
+    final title = await showDialog<String>(
+      context: context,
+      builder: (_) => SheetTitleDialog(
+        colors: colors,
+        initialTitle: getInitialSheetTitle(),
+      ),
+    );
+
+    if (title == null || !mounted) return;
+
+    final files = List<PlatformFile>.from(selectedSheets);
+    final pdfPageCount = selectedPdfPageCount;
+
+    setState(() {
+      isSavingSheet = true;
+      uploadProgress = 0;
+    });
+
+    try {
+      await uploadService.saveSheet(
+        ownerId: user.uid,
+        title: title,
+        files: files,
+        pdfPageCount: pdfPageCount,
+        onProgress: (progress) {
+          if (!mounted) return;
+
+          setState(() {
+            uploadProgress = progress;
+          });
+        },
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        selectedSheets.clear();
+        selectedPdfPageCount = null;
+        isSavingSheet = false;
+        uploadProgress = 0;
+      });
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => SheetSaveResultDialog(
+          colors: colors,
+          isSuccessful: true,
+          sheetTitle: title,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        isSavingSheet = false;
+        uploadProgress = 0;
+      });
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) =>
+            SheetSaveResultDialog(colors: colors, isSuccessful: false),
+      );
+    }
+  }
+
+  String getInitialSheetTitle() {
+    final fileName = selectedSheets.first.name;
+    final extensionIndex = fileName.lastIndexOf('.');
+    final title = extensionIndex > 0
+        ? fileName.substring(0, extensionIndex)
+        : fileName;
+
+    if (title.isEmpty) return 'Untitled Sheet';
+    return title.length > 80 ? title.substring(0, 80) : title;
+  }
+
+  Future<void> confirmDeleteAllSelectedFiles(AppThemeColors colors) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (_) => DeleteSelectedSheetsDialog(
+        colors: colors,
+        fileCount: selectedSheets.length,
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+
+    setState(() {
+      selectedSheets.clear();
+      selectedPdfPageCount = null;
+    });
+  }
+
   Future<void> pickSheets() async {
+    if (isSavingSheet) return;
+
+    final hasSelectedPdf = selectedSheets.any((file) {
+      return file.extension?.toLowerCase() == 'pdf';
+    });
+
+    if (hasSelectedPdf) {
+      showSelectionMessage(
+        'Remove the selected PDF before adding another file.',
+      );
+      return;
+    }
+
+    if (selectedSheets.length >= maxSheetPages) {
+      showSelectionMessage(
+        'You already selected the maximum of $maxSheetPages images.',
+      );
+      return;
+    }
+
     setState(() {
       isPickingFiles = true;
     });
@@ -474,28 +318,16 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
       if (result == null) return;
 
-      const int maxFileSize = 20 * 1024 * 1024;
-
-      final validFiles = result.files.where((file) {
-        return file.size <= maxFileSize;
+      final pdfFiles = result.files.where((file) {
+        return file.extension?.toLowerCase() == 'pdf';
       }).toList();
 
-      final oversizedFiles = result.files.where((file) {
-        return file.size > maxFileSize;
-      }).toList();
-
-      if (oversizedFiles.isNotEmpty && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${oversizedFiles.length} file/s were too large. Max file size is 20 MB.',
-            ),
-          ),
-        );
+      if (pdfFiles.isNotEmpty) {
+        await selectPdf(result.files, pdfFiles.singleOrNull);
+        return;
       }
-      setState(() {
-        selectedSheets = validFiles;
-      });
+
+      selectImages(result.files);
     } finally {
       if (mounted) {
         setState(() {
@@ -505,66 +337,147 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
   }
 
-  void viewSelectedSheet(PlatformFile file) {
-    final isPdf = file.extension?.toLowerCase() == 'pdf';
+  Future<void> selectPdf(
+    List<PlatformFile> pickedFiles,
+    PlatformFile? pdf,
+  ) async {
+    if (pickedFiles.length != 1 || pdf == null) {
+      showSelectionMessage(
+        'Select either 1 PDF or up to $maxSheetPages images. PDFs cannot be mixed with images.',
+      );
+      return;
+    }
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        file.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: AppTextSizes.body,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
+    if (selectedSheets.isNotEmpty) {
+      showSelectionMessage('Remove the selected images before choosing a PDF.');
+      return;
+    }
 
-                const Gap(AppSpacing.md),
+    if (pdf.size > maxPdfFileSize) {
+      showSelectionMessage('The PDF must be 20 MB or smaller.');
+      return;
+    }
 
-                if (isPdf && file.bytes != null)
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.65,
-                    width: double.infinity,
-                    child: PdfViewer.data(file.bytes!, sourceName: file.name),
-                  )
-                else if (file.bytes != null)
-                  SizedBox(
-                    height: 400,
-                    child: InteractiveViewer(
-                      child: Image.memory(file.bytes!, fit: BoxFit.contain),
-                    ),
-                  )
-                else
-                  const Text('Preview is not available.'),
-              ],
-            ),
-          ),
+    try {
+      final pageCount = await getPdfPageCount(pdf);
+
+      if (pageCount < 1) {
+        showSelectionMessage('The PDF does not contain any pages.');
+        return;
+      }
+
+      if (pageCount > maxSheetPages) {
+        showSelectionMessage(
+          'This PDF has $pageCount pages. The maximum is $maxSheetPages pages.',
         );
-      },
+        return;
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        selectedSheets = [pdf];
+        selectedPdfPageCount = pageCount;
+      });
+    } catch (_) {
+      showSelectionMessage(
+        'The PDF could not be read. Make sure it is a valid, unlocked PDF.',
+      );
+    }
+  }
+
+  void selectImages(List<PlatformFile> pickedFiles) {
+    final oversizedImages = pickedFiles.where((file) {
+      return file.size > maxImageFileSize;
+    }).toList();
+    final allowedImages = pickedFiles.where((file) {
+      return file.size <= maxImageFileSize;
+    }).toList();
+    final newImages = allowedImages.where((file) {
+      return !selectedSheets.any((selectedFile) {
+        return selectedFile.name == file.name && selectedFile.size == file.size;
+      });
+    }).toList();
+    final remainingSlots = maxSheetPages - selectedSheets.length;
+    final imagesToAdd = newImages.take(remainingSlots).toList();
+    final duplicateCount = allowedImages.length - newImages.length;
+    final messages = <String>[];
+
+    if (oversizedImages.isNotEmpty) {
+      messages.add(
+        '${oversizedImages.length} image(s) were skipped because each image must be 5 MB or smaller.',
+      );
+    }
+
+    if (duplicateCount > 0) {
+      messages.add('$duplicateCount duplicate image(s) were skipped.');
+    }
+
+    if (newImages.length > remainingSlots) {
+      messages.add('Only $remainingSlots more image(s) could be added.');
+    }
+
+    if (messages.isNotEmpty) {
+      showSelectionMessage(messages.join(' '));
+    }
+
+    if (imagesToAdd.isEmpty || !mounted) return;
+
+    setState(() {
+      selectedSheets.addAll(imagesToAdd);
+      selectedPdfPageCount = null;
+    });
+  }
+
+  Future<int> getPdfPageCount(PlatformFile pdf) async {
+    final bytes = pdf.bytes;
+    if (bytes == null) throw Exception('PDF data is unavailable.');
+
+    await pdfrxFlutterInitialize();
+    final document = await PdfDocument.openData(bytes, sourceName: pdf.name);
+
+    try {
+      return document.pages.length;
+    } finally {
+      await document.dispose();
+    }
+  }
+
+  void removeSelectedSheet(int index) {
+    setState(() {
+      selectedSheets.removeAt(index);
+      if (selectedSheets.isEmpty) {
+        selectedPdfPageCount = null;
+      }
+    });
+  }
+
+  void viewSelectedSheet(PlatformFile file, AppThemeColors colors) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => SelectedSheetPreviewDialog(colors: colors, file: file),
     );
   }
 
   Future<void> captureSheet() async {
+    if (isSavingSheet || isPickingFiles) return;
+
+    final hasSelectedPdf = selectedSheets.any((file) {
+      return file.extension?.toLowerCase() == 'pdf';
+    });
+
+    if (hasSelectedPdf) {
+      showSelectionMessage(
+        'Remove the selected PDF before adding captured images.',
+      );
+      return;
+    }
+
+    if (selectedSheets.length >= maxSheetPages) {
+      showSelectionMessage('You can only add up to $maxSheetPages images.');
+      return;
+    }
+
     final image = await imagePicker.pickImage(
       source: ImageSource.camera,
       imageQuality: 90,
@@ -573,6 +486,15 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
+
+    if (bytes.length > maxImageFileSize) {
+      showSelectionMessage(
+        'The captured image is larger than 5 MB. Try capturing it again.',
+      );
+      return;
+    }
+
+    if (!mounted) return;
 
     final capturedFile = PlatformFile(
       name: image.name,
@@ -583,6 +505,15 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     setState(() {
       selectedSheets.add(capturedFile);
+      selectedPdfPageCount = null;
     });
+  }
+
+  void showSelectionMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }

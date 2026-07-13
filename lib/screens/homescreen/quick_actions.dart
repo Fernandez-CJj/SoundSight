@@ -4,23 +4,53 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class QuickActions extends StatelessWidget {
-  const QuickActions({super.key, required this.colors});
+  const QuickActions({
+    super.key,
+    required this.colors,
+    required this.onMusicSheets,
+    required this.onUploadSheet,
+    required this.onCaptureSheet,
+  });
 
   final AppThemeColors colors;
+  final VoidCallback onMusicSheets;
+  final VoidCallback onUploadSheet;
+  final VoidCallback onCaptureSheet;
 
   @override
   Widget build(BuildContext context) {
-    const quickActions = [
-      _QuickAction('Music Sheets', Icons.queue_music, Color(0xFF3B82F6)),
-      _QuickAction('Upload Sheet', Icons.upload, Color(0xFF22C55E)),
+    final quickActions = [
+      _QuickAction(
+        'Music Sheets',
+        Icons.queue_music,
+        Color(0xFF3B82F6),
+        onMusicSheets,
+      ),
+      _QuickAction(
+        'Upload Sheet',
+        Icons.upload,
+        Color(0xFF22C55E),
+        onUploadSheet,
+      ),
       _QuickAction(
         'Capture Sheet',
         Icons.camera_alt_outlined,
         Color(0xFFF59E0B),
+        onCaptureSheet,
       ),
-      _QuickAction('Saved Sheets', Icons.folder_open, Color(0xFF8B5CF6)),
-      _QuickAction('Composition', Icons.edit_outlined, Color(0xFFEC4899)),
-      _QuickAction('Practice Results', Icons.bar_chart, Color(0xFF06B6D4)),
+      _QuickAction('Saved Sheets', Icons.folder_open, Color(0xFF8B5CF6), null),
+      _QuickAction(
+        'Composition',
+        Icons.edit_outlined,
+        Color(0xFFEC4899),
+        null,
+      ),
+      _QuickAction(
+        'Practice Results',
+        Icons.bar_chart,
+        Color(0xFF06B6D4),
+        null,
+      ),
     ];
 
     return Column(
@@ -59,7 +89,7 @@ class QuickActions extends StatelessWidget {
                     side: BorderSide(color: colors.borderColor),
                   ),
                   child: InkWell(
-                    onTap: () {},
+                    onTap: action.onTap,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -99,9 +129,10 @@ class QuickActions extends StatelessWidget {
 }
 
 class _QuickAction {
-  const _QuickAction(this.label, this.icon, this.color);
+  const _QuickAction(this.label, this.icon, this.color, this.onTap);
 
   final String label;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
 }

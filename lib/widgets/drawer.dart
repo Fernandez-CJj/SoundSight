@@ -6,6 +6,7 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/auth/login_screen.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/homescreen/home_screen.dart';
+import 'package:soundsight/screens/music_sheet/music_sheet_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer_profile_header.dart';
@@ -82,6 +83,14 @@ class AppDrawer extends StatelessWidget {
               title: 'Music Sheets',
               onTap: () {
                 Navigator.pop(context);
+                if (activeItem != DrawerItem.musicSheets) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          MusicSheetScreen(isDarkMode: isDarkMode),
+                    ),
+                  );
+                }
               },
             ),
             _DrawerTile(

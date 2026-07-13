@@ -13,5 +13,29 @@ service firebase.storage {
       allow delete: if request.auth != null
                     && request.auth.uid == userId;
     }
+
+    match /musicSheets/{ownerId}/{sheetId}/{fileName} {
+      allow read: if request.auth != null
+                  && request.auth.uid == ownerId;
+
+      allow create, update: if request.auth != null
+                            && request.auth.uid == ownerId
+                            && (
+                              (
+                                request.resource.contentType.matches('image/.*')
+                                && request.resource.size <= 5 * 1024 * 1024
+                                && fileName.matches('page_(0[1-9]|1[0-9]|20)[.](jpg|jpeg|png|heic|webp)')
+                              )
+                              ||
+                              (
+                                request.resource.contentType == 'application/pdf'
+                                && request.resource.size <= 20 * 1024 * 1024
+                                && fileName == 'sheet.pdf'
+                              )
+                            );
+
+      allow delete: if request.auth != null
+                    && request.auth.uid == ownerId;
+    }
   }
 }
