@@ -16,8 +16,56 @@ service cloud.firestore {
              && (
                (data.type == 'pdf' && data.files.size() == 1)
                ||
-               (data.type == 'images' && data.files.size() == data.pageCount)
+               (data.type == 'images'
+                 && data.files.size() == data.pageCount)
              );
+    }
+
+    function validComposition(data) {
+      return data.keys().hasOnly([
+               'ownerId',
+               'title',
+               'key',
+               'tempo',
+               'beatsPerMeasure',
+               'beatUnit',
+               'measureCount',
+               'notes',
+               'createdAt',
+               'updatedAt'
+             ])
+             && data.ownerId is string
+             && data.title is string
+             && data.title.size() > 0
+             && data.title.size() <= 80
+             && data.key is string
+             && data.key.size() > 0
+             && data.key.size() <= 20
+             && data.tempo is int
+             && data.tempo >= 40
+             && data.tempo <= 200
+             && data.beatsPerMeasure is int
+             && data.beatUnit is int
+             && (
+               (data.beatUnit == 4
+                 && data.beatsPerMeasure >= 2
+                 && data.beatsPerMeasure <= 7)
+               ||
+               (data.beatUnit == 8
+                 && (
+                   data.beatsPerMeasure == 3
+                   || data.beatsPerMeasure == 6
+                   || data.beatsPerMeasure == 9
+                   || data.beatsPerMeasure == 12
+                 ))
+             )
+             && data.measureCount is int
+             && data.measureCount > 0
+             && data.measureCount <= 128
+             && data.notes is list
+             && data.notes.size() <= 256
+             && data.createdAt is timestamp
+             && data.updatedAt is timestamp;
     }
 
     match /users/{userId} {
@@ -35,8 +83,29 @@ service cloud.firestore {
 
       allow update: if request.auth != null
                     && resource.data.ownerId == request.auth.uid
-                    && request.resource.data.ownerId == resource.data.ownerId
+                    && request.resource.data.ownerId
+                       == resource.data.ownerId
                     && validMusicSheet(request.resource.data);
+    }
+
+    match /compositions/{compositionId} {
+      allow create: if request.auth != null
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.updatedAt == request.time
+                    && validComposition(request.resource.data);
+
+      allow read, delete: if request.auth != null
+                          && resource.data.ownerId == request.auth.uid;
+
+      allow update: if request.auth != null
+                    && resource.data.ownerId == request.auth.uid
+                    && request.resource.data.ownerId
+                       == resource.data.ownerId
+                    && request.resource.data.createdAt
+                       == resource.data.createdAt
+                    && request.resource.data.updatedAt == request.time
+                    && validComposition(request.resource.data);
     }
   }
 }

@@ -10,12 +10,14 @@ class QuickActions extends StatelessWidget {
     required this.onMusicSheets,
     required this.onUploadSheet,
     required this.onCaptureSheet,
+    required this.onComposition,
   });
 
   final AppThemeColors colors;
   final VoidCallback onMusicSheets;
   final VoidCallback onUploadSheet;
   final VoidCallback onCaptureSheet;
+  final VoidCallback onComposition;
 
   @override
   Widget build(BuildContext context) {
@@ -23,29 +25,34 @@ class QuickActions extends StatelessWidget {
       _QuickAction(
         'Music Sheets',
         Icons.queue_music,
-        Color(0xFF3B82F6),
+        const Color(0xFF3B82F6),
         onMusicSheets,
       ),
       _QuickAction(
         'Upload Sheet',
         Icons.upload,
-        Color(0xFF22C55E),
+        const Color(0xFF22C55E),
         onUploadSheet,
       ),
       _QuickAction(
         'Capture Sheet',
         Icons.camera_alt_outlined,
-        Color(0xFFF59E0B),
+        const Color(0xFFF59E0B),
         onCaptureSheet,
       ),
-      _QuickAction('Saved Sheets', Icons.folder_open, Color(0xFF8B5CF6), null),
-      _QuickAction(
-        'Composition',
-        Icons.edit_outlined,
-        Color(0xFFEC4899),
+      const _QuickAction(
+        'Saved Sheets',
+        Icons.folder_open,
+        Color(0xFF8B5CF6),
         null,
       ),
       _QuickAction(
+        'Composition',
+        Icons.edit_outlined,
+        const Color(0xFFEC4899),
+        onComposition,
+      ),
+      const _QuickAction(
         'Practice Results',
         Icons.bar_chart,
         Color(0xFF06B6D4),
@@ -64,7 +71,7 @@ class QuickActions extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        Gap(AppSpacing.sm),
+        const Gap(AppSpacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
             final crossAxisCount = constraints.maxWidth >= 520 ? 4 : 3;
@@ -103,7 +110,7 @@ class QuickActions extends StatelessWidget {
                             size: 24,
                           ),
                         ),
-                        Gap(AppSpacing.xs),
+                        const Gap(AppSpacing.xs),
                         Text(
                           action.label,
                           textAlign: TextAlign.center,

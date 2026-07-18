@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
+import 'package:soundsight/screens/composition/my_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/level_card.dart';
 import 'package:soundsight/screens/homescreen/practice_container.dart';
 import 'package:soundsight/screens/homescreen/quick_actions.dart';
@@ -23,12 +24,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late bool isDarkMode;
+
   String username = '';
   String skillLevel = '';
+
   @override
   void initState() {
     super.initState();
+
     isDarkMode = widget.isDarkMode ?? false;
+
     loadTheme();
     loadUser();
   }
@@ -36,9 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
+
     final practiceImage = isDarkMode
         ? 'assets/images/black_container.png'
         : 'assets/images/white_container.png';
+
     final practiceTextColor = isDarkMode ? Colors.white : Colors.black;
     final practiceButtonColor = isDarkMode ? Colors.white : Colors.black;
     final practiceButtonTextColor = isDarkMode ? Colors.black : Colors.white;
@@ -59,8 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 image: DecorationImage(image: AssetImage(colors.logoPath)),
               ),
             ),
-            Gap(AppSpacing.xs),
-            Text(
+            const Gap(AppSpacing.xs),
+            const Text(
               'SoundSight',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
@@ -72,11 +79,13 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => ProfileScreen(colors: colors)));
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(colors: colors),
+                ),
+              );
             },
-            icon: Icon(Icons.person, size: 30),
+            icon: const Icon(Icons.person, size: 30),
           ),
         ],
       ),
@@ -101,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Gap(AppSpacing.xs),
+            const Gap(AppSpacing.xs),
             Text(
               'Keep practicing, Great music starts with you.',
               style: TextStyle(
@@ -110,9 +119,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 fontWeight: FontWeight.w400,
               ),
             ),
-            Gap(AppSpacing.md),
+            const Gap(AppSpacing.md),
             TopCard(colors: colors, skillLevel: skillLevel),
-            Gap(AppSpacing.md),
+            const Gap(AppSpacing.md),
             PracticeContainer(
               practiceImage: practiceImage,
               practiceTextColor: practiceTextColor,
@@ -120,12 +129,17 @@ class _HomeScreenState extends State<HomeScreen> {
               practiceButtonTextColor: practiceButtonTextColor,
               borderColor: colors.borderColor,
             ),
-            Gap(AppSpacing.md),
+            const Gap(AppSpacing.md),
             QuickActions(
               colors: colors,
               onMusicSheets: openMusicSheets,
-              onUploadSheet: () => openAddSheet(SheetInputAction.upload),
-              onCaptureSheet: () => openAddSheet(SheetInputAction.capture),
+              onUploadSheet: () {
+                openAddSheet(SheetInputAction.upload);
+              },
+              onCaptureSheet: () {
+                openAddSheet(SheetInputAction.capture);
+              },
+              onComposition: openCompositions,
             ),
           ],
         ),
@@ -135,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> loadTheme() async {
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) return;
 
     final userDoc = await FirebaseFirestore.instance
@@ -153,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> loadUser() async {
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) return;
 
     final userDoc = await FirebaseFirestore.instance
@@ -183,6 +199,14 @@ class _HomeScreenState extends State<HomeScreen> {
           isDarkMode: isDarkMode,
           initialAction: initialAction,
         ),
+      ),
+    );
+  }
+
+  void openCompositions() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MyCompositionsScreen(isDarkMode: isDarkMode),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/auth/login_screen.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
+import 'package:soundsight/screens/composition/my_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/home_screen.dart';
 import 'package:soundsight/screens/music_sheet/music_sheet_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
@@ -33,6 +34,7 @@ class AppDrawer extends StatelessWidget {
   final bool isDarkMode;
   final ValueChanged<bool> onDarkModeChanged;
   final DrawerItem activeItem;
+
   static const Color _logoutColor = Color(0xFFDC2626);
 
   @override
@@ -50,6 +52,7 @@ class AppDrawer extends StatelessWidget {
               colors: colors,
               onTap: () {
                 Navigator.pop(context);
+
                 if (activeItem != DrawerItem.profile) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -67,6 +70,7 @@ class AppDrawer extends StatelessWidget {
               title: 'Home',
               onTap: () {
                 Navigator.pop(context);
+
                 if (activeItem != DrawerItem.home) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -83,11 +87,11 @@ class AppDrawer extends StatelessWidget {
               title: 'Music Sheets',
               onTap: () {
                 Navigator.pop(context);
+
                 if (activeItem != DrawerItem.musicSheets) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          MusicSheetScreen(isDarkMode: isDarkMode),
+                      builder: (_) => MusicSheetScreen(isDarkMode: isDarkMode),
                     ),
                   );
                 }
@@ -100,6 +104,7 @@ class AppDrawer extends StatelessWidget {
               title: 'Upload / Capture Sheet',
               onTap: () {
                 Navigator.pop(context);
+
                 if (activeItem != DrawerItem.captureUpload) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -136,6 +141,15 @@ class AppDrawer extends StatelessWidget {
               title: 'Composition',
               onTap: () {
                 Navigator.pop(context);
+
+                if (activeItem != DrawerItem.composition) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          MyCompositionsScreen(isDarkMode: isDarkMode),
+                    ),
+                  );
+                }
               },
             ),
             _DrawerTile(
@@ -171,8 +185,8 @@ class AppDrawer extends StatelessWidget {
               onChanged: _updateTheme,
             ),
             ListTile(
-              leading: Icon(Icons.logout, color: _logoutColor),
-              title: Text(
+              leading: const Icon(Icons.logout, color: _logoutColor),
+              title: const Text(
                 'Logout',
                 style: TextStyle(
                   fontSize: AppTextSizes.body,
@@ -205,6 +219,7 @@ class AppDrawer extends StatelessWidget {
     onDarkModeChanged(value);
 
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) return;
 
     await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
@@ -235,14 +250,14 @@ class AppDrawer extends StatelessWidget {
                       color: _logoutColor,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.logout,
                       color: Colors.white,
                       size: AppIconSizes.sm,
                     ),
                   ),
                   const Gap(AppSpacing.sm),
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'Logout?',
                       style: TextStyle(
