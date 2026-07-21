@@ -107,5 +107,91 @@ service cloud.firestore {
                     && request.resource.data.updatedAt == request.time
                     && validComposition(request.resource.data);
     }
+
+    match /compositionPosts/{postId} {
+      allow read: if request.auth != null;
+
+      allow create, update, delete: if false;
+
+      match /versions/{versionId} {
+        allow read: if request.auth != null;
+
+        allow create, update, delete: if false;
+
+        match /likes/{userId} {
+          allow read: if request.auth != null;
+
+          allow create: if request.auth != null
+                        && request.auth.uid == userId
+                        && request.resource.data.keys().hasOnly([
+                             'userId',
+                             'createdAt'
+                           ])
+                        && request.resource.data.userId == request.auth.uid
+                        && request.resource.data.createdAt == request.time;
+
+          allow update: if false;
+
+          allow delete: if request.auth != null
+                        && request.auth.uid == userId;
+        }
+
+        match /comments/{commentId} {
+          allow read: if request.auth != null;
+
+          allow create: if request.auth != null
+                        && request.resource.data.keys().hasOnly([
+                             'userId',
+                             'username',
+                             'profileImageUrl',
+                             'text',
+                             'createdAt'
+                           ])
+                        && request.resource.data.userId == request.auth.uid
+                        && request.resource.data.username is string
+                        && request.resource.data.profileImageUrl is string
+                        && request.resource.data.text is string
+                        && request.resource.data.text.size() > 0
+                        && request.resource.data.text.size() <= 500
+                        && request.resource.data.createdAt == request.time;
+
+          allow update: if false;
+
+          allow delete: if request.auth != null
+                        && (
+                          request.auth.uid == resource.data.userId
+                          || request.auth.uid == get(
+                               /databases/$(database)/documents/compositionPosts/$(postId)
+                             ).data.ownerId
+                        );
+        }
+      }
+    }
+
+    match /savedCompositionPosts/{saveId} {
+      allow get: if request.auth != null
+                 && saveId.matches(request.auth.uid + '_.*');
+
+      allow list: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly([
+                         'userId',
+                         'postId',
+                         'versionNumber',
+                         'savedAt'
+                       ])
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.postId is string
+                    && request.resource.data.versionNumber is int
+                    && request.resource.data.versionNumber > 0
+                    && request.resource.data.savedAt == request.time;
+
+      allow update: if false;
+
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
+    }
   }
 }

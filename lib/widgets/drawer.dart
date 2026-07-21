@@ -5,8 +5,10 @@ import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/auth/login_screen.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
-import 'package:soundsight/screens/composition/my_compositions_screen.dart';
-import 'package:soundsight/screens/homescreen/home_screen.dart';
+import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
+import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
+import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
+import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/screens/music_sheet/music_sheet_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -19,6 +21,7 @@ enum DrawerItem {
   arPractice,
   savedSheets,
   composition,
+  publishedCompositions,
   practiceResults,
   profile,
 }
@@ -132,6 +135,16 @@ class AppDrawer extends StatelessWidget {
               title: 'Saved Sheets',
               onTap: () {
                 Navigator.pop(context);
+
+                if (activeItem != DrawerItem.savedSheets) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SavedCompositionsScreen(
+                        isDarkMode: isDarkMode,
+                      ),
+                    ),
+                  );
+                }
               },
             ),
             _DrawerTile(
@@ -147,6 +160,25 @@ class AppDrawer extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (_) =>
                           MyCompositionsScreen(isDarkMode: isDarkMode),
+                    ),
+                  );
+                }
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.publishedCompositions,
+              icon: Icons.public_rounded,
+              title: 'Published Compositions',
+              onTap: () {
+                Navigator.pop(context);
+
+                if (activeItem != DrawerItem.publishedCompositions) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PublishedCompositionsScreen(
+                        isDarkMode: isDarkMode,
+                      ),
                     ),
                   );
                 }

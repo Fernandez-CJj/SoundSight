@@ -89,11 +89,14 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                 child: SizedBox(
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: showPlayConfirmation,
-                    icon: Icon(Icons.play_arrow_rounded, size: 24),
+                    onPressed: showArConfirmation,
+                    icon: Icon(Icons.view_in_ar_rounded, size: AppIconSizes.md),
                     label: Text(
-                      'Play This Piece',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      'Play with AR',
+                      style: TextStyle(
+                        fontSize: AppTextSizes.body,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primaryColor,
@@ -274,7 +277,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     return FirebaseStorage.instance.ref(path).getData(maxSize);
   }
 
-  Future<void> showPlayConfirmation() async {
+  Future<void> showArConfirmation() async {
     final colors = widget.colors;
 
     await showDialog<void>(
@@ -294,13 +297,13 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.play_arrow_rounded,
+              Icons.view_in_ar_rounded,
               color: colors.backgroundColor,
-              size: 32,
+              size: AppIconSizes.lg,
             ),
           ),
           title: Text(
-            'Play this piece?',
+            'Play with AR?',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.primaryColor,
@@ -309,7 +312,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
             ),
           ),
           content: Text(
-            'Do you want to play "${widget.title}"?',
+            'Do you want to use "${widget.title}" for AR practice?',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.secondaryTextColor,
@@ -345,10 +348,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                 Expanded(
                   child: SizedBox(
                     height: 48,
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       onPressed: () => Navigator.pop(dialogContext),
-                      icon: Icon(Icons.play_arrow_rounded, size: 21),
-                      label: Text('Play'),
+                      child: Text('Start'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colors.primaryColor,
                         foregroundColor: colors.backgroundColor,

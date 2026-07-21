@@ -6,7 +6,7 @@ import 'package:gap/gap.dart';
 import 'package:soundsight/screens/assessment/assessment_screen.dart';
 import 'package:soundsight/screens/auth/register_screen.dart';
 import 'package:soundsight/screens/auth/widgets/app_text_form_field.dart';
-import 'package:soundsight/screens/homescreen/home_screen.dart';
+import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/theme/app_colors.dart';
 import '../../constants/constant.dart';
 
