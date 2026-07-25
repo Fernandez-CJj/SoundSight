@@ -1,0 +1,61 @@
+2026-07-22 18:31:45,814 INFO [1000359871]                 Book.java:560  | 1 sheet in C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359871.jpg
+2026-07-22 18:31:46,028 INFO []                 Book.java:2565 | Stored /book.xml
+2026-07-22 18:31:46,029 INFO []                 Book.java:2525 | Book stored as C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359871.omr
+2026-07-22 18:31:46,040 INFO []                 Book.java:1929 | Book reaching PAGE on sheets:[#1]
+2026-07-22 18:31:46,044 INFO [1000359871]       StepMonitoring.java:98   | LOAD
+2026-07-22 18:31:46,433 INFO [1000359871]            SheetStub.java:1278 | Loaded image #1 2500x2791 from C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359871.jpg
+2026-07-22 18:31:46,435 INFO [1000359871]            ImageUtil.java:152  | Converting max RGB to gray
+2026-07-22 18:31:46,751 INFO [1000359871]       StepMonitoring.java:98   | BINARY
+2026-07-22 18:31:47,293 INFO [1000359871]       StepMonitoring.java:98   | SCALE
+2026-07-22 18:31:47,317 INFO [1000359871]         ScaleBuilder.java:254  | Beam  guessed height: 11 -- 0.25 of [9..19] range
+2026-07-22 18:31:47,318 INFO [1000359871]         ScaleBuilder.java:271  | Beam measured height: 13 -- 0.40 of [9..19] range at 150% of needed quorum
+2026-07-22 18:31:47,318 INFO [1000359871]         ScaleBuilder.java:401  | Normalized black jitter: 9.52 %
+2026-07-22 18:31:47,318 INFO [1000359871]            ScaleStep.java:65   | Scale{ interline(20,21,21) line(4,4,6) beam(13)}
+2026-07-22 18:31:47,319 INFO [1000359871]       StepMonitoring.java:98   | GRID
+2026-07-22 18:31:48,246 INFO [1000359871]       LinesRetriever.java:1508 | Global slope: 0.00000
+2026-07-22 18:31:48,304 INFO [1000359871]    ClustersRetriever.java:326  | Retrieved raw line clusters: 10 of sizes [5] with interline(20,21,21)
+2026-07-22 18:31:48,685 INFO [1000359871]            PeakGraph.java:310  | Systems: #1[1, 2] #2[3, 4] #3[5, 6] #4[7, 8] #5[9, 10]
+2026-07-22 18:31:49,298 INFO [1000359871]        SystemManager.java:134  | Indentation detected for system #1
+2026-07-22 18:31:49,300 INFO [1000359871]        SystemManager.java:800  | 1 part along 5 systems
+2026-07-22 18:31:49,301 INFO [1000359871]                 Book.java:543  | Created scores: [{Score 1}]
+2026-07-22 18:31:49,301 INFO [1000359871]       StepMonitoring.java:98   | HEADERS
+2026-07-22 18:31:51,160 INFO [1000359871]       StepMonitoring.java:98   | STEM_SEEDS
+2026-07-22 18:31:51,232 INFO [1000359871]        StemSeedsStep.java:86   | stem(4 max:5)
+2026-07-22 18:31:51,312 INFO [1000359871]       StepMonitoring.java:98   | BEAMS
+2026-07-22 18:31:55,980 INFO [1000359871]       StepMonitoring.java:98   | LEDGERS
+2026-07-22 18:31:56,909 INFO [1000359871]       StepMonitoring.java:98   | HEADS
+2026-07-22 18:32:05,892 INFO [1000359871]        HeadSeedTally.java:235  | Scale information: HeadSeeds{NOTEHEAD_VOID[L:-1.5] NOTEHEAD_BLACK[L:-1.1,R:-1.4]}
+2026-07-22 18:32:05,892 INFO [1000359871]       StepMonitoring.java:98   | STEMS
+2026-07-22 18:32:07,177 INFO [1000359871]       StepMonitoring.java:98   | REDUCTION
+2026-07-22 18:32:07,406 INFO [1000359871]        ReductionStep.java:105  | Stems free length median value: 74 pixels, 3.5 interlines
+2026-07-22 18:32:07,412 INFO [1000359871]       StepMonitoring.java:98   | CUE_BEAMS
+2026-07-22 18:32:07,413 INFO [1000359871]         CueBeamsStep.java:81   | Step CUE_BEAMS is skipped because small heads switch is off
+2026-07-22 18:32:07,413 INFO [1000359871]       StepMonitoring.java:98   | TEXTS
+2026-07-22 18:32:08,614 INFO [1000359871]       StepMonitoring.java:98   | MEASURES
+2026-07-22 18:32:08,632 INFO [1000359871]                 Page.java:307  | 26 raw measures: [6 in system#1, 5 in system#2, 5 in system#3, 5 in system#4, 5 in system#5]
+2026-07-22 18:32:08,633 INFO [1000359871]       StepMonitoring.java:98   | CHORDS
+2026-07-22 18:32:08,662 INFO [1000359871]       StepMonitoring.java:98   | CURVES
+2026-07-22 18:32:09,848 INFO [1000359871]         SlursBuilder.java:240  | Slurs: 19
+2026-07-22 18:32:09,869 INFO [1000359871]      SegmentsBuilder.java:155  | Segments: 4
+2026-07-22 18:32:09,878 INFO [1000359871]       StepMonitoring.java:98   | SYMBOLS
+2026-07-22 18:32:11,103 INFO [1000359871]       StepMonitoring.java:98   | LINKS
+2026-07-22 18:32:11,142 INFO [1000359871]             KeyInter.java:1198 | No effective key before AlterInter#6350{(0.796) staff:5 NATURAL pitch:-4.0}
+2026-07-22 18:32:11,187 INFO [1000359871]       StepMonitoring.java:98   | RHYTHMS
+2026-07-22 18:32:11,264 INFO [1000359871]       StepMonitoring.java:98   | PAGE
+2026-07-22 18:32:11,269 INFO [1000359871]       SheetReduction.java:154  | Gutter. Different glyphs 2/3 DynamicsInter#6307{(0.500/0.768) DYNAMICS_FF} vs WordInter#5713{(0.687/0.687) staff:5 TEXT "2" font:BMS-40}
+2026-07-22 18:32:11,271 INFO [1000359871]       SheetReduction.java:154  | Gutter. Different glyphs 2/3 DynamicsInter#6307{(0.500/0.768) DYNAMICS_FF} vs WordInter#5714{(0.680/0.680) staff:5 TEXT "43" font:BIS-47}
+2026-07-22 18:32:11,271 INFO [1000359871]       SheetReduction.java:154  | Gutter. Different glyphs 3/4 DynamicsInter#6333{(0.299/0.590) DYNAMICS_FP} vs SlurInter#5973{(0.714/0.956) SLUR_ABOVE}
+2026-07-22 18:32:11,272 INFO [1000359871]       SheetReduction.java:154  | Gutter. Different glyphs 3/4 DynamicsInter#6333{(0.299/0.590) DYNAMICS_FP} vs WordInter#5728{(0.708/0.708) staff:7 TEXT "24" font:BIS-51}
+2026-07-22 18:32:11,272 INFO [1000359871]       SheetReduction.java:154  | Gutter. Different glyphs 3/4 DynamicsInter#6333{(0.299/0.590) DYNAMICS_FP} vs HeadInter#3069{(0.781/0.961) staff:7 NOTEHEAD_BLACK pitch:-7.0}
+2026-07-22 18:32:11,280 INFO [1000359871]                 Book.java:2584 | Book{1000359871} storing
+2026-07-22 18:32:11,339 INFO [1000359871]                 Book.java:2565 | Stored /book.xml
+2026-07-22 18:32:11,462 INFO [1000359871]           DataHolder.java:348  | Stored /sheet#1/BINARY.png
+2026-07-22 18:32:12,563 INFO [1000359871]                Sheet.java:1583 | Stored /sheet#1/sheet#1.xml
+2026-07-22 18:32:12,563 INFO [1000359871]                 Book.java:2525 | Book stored as C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359871.omr
+2026-07-22 18:32:12,571 INFO [1000359871]            SheetStub.java:1655 | Sheet disposed
+2026-07-22 18:32:12,608 INFO [1000359871]                 Book.java:2050 | End of Stub#1
+2026-07-22 18:32:12,610 INFO [1000359871]                 Book.java:2057 | End of Book{1000359871}
+2026-07-22 18:32:13,225 INFO [1000359871]            SheetStub.java:1000 | Loaded /sheet#1/sheet#1.xml
+2026-07-22 18:32:13,723 INFO [1000359871]      PartwiseBuilder.java:2707 | Exporting sheet(s): [#1]
+2026-07-22 18:32:13,875 INFO [1000359871]        ScoreExporter.java:164  | Score 1000359871 exported to C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359871.mxl
+2026-07-22 18:32:13,931 INFO [1000359871]                Score.java:181  | Closing {Score 1}

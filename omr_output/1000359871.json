@@ -1,0 +1,2234 @@
+[
+    {
+        "note": "E4",
+        "timestamp_seconds": 0.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 0.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A4",
+        "timestamp_seconds": 0.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 1.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A1",
+        "timestamp_seconds": 0.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 1.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 0.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 1.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 1.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 2.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 1.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 2.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 1.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 2.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 1.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 2.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 1.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 3.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 1.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 3.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 1.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 3.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 1.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 3.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D5",
+        "timestamp_seconds": 2.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 4.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D2",
+        "timestamp_seconds": 2.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 4.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 2.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 4.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 2.5,
+        "duration_seconds": 1.0,
+        "beat_offset": 5.0,
+        "beat_duration": 2.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 2.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 5.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 2.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 5.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 2.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 5.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 3.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 6.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 3.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 6.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 3.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 6.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 3.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 7.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G2",
+        "timestamp_seconds": 3.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 7.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 3.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 7.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D5",
+        "timestamp_seconds": 4.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 8.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 4.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 8.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 4.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 8.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 4.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 8.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 4.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 8.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G5",
+        "timestamp_seconds": 4.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 9.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 4.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 9.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 4.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 9.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 4.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 9.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 4.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 9.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 5.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 10.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "C3",
+        "timestamp_seconds": 5.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 10.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D#5",
+        "timestamp_seconds": 5.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 10.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 5.5,
+        "duration_seconds": 1.0,
+        "beat_offset": 11.0,
+        "beat_duration": 2.0,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 5.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 11.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 5.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 11.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 5.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 11.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 6.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 12.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 6.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 12.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 6.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 12.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A4",
+        "timestamp_seconds": 6.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 13.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A2",
+        "timestamp_seconds": 6.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 13.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 6.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 13.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 7.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 14.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 7.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 14.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 7.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 14.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 7.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 14.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 7.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 15.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 7.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 15.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 7.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 15.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 7.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 15.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D5",
+        "timestamp_seconds": 8.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 16.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D2",
+        "timestamp_seconds": 8.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 16.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 8.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 16.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 8.5,
+        "duration_seconds": 1.0,
+        "beat_offset": 17.0,
+        "beat_duration": 2.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 8.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 17.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 8.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 17.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 8.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 17.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 9.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 18.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 9.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 18.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 9.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 18.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 9.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 19.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G2",
+        "timestamp_seconds": 9.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 19.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 9.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 19.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D5",
+        "timestamp_seconds": 10.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 20.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 10.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 20.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 10.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 20.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 10.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 20.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 10.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 20.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G5",
+        "timestamp_seconds": 10.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 21.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 10.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 21.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 10.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 21.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 10.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 21.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 10.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 21.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 11.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 22.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "C3",
+        "timestamp_seconds": 11.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 22.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 11.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 23.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 11.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 23.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 11.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 23.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 11.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 23.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A4",
+        "timestamp_seconds": 12.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 24.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A1",
+        "timestamp_seconds": 12.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 24.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 12.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 24.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 12.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 25.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 12.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 25.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 12.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 25.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 12.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 25.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 13.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 26.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 13.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 26.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 13.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 26.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 13.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 26.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D5",
+        "timestamp_seconds": 13.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 27.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D2",
+        "timestamp_seconds": 13.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 27.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 13.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 27.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 14.0,
+        "duration_seconds": 1.0,
+        "beat_offset": 28.0,
+        "beat_duration": 2.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 14.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 28.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 14.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 28.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 14.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 28.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 14.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 29.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 14.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 29.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 14.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 29.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 15.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 30.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G2",
+        "timestamp_seconds": 15.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 30.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 15.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 30.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D5",
+        "timestamp_seconds": 15.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 31.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 15.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 31.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 15.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 31.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 15.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 31.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 15.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 31.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G5",
+        "timestamp_seconds": 16.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 32.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 16.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 32.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 16.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 32.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 16.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 32.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 16.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 32.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 16.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 33.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "C3",
+        "timestamp_seconds": 16.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 33.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D#5",
+        "timestamp_seconds": 16.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 33.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 17.0,
+        "duration_seconds": 1.0,
+        "beat_offset": 34.0,
+        "beat_duration": 2.0,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 17.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 34.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 17.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 34.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 17.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 34.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 17.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 35.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 17.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 35.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 17.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 35.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 18.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 36.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A2",
+        "timestamp_seconds": 18.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 36.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D5",
+        "timestamp_seconds": 18.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 36.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 18.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 37.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 18.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 37.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 18.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 37.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 18.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 37.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 19.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 38.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 19.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 38.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 19.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 38.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 19.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 38.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 19.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 39.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D2",
+        "timestamp_seconds": 19.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 39.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G5",
+        "timestamp_seconds": 19.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 39.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 20.0,
+        "duration_seconds": 1.0,
+        "beat_offset": 40.0,
+        "beat_duration": 2.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 20.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 40.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 20.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 40.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 20.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 40.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 20.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 41.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 20.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 41.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 20.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 41.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G5",
+        "timestamp_seconds": 21.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 42.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "G2",
+        "timestamp_seconds": 21.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 42.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F#5",
+        "timestamp_seconds": 21.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 43.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 21.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 43.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 21.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 43.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 21.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 43.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G5",
+        "timestamp_seconds": 21.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 43.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "D6",
+        "timestamp_seconds": 22.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 44.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 22.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 44.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 22.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 44.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F4",
+        "timestamp_seconds": 22.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 44.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 22.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 44.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 22.5,
+        "duration_seconds": 1.5,
+        "beat_offset": 45.0,
+        "beat_duration": 3.0,
+        "hand": "right"
+    },
+    {
+        "note": "C3",
+        "timestamp_seconds": 22.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 45.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 23.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 46.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 23.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 46.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 23.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 46.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G3",
+        "timestamp_seconds": 23.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 47.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 23.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 47.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 23.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 47.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 24.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 48.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E2",
+        "timestamp_seconds": 24.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 48.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F#5",
+        "timestamp_seconds": 24.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 48.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "G#5",
+        "timestamp_seconds": 24.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 49.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 24.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 49.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 24.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 49.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 24.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 49.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 24.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 49.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "B5",
+        "timestamp_seconds": 25.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 50.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 25.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 50.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G#3",
+        "timestamp_seconds": 25.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 50.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 25.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 50.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C6",
+        "timestamp_seconds": 25.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 50.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "B5",
+        "timestamp_seconds": 25.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 51.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A2",
+        "timestamp_seconds": 25.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 51.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 25.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 51.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 26.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 52.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 26.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 52.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 26.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 52.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 26.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 52.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B5",
+        "timestamp_seconds": 26.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 52.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 26.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 53.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 26.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 53.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 26.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 53.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 26.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 53.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G5",
+        "timestamp_seconds": 27.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 54.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E2",
+        "timestamp_seconds": 27.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 54.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G#5",
+        "timestamp_seconds": 27.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 54.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 27.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 55.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 27.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 55.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 27.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 55.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 27.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 55.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "F5",
+        "timestamp_seconds": 27.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 55.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 28.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 56.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 28.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 56.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 28.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 56.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 28.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 56.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 28.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 57.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A2",
+        "timestamp_seconds": 28.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 57.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 28.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 57.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A4",
+        "timestamp_seconds": 29.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 58.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 29.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 58.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 29.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 58.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 29.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 58.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 29.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 58.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A4",
+        "timestamp_seconds": 29.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 59.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 29.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 59.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 29.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 59.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 29.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 59.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 30.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 60.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E2",
+        "timestamp_seconds": 30.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 60.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G#4",
+        "timestamp_seconds": 30.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 60.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 30.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 61.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 30.5,
+        "duration_seconds": 0.125,
+        "beat_offset": 61.0,
+        "beat_duration": 0.25,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 30.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 61.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 30.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 61.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 30.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 61.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G#5",
+        "timestamp_seconds": 30.625,
+        "duration_seconds": 0.125,
+        "beat_offset": 61.25,
+        "beat_duration": 0.25,
+        "hand": "right"
+    },
+    {
+        "note": "B5",
+        "timestamp_seconds": 30.75,
+        "duration_seconds": 0.125,
+        "beat_offset": 61.5,
+        "beat_duration": 0.25,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 30.875,
+        "duration_seconds": 0.125,
+        "beat_offset": 61.75,
+        "beat_duration": 0.25,
+        "hand": "right"
+    },
+    {
+        "note": "G#5",
+        "timestamp_seconds": 31.0,
+        "duration_seconds": 0.125,
+        "beat_offset": 62.0,
+        "beat_duration": 0.25,
+        "hand": "right"
+    },
+    {
+        "note": "B5",
+        "timestamp_seconds": 31.0,
+        "duration_seconds": 0.375,
+        "beat_offset": 62.0,
+        "beat_duration": 0.75,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 31.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 62.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G#3",
+        "timestamp_seconds": 31.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 62.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 31.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 62.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C6",
+        "timestamp_seconds": 31.375,
+        "duration_seconds": 0.125,
+        "beat_offset": 62.75,
+        "beat_duration": 0.25,
+        "hand": "right"
+    },
+    {
+        "note": "B5",
+        "timestamp_seconds": 31.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 63.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A2",
+        "timestamp_seconds": 31.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 63.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 31.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 63.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 32.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 64.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 32.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 64.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 32.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 64.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 32.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 64.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B5",
+        "timestamp_seconds": 32.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 64.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 32.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 65.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 32.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 65.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 32.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 65.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 32.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 65.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 33.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 66.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E2",
+        "timestamp_seconds": 33.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 66.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "G#5",
+        "timestamp_seconds": 33.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 66.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E5",
+        "timestamp_seconds": 33.5,
+        "duration_seconds": 0.25,
+        "beat_offset": 67.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 33.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 67.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 33.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 67.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 33.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 67.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E6",
+        "timestamp_seconds": 33.75,
+        "duration_seconds": 0.25,
+        "beat_offset": 67.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "E6",
+        "timestamp_seconds": 34.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 68.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 34.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 68.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B3",
+        "timestamp_seconds": 34.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 68.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "D4",
+        "timestamp_seconds": 34.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 68.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A5",
+        "timestamp_seconds": 34.5,
+        "duration_seconds": 1.0,
+        "beat_offset": 69.0,
+        "beat_duration": 2.0,
+        "hand": "right"
+    },
+    {
+        "note": "A2",
+        "timestamp_seconds": 34.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 69.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 35.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 70.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 35.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 70.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 35.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 70.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E3",
+        "timestamp_seconds": 35.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 71.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 35.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 71.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 35.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 71.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "A4",
+        "timestamp_seconds": 36.0,
+        "duration_seconds": 0.25,
+        "beat_offset": 72.0,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "A1",
+        "timestamp_seconds": 36.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 72.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "B4",
+        "timestamp_seconds": 36.25,
+        "duration_seconds": 0.25,
+        "beat_offset": 72.5,
+        "beat_duration": 0.5,
+        "hand": "right"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 36.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 73.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 36.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 73.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 36.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 73.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 36.5,
+        "duration_seconds": 0.5,
+        "beat_offset": 73.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C5",
+        "timestamp_seconds": 37.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 74.0,
+        "beat_duration": 1.0,
+        "hand": "right"
+    },
+    {
+        "note": "A3",
+        "timestamp_seconds": 37.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 74.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "C4",
+        "timestamp_seconds": 37.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 74.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    },
+    {
+        "note": "E4",
+        "timestamp_seconds": 37.0,
+        "duration_seconds": 0.5,
+        "beat_offset": 74.0,
+        "beat_duration": 1.0,
+        "hand": "left"
+    }
+]

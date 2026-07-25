@@ -1,0 +1,64 @@
+2026-07-22 18:16:00,999 INFO [1000359920]                 Book.java:560  | 1 sheet in C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359920.jpg
+2026-07-22 18:16:01,269 INFO []                 Book.java:2565 | Stored /book.xml
+2026-07-22 18:16:01,269 INFO []                 Book.java:2525 | Book stored as C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359920.omr
+2026-07-22 18:16:01,275 INFO []                 Book.java:1929 | Book reaching PAGE on sheets:[#1]
+2026-07-22 18:16:01,278 INFO [1000359920]       StepMonitoring.java:98   | LOAD
+2026-07-22 18:16:01,573 INFO [1000359920]            SheetStub.java:1278 | Loaded image #1 2500x3320 from C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359920.jpg
+2026-07-22 18:16:01,580 INFO [1000359920]            ImageUtil.java:152  | Converting max RGB to gray
+2026-07-22 18:16:01,953 INFO [1000359920]       StepMonitoring.java:98   | BINARY
+2026-07-22 18:16:02,852 INFO [1000359920]       StepMonitoring.java:98   | SCALE
+2026-07-22 18:16:02,884 INFO [1000359920]         ScaleBuilder.java:254  | Beam  guessed height: 12 -- 0.25 of [9..20] range
+2026-07-22 18:16:02,886 INFO [1000359920]         ScaleBuilder.java:271  | Beam measured height: 14 -- 0.45 of [9..20] range at 146% of needed quorum
+2026-07-22 18:16:02,886 INFO [1000359920]         ScaleBuilder.java:401  | Normalized black jitter: 19.05 %
+2026-07-22 18:16:02,886 INFO [1000359920]            ScaleStep.java:65   | Scale{ interline(20,21,23) line(1,3,5) beam(14)}
+2026-07-22 18:16:02,887 INFO [1000359920]       StepMonitoring.java:98   | GRID
+2026-07-22 18:16:03,842 INFO [1000359920]       LinesRetriever.java:1508 | Global slope: 0.00000
+2026-07-22 18:16:04,039 INFO [1000359920]    ClustersRetriever.java:326  | Retrieved raw line clusters: 12 of sizes [5] with interline(20,21,23)
+2026-07-22 18:16:04,497 INFO [1000359920]            PeakGraph.java:310  | Systems: #1[1, 2] #2[3, 4] #3[5, 6] #4[7, 8] #5[9, 10] #6[11, 12]
+2026-07-22 18:16:05,366 INFO [1000359920]        SystemManager.java:134  | Indentation detected for system #1
+2026-07-22 18:16:05,367 INFO [1000359920]        SystemManager.java:800  | 1 part along 6 systems
+2026-07-22 18:16:05,368 INFO [1000359920]                 Book.java:543  | Created scores: [{Score 1}]
+2026-07-22 18:16:05,368 INFO [1000359920]       StepMonitoring.java:98   | HEADERS
+2026-07-22 18:16:07,271 INFO [1000359920]       StepMonitoring.java:98   | STEM_SEEDS
+2026-07-22 18:16:07,369 INFO [1000359920]        StemSeedsStep.java:86   | stem(7 max:8)
+2026-07-22 18:16:07,461 INFO [1000359920]       StepMonitoring.java:98   | BEAMS
+2026-07-22 18:16:14,271 INFO [1000359920]       StepMonitoring.java:98   | LEDGERS
+2026-07-22 18:16:14,902 INFO [1000359920]       StepMonitoring.java:98   | HEADS
+2026-07-22 18:16:25,331 INFO [1000359920]        HeadSeedTally.java:235  | Scale information: HeadSeeds{NOTEHEAD_VOID[L:-1.3] NOTEHEAD_BLACK[L:-1.1,R:-1.7]}
+2026-07-22 18:16:25,332 INFO [1000359920]       StepMonitoring.java:98   | STEMS
+2026-07-22 18:16:26,007 INFO [1000359920]       StepMonitoring.java:98   | REDUCTION
+2026-07-22 18:16:26,094 INFO [1000359920]        ReductionStep.java:105  | Stems free length median value: 74 pixels, 3.5 interlines
+2026-07-22 18:16:26,098 INFO [1000359920]       StepMonitoring.java:98   | CUE_BEAMS
+2026-07-22 18:16:26,098 INFO [1000359920]         CueBeamsStep.java:81   | Step CUE_BEAMS is skipped because small heads switch is off
+2026-07-22 18:16:26,099 INFO [1000359920]       StepMonitoring.java:98   | TEXTS
+2026-07-22 18:16:27,551 INFO [1000359920]       StepMonitoring.java:98   | MEASURES
+2026-07-22 18:16:27,560 INFO [1000359920]                 Page.java:307  | 33 raw measures: [6 in system#1, 5 in system#2, 5 in system#3, 7 in system#4, 5 in system#5, 5 in system#6]
+2026-07-22 18:16:27,561 INFO [1000359920]       StepMonitoring.java:98   | CHORDS
+2026-07-22 18:16:27,580 INFO [1000359920]       StepMonitoring.java:98   | CURVES
+2026-07-22 18:16:28,642 INFO [1000359920]         SlursBuilder.java:240  | Slurs: 24
+2026-07-22 18:16:28,659 INFO [1000359920]      SegmentsBuilder.java:155  | Segments: 17
+2026-07-22 18:16:28,668 INFO [1000359920]       StepMonitoring.java:98   | SYMBOLS
+2026-07-22 18:16:29,607 INFO [1000359920]       StepMonitoring.java:98   | LINKS
+2026-07-22 18:16:29,614 INFO [1000359920]             KeyInter.java:1331 | Key built KeyInter#6435{(0.227) staff:1 KEY_CANCEL pitch:-4.3 fifths:null}
+2026-07-22 18:16:29,647 INFO [1000359920]             KeyInter.java:1331 | Key built KeyInter#6437{(0.142) staff:9 KEY_CANCEL pitch:-4.1 fifths:null}
+2026-07-22 18:16:29,647 INFO [1000359920]             KeyInter.java:1198 | No effective key before AlterInter#6381{(0.142) staff:9 NATURAL pitch:-2.0}
+2026-07-22 18:16:29,647 INFO [1000359920]             KeyInter.java:1198 | No effective key before AlterInter#6387{(0.681) staff:9 NATURAL pitch:5.0}
+2026-07-22 18:16:29,657 INFO [1000359920]       StepMonitoring.java:98   | RHYTHMS
+2026-07-22 18:16:29,710 INFO [1000359920]        MeasureRhythm.java:1044 | Measure{#29} No timeOffset for RestChordInter#6429{(0.785/0.785) staff:12 slot#5 dur:1/4}
+2026-07-22 18:16:29,710 INFO [1000359920]          StackRhythm.java:224  | S6 MeasureStack#29 no correct rhythm
+2026-07-22 18:16:29,714 INFO [1000359920]        MeasureRhythm.java:1044 | Measure{#33} No timeOffset for HeadChordInter#5590{(0.854/0.854) staff:12 slot#2 dur:1/4}
+2026-07-22 18:16:29,714 INFO [1000359920]   AbstractChordInter.java:635  | Measure{#33} No timeOffset for HeadChordInter#5590{(0.854/0.854) staff:12 slot#2 dur:1/4}
+2026-07-22 18:16:29,715 INFO [1000359920]          StackRhythm.java:224  | S6 MeasureStack#33 no correct rhythm
+2026-07-22 18:16:29,715 INFO [1000359920]       StepMonitoring.java:98   | PAGE
+2026-07-22 18:16:29,724 INFO [1000359920]                 Book.java:2584 | Book{1000359920} storing
+2026-07-22 18:16:29,779 INFO [1000359920]                 Book.java:2565 | Stored /book.xml
+2026-07-22 18:16:29,884 INFO [1000359920]           DataHolder.java:348  | Stored /sheet#1/BINARY.png
+2026-07-22 18:16:30,645 INFO [1000359920]                Sheet.java:1583 | Stored /sheet#1/sheet#1.xml
+2026-07-22 18:16:30,645 INFO [1000359920]                 Book.java:2525 | Book stored as C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359920.omr
+2026-07-22 18:16:30,649 INFO [1000359920]            SheetStub.java:1655 | Sheet disposed
+2026-07-22 18:16:30,682 INFO [1000359920]                 Book.java:2050 | End of Stub#1
+2026-07-22 18:16:30,684 INFO [1000359920]                 Book.java:2057 | End of Book{1000359920}
+2026-07-22 18:16:31,358 INFO [1000359920]            SheetStub.java:1000 | Loaded /sheet#1/sheet#1.xml
+2026-07-22 18:16:31,827 INFO [1000359920]      PartwiseBuilder.java:2707 | Exporting sheet(s): [#1]
+2026-07-22 18:16:31,931 INFO [1000359920]        ScoreExporter.java:164  | Score 1000359920 exported to C:\Users\annes\Desktop\piano\SoundSight\backend\omr_output\1000359920.mxl
+2026-07-22 18:16:31,982 INFO [1000359920]                Score.java:181  | Closing {Score 1}

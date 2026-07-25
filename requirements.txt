@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+music21
+oemer
+Pillow
+opencv-python
+pydantic
+numpy
