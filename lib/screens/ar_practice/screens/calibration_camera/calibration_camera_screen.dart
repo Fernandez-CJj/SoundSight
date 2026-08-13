@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import '../../models/keyboard_profile.dart';
 import 'widgets/arcore_camera_view.dart';
 import '../../models/arcore_tracking_status.dart';
+import '../../models/calibration_guidance_state.dart';
 
-// Receives the selected keyboard profile and prepares a screen where
-// the native ARCore camera view will be added during Phase 3.
+// Receives the selected keyboard profile and displays the native ARCore camera.
+// The screen also converts ARCore tracking updates into readable calibration
+// guidance and hides calibration overlays whenever tracking is unreliable.
 class CalibrationCameraScreen extends StatefulWidget {
   const CalibrationCameraScreen({super.key, required this.keyboardProfile});
 
@@ -19,6 +21,7 @@ class CalibrationCameraScreen extends StatefulWidget {
 
 class CalibrationCameraScreenState extends State<CalibrationCameraScreen> {
   ArCoreTrackingStatus trackingStatus = ArCoreTrackingStatus.initializing;
+
   // Restricts calibration to landscape because the keyboard must fit
   // horizontally inside the camera view.
   @override
@@ -45,9 +48,18 @@ class CalibrationCameraScreenState extends State<CalibrationCameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Gets the readable message for the latest tracking status every time
-    // setState rebuilds this screen.
-    String trackingMessage = getTrackingMessage();
+    // Converts the current ARCore status into guidance that is easier to
+    // understand, then prepares the text shown over the camera preview.
+    CalibrationGuidanceState guidanceState = getCalibrationGuidanceState(
+      trackingStatus,
+    );
+
+    String guidanceMessage = getCalibrationGuidanceMessage(guidanceState);
+
+    String preparationInstructions = getCalibrationPreparationInstructions();
+
+    // Decides whether the Start Scan button can currently be pressed.
+    bool scanCanStart = canStartScan(guidanceState);
 
     // Checks whether the current ARCore pose is safe for future overlays.
     bool trackingReliable = isTrackingReliable();
@@ -55,7 +67,6 @@ class CalibrationCameraScreenState extends State<CalibrationCameraScreen> {
     // Converts the true or false safety result into readable temporary test text.
     String overlayStatus = trackingReliable ? 'safe' : 'hidden';
     return Scaffold(
-      appBar: AppBar(title: const Text('Piano Calibration')),
       body: Stack(
         children: [
           Positioned.fill(
@@ -63,15 +74,52 @@ class CalibrationCameraScreenState extends State<CalibrationCameraScreen> {
               onTrackingStatusChanged: handleTrackingStatusChanged,
             ),
           ),
+          // Shows the temporary test overlay only while ARCore tracking is
+          // reliable. Detected piano-key overlays will replace this symbol.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Visibility(
+                visible: trackingReliable,
+                child: const Center(
+                  child: Icon(Icons.add, color: Colors.green, size: 40),
+                ),
+              ),
+            ),
+          ),
           Positioned(
-            top: 16.0,
+            top: 64.0,
             left: 16.0,
-            // Shows temporary diagnostic information for testing the native AR system.
-            // The actual piano overlays will use trackingReliable later.
+            // Shows temporary calibration instructions and tracking information.
+            // The final screen design will replace this diagnostic presentation.
             child: Text(
-              'Selected keyboard: ${widget.keyboardProfile.name}\n'
-              'AR status: $trackingMessage\n'
+              'Selected keyboard: ${widget.keyboardProfile.name}\n\n'
+              '$preparationInstructions\n\n'
+              'Current guidance: $guidanceMessage\n'
               'Overlays: $overlayStatus',
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: ElevatedButton(
+              onPressed: scanCanStart ? handleStartScan : null,
+              child: const Text('Start scan'),
+            ),
+          ),
+          // Keeps a back button available after removing the AppBar.
+          // SafeArea prevents it from overlapping the phone's system areas.
+          Positioned(
+            top: 0,
+            left: 0,
+            child: SafeArea(
+              child: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.arrow_back),
+                color: Colors.white,
+                tooltip: 'Back',
+              ),
             ),
           ),
         ],
@@ -90,56 +138,23 @@ class CalibrationCameraScreenState extends State<CalibrationCameraScreen> {
     });
   }
 
-  // Converts the current ARCore tracking status into a message that can be
-  // understood by the user. The method reads trackingStatus, checks which enum
-  // value it contains, and returns the matching instruction for the screen.
-  String getTrackingMessage() {
-    switch (trackingStatus) {
-      case ArCoreTrackingStatus.initializing:
-        return 'Initializing AR tracking';
-
-      case ArCoreTrackingStatus.tracking:
-        return 'Tracking ready';
-
-      case ArCoreTrackingStatus.paused:
-        return 'Tracking paused';
-
-      case ArCoreTrackingStatus.stopped:
-        return 'Tracking stopped';
-
-      case ArCoreTrackingStatus.insufficientLight:
-        return 'More light is needed';
-
-      case ArCoreTrackingStatus.excessiveMotion:
-        return 'Move the phone more slowly';
-
-      case ArCoreTrackingStatus.insufficientFeatures:
-        return 'Point the camera at the keyboard';
-
-      case ArCoreTrackingStatus.cameraUnavailable:
-        return 'Camera is unavailable';
-
-      case ArCoreTrackingStatus.badState:
-        return 'Tracking needs to recover';
-
-      case ArCoreTrackingStatus.installRequired:
-        return 'ARCore installation or update is required';
-
-      case ArCoreTrackingStatus.permissionMissing:
-        return 'Camera permission is required';
-
-      case ArCoreTrackingStatus.unsupported:
-        return 'ARCore is unavailable on this device';
-
-      case ArCoreTrackingStatus.failed:
-        return 'AR tracking failed';
-    }
-  }
-
   // Reports whether ARCore currently has a reliable camera pose.
   // Future piano overlays must only be visible while this returns true.
   // Every initializing, paused, stopped, or failure status returns false.
   bool isTrackingReliable() {
     return trackingStatus == ArCoreTrackingStatus.tracking;
+  }
+
+  // Allows scanning only when ARCore tracking is ready and reliable.
+  bool canStartScan(CalibrationGuidanceState guidanceState) {
+    return guidanceState == CalibrationGuidanceState.ready;
+  }
+
+  // Temporarily confirms that AR tracking is ready.
+  // Phase 5 will replace this message with the real keyboard detection process.
+  void handleStartScan() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tracking is ready for keyboard scanning.')),
+    );
   }
 }
