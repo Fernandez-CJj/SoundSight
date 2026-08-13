@@ -14,8 +14,7 @@ class RenameMusicSheetDialog extends StatefulWidget {
   final String currentTitle;
 
   @override
-  State<RenameMusicSheetDialog> createState() =>
-      _RenameMusicSheetDialogState();
+  State<RenameMusicSheetDialog> createState() => _RenameMusicSheetDialogState();
 }
 
 class _RenameMusicSheetDialogState extends State<RenameMusicSheetDialog> {

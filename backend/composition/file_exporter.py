@@ -3,7 +3,9 @@ import os
 
 def saveMusicXml(score, compositionId):
     backendFolder = os.path.dirname(
-        os.path.abspath(__file__)
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
     )
 
     outputFolder = os.path.join(

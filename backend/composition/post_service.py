@@ -1,6 +1,6 @@
 from firebase_admin import firestore
 
-from firebase_service import getDatabase
+from core.firebase_service import getDatabase
 
 
 def getNextPublishedVersion(compositionId):

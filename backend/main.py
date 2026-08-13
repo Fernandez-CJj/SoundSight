@@ -3,21 +3,27 @@ import os
 from fastapi import FastAPI
 from fastapi import HTTPException
 
-from composition_models import CompositionRequest
-from composition_models import UnpublishRequest
-from file_exporter import saveMusicXml
-from musescore_service import exportPdf
-from post_service import getNextPublishedVersion
-from post_service import saveCompositionPost
-from public_profile_service import getPublicProfile
-from score_builder import create_basic_score
-from storage_service import uploadPdf
-from unpublish_service import unpublishComposition
+from composition.composition_models import CompositionRequest
+from composition.composition_models import UnpublishRequest
+from composition.file_exporter import saveMusicXml
+from composition.post_service import getNextPublishedVersion
+from composition.post_service import saveCompositionPost
+from composition.public_profile_service import getPublicProfile
+from composition.score_builder import create_basic_score
+from composition.storage_service import uploadPdf
+from composition.unpublish_service import unpublishComposition
+from core.musescore_service import exportPdf
+from omr.audiveris_service import isAudiverisInstalled
+from omr.music_sheet_models import OmrConversionRequest
+from omr.omr_conversion_service import convertMusicSheet
 
 
 app = FastAPI(
-    title="SoundSight Composition API",
-    description="Converts SoundSight compositions into music sheets.",
+    title="SoundSight API",
+    description=(
+        "Converts compositions into music sheets "
+        "and recognizes uploaded music sheets."
+    ),
     version="1.0.0",
 )
 
@@ -25,19 +31,63 @@ app = FastAPI(
 @app.get("/")
 def root():
     return {
-        "message": "SoundSight composition backend is running."
+        "message": "SoundSight backend is running."
     }
 
 
 @app.get("/health")
 def health():
     return {
-        "status": "ok"
+        "status": "ok",
+        "audiverisInstalled": isAudiverisInstalled(),
     }
 
 
+@app.post(
+    "/music-sheets/{sheetId}/recognize"
+)
+def recognize_music_sheet(
+    sheetId: str,
+    request: OmrConversionRequest,
+):
+    try:
+        return convertMusicSheet(
+            sheetId,
+            request.ownerId,
+        )
+    except FileNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except PermissionError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        ) from error
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        ) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "The music sheet could not be converted."
+            ),
+        ) from error
+
+
 @app.post("/compositions")
-def receive_composition(composition: CompositionRequest):
+def receive_composition(
+    composition: CompositionRequest,
+):
     publicProfile = getPublicProfile(
         composition.ownerId
     )
@@ -150,10 +200,14 @@ def unpublish_composition(
     if not wasDeleted:
         raise HTTPException(
             status_code=404,
-            detail="The published composition was not found.",
+            detail=(
+                "The published composition was not found."
+            ),
         )
 
     return {
-        "message": "Composition unpublished successfully.",
+        "message": (
+            "Composition unpublished successfully."
+        ),
         "compositionId": compositionId,
     }

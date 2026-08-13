@@ -1,4 +1,4 @@
-from firebase_service import getDatabase
+from core.firebase_service import getDatabase
 
 
 def getPublicProfile(userId):

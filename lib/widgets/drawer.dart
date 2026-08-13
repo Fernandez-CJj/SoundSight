@@ -9,7 +9,7 @@ import 'package:soundsight/screens/composition/screens/my_compositions_screen.da
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
-import 'package:soundsight/screens/music_sheet/music_sheet_screen.dart';
+import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer_profile_header.dart';

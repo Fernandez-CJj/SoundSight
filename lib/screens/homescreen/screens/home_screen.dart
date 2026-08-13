@@ -12,7 +12,7 @@ import 'package:soundsight/screens/homescreen/widgets/community_compositions_sec
 import 'package:soundsight/screens/homescreen/widgets/level_card.dart';
 import 'package:soundsight/screens/homescreen/widgets/practice_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/quick_actions.dart';
-import 'package:soundsight/screens/music_sheet/music_sheet_screen.dart';
+import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';

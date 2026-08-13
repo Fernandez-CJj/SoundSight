@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
-import 'package:soundsight/screens/music_sheet/music_sheet_card.dart';
-import 'package:soundsight/screens/music_sheet/music_sheet_dialogs.dart';
-import 'package:soundsight/screens/music_sheet/music_sheet_viewer_screen.dart';
+import 'package:soundsight/screens/music_sheet/dialogs/music_sheet_dialogs.dart';
+import 'package:soundsight/screens/music_sheet/services/music_sheet_delete_service.dart';
+import 'package:soundsight/screens/music_sheet/screens/music_sheet_viewer_screen.dart';
+import 'package:soundsight/screens/music_sheet/widgets/music_sheet_card.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
 
@@ -25,6 +25,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
   late final String? userId;
   Stream<QuerySnapshot<Map<String, dynamic>>>? musicSheetsStream;
   final Set<String> deletingSheetIds = {};
+  final MusicSheetDeleteService deleteService = MusicSheetDeleteService();
 
   @override
   void initState() {
@@ -97,9 +98,10 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                   return buildErrorState(colors);
                 }
 
-                final sheets = List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
-                  snapshot.data?.docs ?? [],
-                );
+                final sheets =
+                    List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+                      snapshot.data?.docs ?? [],
+                    );
                 sheets.sort(sortSheetsByDate);
 
                 if (sheets.isEmpty) {
@@ -184,7 +186,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
           pageCount: pageCount,
           dateText: formatDate(data['createdAt'] as Timestamp?),
           isDeleting: deletingSheetIds.contains(sheet.id),
-          onView: () => openMusicSheet(colors, title, type, data),
+          onView: () => openMusicSheet(colors, sheet.id, title, type, data),
           onRename: () => renameMusicSheet(colors, sheet, title),
           onDelete: () => deleteMusicSheet(colors, sheet, title, data),
         );
@@ -325,6 +327,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
 
   void openMusicSheet(
     AppThemeColors colors,
+    String sheetId,
     String title,
     String type,
     Map<String, dynamic> data,
@@ -333,6 +336,8 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
       MaterialPageRoute(
         builder: (_) => MusicSheetViewerScreen(
           colors: colors,
+          sheetId: sheetId,
+          ownerId: data['ownerId'] as String? ?? userId ?? '',
           title: title,
           type: type,
           files: getFiles(data),
@@ -348,15 +353,11 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
   ) async {
     final newTitle = await showDialog<String>(
       context: context,
-      builder: (_) => RenameMusicSheetDialog(
-        colors: colors,
-        currentTitle: currentTitle,
-      ),
+      builder: (_) =>
+          RenameMusicSheetDialog(colors: colors, currentTitle: currentTitle),
     );
 
-    if (newTitle == null ||
-        newTitle == currentTitle ||
-        !mounted) {
+    if (newTitle == null || newTitle == currentTitle || !mounted) {
       return;
     }
 
@@ -378,12 +379,16 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     String title,
     Map<String, dynamic> data,
   ) async {
+    if (data['omrStatus'] == 'processing') {
+      showMessage(
+        'Wait for the music-sheet translation to finish before deleting it.',
+      );
+      return;
+    }
+
     final shouldDelete = await showDialog<bool>(
       context: context,
-      builder: (_) => DeleteMusicSheetDialog(
-        colors: colors,
-        title: title,
-      ),
+      builder: (_) => DeleteMusicSheetDialog(colors: colors, title: title),
     );
 
     if (shouldDelete != true || !mounted) return;
@@ -393,18 +398,10 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     });
 
     try {
-      for (final file in getFiles(data)) {
-        final storagePath = file['storagePath'] as String?;
-        if (storagePath == null || storagePath.isEmpty) continue;
-
-        try {
-          await FirebaseStorage.instance.ref(storagePath).delete();
-        } on FirebaseException catch (error) {
-          if (error.code != 'object-not-found') rethrow;
-        }
-      }
-
-      await sheet.reference.delete();
+      await deleteService.deleteMusicSheet(
+        sheetReference: sheet.reference,
+        sheetData: data,
+      );
       showMessage('"$title" was deleted.');
     } catch (_) {
       showMessage('The music sheet could not be deleted.');

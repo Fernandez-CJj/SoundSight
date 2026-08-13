@@ -1,5 +1,5 @@
-from firebase_service import getDatabase
-from storage_service import deletePublishedPdfs
+from composition.storage_service import deletePublishedPdfs
+from core.firebase_service import getDatabase
 
 
 def unpublishComposition(

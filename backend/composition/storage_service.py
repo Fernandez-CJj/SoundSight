@@ -1,6 +1,6 @@
 import os
 
-from firebase_service import getStorageBucket
+from core.firebase_service import getStorageBucket
 
 
 def uploadPdf(

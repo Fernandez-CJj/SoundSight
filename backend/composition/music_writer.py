@@ -2,7 +2,7 @@ from music21 import chord
 from music21 import note
 from music21 import tie
 
-from composition_models import CompositionRequest
+from composition.composition_models import CompositionRequest
 
 
 def getStartBeat(compositionNote):

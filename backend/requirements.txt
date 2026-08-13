@@ -2,3 +2,4 @@ fastapi
 uvicorn[standard]
 music21
 firebase-admin
+Pillow

@@ -1,22 +1,34 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/screens/music_sheet/dialogs/music_sheet_omr_dialogs.dart';
+import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart';
+import 'package:soundsight/screens/music_sheet/services/music_sheet_omr_service.dart';
+import 'package:soundsight/screens/music_sheet/widgets/music_sheet_audio_preview.dart';
+import 'package:soundsight/screens/music_sheet/widgets/music_sheet_omr_status_card.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+import '../../ar_practice/screens/keyboard_setup/keyboard_setup_screen.dart';
 
 class MusicSheetViewerScreen extends StatefulWidget {
   const MusicSheetViewerScreen({
     super.key,
     required this.colors,
+    required this.sheetId,
+    required this.ownerId,
     required this.title,
     required this.type,
     required this.files,
   });
 
   final AppThemeColors colors;
+  final String sheetId;
+  final String ownerId;
   final String title;
   final String type;
   final List<Map<String, dynamic>> files;
@@ -31,7 +43,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
   late final List<Map<String, dynamic>> files;
   final Map<String, Future<Uint8List?>> imageFutures = {};
+  final MusicSheetOmrService omrService = MusicSheetOmrService();
   Future<Uint8List?>? pdfFuture;
+  bool isConverting = false;
 
   @override
   void initState() {
@@ -110,11 +124,103 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                 ),
               ),
             ),
-      body: files.isEmpty
-          ? buildEmptyState()
-          : widget.type == 'pdf'
-          ? buildPdfViewer()
-          : buildImageViewer(),
+      body: files.isEmpty ? buildEmptyState() : buildViewerBody(),
+    );
+  }
+
+  Widget buildViewerBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isLandscape =
+            MediaQuery.orientationOf(context) == Orientation.landscape;
+        final sheetViewer = widget.type == 'pdf'
+            ? buildPdfViewer()
+            : buildImageViewer();
+
+        if (isLandscape) {
+          final sidePanelWidth = (constraints.maxWidth * 0.36)
+              .clamp(280.0, 360.0)
+              .toDouble();
+
+          return Row(
+            children: [
+              SizedBox(
+                width: sidePanelWidth,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: AppSpacing.md),
+                  child: buildOmrSection(),
+                ),
+              ),
+              VerticalDivider(
+                width: 1,
+                thickness: 1,
+                color: widget.colors.borderColor,
+              ),
+              Expanded(child: sheetViewer),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            buildOmrSection(),
+            Expanded(child: sheetViewer),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget buildOmrSection() {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('musicSheets')
+          .doc(widget.sheetId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final sheetData = snapshot.data?.data() ?? {};
+        final status = sheetData['omrStatus'] as String? ?? 'notStarted';
+        final partCount = (sheetData['omrPartCount'] as num?)?.toInt() ?? 0;
+        final noteCount = (sheetData['omrNoteCount'] as num?)?.toInt() ?? 0;
+        final previewAudioStoragePath =
+            sheetData['previewAudioStoragePath'] as String? ?? '';
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                0,
+              ),
+              child: MusicSheetOmrStatusCard(
+                colors: widget.colors,
+                status: status,
+                partCount: partCount,
+                noteCount: noteCount,
+                isConverting: isConverting,
+                onRecognize: () =>
+                    recognizeMusicSheet(isReconversion: status == 'completed'),
+              ),
+            ),
+            if (status != 'processing' && previewAudioStoragePath.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  0,
+                ),
+                child: MusicSheetAudioPreview(
+                  colors: widget.colors,
+                  storagePath: previewAudioStoragePath,
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -274,13 +380,89 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
   Future<Uint8List?> loadFile(dynamic storagePath, int maxSize) {
     final path = storagePath is String ? storagePath : '';
     if (path.isEmpty) return Future.value(null);
-    return FirebaseStorage.instance.ref(path).getData(maxSize);
+    return FirebaseStorage.instance
+        .ref(path)
+        .getData(maxSize)
+        .timeout(const Duration(minutes: 1));
+  }
+
+  Future<void> recognizeMusicSheet({bool isReconversion = false}) async {
+    if (isConverting) return;
+
+    final shouldRecognize = await showDialog<bool>(
+      context: context,
+      builder: (_) => RecognizeMusicSheetDialog(
+        colors: widget.colors,
+        title: widget.title,
+        isReconversion: isReconversion,
+      ),
+    );
+
+    if (shouldRecognize != true || !mounted) return;
+
+    setState(() {
+      isConverting = true;
+    });
+
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => MusicSheetOmrLoadingDialog(colors: widget.colors),
+      ),
+    );
+
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    OmrConversionResult? result;
+    Object? conversionError;
+
+    try {
+      result = await omrService.recognizeMusicSheet(
+        sheetId: widget.sheetId,
+        ownerId: widget.ownerId,
+      );
+    } catch (error) {
+      conversionError = error;
+    }
+
+    if (!mounted) return;
+
+    Navigator.of(context, rootNavigator: true).pop();
+
+    setState(() {
+      isConverting = false;
+    });
+
+    if (result != null) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) =>
+            MusicSheetOmrSuccessDialog(colors: widget.colors, result: result!),
+      );
+      return;
+    }
+
+    final errorMessage = conversionError.toString().replaceFirst(
+      'Exception: ',
+      '',
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => MusicSheetOmrErrorDialog(
+        colors: widget.colors,
+        message: errorMessage.isEmpty
+            ? 'The music sheet could not be translated.'
+            : errorMessage,
+      ),
+    );
   }
 
   Future<void> showArConfirmation() async {
     final colors = widget.colors;
 
-    await showDialog<void>(
+    final shouldStart = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -303,7 +485,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
             ),
           ),
           title: Text(
-            'Play with AR?',
+            'Open AR note guide?',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.primaryColor,
@@ -312,7 +494,8 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
             ),
           ),
           content: Text(
-            'Do you want to use "${widget.title}" for AR practice?',
+            'This will align note overlays with the keys on your physical '
+            'piano. No music sheet translation is required.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.secondaryTextColor,
@@ -332,7 +515,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                   child: SizedBox(
                     height: 48,
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(dialogContext),
+                      onPressed: () {
+                        Navigator.pop(dialogContext, false);
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colors.primaryColor,
                         side: BorderSide(color: colors.borderColor),
@@ -340,7 +525,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
-                      child: Text('Cancel'),
+                      child: const Text('Cancel'),
                     ),
                   ),
                 ),
@@ -349,8 +534,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                   child: SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: Text('Start'),
+                      onPressed: () {
+                        Navigator.pop(dialogContext, true);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colors.primaryColor,
                         foregroundColor: colors.backgroundColor,
@@ -359,6 +545,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
+                      child: const Text('Start'),
                     ),
                   ),
                 ),
@@ -367,6 +554,17 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
           ],
         );
       },
+    );
+
+    if (shouldStart != true || !mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          return const KeyboardSetupScreen();
+        },
+      ),
     );
   }
 }

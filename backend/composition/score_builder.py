@@ -7,8 +7,8 @@ from music21 import meter
 from music21 import stream
 from music21 import tempo
 
-from composition_models import CompositionRequest
-from music_writer import addCompositionMusic
+from composition.composition_models import CompositionRequest
+from composition.music_writer import addCompositionMusic
 
 
 def create_basic_score(
