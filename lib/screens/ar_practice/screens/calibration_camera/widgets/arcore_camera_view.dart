@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../../../models/arcore_tracking_status.dart';
+import '../../../models/keyboard_detection_result.dart';
 
 // Kotlin sends tracking statuses as uppercase strings because a Kotlin enum
 // cannot be passed directly into Dart. This method converts each native name
@@ -46,16 +47,54 @@ ArCoreTrackingStatus parseArCoreTrackingStatus(String statusName) {
   }
 }
 
+// Sends keyboard-scanning commands to the matching Android camera view.
+class ArCoreCameraController {
+  ArCoreCameraController({required this.viewId});
+
+  final int viewId;
+
+  // Tells Kotlin to start keyboard scanning.
+  Future<void> startKeyboardScan() async {
+    String channelName = 'soundsight/arcore_commands_$viewId';
+
+    MethodChannel cameraCommandChannel = MethodChannel(channelName);
+
+    await cameraCommandChannel.invokeMethod('startKeyboardScan');
+  }
+
+  // Tells Kotlin to stop keyboard scanning.
+  Future<void> stopKeyboardScan() async {
+    String channelName = 'soundsight/arcore_commands_$viewId';
+
+    MethodChannel cameraCommandChannel = MethodChannel(channelName);
+
+    await cameraCommandChannel.invokeMethod('stopKeyboardScan');
+  }
+}
+
 // Requests the native Android AR view registered in MainActivity and provides
 // a callback that sends converted tracking changes to the parent calibration
 // screen. StatefulWidget is required because the tracking subscription must
 // remain stored for as long as this camera view exists.
 class ArCoreCameraView extends StatefulWidget {
-  const ArCoreCameraView({super.key, required this.onTrackingStatusChanged});
+  const ArCoreCameraView({
+    super.key,
+    required this.onTrackingStatusChanged,
+    required this.onCameraControllerCreated,
+    required this.onKeyboardDetectionResultChanged,
+  });
 
   // Stores the parent screen's method without calling it immediately.
   // The State object calls this method later when Kotlin sends a new status.
   final ValueChanged<ArCoreTrackingStatus> onTrackingStatusChanged;
+
+  // Gives the completed camera controller to the parent screen after Android
+  // creates the native camera view and supplies its unique view ID.
+  final ValueChanged<ArCoreCameraController> onCameraControllerCreated;
+
+  // Stores the parent screen's method that receives complete keyboard-detection
+  // results. Null tells the parent that incoming native data was invalid.
+  final ValueChanged<KeyboardDetectionResult?> onKeyboardDetectionResultChanged;
 
   @override
   State<ArCoreCameraView> createState() => _ArCoreCameraViewState();
@@ -71,6 +110,10 @@ class _ArCoreCameraViewState extends State<ArCoreCameraView> {
   // Android creates the native view and receives a subscription after the
   // matching EventChannel begins listening.
   StreamSubscription<dynamic>? trackingSubscription;
+
+  // Holds the active keyboard-detection listener. It is stored separately from
+  // tracking because Kotlin sends detection results through a different channel.
+  StreamSubscription<dynamic>? keyboardDetectionSubscription;
 
   @override
   Widget build(BuildContext context) {
@@ -125,12 +168,15 @@ class _ArCoreCameraViewState extends State<ArCoreCameraView> {
         );
 
     // Notifies PlatformViewLink after Kotlin finishes creating the native view.
-    controller.addOnPlatformViewCreatedListener(
-      params.onPlatformViewCreated,
-    );
+    controller.addOnPlatformViewCreatedListener(params.onPlatformViewCreated);
 
     // Uses the created view's unique ID to connect to its tracking EventChannel.
     controller.addOnPlatformViewCreatedListener(connectTrackingChannel);
+
+    // Uses the same native view ID to connect to its keyboard-detection channel.
+    controller.addOnPlatformViewCreatedListener(
+      connectKeyboardDetectionChannel,
+    );
 
     // Sends the native-view creation request after both listeners are ready.
     controller.create();
@@ -146,6 +192,14 @@ class _ArCoreCameraViewState extends State<ArCoreCameraView> {
     // Stops an older listener first if Android recreated the native view.
     // The null-aware operator skips cancel when no subscription exists yet.
     trackingSubscription?.cancel();
+
+    // Creates a controller connected to this native view's command channel,
+    // then gives it to the parent calibration screen.
+    ArCoreCameraController newCameraController = ArCoreCameraController(
+      viewId: viewId,
+    );
+
+    widget.onCameraControllerCreated(newCameraController);
 
     // Creates the same channel name used by ArCorePlatformView in Kotlin.
     // For example, view ID 3 creates soundsight/arcore_tracking_3.
@@ -185,12 +239,53 @@ class _ArCoreCameraViewState extends State<ArCoreCameraView> {
     );
   }
 
+  // Connects to the keyboard-detection channel belonging to this native camera
+  // view and stores its repeating event subscription.
+  void connectKeyboardDetectionChannel(int viewId) {
+    keyboardDetectionSubscription?.cancel();
+
+    EventChannel keyboardDetectionChannel = EventChannel(
+      'soundsight/keyboard_detection_$viewId',
+    );
+
+    keyboardDetectionSubscription = keyboardDetectionChannel
+        .receiveBroadcastStream()
+        .listen(
+          handleKeyboardDetectionData,
+          onError: handleKeyboardDetectionError,
+        );
+  }
+
+  // Parses one keyboard-detection event and delivers the safe result to the
+  // parent screen. A parsing failure delivers null to remove old result data.
+  void handleKeyboardDetectionData(Object? detectionData) {
+    if (mounted == false) {
+      return;
+    }
+
+    KeyboardDetectionResult? keyboardDetectionResult =
+        parseKeyboardDetectionResult(detectionData);
+
+    widget.onKeyboardDetectionResultChanged(keyboardDetectionResult);
+  }
+
+  // Reports a detection-channel failure as null so the parent screen immediately
+  // removes any previously stored detection result.
+  void handleKeyboardDetectionError(Object error) {
+    if (mounted == false) {
+      return;
+    }
+
+    widget.onKeyboardDetectionResultChanged(null);
+  }
+
   // Runs when Flutter permanently removes this camera widget.
   // Canceling the subscription stops native tracking events from being delivered
   // to an old screen and releases the Dart listener stored by this State object.
   @override
   void dispose() {
     trackingSubscription?.cancel();
+    keyboardDetectionSubscription?.cancel();
 
     super.dispose();
   }

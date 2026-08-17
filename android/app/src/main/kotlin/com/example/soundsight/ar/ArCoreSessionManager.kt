@@ -124,9 +124,8 @@ class ArCoreSessionManager(
     }
 
     // Configures the existing ARCore session to wait for each camera frame.
-    // Blocking updates prevent the OpenGL thread from repeatedly requesting the
-    // same frame while Android is pausing or reopening the camera. This follows
-    // the safer update behavior used by ARCore's official camera sample.
+    // BLOCKING is kept because it prevents the frame loop from racing ahead of
+    // ARCore during rapid Home and return lifecycle changes on the test phone.
     // A configuration failure closes the incomplete session safely.
     private fun configureArCoreSession(): ArCoreSessionResult {
         val session = arCoreSession
@@ -237,17 +236,11 @@ class ArCoreSessionManager(
 
             if (connectedCameraTextureId != cameraTextureId) {
                 session.setCameraTextureName(cameraTextureId)
+                connectedCameraTextureId = cameraTextureId
             }
 
-            val frame = session.update()
-
-            // Remembers the texture only after ARCore successfully updates.
-            // A failed update must try the connection again on the next frame.
-            connectedCameraTextureId = cameraTextureId
-
-            return frame
+            return session.update()
         } catch (exception: Exception) {
-            connectedCameraTextureId = -1
             return null
         }
     }

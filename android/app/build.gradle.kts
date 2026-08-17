@@ -45,6 +45,10 @@ android {
 
   dependencies {
     implementation("com.google.ar:core:1.54.0")
+
+    // Adds OpenCV's Android image-processing tools.
+    // These tools detect piano keys and their boundaries in camera images.
+    implementation("org.opencv:opencv:4.13.0")
 }
 
 flutter {
