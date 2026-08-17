@@ -1325,41 +1325,6 @@ class KeyboardImageProcessor(
                 }
             }
 
-            // Calculates the upper part of the straightened keyboard image that may contain
-            // the dark horizontal piano panel connected to the tops of the black keys.
-            val topPanelRegionHeight =
-                (
-                        darkAreaMask.rows().toDouble() *
-                                0.30
-                        ).toInt()
-
-            // Confirms that the region has a usable height before creating an OpenCV view.
-            if (
-                topPanelRegionHeight > 0 &&
-                topPanelRegionHeight < darkAreaMask.rows()
-            ) {
-                // Creates a temporary view of only the upper 30% of the existing mask.
-                // Changing this view also changes the matching pixels in darkAreaMask.
-                val topPanelRegion =
-                    darkAreaMask.submat(
-                        0,
-                        topPanelRegionHeight,
-                        0,
-                        darkAreaMask.cols()
-                    )
-
-                try {
-                    // Changes the upper mask area to black so it cannot connect several
-                    // physical black keys into one large horizontal contour.
-                    topPanelRegion.setTo(
-                        Scalar(0.0)
-                    )
-                } finally {
-                    // Releases the temporary OpenCV view after the original mask is updated.
-                    topPanelRegion.release()
-                }
-            }
-
             return darkAreaMask.empty() == false
         } finally {
             smoothedKeyboardImage.release()
