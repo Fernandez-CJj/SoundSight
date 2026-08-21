@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/screens/practice/practice_screen.dart';
 
 class PracticeContainer extends StatelessWidget {
   const PracticeContainer({
@@ -65,7 +66,11 @@ class PracticeContainer extends StatelessWidget {
                 width: 128,
                 height: 38,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => PracticeScreen()));
+                  },
                   icon: Icon(Icons.center_focus_weak, size: 17),
                   label: Text(
                     'Start Practice',

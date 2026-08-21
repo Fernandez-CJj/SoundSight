@@ -125,6 +125,38 @@ class CompositionPlaybackService {
     await _disposeUnusedPreviewPools();
   }
 
+  Future<Set<int>> preloadPreviewNotes(Iterable<int> midiNumbers) async {
+    final currentLoadSession = ++_previewLoadSession;
+    final requiredMidiNumbers = midiNumbers
+        .where(PianoNote.isValidMidi)
+        .toSet();
+
+    final loadedMidiNumbers = await Future.wait(
+      requiredMidiNumbers.map((midiNumber) async {
+        try {
+          await _getPreviewPool(midiNumber);
+          return midiNumber;
+        } catch (_) {
+          return null;
+        }
+      }),
+    );
+
+    if (currentLoadSession != _previewLoadSession) {
+      return const <int>{};
+    }
+
+    final availableMidiNumbers = loadedMidiNumbers.whereType<int>().toSet();
+
+    _currentPreviewMidiNumbers
+      ..clear()
+      ..addAll(availableMidiNumbers);
+
+    await _disposeUnusedPreviewPools();
+
+    return availableMidiNumbers;
+  }
+
   Future<void> playComposition({
     required Composition composition,
     void Function(CompositionNote?)? onNoteChanged,

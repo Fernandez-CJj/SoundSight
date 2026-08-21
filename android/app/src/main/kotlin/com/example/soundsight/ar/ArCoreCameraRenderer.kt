@@ -1,20 +1,13 @@
 package com.example.soundsight.ar
 
 import android.app.Activity
-import android.hardware.camera2.CameraMetadata
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.os.Build
-import android.util.Log
 import com.google.ar.core.Frame
-import com.google.ar.core.ImageMetadata
 import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
-import com.google.ar.core.exceptions.DeadlineExceededException
-import com.google.ar.core.exceptions.MetadataNotFoundException
-import com.google.ar.core.exceptions.NotYetAvailableException
-import com.google.ar.core.exceptions.ResourceExhaustedException
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import com.example.soundsight.vision.ArCoreCameraImageReader
@@ -71,11 +64,6 @@ class ArCoreCameraRenderer(
     private val trackingStatusListener: ArCoreTrackingStatusListener,
     private val keyboardDetectionResultListener: KeyboardDetectionResultListener
 ) : GLSurfaceView.Renderer {
-    // Gives every temporary exposure line one recognizable Logcat tag.
-    // Filtering for SoundSightExposure hides unrelated Android messages.
-    private val exposureDiagnosticLogTag: String =
-        "SoundSightExposure"
-
     private val backgroundRenderer: CameraBackgroundRenderer =
         CameraBackgroundRenderer()
 
@@ -99,15 +87,6 @@ class ArCoreCameraRenderer(
     // image-processing worker will run on different threads.
     private val cameraImageBeingProcessed: AtomicBoolean =
         AtomicBoolean(false)
-
-    // Limits camera-metadata logging to one sample every 0.1 seconds.
-    // This does not limit camera drawing or OpenCV image processing.
-    private val exposureDiagnosticIntervalNanoseconds: Long =
-        100_000_000L
-
-    // Stores when the previous exposure sample was logged.
-    // Only the OpenGL rendering thread reads and changes this value.
-    private var lastExposureDiagnosticTimeNanoseconds: Long = 0L
 
     // Remembers whether the user has started keyboard scanning.
     // Camera frames are not sent to OpenCV while this value is false.
@@ -174,7 +153,6 @@ class ArCoreCameraRenderer(
         lastTrackingStatus = null
         validCameraFrameHasBeenDrawn = false
         lastValidCameraFrameDrawTimeNanoseconds = 0L
-        lastExposureDiagnosticTimeNanoseconds = 0L
 
         reportTrackingStatus(
             ArCoreTrackingStatus.INITIALIZING
@@ -255,10 +233,6 @@ class ArCoreCameraRenderer(
             return
         }
 
-        // Records camera settings only after ARCore provides a valid frame.
-        // Missing optional metadata never prevents the camera from drawing.
-        logExposureDiagnosticsIfNeeded(frame)
-
         // The new frame is valid, so it can safely replace the previous image.
         clearCameraSurface()
 
@@ -287,273 +261,6 @@ class ArCoreCameraRenderer(
         validCameraFrameHasBeenDrawn = true
         lastValidCameraFrameDrawTimeNanoseconds =
             System.nanoTime()
-    }
-
-    // Reads and logs camera exposure metadata at most once every 0.1 seconds.
-    // These values are diagnostic only and never control rendering, tracking,
-    // computer vision, or whether keyboard geometry is safe to display.
-    private fun logExposureDiagnosticsIfNeeded(
-        frame: Frame
-    ) {
-        val currentTimeNanoseconds =
-            System.nanoTime()
-
-        val timeSincePreviousDiagnosticNanoseconds =
-            currentTimeNanoseconds -
-                    lastExposureDiagnosticTimeNanoseconds
-
-        val diagnosticIntervalHasPassed =
-            lastExposureDiagnosticTimeNanoseconds == 0L ||
-                    timeSincePreviousDiagnosticNanoseconds >=
-                    exposureDiagnosticIntervalNanoseconds
-
-        if (diagnosticIntervalHasPassed == false) {
-            return
-        }
-
-        lastExposureDiagnosticTimeNanoseconds =
-            currentTimeNanoseconds
-
-        val imageMetadata: ImageMetadata
-
-        try {
-            imageMetadata = frame.imageMetadata
-        } catch (exception: NotYetAvailableException) {
-            logUnavailableExposureMetadata(
-                frame,
-                "NOT_YET_AVAILABLE"
-            )
-            return
-        } catch (exception: DeadlineExceededException) {
-            logUnavailableExposureMetadata(
-                frame,
-                "DEADLINE_EXCEEDED"
-            )
-            return
-        } catch (exception: ResourceExhaustedException) {
-            logUnavailableExposureMetadata(
-                frame,
-                "RESOURCE_EXHAUSTED"
-            )
-            return
-        } catch (exception: Exception) {
-            logUnavailableExposureMetadata(
-                frame,
-                exception.javaClass.simpleName
-            )
-            return
-        }
-
-        // Each metadata key below contains one scalar value. The FPS-range key
-        // is deliberately not read because that key contains an array and caused
-        // the previous native crash when it was requested as the wrong type.
-        val exposureTimeNanoseconds =
-            getLongMetadataValue(
-                imageMetadata,
-                ImageMetadata.SENSOR_EXPOSURE_TIME
-            )
-
-        val sensorSensitivity =
-            getIntMetadataValue(
-                imageMetadata,
-                ImageMetadata.SENSOR_SENSITIVITY
-            )
-
-        val frameDurationNanoseconds =
-            getLongMetadataValue(
-                imageMetadata,
-                ImageMetadata.SENSOR_FRAME_DURATION
-            )
-
-        val autoExposureState =
-            getByteMetadataValue(
-                imageMetadata,
-                ImageMetadata.CONTROL_AE_STATE
-            )
-
-        val antiBandingMode =
-            getByteMetadataValue(
-                imageMetadata,
-                ImageMetadata.CONTROL_AE_ANTIBANDING_MODE
-            )
-
-        val exposureTimeText =
-            getLongDiagnosticText(exposureTimeNanoseconds)
-
-        val sensorSensitivityText =
-            getIntDiagnosticText(sensorSensitivity)
-
-        val frameDurationText =
-            getLongDiagnosticText(frameDurationNanoseconds)
-
-        val autoExposureStateText =
-            getAutoExposureStateText(autoExposureState)
-
-        val antiBandingModeText =
-            getAntiBandingModeText(antiBandingMode)
-
-        Log.d(
-            exposureDiagnosticLogTag,
-            "frameTimestamp=${frame.timestamp} " +
-                    "exposureNs=$exposureTimeText " +
-                    "iso=$sensorSensitivityText " +
-                    "frameDurationNs=$frameDurationText " +
-                    "aeState=$autoExposureStateText " +
-                    "antiBanding=$antiBandingModeText"
-        )
-    }
-
-    // Writes a readable diagnostic instead of interrupting the renderer when
-    // ARCore cannot provide camera metadata for the current valid frame.
-    private fun logUnavailableExposureMetadata(
-        frame: Frame,
-        reason: String
-    ) {
-        Log.d(
-            exposureDiagnosticLogTag,
-            "frameTimestamp=${frame.timestamp} " +
-                    "metadata=UNAVAILABLE " +
-                    "reason=$reason"
-        )
-    }
-
-    // Reads one long metadata value. A phone may omit an optional metadata key,
-    // so an unavailable value becomes null instead of stopping camera drawing.
-    private fun getLongMetadataValue(
-        imageMetadata: ImageMetadata,
-        key: Int
-    ): Long? {
-        try {
-            return imageMetadata.getLong(key)
-        } catch (exception: MetadataNotFoundException) {
-            return null
-        } catch (exception: IllegalArgumentException) {
-            return null
-        }
-    }
-
-    // Reads one integer metadata value while allowing optional device-specific
-    // values to be missing safely.
-    private fun getIntMetadataValue(
-        imageMetadata: ImageMetadata,
-        key: Int
-    ): Int? {
-        try {
-            return imageMetadata.getInt(key)
-        } catch (exception: MetadataNotFoundException) {
-            return null
-        } catch (exception: IllegalArgumentException) {
-            return null
-        }
-    }
-
-    // Reads one byte metadata value. Android represents the auto-exposure and
-    // anti-banding states as bytes, which are converted to integers for comparison.
-    private fun getByteMetadataValue(
-        imageMetadata: ImageMetadata,
-        key: Int
-    ): Int? {
-        try {
-            return imageMetadata.getByte(key).toInt()
-        } catch (exception: MetadataNotFoundException) {
-            return null
-        } catch (exception: IllegalArgumentException) {
-            return null
-        }
-    }
-
-    // Converts a missing long value into readable Logcat text.
-    private fun getLongDiagnosticText(value: Long?): String {
-        if (value == null) {
-            return "UNAVAILABLE"
-        }
-
-        return value.toString()
-    }
-
-    // Converts a missing integer value into readable Logcat text.
-    private fun getIntDiagnosticText(value: Int?): String {
-        if (value == null) {
-            return "UNAVAILABLE"
-        }
-
-        return value.toString()
-    }
-
-    // Converts Android's numeric auto-exposure state into a readable name.
-    private fun getAutoExposureStateText(
-        autoExposureState: Int?
-    ): String {
-        if (autoExposureState == null) {
-            return "UNAVAILABLE"
-        }
-
-        if (
-            autoExposureState ==
-            CameraMetadata.CONTROL_AE_STATE_INACTIVE
-        ) {
-            return "INACTIVE"
-        } else if (
-            autoExposureState ==
-            CameraMetadata.CONTROL_AE_STATE_SEARCHING
-        ) {
-            return "SEARCHING"
-        } else if (
-            autoExposureState ==
-            CameraMetadata.CONTROL_AE_STATE_CONVERGED
-        ) {
-            return "CONVERGED"
-        } else if (
-            autoExposureState ==
-            CameraMetadata.CONTROL_AE_STATE_LOCKED
-        ) {
-            return "LOCKED"
-        } else if (
-            autoExposureState ==
-            CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED
-        ) {
-            return "FLASH_REQUIRED"
-        } else if (
-            autoExposureState ==
-            CameraMetadata.CONTROL_AE_STATE_PRECAPTURE
-        ) {
-            return "PRECAPTURE"
-        }
-
-        return "UNKNOWN_$autoExposureState"
-    }
-
-    // Converts Android's numeric anti-banding mode into a readable name.
-    private fun getAntiBandingModeText(
-        antiBandingMode: Int?
-    ): String {
-        if (antiBandingMode == null) {
-            return "UNAVAILABLE"
-        }
-
-        if (
-            antiBandingMode ==
-            CameraMetadata.CONTROL_AE_ANTIBANDING_MODE_OFF
-        ) {
-            return "OFF"
-        } else if (
-            antiBandingMode ==
-            CameraMetadata.CONTROL_AE_ANTIBANDING_MODE_50HZ
-        ) {
-            return "50_HZ"
-        } else if (
-            antiBandingMode ==
-            CameraMetadata.CONTROL_AE_ANTIBANDING_MODE_60HZ
-        ) {
-            return "60_HZ"
-        } else if (
-            antiBandingMode ==
-            CameraMetadata.CONTROL_AE_ANTIBANDING_MODE_AUTO
-        ) {
-            return "AUTO"
-        }
-
-        return "UNKNOWN_$antiBandingMode"
     }
 
     // Clears the visible camera color and depth information. This is used before

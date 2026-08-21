@@ -9,7 +9,9 @@ import 'package:soundsight/screens/composition/screens/my_compositions_screen.da
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
+import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
+import 'package:soundsight/screens/practice/practice_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer_profile_header.dart';
@@ -19,6 +21,7 @@ enum DrawerItem {
   musicSheets,
   captureUpload,
   arPractice,
+  midi,
   savedSheets,
   composition,
   publishedCompositions,
@@ -124,7 +127,25 @@ class AppDrawer extends StatelessWidget {
               icon: Icons.view_in_ar_outlined,
               title: 'AR Practice',
               onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => PracticeScreen()),
+                );
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.midi,
+              icon: Icons.usb_outlined,
+              title: 'MIDI',
+              onTap: () {
                 Navigator.pop(context);
+
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const MidiNoteIdentifierScreen(),
+                  ),
+                );
               },
             ),
             Divider(color: colors.borderColor),
@@ -139,9 +160,8 @@ class AppDrawer extends StatelessWidget {
                 if (activeItem != DrawerItem.savedSheets) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => SavedCompositionsScreen(
-                        isDarkMode: isDarkMode,
-                      ),
+                      builder: (_) =>
+                          SavedCompositionsScreen(isDarkMode: isDarkMode),
                     ),
                   );
                 }
@@ -176,9 +196,8 @@ class AppDrawer extends StatelessWidget {
                 if (activeItem != DrawerItem.publishedCompositions) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => PublishedCompositionsScreen(
-                        isDarkMode: isDarkMode,
-                      ),
+                      builder: (_) =>
+                          PublishedCompositionsScreen(isDarkMode: isDarkMode),
                     ),
                   );
                 }
@@ -189,9 +208,7 @@ class AppDrawer extends StatelessWidget {
               active: activeItem == DrawerItem.practiceResults,
               icon: Icons.bar_chart_outlined,
               title: 'Practice Results',
-              onTap: () {
-                Navigator.pop(context);
-              },
+              onTap: () {},
             ),
             Divider(color: colors.borderColor),
             SwitchListTile(

@@ -5,6 +5,8 @@
         android:name="android.hardware.camera.ar"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:label="soundsight"
         android:name="${applicationName}"
