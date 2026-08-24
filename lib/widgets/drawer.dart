@@ -8,6 +8,7 @@ import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_scr
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
+import 'package:soundsight/screens/flyaway/flyaway_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
@@ -22,6 +23,7 @@ enum DrawerItem {
   captureUpload,
   arPractice,
   midi,
+  flyaway,
   savedSheets,
   composition,
   publishedCompositions,
@@ -146,6 +148,21 @@ class AppDrawer extends StatelessWidget {
                     builder: (_) => const MidiNoteIdentifierScreen(),
                   ),
                 );
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.flyaway,
+              icon: Icons.back_hand_outlined,
+              title: 'Flyaway',
+              onTap: () {
+                Navigator.pop(context);
+
+                if (activeItem != DrawerItem.flyaway) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FlyawayScreen()),
+                  );
+                }
               },
             ),
             Divider(color: colors.borderColor),

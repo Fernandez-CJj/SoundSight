@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'sight_reading/music_sheet_reading_screen.dart';
+import '../challenges/sight_reading/music_sheet_reading_screen.dart';
 
-class SelectedChallengeItemScreen extends StatelessWidget {
-  const SelectedChallengeItemScreen({
+class SelectedFundamentalLessonScreen extends StatelessWidget {
+  const SelectedFundamentalLessonScreen({
     super.key,
-    required this.challengeItemId,
+    required this.folderId,
+    required this.lessonId,
     required this.title,
   });
 
-  final String challengeItemId;
+  final String folderId;
+  final String lessonId;
   final String title;
 
   @override
@@ -34,9 +36,9 @@ class SelectedChallengeItemScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => MusicSheetReadingScreen(
+                        builder: (context) => MusicSheetReadingScreen(
                           scoreDocumentPath:
-                              'challenge_items/$challengeItemId',
+                              'fundamentals_folders/$folderId/lessons/$lessonId',
                         ),
                       ),
                     );
@@ -44,7 +46,10 @@ class SelectedChallengeItemScreen extends StatelessWidget {
                   child: const Text('Music Sheet Reading'),
                 ),
                 const SizedBox(height: 17),
-                const ElevatedButton(onPressed: null, child: Text('Synthesia')),
+                const ElevatedButton(
+                  onPressed: null,
+                  child: Text('Synthesia'),
+                ),
               ],
             ),
           ),

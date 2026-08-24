@@ -16,9 +16,12 @@ import 'sight_reading_note_matcher.dart';
 import 'sight_reading_performance_tracker.dart';
 
 class MusicSheetReadingScreen extends StatefulWidget {
-  const MusicSheetReadingScreen({super.key, required this.challengeItemId});
+  const MusicSheetReadingScreen({
+    super.key,
+    required this.scoreDocumentPath,
+  });
 
-  final String challengeItemId;
+  final String scoreDocumentPath;
 
   @override
   State<MusicSheetReadingScreen> createState() =>
@@ -693,8 +696,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
     try {
       final piece = await FirebaseFirestore.instance
-          .collection('challenge_items')
-          .doc(widget.challengeItemId)
+          .doc(widget.scoreDocumentPath)
           .get();
 
       final data = piece.data();
