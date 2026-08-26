@@ -1,19 +1,16 @@
 import 'flyaway_finger.dart';
 
-/// Stores one finger's normalized image-space height for one camera frame.
-/// This is a measurement only. It does not yet decide whether the finger
-/// should be considered a flyaway finger.
+/// Stores one finger's relative-depth measurement for one camera frame.
+/// This model does not decide whether the finger is a flyaway finger.
 class FingerMeasurement {
   const FingerMeasurement({
     required this.finger,
-    required this.normalizedHeight,
+    required this.relativeDepth,
   });
 
   /// Identifies which finger was measured.
   final FlyawayFinger finger;
 
-  /// Signed fingertip height relative to the detected palm length.
-  /// This value can be negative or greater than 1.0. Normalized means that
-  /// it is relative to hand size, not that it is restricted from 0.0 to 1.0.
-  final double normalizedHeight;
+  /// Estimated depth difference between the finger base and fingertip.
+  final double relativeDepth;
 }

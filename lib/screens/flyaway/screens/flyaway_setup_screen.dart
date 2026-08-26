@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_litert/flutter_litert.dart';
 import 'package:hand_detection/hand_detection.dart';
 
 import '../controllers/flyaway_analysis_controller.dart';
@@ -61,10 +61,26 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       <Handedness, List<FingerMeasurement>>{};
 
   bool calibrationActive = false;
+  bool restingCalibrationActive = false;
+  bool calibrationReady = false;
+
+  static const int preparationDurationSeconds = 3;
+  static const int restingCalibrationDurationSeconds = 3;
+  static const int movementCalibrationDurationSeconds = 7;
+  static const int minimumRestingSampleCount = 5;
+
+  Timer? calibrationTimer;
+
+  int preparationSecondsRemaining = 0;
+  int restingSecondsRemaining = 0;
+  int movementSecondsRemaining = 0;
 
   final Map<Handedness, Map<FlyawayFinger, FingerCalibrationRange>>
   calibrationRanges =
       <Handedness, Map<FlyawayFinger, FingerCalibrationRange>>{};
+
+  final Map<Handedness, Map<FlyawayFinger, List<double>>> restingDepthSamples =
+      <Handedness, Map<FlyawayFinger, List<double>>>{};
 
   /// Size of the rotated and resized image analyzed by the detector.
   Size? detectionImageSize;
@@ -104,7 +120,10 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
           // Middle layer: circles drawn over detected hand landmarks.
           buildHandLandmarkOverlay(),
 
-          // Middle layer: temporary finger-height measurement display.
+          // Left-side layer: calibrated depth ranges for each finger.
+          buildCalibrationRangePanel(),
+
+          // Middle layer: temporary finger-depth measurement display.
           buildMeasurementPanel(),
 
           // Top-center layer: starts or finishes calibration.
@@ -162,7 +181,7 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
     );
   }
 
-  /// Builds the button that starts or finishes calibration.
+  /// Builds the visible calibration status and restart button.
   Widget buildCalibrationButton() {
     return SafeArea(
       child: Align(
@@ -170,7 +189,19 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: FilledButton(
-            onPressed: toggleCalibration,
+            onPressed: startCalibrationSequence,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.black.withValues(alpha: 0.85),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(280, 52),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              side: const BorderSide(color: Colors.white, width: 1.5),
+              elevation: 6,
+              textStyle: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             child: Text(getCalibrationButtonLabel()),
           ),
         ),
@@ -178,28 +209,196 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
     );
   }
 
-  /// Returns text describing what the calibration button will do.
+  /// Returns the current calibration status and restart instruction.
   String getCalibrationButtonLabel() {
-    if (calibrationActive) {
-      return 'Finish calibration';
+    if (preparationSecondsRemaining > 0) {
+      return 'Get ready: $preparationSecondsRemaining | Tap to restart';
+    } else if (restingCalibrationActive) {
+      return 'Rest fingers on keys: $restingSecondsRemaining | Tap to restart';
+    } else if (calibrationActive) {
+      return 'Move normally: $movementSecondsRemaining | Tap to restart';
+    } else if (calibrationReady) {
+      return 'Recalibrate';
     } else {
       return 'Start calibration';
     }
   }
 
-  /// Switches calibration between running and stopped.
-  void toggleCalibration() {
+  /// Starts the preparation countdown before measurement collection.
+  void startCalibrationSequence() {
+    calibrationTimer?.cancel();
+
     setState(() {
-      if (calibrationActive) {
-        calibrationActive = false;
-      } else {
-        calibrationRanges.clear();
+      calibrationRanges.clear();
+      restingDepthSamples.clear();
+      flyawayTrackers.clear();
+      confirmedFlyawayFingers.clear();
+
+      calibrationReady = false;
+      calibrationActive = false;
+      restingCalibrationActive = false;
+      preparationSecondsRemaining = preparationDurationSeconds;
+      restingSecondsRemaining = restingCalibrationDurationSeconds;
+      movementSecondsRemaining = movementCalibrationDurationSeconds;
+    });
+
+    calibrationTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      handleCalibrationTimerTick,
+    );
+  }
+
+  /// Advances preparation and calibration by one second.
+  void handleCalibrationTimerTick(Timer timer) {
+    if (!mounted) {
+      timer.cancel();
+      return;
+    }
+
+    var calibrationFinished = false;
+
+    setState(() {
+      if (preparationSecondsRemaining > 1) {
+        preparationSecondsRemaining--;
+      } else if (preparationSecondsRemaining == 1) {
+        preparationSecondsRemaining = 0;
+
         previousHandMeasurements.clear();
         flyawayTrackers.clear();
         confirmedFlyawayFingers.clear();
+
         calibrationActive = true;
+        restingCalibrationActive = true;
+      } else if (restingCalibrationActive) {
+        if (restingSecondsRemaining > 1) {
+          restingSecondsRemaining--;
+        } else {
+          restingSecondsRemaining = 0;
+          restingCalibrationActive = false;
+
+          createRestingCalibrationProfiles();
+          previousHandMeasurements.clear();
+        }
+      } else if (calibrationActive) {
+        if (movementSecondsRemaining > 1) {
+          movementSecondsRemaining--;
+        } else {
+          movementSecondsRemaining = 0;
+          calibrationActive = false;
+
+          timer.cancel();
+          calibrationTimer = null;
+
+          calibrationFinished = true;
+        }
       }
     });
+
+    if (calibrationFinished) {
+      showCalibrationResultDialog();
+    }
+  }
+
+  /// Checks whether at least one complete hand calibration was captured.
+  bool calibrationWasSuccessful() {
+    if (calibrationRanges.isEmpty) {
+      return false;
+    }
+
+    for (final fingerRanges in calibrationRanges.values) {
+      if (fingerRanges.length == FlyawayFinger.values.length) {
+        var everyFingerHasNormalMovement = true;
+
+        for (final fingerRange in fingerRanges.values) {
+          if (fingerRange.normalMovementSampleCount == 0) {
+            everyFingerHasNormalMovement = false;
+          }
+        }
+
+        if (everyFingerHasNormalMovement) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// Shows whether calibration captured enough hand information.
+  void showCalibrationResultDialog() {
+    if (!mounted) {
+      return;
+    }
+
+    final calibrationSucceeded = calibrationWasSuccessful();
+
+    IconData dialogIcon;
+    Color dialogIconColor;
+    String dialogTitle;
+    String dialogMessage;
+    String dialogButtonLabel;
+
+    if (calibrationSucceeded) {
+      dialogIcon = Icons.check_circle;
+      dialogIconColor = Colors.green;
+      dialogTitle = 'Calibration complete';
+      dialogMessage =
+          "You're ready to perform! Your resting finger reference and "
+          'normal movement range '
+          'was captured. Keep the phone in the same position.';
+      dialogButtonLabel = 'Start analysis';
+    } else {
+      dialogIcon = Icons.error;
+      dialogIconColor = Colors.red;
+      dialogTitle = 'Calibration unsuccessful';
+      dialogMessage =
+          'No complete hand measurements were captured. Keep your hands '
+          'inside the camera view and try again.';
+      dialogButtonLabel = 'Try again';
+    }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          icon: Icon(dialogIcon, color: dialogIconColor, size: 52),
+          title: Text(dialogTitle),
+          content: Text(dialogMessage),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                handleCalibrationDialogAction(
+                  dialogContext,
+                  calibrationSucceeded,
+                );
+              },
+              child: Text(dialogButtonLabel),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Handles the success or retry action selected from the result dialog.
+  void handleCalibrationDialogAction(
+    BuildContext dialogContext,
+    bool calibrationSucceeded,
+  ) {
+    Navigator.of(dialogContext).pop();
+
+    if (calibrationSucceeded) {
+      setState(() {
+        previousHandMeasurements.clear();
+        flyawayTrackers.clear();
+        confirmedFlyawayFingers.clear();
+
+        calibrationReady = true;
+      });
+    } else {
+      startCalibrationSequence();
+    }
   }
 
   /// Returns the appropriate camera widget for the camera's current state.
@@ -543,13 +742,13 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       final previousMeasurement = previousMeasurements[fingerIndex];
       final currentMeasurement = currentMeasurements[fingerIndex];
 
-      final smoothedHeight =
-          previousMeasurement.normalizedHeight * previousWeight +
-          currentMeasurement.normalizedHeight * currentWeight;
+      final smoothedDepth =
+          previousMeasurement.relativeDepth * previousWeight +
+          currentMeasurement.relativeDepth * currentWeight;
 
       final smoothedMeasurement = FingerMeasurement(
         finger: currentMeasurement.finger,
-        normalizedHeight: smoothedHeight,
+        relativeDepth: smoothedDepth,
       );
 
       smoothedMeasurements.add(smoothedMeasurement);
@@ -578,7 +777,7 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
     }
   }
 
-  /// Adds the current finger measurements to the active calibration.
+  /// Sends current measurements to the active calibration stage.
   void collectCalibrationMeasurements(
     List<Hand> hands,
     List<List<FingerMeasurement>> measurements,
@@ -587,6 +786,18 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       return;
     }
 
+    if (restingCalibrationActive) {
+      collectRestingDepthSamples(hands, measurements);
+    } else {
+      collectNormalMovementLifts(hands, measurements);
+    }
+  }
+
+  /// Collects several depth readings while fingers rest on the keys.
+  void collectRestingDepthSamples(
+    List<Hand> hands,
+    List<List<FingerMeasurement>> measurements,
+  ) {
     for (var handIndex = 0; handIndex < hands.length; handIndex++) {
       if (handIndex >= measurements.length) {
         return;
@@ -595,31 +806,221 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       final handedness = hands[handIndex].handedness;
 
       if (handedness != null) {
-        var fingerRanges = calibrationRanges[handedness];
+        var handSamples = restingDepthSamples[handedness];
 
-        if (fingerRanges == null) {
-          fingerRanges = <FlyawayFinger, FingerCalibrationRange>{};
-          calibrationRanges[handedness] = fingerRanges;
+        if (handSamples == null) {
+          handSamples = <FlyawayFinger, List<double>>{};
+          restingDepthSamples[handedness] = handSamples;
         }
 
         for (final measurement in measurements[handIndex]) {
-          final existingRange = fingerRanges[measurement.finger];
+          var fingerSamples = handSamples[measurement.finger];
 
-          if (existingRange == null) {
-            fingerRanges[measurement.finger] = FingerCalibrationRange(
-              minimumHeight: measurement.normalizedHeight,
-              maximumHeight: measurement.normalizedHeight,
+          if (fingerSamples == null) {
+            fingerSamples = <double>[];
+            handSamples[measurement.finger] = fingerSamples;
+          }
+
+          fingerSamples.add(measurement.relativeDepth);
+        }
+      }
+    }
+  }
+
+  /// Creates one stable resting reference from each finger's samples.
+  void createRestingCalibrationProfiles() {
+    calibrationRanges.clear();
+
+    for (final handEntry in restingDepthSamples.entries) {
+      final fingerRanges = <FlyawayFinger, FingerCalibrationRange>{};
+
+      for (final finger in FlyawayFinger.values) {
+        final samples = handEntry.value[finger];
+
+        if (samples != null && samples.length >= minimumRestingSampleCount) {
+          final restingDepth = calculateMedian(samples);
+
+          fingerRanges[finger] = FingerCalibrationRange(
+            restingDepth: restingDepth,
+          );
+        }
+      }
+
+      if (fingerRanges.isNotEmpty) {
+        calibrationRanges[handEntry.key] = fingerRanges;
+      }
+    }
+  }
+
+  /// Returns the middle sample so one extreme reading cannot set the baseline.
+  double calculateMedian(List<double> samples) {
+    final sortedSamples = List<double>.from(samples);
+    sortedSamples.sort();
+
+    final middleIndex = sortedSamples.length ~/ 2;
+
+    if (sortedSamples.length.isOdd) {
+      return sortedSamples[middleIndex];
+    } else {
+      final lowerMiddle = sortedSamples[middleIndex - 1];
+      final upperMiddle = sortedSamples[middleIndex];
+
+      return (lowerMiddle + upperMiddle) / 2;
+    }
+  }
+
+  /// Records how far each finger normally moves above its resting reference.
+  void collectNormalMovementLifts(
+    List<Hand> hands,
+    List<List<FingerMeasurement>> measurements,
+  ) {
+    for (var handIndex = 0; handIndex < hands.length; handIndex++) {
+      if (handIndex >= measurements.length) {
+        return;
+      }
+
+      final handedness = hands[handIndex].handedness;
+
+      if (handedness != null) {
+        final fingerRanges = calibrationRanges[handedness];
+
+        if (fingerRanges != null) {
+          final liftAmounts = calculateLiftAmounts(
+            fingerRanges,
+            measurements[handIndex],
+          );
+
+          for (final measurement in measurements[handIndex]) {
+            final fingerRange = fingerRanges[measurement.finger];
+            final liftAmount = liftAmounts[measurement.finger];
+            final independentLift = calculateIndependentLift(
+              measurement.finger,
+              liftAmounts,
             );
-          } else {
-            existingRange.includeHeight(measurement.normalizedHeight);
+
+            if (fingerRange != null &&
+                liftAmount != null &&
+                independentLift != null) {
+              fingerRange.includeNormalMovement(
+                liftAmount: liftAmount,
+                independentLift: independentLift,
+              );
+            }
           }
         }
       }
     }
   }
 
-  /// Checks whether one finger is above its calibrated normal range.
-  bool isFingerExcessivelyHigh(Hand hand, FingerMeasurement measurement) {
+  /// Calculates every finger's lift above its resting reference.
+  Map<FlyawayFinger, double> calculateLiftAmounts(
+    Map<FlyawayFinger, FingerCalibrationRange> fingerRanges,
+    List<FingerMeasurement> measurements,
+  ) {
+    final liftAmounts = <FlyawayFinger, double>{};
+
+    for (final measurement in measurements) {
+      final fingerRange = fingerRanges[measurement.finger];
+
+      if (fingerRange != null) {
+        final liftAmount =
+            measurement.relativeDepth - fingerRange.restingDepth;
+
+        liftAmounts[measurement.finger] = liftAmount;
+      }
+    }
+
+    return liftAmounts;
+  }
+
+  /// Returns the fingers directly beside one finger.
+  List<FlyawayFinger> getAdjacentFingers(FlyawayFinger finger) {
+    switch (finger) {
+      case FlyawayFinger.thumb:
+        return <FlyawayFinger>[FlyawayFinger.indexFinger];
+      case FlyawayFinger.indexFinger:
+        return <FlyawayFinger>[
+          FlyawayFinger.thumb,
+          FlyawayFinger.middle,
+        ];
+      case FlyawayFinger.middle:
+        return <FlyawayFinger>[
+          FlyawayFinger.indexFinger,
+          FlyawayFinger.ring,
+        ];
+      case FlyawayFinger.ring:
+        return <FlyawayFinger>[
+          FlyawayFinger.middle,
+          FlyawayFinger.pinky,
+        ];
+      case FlyawayFinger.pinky:
+        return <FlyawayFinger>[FlyawayFinger.ring];
+    }
+  }
+
+  /// Measures how much one finger rises beyond its adjacent fingers.
+  double? calculateIndependentLift(
+    FlyawayFinger finger,
+    Map<FlyawayFinger, double> liftAmounts,
+  ) {
+    final fingerLift = liftAmounts[finger];
+
+    if (fingerLift == null) {
+      return null;
+    }
+
+    final adjacentFingers = getAdjacentFingers(finger);
+    var adjacentLiftTotal = 0.0;
+    var adjacentLiftCount = 0;
+
+    for (final adjacentFinger in adjacentFingers) {
+      final adjacentLift = liftAmounts[adjacentFinger];
+
+      if (adjacentLift != null) {
+        adjacentLiftTotal += adjacentLift;
+        adjacentLiftCount++;
+      }
+    }
+
+    if (adjacentLiftCount == 0) {
+      return null;
+    }
+
+    final averageAdjacentLift = adjacentLiftTotal / adjacentLiftCount;
+
+    return fingerLift - averageAdjacentLift;
+  }
+
+  /// Returns all calibrated lift amounts for one detected hand.
+  Map<FlyawayFinger, double>? getLiftAmountsForHand(
+    Hand hand,
+    List<FingerMeasurement> measurements,
+  ) {
+    final handedness = hand.handedness;
+
+    if (handedness == null) {
+      return null;
+    }
+
+    final fingerRanges = calibrationRanges[handedness];
+
+    if (fingerRanges == null) {
+      return null;
+    }
+
+    return calculateLiftAmounts(fingerRanges, measurements);
+  }
+
+  /// Checks both total lift and lift beyond neighboring fingers.
+  bool isFingerExcessivelyHigh(
+    Hand hand,
+    FingerMeasurement measurement,
+    List<FingerMeasurement> measurements,
+  ) {
+    if (!calibrationReady) {
+      return false;
+    }
+
     if (calibrationActive) {
       return false;
     }
@@ -642,15 +1043,99 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       return false;
     }
 
-    const allowedMargin = 0.10;
+    final liftAmounts = calculateLiftAmounts(fingerRanges, measurements);
+    final liftAmount = liftAmounts[measurement.finger];
+    final independentLift = calculateIndependentLift(
+      measurement.finger,
+      liftAmounts,
+    );
 
-    final flyawayThreshold = fingerRange.maximumHeight + allowedMargin;
-
-    if (measurement.normalizedHeight > flyawayThreshold) {
-      return true;
-    } else {
+    if (liftAmount == null || independentLift == null) {
       return false;
     }
+
+    final flyawayThreshold = calculateLiftThreshold(fingerRange);
+    final independentThreshold = calculateIndependentLiftThreshold(fingerRange);
+
+    if (liftAmount <= flyawayThreshold) {
+      return false;
+    }
+
+    if (independentLift <= independentThreshold) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Calculates the lift amount a finger must pass to become HIGH.
+  double calculateLiftThreshold(FingerCalibrationRange fingerRange) {
+    return calculateThresholdFromMaximum(fingerRange.maximumNormalLift);
+  }
+
+  /// Calculates the independent lift a finger must pass to become HIGH.
+  double calculateIndependentLiftThreshold(
+    FingerCalibrationRange fingerRange,
+  ) {
+    return calculateThresholdFromMaximum(
+      fingerRange.maximumNormalIndependentLift,
+    );
+  }
+
+  /// Adds the shared safety margin to a calibrated normal maximum.
+  double calculateThresholdFromMaximum(double maximumNormalLift) {
+    const liftMarginPercentage = 0.20;
+    const minimumLiftMargin = 0.5;
+
+    final percentageMargin = maximumNormalLift * liftMarginPercentage;
+
+    double allowedLiftMargin;
+
+    if (percentageMargin > minimumLiftMargin) {
+      allowedLiftMargin = percentageMargin;
+    } else {
+      allowedLiftMargin = minimumLiftMargin;
+    }
+
+    return maximumNormalLift + allowedLiftMargin;
+  }
+
+  /// Returns the current lift above one finger's resting reference.
+  double? getLiftAmount(Hand hand, FingerMeasurement measurement) {
+    final handedness = hand.handedness;
+
+    if (handedness == null) {
+      return null;
+    }
+
+    final fingerRanges = calibrationRanges[handedness];
+
+    if (fingerRanges == null) {
+      return null;
+    }
+
+    final fingerRange = fingerRanges[measurement.finger];
+
+    if (fingerRange == null) {
+      return null;
+    }
+
+    return measurement.relativeDepth - fingerRange.restingDepth;
+  }
+
+  /// Returns the current lift above the average of adjacent fingers.
+  double? getIndependentLiftAmount(
+    Hand hand,
+    FlyawayFinger finger,
+    List<FingerMeasurement> measurements,
+  ) {
+    final liftAmounts = getLiftAmountsForHand(hand, measurements);
+
+    if (liftAmounts == null) {
+      return null;
+    }
+
+    return calculateIndependentLift(finger, liftAmounts);
   }
 
   /// Checks whether a finger is currently a confirmed flyaway.
@@ -681,6 +1166,11 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
   ) {
     final confirmedFlyaways = <Handedness, Set<FlyawayFinger>>{};
 
+    if (!calibrationReady) {
+      flyawayTrackers.clear();
+      return confirmedFlyaways;
+    }
+
     if (calibrationActive) {
       flyawayTrackers.clear();
       return confirmedFlyaways;
@@ -709,7 +1199,11 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
           final handFlyaways = <FlyawayFinger>{};
 
           for (final measurement in measurements[handIndex]) {
-            final fingerIsHigh = isFingerExcessivelyHigh(hand, measurement);
+            final fingerIsHigh = isFingerExcessivelyHigh(
+              hand,
+              measurement,
+              measurements[handIndex],
+            );
 
             var tracker = fingerTrackers[measurement.finger];
 
@@ -768,6 +1262,105 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
     );
   }
 
+  /// Builds the left-side panel containing calibrated lift references.
+  Widget buildCalibrationRangePanel() {
+    if (calibrationRanges.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      left: 12,
+      top: 72,
+      child: SafeArea(
+        child: IgnorePointer(
+          child: Container(
+            width: 230,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white54, width: 1),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'LIFT CALIBRATION',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  getCalibrationRangeText(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Converts the calibrated lift references into readable debug text.
+  String getCalibrationRangeText() {
+    final handSections = <String>[];
+
+    for (final handEntry in calibrationRanges.entries) {
+      final fingerLines = <String>[];
+
+      final handLabel = getCalibrationHandednessLabel(handEntry.key);
+      fingerLines.add(handLabel);
+
+      for (final finger in FlyawayFinger.values) {
+        final fingerRange = handEntry.value[finger];
+
+        if (fingerRange != null) {
+          final fingerLabel = getFingerLabel(finger);
+
+          final resting = fingerRange.restingDepth.toStringAsFixed(2);
+          final maximum = fingerRange.maximumNormalLift.toStringAsFixed(2);
+          final independentMaximum = fingerRange.maximumNormalIndependentLift
+              .toStringAsFixed(2);
+
+          final threshold = calculateLiftThreshold(
+            fingerRange,
+          ).toStringAsFixed(2);
+
+          final independentThreshold = calculateIndependentLiftThreshold(
+            fingerRange,
+          ).toStringAsFixed(2);
+
+          fingerLines.add(
+            '$fingerLabel  base $resting  raw $maximum/$threshold  '
+            'ind $independentMaximum/$independentThreshold',
+          );
+        }
+      }
+
+      handSections.add(fingerLines.join('\n'));
+    }
+
+    return handSections.join('\n\n');
+  }
+
+  /// Returns the display name for a calibrated hand.
+  String getCalibrationHandednessLabel(Handedness handedness) {
+    if (handedness == Handedness.left) {
+      return 'LEFT HAND';
+    } else {
+      return 'RIGHT HAND';
+    }
+  }
+
   /// Builds the temporary panel used to inspect raw finger measurements.
   Widget buildMeasurementPanel() {
     if (handMeasurements.isEmpty) {
@@ -807,7 +1400,8 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       for (final measurement in handMeasurements[handIndex]) {
         final label = getFingerLabel(measurement.finger);
 
-        final height = measurement.normalizedHeight.toStringAsFixed(2);
+        final depth = measurement.relativeDepth.toStringAsFixed(2);
+        var measurementText = 'Z $depth';
 
         bool fingerIsHigh = false;
         bool fingerIsFlyaway = false;
@@ -815,17 +1409,38 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
         if (handIndex < detectedHands.length) {
           final hand = detectedHands[handIndex];
 
-          fingerIsHigh = isFingerExcessivelyHigh(hand, measurement);
+          final liftAmount = getLiftAmount(hand, measurement);
+          final independentLift = getIndependentLiftAmount(
+            hand,
+            measurement.finger,
+            handMeasurements[handIndex],
+          );
+
+          if (liftAmount != null) {
+            final lift = liftAmount.toStringAsFixed(2);
+            measurementText = 'Z $depth L $lift';
+          }
+
+          if (independentLift != null) {
+            final independent = independentLift.toStringAsFixed(2);
+            measurementText = '$measurementText IL $independent';
+          }
+
+          fingerIsHigh = isFingerExcessivelyHigh(
+            hand,
+            measurement,
+            handMeasurements[handIndex],
+          );
 
           fingerIsFlyaway = isFingerConfirmedFlyaway(hand, measurement.finger);
         }
 
         if (fingerIsFlyaway) {
-          fingerValues.add('$label: $height FLYAWAY');
+          fingerValues.add('$label: $measurementText FLYAWAY');
         } else if (fingerIsHigh) {
-          fingerValues.add('$label: $height HIGH');
+          fingerValues.add('$label: $measurementText HIGH');
         } else {
-          fingerValues.add('$label: $height');
+          fingerValues.add('$label: $measurementText');
         }
       }
 
@@ -873,6 +1488,9 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
 
   @override
   void dispose() {
+    calibrationTimer?.cancel();
+    calibrationTimer = null;
+
     // Release the camera and detector resources owned by this screen.
     cameraController?.dispose();
     handTrackingService.dispose();

@@ -1,19 +1,37 @@
-/// Stores the lowest and highest normal height recorded for one finger.
+/// Stores one finger's resting, total-lift, and independent-lift references.
 class FingerCalibrationRange {
   FingerCalibrationRange({
-    required this.minimumHeight,
-    required this.maximumHeight,
+    required this.restingDepth,
+    this.maximumNormalLift = 0,
+    this.maximumNormalIndependentLift = 0,
+    this.normalMovementSampleCount = 0,
   });
 
-  double minimumHeight;
-  double maximumHeight;
+  /// Stable depth recorded while the finger rests on a piano key.
+  final double restingDepth;
 
-  /// Expands the normal range when a new measurement is outside it.
-  void includeHeight(double height) {
-    if (height < minimumHeight) {
-      minimumHeight = height;
-    } else if (height > maximumHeight) {
-      maximumHeight = height;
+  /// Largest lift amount observed during normal movement calibration.
+  double maximumNormalLift;
+
+  /// Largest lift above neighboring fingers during normal movement.
+  double maximumNormalIndependentLift;
+
+  /// Number of normal-movement samples collected for this finger.
+  int normalMovementSampleCount;
+
+  /// Includes one normal movement sample in this finger's calibration.
+  void includeNormalMovement({
+    required double liftAmount,
+    required double independentLift,
+  }) {
+    normalMovementSampleCount++;
+
+    if (liftAmount > maximumNormalLift) {
+      maximumNormalLift = liftAmount;
+    }
+
+    if (independentLift > maximumNormalIndependentLift) {
+      maximumNormalIndependentLift = independentLift;
     }
   }
 }
