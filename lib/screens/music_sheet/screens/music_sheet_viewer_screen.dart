@@ -13,7 +13,6 @@ import 'package:soundsight/screens/music_sheet/services/music_sheet_omr_service.
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_audio_preview.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_omr_status_card.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
-import '../../ar_practice/screens/keyboard_setup/keyboard_setup_screen.dart';
 
 class MusicSheetViewerScreen extends StatefulWidget {
   const MusicSheetViewerScreen({
@@ -86,44 +85,6 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: files.isEmpty
-          ? null
-          : SafeArea(
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.sm,
-                  AppSpacing.md,
-                  AppSpacing.md,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.backgroundColor,
-                  border: Border(top: BorderSide(color: colors.borderColor)),
-                ),
-                child: SizedBox(
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: showArConfirmation,
-                    icon: Icon(Icons.view_in_ar_rounded, size: AppIconSizes.md),
-                    label: Text(
-                      'Play with AR',
-                      style: TextStyle(
-                        fontSize: AppTextSizes.body,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primaryColor,
-                      foregroundColor: colors.backgroundColor,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
       body: files.isEmpty ? buildEmptyState() : buildViewerBody(),
     );
   }
@@ -459,112 +420,4 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     );
   }
 
-  Future<void> showArConfirmation() async {
-    final colors = widget.colors;
-
-    final shouldStart = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: colors.surfaceColor,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          icon: Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: colors.primaryColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.view_in_ar_rounded,
-              color: colors.backgroundColor,
-              size: AppIconSizes.lg,
-            ),
-          ),
-          title: Text(
-            'Open AR note guide?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.primaryColor,
-              fontSize: AppTextSizes.sectionTitle,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          content: Text(
-            'This will align note overlays with the keys on your physical '
-            'piano. No music sheet translation is required.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.body,
-            ),
-          ),
-          actionsPadding: EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            0,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(dialogContext, false);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colors.primaryColor,
-                        side: BorderSide(color: colors.borderColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                ),
-                Gap(AppSpacing.sm),
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(dialogContext, true);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primaryColor,
-                        foregroundColor: colors.backgroundColor,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      child: const Text('Start'),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldStart != true || !mounted) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          return const KeyboardSetupScreen();
-        },
-      ),
-    );
-  }
 }

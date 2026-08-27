@@ -25,11 +25,6 @@ class SelectedChallengeItemScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const ElevatedButton(
-                  onPressed: null,
-                  child: Text('AR Practice'),
-                ),
-                const SizedBox(height: 17),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(

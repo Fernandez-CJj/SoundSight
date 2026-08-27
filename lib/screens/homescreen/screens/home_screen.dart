@@ -10,7 +10,6 @@ import 'package:soundsight/screens/composition/screens/published_compositions_sc
 import 'package:soundsight/screens/composition/screens/published_composition_viewer_screen.dart';
 import 'package:soundsight/screens/homescreen/widgets/community_compositions_section.dart';
 import 'package:soundsight/screens/homescreen/widgets/level_card.dart';
-import 'package:soundsight/screens/homescreen/widgets/practice_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/quick_actions.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
@@ -44,14 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
-
-    final practiceImage = isDarkMode
-        ? 'assets/images/black_container.png'
-        : 'assets/images/white_container.png';
-
-    final practiceTextColor = isDarkMode ? Colors.white : Colors.black;
-    final practiceButtonColor = isDarkMode ? Colors.white : Colors.black;
-    final practiceButtonTextColor = isDarkMode ? Colors.black : Colors.white;
 
     return Scaffold(
       backgroundColor: colors.backgroundColor,
@@ -128,14 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const Gap(AppSpacing.md),
             TopCard(colors: colors, skillLevel: skillLevel),
-            const Gap(AppSpacing.md),
-            PracticeContainer(
-              practiceImage: practiceImage,
-              practiceTextColor: practiceTextColor,
-              practiceButtonColor: practiceButtonColor,
-              practiceButtonTextColor: practiceButtonTextColor,
-              borderColor: colors.borderColor,
-            ),
             const Gap(AppSpacing.md),
             QuickActions(
               colors: colors,

@@ -12,7 +12,6 @@ import 'package:soundsight/screens/flyaway/flyaway_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
-import 'package:soundsight/screens/practice/practice_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer_profile_header.dart';
@@ -21,7 +20,6 @@ enum DrawerItem {
   home,
   musicSheets,
   captureUpload,
-  arPractice,
   midi,
   flyaway,
   savedSheets,
@@ -121,18 +119,6 @@ class AppDrawer extends StatelessWidget {
                     ),
                   );
                 }
-              },
-            ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.arPractice,
-              icon: Icons.view_in_ar_outlined,
-              title: 'AR Practice',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => PracticeScreen()),
-                );
               },
             ),
             _DrawerTile(
