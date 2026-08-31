@@ -16,10 +16,7 @@ import 'sight_reading_note_matcher.dart';
 import 'sight_reading_performance_tracker.dart';
 
 class MusicSheetReadingScreen extends StatefulWidget {
-  const MusicSheetReadingScreen({
-    super.key,
-    required this.scoreDocumentPath,
-  });
+  const MusicSheetReadingScreen({super.key, required this.scoreDocumentPath});
 
   final String scoreDocumentPath;
 
@@ -371,9 +368,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Icon(
-                            scorePreviewPlaying
-                                ? Icons.stop
-                                : Icons.volume_up,
+                            scorePreviewPlaying ? Icons.stop : Icons.volume_up,
                           ),
                     label: Text(
                       scorePreviewPreparing
@@ -623,9 +618,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     scoreIsLoading = true;
 
     WidgetsBinding.instance.addPostFrameCallback((value) {
-      if (!mounted ||
-          !scoreIsLoading ||
-          scoreLoadingDialogContext != null) {
+      if (!mounted || !scoreIsLoading || scoreLoadingDialogContext != null) {
         return;
       }
 
@@ -1076,12 +1069,11 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     startPlayingTimer();
     queueNextPerformanceCursorSlide();
 
-    performanceTicker = Timer.periodic(
-      const Duration(milliseconds: 20),
-      (timer) {
-        updatePerformanceTimeline();
-      },
-    );
+    performanceTicker = Timer.periodic(const Duration(milliseconds: 20), (
+      timer,
+    ) {
+      updatePerformanceTimeline();
+    });
   }
 
   void updatePerformanceTimeline() {
@@ -1097,9 +1089,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       queueNextPerformanceCursorSlide();
     } else if (timelineUpdate.stateChanged) {
       unawaited(
-        musicSheetController.setCursorWrong(
-          performanceTracker.cursorIsWrong,
-        ),
+        musicSheetController.setCursorWrong(performanceTracker.cursorIsWrong),
       );
     }
 

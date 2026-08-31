@@ -71,6 +71,31 @@ service cloud.firestore {
     match /users/{userId} {
       allow create, read, update, delete: if request.auth != null
                                           && request.auth.uid == userId;
+
+      match /pianoCalibrations/{calibrationId} {
+        allow create, read, update, delete: if request.auth != null
+                                            && request.auth.uid == userId;
+      }
+    }
+
+    match /challenge_levels/{levelId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if false;
+    }
+
+    match /challenge_items/{itemId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if false;
+    }
+
+    match /fundamentals_folders/{folderId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if false;
+
+      match /lessons/{lessonId} {
+        allow read: if request.auth != null;
+        allow create, update, delete: if false;
+      }
     }
 
     match /musicSheets/{sheetId} {

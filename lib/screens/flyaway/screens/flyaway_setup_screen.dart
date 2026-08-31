@@ -103,7 +103,6 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
     initializeScreen();
 
     // Hide the Android system bars while using the camera screen.
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
   @override
@@ -923,8 +922,7 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       final fingerRange = fingerRanges[measurement.finger];
 
       if (fingerRange != null) {
-        final liftAmount =
-            measurement.relativeDepth - fingerRange.restingDepth;
+        final liftAmount = measurement.relativeDepth - fingerRange.restingDepth;
 
         liftAmounts[measurement.finger] = liftAmount;
       }
@@ -939,20 +937,11 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
       case FlyawayFinger.thumb:
         return <FlyawayFinger>[FlyawayFinger.indexFinger];
       case FlyawayFinger.indexFinger:
-        return <FlyawayFinger>[
-          FlyawayFinger.thumb,
-          FlyawayFinger.middle,
-        ];
+        return <FlyawayFinger>[FlyawayFinger.thumb, FlyawayFinger.middle];
       case FlyawayFinger.middle:
-        return <FlyawayFinger>[
-          FlyawayFinger.indexFinger,
-          FlyawayFinger.ring,
-        ];
+        return <FlyawayFinger>[FlyawayFinger.indexFinger, FlyawayFinger.ring];
       case FlyawayFinger.ring:
-        return <FlyawayFinger>[
-          FlyawayFinger.middle,
-          FlyawayFinger.pinky,
-        ];
+        return <FlyawayFinger>[FlyawayFinger.middle, FlyawayFinger.pinky];
       case FlyawayFinger.pinky:
         return <FlyawayFinger>[FlyawayFinger.ring];
     }
@@ -1074,9 +1063,7 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
   }
 
   /// Calculates the independent lift a finger must pass to become HIGH.
-  double calculateIndependentLiftThreshold(
-    FingerCalibrationRange fingerRange,
-  ) {
+  double calculateIndependentLiftThreshold(FingerCalibrationRange fingerRange) {
     return calculateThresholdFromMaximum(
       fingerRange.maximumNormalIndependentLift,
     );
