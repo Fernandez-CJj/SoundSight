@@ -251,19 +251,29 @@ class SightReadingPerformanceTracker {
 
     attempt.finalized = true;
     evaluatedEventCount++;
+    final isCurrentCursorEvent = eventIndex == cursorEventIndex;
 
     if (attempt.matched && !attempt.hadMistake) {
       correctEventCount++;
-      cursorIsWrong = false;
-      resultText = 'Correct';
+
+      if (isCurrentCursorEvent) {
+        cursorIsWrong = false;
+        resultText = 'Correct';
+      }
     } else if (attempt.hadMistake) {
       wrongEventCount++;
-      cursorIsWrong = true;
-      resultText = 'Wrong';
+
+      if (isCurrentCursorEvent) {
+        cursorIsWrong = true;
+        resultText = 'Wrong';
+      }
     } else {
       missedEventCount++;
-      cursorIsWrong = true;
-      resultText = 'Missed';
+
+      if (isCurrentCursorEvent) {
+        cursorIsWrong = true;
+        resultText = 'Missed';
+      }
     }
   }
 }

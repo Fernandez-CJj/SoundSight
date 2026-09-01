@@ -76,6 +76,46 @@ service cloud.firestore {
         allow create, read, update, delete: if request.auth != null
                                             && request.auth.uid == userId;
       }
+
+      match /challenge_progress/{challengeItemId} {
+        allow read: if request.auth != null
+                    && request.auth.uid == userId;
+
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && exists(
+                           /databases/$(database)/documents/challenge_items/$(challengeItemId)
+                         )
+                      && request.resource.data.keys().hasOnly([
+                           'challengeItemId',
+                           'completed',
+                           'mode',
+                           'correctCount',
+                           'wrongCount',
+                           'missedCount',
+                           'totalCount',
+                           'xpAwarded',
+                           'completedAt'
+                         ])
+                      && request.resource.data.challengeItemId
+                         == challengeItemId
+                      && request.resource.data.completed == true
+                      && request.resource.data.mode == 'performance'
+                      && request.resource.data.correctCount is int
+                      && request.resource.data.wrongCount is int
+                      && request.resource.data.missedCount is int
+                      && request.resource.data.totalCount is int
+                      && request.resource.data.xpAwarded is int
+                      && request.resource.data.totalCount > 0
+                      && request.resource.data.correctCount
+                         == request.resource.data.totalCount
+                      && request.resource.data.wrongCount == 0
+                      && request.resource.data.missedCount == 0
+                      && request.resource.data.xpAwarded == 20
+                      && request.resource.data.completedAt == request.time;
+
+        allow update, delete: if false;
+      }
     }
 
     match /challenge_levels/{levelId} {

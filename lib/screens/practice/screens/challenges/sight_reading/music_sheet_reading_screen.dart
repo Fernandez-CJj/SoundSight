@@ -14,11 +14,17 @@ import 'midi_file_duration_calculator.dart';
 import 'midi_score_playback_service.dart';
 import 'sight_reading_note_matcher.dart';
 import 'sight_reading_performance_tracker.dart';
+import 'sight_reading_progress_service.dart';
 
 class MusicSheetReadingScreen extends StatefulWidget {
-  const MusicSheetReadingScreen({super.key, required this.scoreDocumentPath});
+  const MusicSheetReadingScreen({
+    super.key,
+    required this.scoreDocumentPath,
+    this.challengeItemId,
+  });
 
   final String scoreDocumentPath;
+  final String? challengeItemId;
 
   @override
   State<MusicSheetReadingScreen> createState() =>
@@ -32,6 +38,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       SightReadingPerformanceTracker();
   final MidiScorePlaybackService scorePlaybackService =
       MidiScorePlaybackService();
+
+  final SightReadingProgressService progressService =
+      SightReadingProgressService();
 
   late final MusicSheetWebViewController musicSheetController;
 
@@ -805,7 +814,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
   }
 
-  Future<void> showCompletionDialog() async {
+  Future<void> showCompletionDialog({
+    SightReadingCompletionResult? completionResult,
+    bool progressSaveFailed = false,
+  }) async {
     final totalMistakes = performanceModeEnabled
         ? performanceTracker.totalMistakes
         : noteMatcher.totalMistakes;
@@ -821,6 +833,22 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final scoreText = performanceModeEnabled
         ? performanceTracker.scoreText
         : noteMatcher.scoreText;
+
+    late final String xpMessage;
+
+    if (!performanceModeEnabled) {
+      xpMessage = 'Wait Mode does not award XP.';
+    } else if (widget.challengeItemId == null) {
+      xpMessage = 'This lesson does not award XP.';
+    } else if (!isPerfect) {
+      xpMessage = 'No XP awarded. Complete Performance Mode without mistakes.';
+    } else if (progressSaveFailed) {
+      xpMessage = 'Progress could not be saved. Please try again.';
+    } else if (completionResult?.newlyCompleted == true) {
+      xpMessage = '+${completionResult!.xpAwarded} XP';
+    } else {
+      xpMessage = 'Already completed. XP is only awarded once.';
+    }
 
     late final String title;
     late final String message;
@@ -915,6 +943,15 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                   ),
                 ),
               ],
+              const SizedBox(height: 10),
+              Text(
+                xpMessage,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: accentColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 10),
               buildDialogTimeResult(
                 elapsedSeconds: elapsedSeconds,
@@ -1098,7 +1135,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
 
     if (timelineUpdate.finished) {
-      finishPerformanceTimeline();
+      unawaited(finishPerformanceTimeline());
     }
   }
 
@@ -1149,15 +1186,17 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     });
   }
 
-  void finishPerformanceTimeline() {
+  Future<void> finishPerformanceTimeline() async {
     if (!mounted || !performanceRunning) {
       return;
     }
 
     performanceRunning = false;
     performanceRunId++;
+
     performanceTicker?.cancel();
     performanceTicker = null;
+
     stopPlayingTimer();
 
     setState(() {
@@ -1166,10 +1205,46 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
     unawaited(musicSheetController.hideCursor());
 
-    WidgetsBinding.instance.addPostFrameCallback((value) {
-      if (mounted) {
-        showCompletionDialog();
+    final isPerfectPerformance =
+        performanceTracker.totalEventCount > 0 &&
+        performanceTracker.correctEventCount ==
+            performanceTracker.totalEventCount &&
+        performanceTracker.wrongEventCount == 0 &&
+        performanceTracker.missedEventCount == 0;
+
+    final challengeItemId = widget.challengeItemId;
+
+    SightReadingCompletionResult? completionResult;
+    var progressSaveFailed = false;
+
+    if (isPerfectPerformance && challengeItemId != null) {
+      try {
+        completionResult = await progressService.recordPerfectCompletion(
+          challengeItemId: challengeItemId,
+          correctCount: performanceTracker.correctEventCount,
+          wrongCount: performanceTracker.wrongEventCount,
+          missedCount: performanceTracker.missedEventCount,
+          totalCount: performanceTracker.totalEventCount,
+        );
+      } catch (error) {
+        progressSaveFailed = true;
+        debugPrint('Failed to save sight-reading progress: $error');
       }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      showCompletionDialog(
+        completionResult: completionResult,
+        progressSaveFailed: progressSaveFailed,
+      );
     });
   }
 

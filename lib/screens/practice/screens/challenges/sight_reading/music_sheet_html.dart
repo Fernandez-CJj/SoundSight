@@ -63,15 +63,7 @@ String buildMusicSheetHtml(String musicXml) {
       const musicXml = $encodedMusicXml;
       const normalCursorColor = "#33e02f";
 
-      const osmd =
-          new opensheetmusicdisplay.OpenSheetMusicDisplay(
-        "osmd-container",
-        {
-          renderSingleHorizontalStaffline: true,
-          drawCredits: false,
-          drawingParameters: "compacttight"
-        }
-      );
+      let osmd = null;
 
       function sendCurrentExpectedNotes() {
         const notes = osmd.cursor.NotesUnderCursor();
@@ -309,6 +301,22 @@ function countPlayablePositions() {
 
       async function renderScore() {
         try {
+          if (typeof opensheetmusicdisplay === "undefined") {
+            throw new Error(
+              "The sheet music renderer could not be loaded."
+            );
+          }
+
+          osmd =
+              new opensheetmusicdisplay.OpenSheetMusicDisplay(
+            "osmd-container",
+            {
+              renderSingleHorizontalStaffline: true,
+              drawCredits: false,
+              drawingParameters: "compacttight"
+            }
+          );
+
           await osmd.load(musicXml);
           osmd.Zoom = 0.75;
           osmd.render();

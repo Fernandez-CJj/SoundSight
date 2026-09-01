@@ -45,6 +45,7 @@ class SelectedChallengeItemScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (_) => MusicSheetReadingScreen(
                           scoreDocumentPath: 'challenge_items/$challengeItemId',
+                          challengeItemId: challengeItemId,
                         ),
                       ),
                     );
