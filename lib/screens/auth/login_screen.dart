@@ -1,14 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:soundsight/screens/assessment/assessment_screen.dart';
+import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
 import 'package:soundsight/screens/auth/register_screen.dart';
 import 'package:soundsight/screens/auth/widgets/app_text_form_field.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/theme/app_colors.dart';
 import '../../constants/constant.dart';
+import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
+import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -273,36 +274,70 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Authenticates the user, synchronizes assessment expiration, and opens the
+  /// correct first screen for the user's assessment state.
   void firebaseLogin() async {
     showLoginLoadingDialog();
+
     try {
-      UserCredential userCred = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: emailCtrl.text,
-            password: passwordCtrl.text,
-          );
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCred.user!.uid)
-          .get();
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailCtrl.text,
+        password: passwordCtrl.text,
+      );
 
-      final isAssessed = userDoc.data()?['skillAssessmentCompleted'] ?? false;
+      // The service uses Firestore server time to detect expiration.
+      final assessmentService = AssessmentAttemptService();
+      final attempt = await assessmentService.loadCurrentAttempt();
 
-      Navigator.of(context).pop();
-      if (isAssessed == true) {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => HomeScreen()));
-      } else {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => AssessmentScreen()));
+      if (!mounted) {
+        return;
       }
-    } on FirebaseAuthException catch (e) {
+
+      // Close the login loading dialog before changing the main route.
+      Navigator.of(context).pop();
+
+      final assessmentStatus = attempt?.effectiveStatus;
+
+      // Completed users keep their calculated level. Expired users have already
+      // been assigned Beginner by the assessment service.
+      final shouldOpenHome =
+          assessmentStatus == AssessmentAttemptStatus.completed ||
+          assessmentStatus == AssessmentAttemptStatus.expired;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) {
+            if (shouldOpenHome) {
+              return const HomeScreen();
+            }
+
+            // A null attempt means the assessment has not started. An active
+            // attempt is passed in so the entry screen can display Resume.
+            return AssessmentEntryScreen(initialAttempt: attempt);
+          },
+        ),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
       Navigator.of(context).pop();
 
       await showLoginErrorDialog(
-        e.message ?? 'Something went wrong while logging in to your account.',
+        error.message ??
+            'Something went wrong while logging in to your account.',
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pop();
+
+      await showLoginErrorDialog(
+        'Unable to check your assessment status. Please try again.',
       );
     }
   }

@@ -69,12 +69,811 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow create, read, update, delete: if request.auth != null
-                                          && request.auth.uid == userId;
+      function ownsUser() {
+        return request.auth != null
+               && request.auth.uid == userId;
+      }
+
+      function validAssessmentSkillLevelUpdate() {
+        let attempt = getAfter(
+          /databases/$(database)/documents/users/$(userId)/assessment/current
+        );
+
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasOnly([
+                   'skillLevel',
+                   'updatedAt'
+                 ])
+               && request.resource.data.updatedAt == request.time
+               && attempt.data.userId == userId
+               && (
+                 (
+                   attempt.data.status == 'completed'
+                   && attempt.data.currentSection == 'results'
+                   && request.resource.data.skillLevel
+                      == attempt.data.finalSkillLevel
+                 )
+                 ||
+                 (
+                   attempt.data.status == 'expired'
+                   && request.resource.data.skillLevel == 'beginner'
+                 )
+               );
+      }
+
+      allow create: if ownsUser()
+                    && (
+                      !request.resource.data.keys().hasAny(['skillLevel'])
+                      || request.resource.data.skillLevel == null
+                    );
+
+      allow read, delete: if ownsUser();
+
+      allow update: if ownsUser()
+                    && (
+                      !request.resource.data.diff(resource.data)
+                        .affectedKeys()
+                        .hasAny(['skillLevel'])
+                      || validAssessmentSkillLevelUpdate()
+                    );
 
       match /pianoCalibrations/{calibrationId} {
         allow create, read, update, delete: if request.auth != null
                                             && request.auth.uid == userId;
+      }
+
+      match /assessment/{assessmentId} {
+        function ownsCurrentAssessment() {
+          return request.auth != null
+                 && request.auth.uid == userId
+                 && assessmentId == 'current';
+        }
+
+        function validQuestionnaireAnswers(answers) {
+          return answers is map
+                 && answers.keys().hasOnly([
+                      'piano_experience',
+                      'sheet_music_experience',
+                      'learning_method',
+                      'primary_goal'
+                    ])
+                 && answers.keys().hasAll([
+                      'piano_experience',
+                      'sheet_music_experience',
+                      'learning_method',
+                      'primary_goal'
+                    ])
+                 && answers.piano_experience in [
+                      'new_to_piano',
+                      'under_one_year',
+                      'one_to_three_years',
+                      'more_than_three_years'
+                    ]
+                 && answers.sheet_music_experience in [
+                      'not_familiar',
+                      'basic_familiarity',
+                      'moderate_familiarity',
+                      'comfortable'
+                    ]
+                 && answers.learning_method in [
+                      'no_formal_learning',
+                      'teacher',
+                      'self_taught',
+                      'mixed_learning'
+                    ]
+                 && answers.primary_goal in [
+                      'learn_notation',
+                      'improve_sight_reading',
+                      'improve_coordination',
+                      'track_progress'
+                    ];
+        }
+
+        function isSelfReportedBeginner(answers) {
+          return answers.piano_experience == 'new_to_piano'
+                 || answers.sheet_music_experience == 'not_familiar';
+        }
+
+        function validNotationReadingAnswers(answers) {
+          return answers is map
+                 && answers.keys().hasOnly([
+                      'beginner_treble_e4',
+                      'beginner_bass_g2',
+                      'beginner_treble_c5',
+                      'beginner_quarter_note',
+                      'beginner_half_note',
+                      'beginner_four_four_time',
+                      'intermediate_treble_c4',
+                      'intermediate_bass_e2',
+                      'intermediate_f_sharp',
+                      'intermediate_g_major',
+                      'intermediate_f_major',
+                      'intermediate_third',
+                      'advanced_bass_c4',
+                      'advanced_six_eight_time',
+                      'advanced_d_major',
+                      'advanced_perfect_fifth',
+                      'advanced_c_major_triad',
+                      'advanced_short_passage'
+                    ])
+                 && answers.keys().hasAll([
+                      'beginner_treble_e4',
+                      'beginner_bass_g2',
+                      'beginner_treble_c5',
+                      'beginner_quarter_note',
+                      'beginner_half_note',
+                      'beginner_four_four_time',
+                      'intermediate_treble_c4',
+                      'intermediate_bass_e2',
+                      'intermediate_f_sharp',
+                      'intermediate_g_major',
+                      'intermediate_f_major',
+                      'intermediate_third',
+                      'advanced_bass_c4',
+                      'advanced_six_eight_time',
+                      'advanced_d_major',
+                      'advanced_perfect_fifth',
+                      'advanced_c_major_triad',
+                      'advanced_short_passage'
+                    ])
+                 && answers.beginner_treble_e4 in [
+                      'c', 'd', 'e', 'f'
+                    ]
+                 && answers.beginner_bass_g2 in [
+                      'e', 'f', 'g', 'a'
+                    ]
+                 && answers.beginner_treble_c5 in [
+                      'a', 'b', 'c', 'd'
+                    ]
+                 && answers.beginner_quarter_note in [
+                      'half_beat', 'one_beat', 'two_beats', 'four_beats'
+                    ]
+                 && answers.beginner_half_note in [
+                      'half_beat', 'one_beat', 'two_beats', 'four_beats'
+                    ]
+                 && answers.beginner_four_four_time in [
+                      'two_quarter_beats',
+                      'three_quarter_beats',
+                      'four_quarter_beats',
+                      'four_eighth_beats'
+                    ]
+                 && answers.intermediate_treble_c4 in [
+                      'b', 'c', 'd', 'e'
+                    ]
+                 && answers.intermediate_bass_e2 in [
+                      'd', 'e', 'f', 'g'
+                    ]
+                 && answers.intermediate_f_sharp in [
+                      'e', 'f', 'f_sharp', 'g_flat'
+                    ]
+                 && answers.intermediate_g_major in [
+                      'c_major', 'g_major', 'd_major', 'f_major'
+                    ]
+                 && answers.intermediate_f_major in [
+                      'c_major', 'g_major', 'd_major', 'f_major'
+                    ]
+                 && answers.intermediate_third in [
+                      'second', 'third', 'fourth', 'fifth'
+                    ]
+                 && answers.advanced_bass_c4 in [
+                      'a', 'b', 'c', 'd'
+                    ]
+                 && answers.advanced_six_eight_time in [
+                      'two_dotted_quarter_beats',
+                      'three_quarter_beats',
+                      'four_quarter_beats',
+                      'six_quarter_beats'
+                    ]
+                 && answers.advanced_d_major in [
+                      'c_major', 'g_major', 'd_major', 'f_major'
+                    ]
+                 && answers.advanced_perfect_fifth in [
+                      'major_third',
+                      'perfect_fourth',
+                      'perfect_fifth',
+                      'major_sixth'
+                    ]
+                 && answers.advanced_c_major_triad in [
+                      'c_major', 'd_minor', 'e_minor', 'f_major'
+                    ]
+                 && answers.advanced_short_passage in [
+                      'two_beats', 'three_beats', 'four_beats', 'five_beats'
+                    ];
+        }
+
+        function notationPoint(answer, correctAnswer) {
+          return answer == correctAnswer ? 1 : 0;
+        }
+
+        function validNotationReadingScore(answers, score) {
+          return score is map
+                 && score.keys().hasOnly([
+                      'beginnerCorrect',
+                      'intermediateCorrect',
+                      'advancedCorrect',
+                      'totalCorrect'
+                    ])
+                 && score.keys().hasAll([
+                      'beginnerCorrect',
+                      'intermediateCorrect',
+                      'advancedCorrect',
+                      'totalCorrect'
+                    ])
+                 && score.beginnerCorrect is int
+                 && score.intermediateCorrect is int
+                 && score.advancedCorrect is int
+                 && score.totalCorrect is int
+                 && score.beginnerCorrect
+                    == notationPoint(answers.beginner_treble_e4, 'e')
+                       + notationPoint(answers.beginner_bass_g2, 'g')
+                       + notationPoint(answers.beginner_treble_c5, 'c')
+                       + notationPoint(
+                           answers.beginner_quarter_note,
+                           'one_beat'
+                         )
+                       + notationPoint(
+                           answers.beginner_half_note,
+                           'two_beats'
+                         )
+                       + notationPoint(
+                           answers.beginner_four_four_time,
+                           'four_quarter_beats'
+                         )
+                 && score.intermediateCorrect
+                    == notationPoint(answers.intermediate_treble_c4, 'c')
+                       + notationPoint(answers.intermediate_bass_e2, 'e')
+                       + notationPoint(
+                           answers.intermediate_f_sharp,
+                           'f_sharp'
+                         )
+                       + notationPoint(
+                           answers.intermediate_g_major,
+                           'g_major'
+                         )
+                       + notationPoint(
+                           answers.intermediate_f_major,
+                           'f_major'
+                         )
+                       + notationPoint(answers.intermediate_third, 'third')
+                 && score.advancedCorrect
+                    == notationPoint(answers.advanced_bass_c4, 'c')
+                       + notationPoint(
+                           answers.advanced_six_eight_time,
+                           'two_dotted_quarter_beats'
+                         )
+                       + notationPoint(
+                           answers.advanced_d_major,
+                           'd_major'
+                         )
+                       + notationPoint(
+                           answers.advanced_perfect_fifth,
+                           'perfect_fifth'
+                         )
+                       + notationPoint(
+                           answers.advanced_c_major_triad,
+                           'c_major'
+                         )
+                       + notationPoint(
+                           answers.advanced_short_passage,
+                           'four_beats'
+                         )
+                 && score.totalCorrect
+                    == score.beginnerCorrect
+                       + score.intermediateCorrect
+                       + score.advancedCorrect;
+        }
+
+        function validPianoTaskResult(
+          result,
+          taskId,
+          difficulty,
+          totalGroupCount
+        ) {
+          return result is map
+                 && result.keys().hasOnly([
+                      'taskId',
+                      'difficulty',
+                      'totalGroupCount',
+                      'correctGroupCount',
+                      'wrongGroupCount',
+                      'missedGroupCount',
+                      'timingMistakeCount'
+                    ])
+                 && result.keys().hasAll([
+                      'taskId',
+                      'difficulty',
+                      'totalGroupCount',
+                      'correctGroupCount',
+                      'wrongGroupCount',
+                      'missedGroupCount',
+                      'timingMistakeCount'
+                    ])
+                 && result.taskId == taskId
+                 && result.difficulty == difficulty
+                 && result.totalGroupCount == totalGroupCount
+                 && result.correctGroupCount is int
+                 && result.wrongGroupCount is int
+                 && result.missedGroupCount is int
+                 && result.timingMistakeCount is int
+                 && result.correctGroupCount >= 0
+                 && result.wrongGroupCount >= 0
+                 && result.missedGroupCount >= 0
+                 && result.timingMistakeCount >= 0
+                 && result.timingMistakeCount <= result.wrongGroupCount
+                 && result.correctGroupCount
+                    + result.wrongGroupCount
+                    + result.missedGroupCount
+                    == totalGroupCount;
+        }
+
+        function validPianoTaskResults(results) {
+          return results is map
+                 && results.keys().hasOnly([
+                      'beginner_middle_c',
+                      'beginner_five_finger_pattern',
+                      'beginner_c_major_chord',
+                      'intermediate_c_major_scale',
+                      'intermediate_c_major_arpeggio',
+                      'intermediate_chord_progression',
+                      'advanced_two_octave_scale',
+                      'advanced_chord_inversions',
+                      'advanced_parallel_scale'
+                    ])
+                 && results.keys().hasAll([
+                      'beginner_middle_c',
+                      'beginner_five_finger_pattern',
+                      'beginner_c_major_chord',
+                      'intermediate_c_major_scale',
+                      'intermediate_c_major_arpeggio',
+                      'intermediate_chord_progression',
+                      'advanced_two_octave_scale',
+                      'advanced_chord_inversions',
+                      'advanced_parallel_scale'
+                    ])
+                 && validPianoTaskResult(
+                      results.beginner_middle_c,
+                      'beginner_middle_c',
+                      'beginner',
+                      1
+                    )
+                 && validPianoTaskResult(
+                      results.beginner_five_finger_pattern,
+                      'beginner_five_finger_pattern',
+                      'beginner',
+                      5
+                    )
+                 && validPianoTaskResult(
+                      results.beginner_c_major_chord,
+                      'beginner_c_major_chord',
+                      'beginner',
+                      1
+                    )
+                 && validPianoTaskResult(
+                      results.intermediate_c_major_scale,
+                      'intermediate_c_major_scale',
+                      'intermediate',
+                      8
+                    )
+                 && validPianoTaskResult(
+                      results.intermediate_c_major_arpeggio,
+                      'intermediate_c_major_arpeggio',
+                      'intermediate',
+                      7
+                    )
+                 && validPianoTaskResult(
+                      results.intermediate_chord_progression,
+                      'intermediate_chord_progression',
+                      'intermediate',
+                      4
+                    )
+                 && validPianoTaskResult(
+                      results.advanced_two_octave_scale,
+                      'advanced_two_octave_scale',
+                      'advanced',
+                      15
+                    )
+                 && validPianoTaskResult(
+                      results.advanced_chord_inversions,
+                      'advanced_chord_inversions',
+                      'advanced',
+                      4
+                    )
+                 && validPianoTaskResult(
+                      results.advanced_parallel_scale,
+                      'advanced_parallel_scale',
+                      'advanced',
+                      8
+                    );
+        }
+
+        function validPianoExecutionScore(results, score) {
+          return score is map
+                 && score.keys().hasOnly([
+                      'beginnerCorrectGroups',
+                      'beginnerTotalGroups',
+                      'intermediateCorrectGroups',
+                      'intermediateTotalGroups',
+                      'advancedCorrectGroups',
+                      'advancedTotalGroups',
+                      'totalCorrectGroups',
+                      'totalGroups',
+                      'wrongGroups',
+                      'missedGroups',
+                      'timingMistakes'
+                    ])
+                 && score.keys().hasAll([
+                      'beginnerCorrectGroups',
+                      'beginnerTotalGroups',
+                      'intermediateCorrectGroups',
+                      'intermediateTotalGroups',
+                      'advancedCorrectGroups',
+                      'advancedTotalGroups',
+                      'totalCorrectGroups',
+                      'totalGroups',
+                      'wrongGroups',
+                      'missedGroups',
+                      'timingMistakes'
+                    ])
+                 && score.beginnerCorrectGroups is int
+                 && score.beginnerTotalGroups is int
+                 && score.intermediateCorrectGroups is int
+                 && score.intermediateTotalGroups is int
+                 && score.advancedCorrectGroups is int
+                 && score.advancedTotalGroups is int
+                 && score.totalCorrectGroups is int
+                 && score.totalGroups is int
+                 && score.wrongGroups is int
+                 && score.missedGroups is int
+                 && score.timingMistakes is int
+                 && score.beginnerTotalGroups == 7
+                 && score.intermediateTotalGroups == 19
+                 && score.advancedTotalGroups == 27
+                 && score.totalGroups == 53
+                 && score.beginnerCorrectGroups
+                    == results.beginner_middle_c.correctGroupCount
+                       + results.beginner_five_finger_pattern.correctGroupCount
+                       + results.beginner_c_major_chord.correctGroupCount
+                 && score.intermediateCorrectGroups
+                    == results.intermediate_c_major_scale.correctGroupCount
+                       + results.intermediate_c_major_arpeggio.correctGroupCount
+                       + results.intermediate_chord_progression.correctGroupCount
+                 && score.advancedCorrectGroups
+                    == results.advanced_two_octave_scale.correctGroupCount
+                       + results.advanced_chord_inversions.correctGroupCount
+                       + results.advanced_parallel_scale.correctGroupCount
+                 && score.totalCorrectGroups
+                    == score.beginnerCorrectGroups
+                       + score.intermediateCorrectGroups
+                       + score.advancedCorrectGroups
+                 && score.wrongGroups
+                    == results.beginner_middle_c.wrongGroupCount
+                       + results.beginner_five_finger_pattern.wrongGroupCount
+                       + results.beginner_c_major_chord.wrongGroupCount
+                       + results.intermediate_c_major_scale.wrongGroupCount
+                       + results.intermediate_c_major_arpeggio.wrongGroupCount
+                       + results.intermediate_chord_progression.wrongGroupCount
+                       + results.advanced_two_octave_scale.wrongGroupCount
+                       + results.advanced_chord_inversions.wrongGroupCount
+                       + results.advanced_parallel_scale.wrongGroupCount
+                 && score.missedGroups
+                    == results.beginner_middle_c.missedGroupCount
+                       + results.beginner_five_finger_pattern.missedGroupCount
+                       + results.beginner_c_major_chord.missedGroupCount
+                       + results.intermediate_c_major_scale.missedGroupCount
+                       + results.intermediate_c_major_arpeggio.missedGroupCount
+                       + results.intermediate_chord_progression.missedGroupCount
+                       + results.advanced_two_octave_scale.missedGroupCount
+                       + results.advanced_chord_inversions.missedGroupCount
+                       + results.advanced_parallel_scale.missedGroupCount
+                 && score.timingMistakes
+                    == results.beginner_middle_c.timingMistakeCount
+                       + results.beginner_five_finger_pattern.timingMistakeCount
+                       + results.beginner_c_major_chord.timingMistakeCount
+                       + results.intermediate_c_major_scale.timingMistakeCount
+                       + results.intermediate_c_major_arpeggio.timingMistakeCount
+                       + results.intermediate_chord_progression.timingMistakeCount
+                       + results.advanced_two_octave_scale.timingMistakeCount
+                       + results.advanced_chord_inversions.timingMistakeCount
+                       + results.advanced_parallel_scale.timingMistakeCount
+                 && score.totalCorrectGroups
+                    + score.wrongGroups
+                    + score.missedGroups
+                    == score.totalGroups;
+        }
+
+        function expectedNotationReadingLevel(score) {
+          return score.beginnerCorrect >= 4
+                 && score.intermediateCorrect >= 4
+                 && score.advancedCorrect >= 4
+                 ? 'advanced'
+                 : score.beginnerCorrect >= 4
+                   && score.intermediateCorrect >= 4
+                   ? 'intermediate'
+                   : 'beginner';
+        }
+
+        function passedPianoTier(correctGroups, totalGroups) {
+          return correctGroups * 100 >= totalGroups * 70;
+        }
+
+        function expectedPianoExecutionLevel(score) {
+          return passedPianoTier(
+                   score.beginnerCorrectGroups,
+                   score.beginnerTotalGroups
+                 )
+                 && passedPianoTier(
+                   score.intermediateCorrectGroups,
+                   score.intermediateTotalGroups
+                 )
+                 && passedPianoTier(
+                   score.advancedCorrectGroups,
+                   score.advancedTotalGroups
+                 )
+                 ? 'advanced'
+                 : passedPianoTier(
+                     score.beginnerCorrectGroups,
+                     score.beginnerTotalGroups
+                   )
+                   && passedPianoTier(
+                     score.intermediateCorrectGroups,
+                     score.intermediateTotalGroups
+                   )
+                   ? 'intermediate'
+                   : 'beginner';
+        }
+
+        function expectedFinalSkillLevel(notationLevel, pianoLevel) {
+          return notationLevel == 'beginner' || pianoLevel == 'beginner'
+                 ? 'beginner'
+                 : notationLevel == 'intermediate'
+                   || pianoLevel == 'intermediate'
+                   ? 'intermediate'
+                   : 'advanced';
+        }
+
+        function validPlacementLevels(notationScore, pianoScore, data) {
+          return data.notationReadingLevel
+                    == expectedNotationReadingLevel(notationScore)
+                 && data.pianoExecutionLevel
+                    == expectedPianoExecutionLevel(pianoScore)
+                 && data.finalSkillLevel
+                    == expectedFinalSkillLevel(
+                         data.notationReadingLevel,
+                         data.pianoExecutionLevel
+                       );
+        }
+
+        allow read: if ownsCurrentAssessment();
+
+        allow create: if ownsCurrentAssessment()
+                      && request.resource.data.keys().hasOnly([
+                           'userId',
+                           'status',
+                           'currentSection',
+                           'assessmentVersion',
+                           'startedAt',
+                           'expiresAt',
+                           'completedAt',
+                           'serverCheckedAt',
+                           'createdAt',
+                           'updatedAt'
+                         ])
+                      && request.resource.data.userId == userId
+                      && request.resource.data.status == 'inProgress'
+                      && request.resource.data.currentSection
+                         == 'introduction'
+                      && request.resource.data.assessmentVersion == 1
+                      && request.resource.data.startedAt == request.time
+                      && request.resource.data.expiresAt == null
+                      && request.resource.data.completedAt == null
+                      && request.resource.data.serverCheckedAt == request.time
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.updatedAt == request.time;
+
+        allow update: if ownsCurrentAssessment()
+                      && (
+                        (
+                          resource.data.expiresAt == null
+                          && request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'expiresAt',
+                                 'updatedAt'
+                               ])
+                          && request.resource.data.expiresAt is timestamp
+                          && request.resource.data.expiresAt
+                             == resource.data.startedAt
+                                + duration.value(3, 'd')
+                          && request.resource.data.updatedAt == request.time
+                        )
+                        ||
+                        (
+                          request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'serverCheckedAt',
+                                 'updatedAt'
+                               ])
+                          && resource.data.status == 'inProgress'
+                          && request.resource.data.serverCheckedAt
+                             == request.time
+                          && request.resource.data.updatedAt == request.time
+                        )
+                        ||
+                        (
+                          resource.data.status == 'inProgress'
+                          && resource.data.expiresAt is timestamp
+                          && request.time < resource.data.expiresAt
+                          && resource.data.currentSection == 'notationReading'
+                          && request.resource.data.currentSection
+                             == 'pianoExecution'
+                          && request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'notationReadingAnswers',
+                                 'notationReadingScore',
+                                 'currentSection',
+                                 'serverCheckedAt',
+                                 'updatedAt'
+                               ])
+                          && validNotationReadingAnswers(
+                               request.resource.data.notationReadingAnswers
+                             )
+                          && validNotationReadingScore(
+                               request.resource.data.notationReadingAnswers,
+                               request.resource.data.notationReadingScore
+                             )
+                          && request.resource.data.serverCheckedAt
+                             == request.time
+                          && request.resource.data.updatedAt == request.time
+                        )
+                        ||
+                        (
+                          resource.data.status == 'inProgress'
+                          && resource.data.expiresAt is timestamp
+                          && request.time < resource.data.expiresAt
+                          && resource.data.currentSection == 'pianoExecution'
+                          && request.resource.data.currentSection
+                             == 'results'
+                          && request.resource.data.status == 'completed'
+                          && request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'pianoTaskResults',
+                                 'pianoExecutionScore',
+                                 'notationReadingLevel',
+                                 'pianoExecutionLevel',
+                                 'finalSkillLevel',
+                                 'placementMethod',
+                                 'status',
+                                 'currentSection',
+                                 'completedAt',
+                                 'serverCheckedAt',
+                                 'updatedAt'
+                               ])
+                          && validPianoTaskResults(
+                               request.resource.data.pianoTaskResults
+                             )
+                          && validPianoExecutionScore(
+                               request.resource.data.pianoTaskResults,
+                               request.resource.data.pianoExecutionScore
+                             )
+                          && validPlacementLevels(
+                               resource.data.notationReadingScore,
+                               request.resource.data.pianoExecutionScore,
+                               request.resource.data
+                             )
+                          && request.resource.data.placementMethod
+                             == 'fullAssessment'
+                          && request.resource.data.completedAt == request.time
+                          && request.resource.data.serverCheckedAt
+                             == request.time
+                          && request.resource.data.updatedAt == request.time
+                        )
+                        ||
+                        (
+                          resource.data.status == 'inProgress'
+                          && resource.data.expiresAt is timestamp
+                          && request.time < resource.data.expiresAt
+                          && resource.data.currentSection == 'questionnaire'
+                          && request.resource.data.currentSection == 'results'
+                          && request.resource.data.status == 'completed'
+                          && request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'questionnaireAnswers',
+                                 'placementMethod',
+                                 'finalSkillLevel',
+                                 'status',
+                                 'currentSection',
+                                 'completedAt',
+                                 'serverCheckedAt',
+                                 'updatedAt'
+                               ])
+                          && validQuestionnaireAnswers(
+                               request.resource.data.questionnaireAnswers
+                             )
+                          && isSelfReportedBeginner(
+                               request.resource.data.questionnaireAnswers
+                             )
+                          && request.resource.data.placementMethod
+                             == 'selfReportedBeginner'
+                          && request.resource.data.finalSkillLevel
+                             == 'beginner'
+                          && request.resource.data.completedAt == request.time
+                          && request.resource.data.serverCheckedAt
+                             == request.time
+                          && request.resource.data.updatedAt == request.time
+                        )
+                        ||
+                        (
+                          resource.data.status == 'inProgress'
+                          && resource.data.expiresAt is timestamp
+                          && request.time < resource.data.expiresAt
+                          && request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'currentSection',
+                                 'serverCheckedAt',
+                                 'updatedAt'
+                               ])
+                          && request.resource.data.serverCheckedAt
+                             == request.time
+                          && request.resource.data.updatedAt == request.time
+                          && resource.data.currentSection == 'introduction'
+                          && request.resource.data.currentSection
+                             == 'questionnaire'
+                        )
+                        ||
+                        (
+                          resource.data.status == 'inProgress'
+                          && resource.data.expiresAt is timestamp
+                          && request.time < resource.data.expiresAt
+                          && resource.data.currentSection == 'questionnaire'
+                          && request.resource.data.currentSection
+                             == 'notationReading'
+                          && request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'questionnaireAnswers',
+                                 'currentSection',
+                                 'serverCheckedAt',
+                                 'updatedAt'
+                               ])
+                          && validQuestionnaireAnswers(
+                               request.resource.data.questionnaireAnswers
+                             )
+                          && !isSelfReportedBeginner(
+                               request.resource.data.questionnaireAnswers
+                             )
+                          && request.resource.data.serverCheckedAt
+                             == request.time
+                          && request.resource.data.updatedAt == request.time
+                        )
+                        ||
+                        (
+                          resource.data.status == 'inProgress'
+                          && resource.data.expiresAt is timestamp
+                          && request.time >= resource.data.expiresAt
+                          && request.resource.data.diff(resource.data)
+                               .affectedKeys()
+                               .hasOnly([
+                                 'status',
+                                 'updatedAt'
+                               ])
+                          && request.resource.data.status == 'expired'
+                          && request.resource.data.updatedAt == request.time
+                          && getAfter(
+                               /databases/$(database)/documents/users/$(userId)
+                             ).data.skillLevel == 'beginner'
+                          && getAfter(
+                               /databases/$(database)/documents/users/$(userId)
+                             ).data.updatedAt == request.time
+                        )
+                      );
+
+        allow delete: if false;
       }
 
       match /challenge_progress/{challengeItemId} {
