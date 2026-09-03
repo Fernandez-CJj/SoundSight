@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'fundamental_lessons_screen.dart';
+import 'fundamental_exercise_screen.dart';
+import 'selected_fundamental_lesson_screen.dart';
 
 class FundamentalScreen extends StatelessWidget {
   const FundamentalScreen({super.key});
@@ -13,6 +14,9 @@ class FundamentalScreen extends StatelessWidget {
       body: FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
         future: FirebaseFirestore.instance
             .collection('fundamentals_folders')
+            .doc('fundamentals')
+            .collection('lessons')
+            .orderBy('title')
             .get(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -23,31 +27,60 @@ class FundamentalScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final folders = snapshot.data!.docs;
+          final items = snapshot.data!.docs;
 
-          if (folders.isEmpty) {
+          if (items.isEmpty) {
             return const Center(child: Text('No fundamentals are available.'));
           }
 
           return ListView.builder(
             padding: const EdgeInsets.all(12),
-            itemCount: folders.length,
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              final folder = folders[index];
-              final data = folder.data();
-              final title = data['title'] as String? ?? folder.id;
+              final item = items[index];
+              final data = item.data();
+              final title = data['title'] as String? ?? item.id;
+              final type = data['type'] as String?;
+              final isLesson = type == 'lesson';
+              final isExercise = type == 'exercise';
 
               return Card(
                 child: ListTile(
-                  leading: const Icon(Icons.folder_outlined),
+                  leading: Icon(
+                    isLesson
+                        ? Icons.menu_book_outlined
+                        : isExercise
+                        ? Icons.music_note_outlined
+                        : Icons.help_outline,
+                  ),
                   title: Text(title),
+                  subtitle: Text(
+                    isLesson
+                        ? 'Lesson'
+                        : isExercise
+                        ? 'Exercise'
+                        : 'Unsupported item',
+                  ),
                   onTap: () {
+                    if (!isLesson && !isExercise) {
+                      return;
+                    }
+
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => FundamentalLessonsScreen(
-                          folderId: folder.id,
-                          folderTitle: title,
-                        ),
+                        builder: (context) => isLesson
+                            ? SelectedFundamentalLessonScreen(
+                                title: title,
+                                slides: _slidesFrom(data['slides']),
+                              )
+                            : FundamentalExerciseScreen(
+                                title: title,
+                                scoreDocumentPath:
+                                    'fundamentals_folders/fundamentals/lessons/${item.id}',
+                                pdfUrl: data['pdfUrl'] as String? ?? '',
+                                pdfFileName:
+                                    data['pdfFileName'] as String? ?? '',
+                              ),
                       ),
                     );
                   },
@@ -58,5 +91,16 @@ class FundamentalScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  static List<Map<String, dynamic>> _slidesFrom(dynamic value) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value
+        .whereType<Map>()
+        .map((slide) => Map<String, dynamic>.from(slide))
+        .toList(growable: false);
   }
 }
