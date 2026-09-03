@@ -7,6 +7,7 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
+import 'package:soundsight/screens/practice/screens/challenges/synthesia/synthesia_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class PublishedCompositionViewerScreen extends StatefulWidget {
@@ -113,13 +114,78 @@ class _PublishedCompositionViewerScreenState
           ),
         ],
       ),
-      body: Column(
-        children: [
-          if (!isLandscape) buildInformationHeader(),
-          Expanded(child: buildPdfViewer()),
-        ],
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        child: SizedBox(
+          width: double.infinity,
+          child: FloatingActionButton.extended(
+            onPressed: showPlayModeDialog,
+            backgroundColor: colors.primaryColor,
+            foregroundColor: colors.backgroundColor,
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: const Text('Play'),
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.only(bottom: 72),
+        child: Column(
+          children: [
+            if (!isLandscape) buildInformationHeader(),
+            Expanded(child: buildPdfViewer()),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> showPlayModeDialog() async {
+    final selectedMode = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: widget.colors.surfaceColor,
+          title: Text(
+            'Choose play mode',
+            style: TextStyle(color: widget.colors.primaryColor),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(
+                  Icons.music_note_rounded,
+                  color: widget.colors.primaryColor,
+                ),
+                title: Text(
+                  'Sight Reading',
+                  style: TextStyle(color: widget.colors.primaryColor),
+                ),
+                onTap: () => Navigator.of(dialogContext).pop('sightReading'),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.piano_rounded,
+                  color: widget.colors.primaryColor,
+                ),
+                title: Text(
+                  'Synthesia',
+                  style: TextStyle(color: widget.colors.primaryColor),
+                ),
+                onTap: () => Navigator.of(dialogContext).pop('synthesia'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selectedMode == 'synthesia' && mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const SynthesiaScreen()),
+      );
+    }
   }
 
   Widget buildInformationHeader() {

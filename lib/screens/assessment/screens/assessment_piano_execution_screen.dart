@@ -741,18 +741,15 @@ class _AssessmentPianoExecutionScreenState
       return const Text('Performing');
     }
 
+    // A recorded task can be submitted or advanced without reconnecting MIDI.
+    if (_isTaskComplete) {
+      return Text(_isLastTask ? 'Submit Piano Results' : 'Next Task');
+    }
+
     if (!_midiIsConnected) {
       return const Text('Connect MIDI');
     }
 
-    if (!_isTaskComplete) {
-      return const Text('Start Task');
-    }
-
-    if (_isLastTask) {
-      return const Text('Submit Piano Results');
-    }
-
-    return const Text('Next Task');
+    return const Text('Start Task');
   }
 }

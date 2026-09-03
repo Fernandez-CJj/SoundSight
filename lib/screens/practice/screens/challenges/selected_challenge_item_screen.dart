@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/screens/practice/screens/challenges/ar/ar_practice_screen.dart';
+import 'package:soundsight/screens/practice/screens/challenges/synthesia/synthesia_screen.dart';
 
 import 'sight_reading/music_sheet_reading_screen.dart';
 
@@ -53,7 +54,14 @@ class SelectedChallengeItemScreen extends StatelessWidget {
                   child: const Text('Music Sheet Reading'),
                 ),
                 const SizedBox(height: 17),
-                const ElevatedButton(onPressed: null, child: Text('Synthesia')),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => SynthesiaScreen()),
+                    );
+                  },
+                  child: Text('Synthesia'),
+                ),
               ],
             ),
           ),

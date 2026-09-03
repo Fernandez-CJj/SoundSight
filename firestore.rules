@@ -364,50 +364,7 @@ service cloud.firestore {
                        + score.advancedCorrect;
         }
 
-        function validPianoTaskResult(
-          result,
-          taskId,
-          difficulty,
-          totalGroupCount
-        ) {
-          return result is map
-                 && result.keys().hasOnly([
-                      'taskId',
-                      'difficulty',
-                      'totalGroupCount',
-                      'correctGroupCount',
-                      'wrongGroupCount',
-                      'missedGroupCount',
-                      'timingMistakeCount'
-                    ])
-                 && result.keys().hasAll([
-                      'taskId',
-                      'difficulty',
-                      'totalGroupCount',
-                      'correctGroupCount',
-                      'wrongGroupCount',
-                      'missedGroupCount',
-                      'timingMistakeCount'
-                    ])
-                 && result.taskId == taskId
-                 && result.difficulty == difficulty
-                 && result.totalGroupCount == totalGroupCount
-                 && result.correctGroupCount is int
-                 && result.wrongGroupCount is int
-                 && result.missedGroupCount is int
-                 && result.timingMistakeCount is int
-                 && result.correctGroupCount >= 0
-                 && result.wrongGroupCount >= 0
-                 && result.missedGroupCount >= 0
-                 && result.timingMistakeCount >= 0
-                 && result.timingMistakeCount <= result.wrongGroupCount
-                 && result.correctGroupCount
-                    + result.wrongGroupCount
-                    + result.missedGroupCount
-                    == totalGroupCount;
-        }
-
-        function validPianoTaskResults(results) {
+        function validPianoExecutionScore(results, score) {
           return results is map
                  && results.keys().hasOnly([
                       'beginner_middle_c',
@@ -431,64 +388,7 @@ service cloud.firestore {
                       'advanced_chord_inversions',
                       'advanced_parallel_scale'
                     ])
-                 && validPianoTaskResult(
-                      results.beginner_middle_c,
-                      'beginner_middle_c',
-                      'beginner',
-                      1
-                    )
-                 && validPianoTaskResult(
-                      results.beginner_five_finger_pattern,
-                      'beginner_five_finger_pattern',
-                      'beginner',
-                      5
-                    )
-                 && validPianoTaskResult(
-                      results.beginner_c_major_chord,
-                      'beginner_c_major_chord',
-                      'beginner',
-                      1
-                    )
-                 && validPianoTaskResult(
-                      results.intermediate_c_major_scale,
-                      'intermediate_c_major_scale',
-                      'intermediate',
-                      8
-                    )
-                 && validPianoTaskResult(
-                      results.intermediate_c_major_arpeggio,
-                      'intermediate_c_major_arpeggio',
-                      'intermediate',
-                      7
-                    )
-                 && validPianoTaskResult(
-                      results.intermediate_chord_progression,
-                      'intermediate_chord_progression',
-                      'intermediate',
-                      4
-                    )
-                 && validPianoTaskResult(
-                      results.advanced_two_octave_scale,
-                      'advanced_two_octave_scale',
-                      'advanced',
-                      15
-                    )
-                 && validPianoTaskResult(
-                      results.advanced_chord_inversions,
-                      'advanced_chord_inversions',
-                      'advanced',
-                      4
-                    )
-                 && validPianoTaskResult(
-                      results.advanced_parallel_scale,
-                      'advanced_parallel_scale',
-                      'advanced',
-                      8
-                    );
-        }
-
-        function validPianoExecutionScore(results, score) {
-          return score is map
+                 && score is map
                  && score.keys().hasOnly([
                       'beginnerCorrectGroups',
                       'beginnerTotalGroups',
@@ -530,52 +430,25 @@ service cloud.firestore {
                  && score.intermediateTotalGroups == 19
                  && score.advancedTotalGroups == 27
                  && score.totalGroups == 53
+                 && score.beginnerCorrectGroups >= 0
                  && score.beginnerCorrectGroups
-                    == results.beginner_middle_c.correctGroupCount
-                       + results.beginner_five_finger_pattern.correctGroupCount
-                       + results.beginner_c_major_chord.correctGroupCount
+                    <= score.beginnerTotalGroups
+                 && score.intermediateCorrectGroups >= 0
                  && score.intermediateCorrectGroups
-                    == results.intermediate_c_major_scale.correctGroupCount
-                       + results.intermediate_c_major_arpeggio.correctGroupCount
-                       + results.intermediate_chord_progression.correctGroupCount
+                    <= score.intermediateTotalGroups
+                 && score.advancedCorrectGroups >= 0
                  && score.advancedCorrectGroups
-                    == results.advanced_two_octave_scale.correctGroupCount
-                       + results.advanced_chord_inversions.correctGroupCount
-                       + results.advanced_parallel_scale.correctGroupCount
+                    <= score.advancedTotalGroups
                  && score.totalCorrectGroups
                     == score.beginnerCorrectGroups
                        + score.intermediateCorrectGroups
                        + score.advancedCorrectGroups
-                 && score.wrongGroups
-                    == results.beginner_middle_c.wrongGroupCount
-                       + results.beginner_five_finger_pattern.wrongGroupCount
-                       + results.beginner_c_major_chord.wrongGroupCount
-                       + results.intermediate_c_major_scale.wrongGroupCount
-                       + results.intermediate_c_major_arpeggio.wrongGroupCount
-                       + results.intermediate_chord_progression.wrongGroupCount
-                       + results.advanced_two_octave_scale.wrongGroupCount
-                       + results.advanced_chord_inversions.wrongGroupCount
-                       + results.advanced_parallel_scale.wrongGroupCount
-                 && score.missedGroups
-                    == results.beginner_middle_c.missedGroupCount
-                       + results.beginner_five_finger_pattern.missedGroupCount
-                       + results.beginner_c_major_chord.missedGroupCount
-                       + results.intermediate_c_major_scale.missedGroupCount
-                       + results.intermediate_c_major_arpeggio.missedGroupCount
-                       + results.intermediate_chord_progression.missedGroupCount
-                       + results.advanced_two_octave_scale.missedGroupCount
-                       + results.advanced_chord_inversions.missedGroupCount
-                       + results.advanced_parallel_scale.missedGroupCount
-                 && score.timingMistakes
-                    == results.beginner_middle_c.timingMistakeCount
-                       + results.beginner_five_finger_pattern.timingMistakeCount
-                       + results.beginner_c_major_chord.timingMistakeCount
-                       + results.intermediate_c_major_scale.timingMistakeCount
-                       + results.intermediate_c_major_arpeggio.timingMistakeCount
-                       + results.intermediate_chord_progression.timingMistakeCount
-                       + results.advanced_two_octave_scale.timingMistakeCount
-                       + results.advanced_chord_inversions.timingMistakeCount
-                       + results.advanced_parallel_scale.timingMistakeCount
+                 && score.totalCorrectGroups >= 0
+                 && score.totalCorrectGroups <= score.totalGroups
+                 && score.wrongGroups >= 0
+                 && score.missedGroups >= 0
+                 && score.timingMistakes >= 0
+                 && score.timingMistakes <= score.wrongGroups
                  && score.totalCorrectGroups
                     + score.wrongGroups
                     + score.missedGroups
@@ -752,9 +625,6 @@ service cloud.firestore {
                                  'serverCheckedAt',
                                  'updatedAt'
                                ])
-                          && validPianoTaskResults(
-                               request.resource.data.pianoTaskResults
-                             )
                           && validPianoExecutionScore(
                                request.resource.data.pianoTaskResults,
                                request.resource.data.pianoExecutionScore
