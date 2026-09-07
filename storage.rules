@@ -7,6 +7,25 @@ service firebase.storage {
              && request.auth.token.email_verified == true;
     }
 
+    function isAdmin() {
+      return request.auth != null
+             && firestore.get(
+                  /databases/(default)/documents/admins/$(request.auth.uid)
+                ).data.enabled == true;
+    }
+
+    match /challenges/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
+    match /fundamentals/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
+    match /pieces/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
     match /profilePictures/{userId}/{fileName} {
       allow read: if isVerifiedUser();
 
@@ -54,5 +73,6 @@ service firebase.storage {
 
       allow create, update, delete: if false;
     }
+
   }
 }

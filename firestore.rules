@@ -7,6 +7,13 @@ service cloud.firestore {
              && request.auth.token.email_verified == true;
     }
 
+    function isAdmin() {
+      return request.auth != null
+             && get(
+                  /databases/$(database)/documents/admins/$(request.auth.uid)
+                ).data.enabled == true;
+    }
+
     function validMusicSheet(data) {
       return data.title is string
              && data.title.size() > 0
@@ -113,7 +120,9 @@ service cloud.firestore {
                       || request.resource.data.skillLevel == null
                     );
 
-      allow read, delete: if ownsUser();
+      allow read: if ownsUser() || isAdmin();
+
+      allow delete: if ownsUser();
 
       allow update: if ownsUser()
                     && (
@@ -793,23 +802,35 @@ service cloud.firestore {
     }
 
     match /challenge_levels/{levelId} {
-      allow read: if isVerifiedUser();
-      allow create, update, delete: if false;
+      allow read: if isVerifiedUser() || isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /challenge_items/{itemId} {
-      allow read: if isVerifiedUser();
-      allow create, update, delete: if false;
+      allow read: if isVerifiedUser() || isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /fundamentals_folders/{folderId} {
-      allow read: if isVerifiedUser();
-      allow create, update, delete: if false;
+      allow read: if isVerifiedUser() || isAdmin();
+      allow create, update, delete: if isAdmin();
 
       match /lessons/{lessonId} {
-        allow read: if isVerifiedUser();
-        allow create, update, delete: if false;
+        allow read: if isVerifiedUser() || isAdmin();
+        allow create, update, delete: if isAdmin();
       }
+    }
+
+    match /available_pieces/{pieceId} {
+      allow read: if isVerifiedUser() || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow get: if request.auth != null
+                 && request.auth.uid == adminId;
+
+      allow list, create, update, delete: if false;
     }
 
     match /musicSheets/{sheetId} {
@@ -932,5 +953,6 @@ service cloud.firestore {
       allow delete: if isVerifiedUser()
                     && resource.data.userId == request.auth.uid;
     }
+
   }
 }
