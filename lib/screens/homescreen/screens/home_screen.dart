@@ -8,6 +8,7 @@ import 'package:soundsight/screens/composition/models/published_composition.dart
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_composition_viewer_screen.dart';
+import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/widgets/community_compositions_section.dart';
 import 'package:soundsight/screens/profile/player_progress_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/practice_container.dart';
@@ -155,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onCaptureSheet: () {
                 openAddSheet(SheetInputAction.capture);
               },
+              onSavedSheets: openSavedSheets,
               onComposition: openCompositions,
               onPublishedCompositions: openPublishedCompositions,
             ),
@@ -222,6 +224,14 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MyCompositionsScreen(isDarkMode: isDarkMode),
+      ),
+    );
+  }
+
+  void openSavedSheets() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SavedCompositionsScreen(isDarkMode: isDarkMode),
       ),
     );
   }

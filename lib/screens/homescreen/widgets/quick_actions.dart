@@ -10,6 +10,7 @@ class QuickActions extends StatelessWidget {
     required this.onMusicSheets,
     required this.onUploadSheet,
     required this.onCaptureSheet,
+    required this.onSavedSheets,
     required this.onComposition,
     required this.onPublishedCompositions,
   });
@@ -18,6 +19,7 @@ class QuickActions extends StatelessWidget {
   final VoidCallback onMusicSheets;
   final VoidCallback onUploadSheet;
   final VoidCallback onCaptureSheet;
+  final VoidCallback onSavedSheets;
   final VoidCallback onComposition;
   final VoidCallback onPublishedCompositions;
 
@@ -42,11 +44,11 @@ class QuickActions extends StatelessWidget {
         const Color(0xFFF59E0B),
         onCaptureSheet,
       ),
-      const _QuickAction(
+      _QuickAction(
         'Saved Sheets',
         Icons.folder_open,
-        Color(0xFF8B5CF6),
-        null,
+        const Color(0xFF8B5CF6),
+        onSavedSheets,
       ),
       _QuickAction(
         'Composition',

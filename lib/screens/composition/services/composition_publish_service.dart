@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:soundsight/screens/composition/models/composition.dart';
 
 class CompositionPublishService {
-  static const String backendUrl = 'http://127.0.0.1:8000';
+  static const String backendUrl = 'http://10.93.200.3:8000';
 
   Future<String> publishComposition(Composition composition) async {
     final requestData = composition.toMap();
