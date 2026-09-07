@@ -90,6 +90,7 @@ flutter:
     - assets/audio/piano/
     - assets/audio/piano/cleaned/
     - assets/synthesi_video.mp4
+    - assets/number_notation_video.mp4
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

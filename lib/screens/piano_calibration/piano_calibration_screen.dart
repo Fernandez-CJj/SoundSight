@@ -34,6 +34,7 @@ import '../practice/screens/challenges/ar/models/ar_score_timeline.dart';
 import '../practice/screens/challenges/ar/services/ar_practice_performance_tracker.dart';
 import '../practice/screens/challenges/ar/utils/midi_note_utils.dart';
 import '../practice/screens/challenges/ar/widgets/ar_falling_notes_overlay.dart';
+import '../practice/screens/challenges/ar/number_notation_video_screen.dart';
 
 /// Camera-based piano calibration and AR practice screen.
 ///
@@ -550,7 +551,9 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                         )
                       else
                         FilledButton.icon(
-                          onPressed: canStart ? startPracticePlayback : null,
+                          onPressed: canStart
+                              ? choosePracticeDisplayMode
+                              : null,
                           icon: const Icon(Icons.play_arrow),
                           label: const Text('Start'),
                           style: FilledButton.styleFrom(
@@ -630,6 +633,53 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         ),
       ],
     );
+  }
+
+  /// Lets the user choose the visual notation shown during AR practice.
+  Future<void> choosePracticeDisplayMode() async {
+    String? selectedMode = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          icon: const Icon(Icons.visibility_outlined, size: 40),
+          title: const Text('Choose notation'),
+          content: const Text(
+            'Select how you want the music to appear during practice.',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(dialogContext).pop('notes');
+              },
+              icon: const Icon(Icons.music_note),
+              label: const Text('Notes'),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.of(dialogContext).pop('numbers');
+              },
+              icon: const Icon(Icons.numbers),
+              label: const Text('Number Notation'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || selectedMode == null) {
+      return;
+    }
+
+    if (selectedMode == 'notes') {
+      startPracticePlayback();
+    } else if (selectedMode == 'numbers') {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const NumberNotationVideoScreen(),
+        ),
+      );
+    }
   }
 
   /// Builds the color-coded message for the most recent evaluated input.
