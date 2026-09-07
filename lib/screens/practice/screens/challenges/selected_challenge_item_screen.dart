@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:soundsight/screens/practice/screens/challenges/ar/ar_practice_screen.dart';
 import 'package:soundsight/screens/practice/screens/challenges/synthesia/synthesia_screen.dart';
 
+import '../music_sheet_pdf_screen.dart';
 import 'sight_reading/music_sheet_reading_screen.dart';
 
 class SelectedChallengeItemScreen extends StatelessWidget {
@@ -9,10 +10,14 @@ class SelectedChallengeItemScreen extends StatelessWidget {
     super.key,
     required this.challengeItemId,
     required this.title,
+    required this.pdfUrl,
+    required this.pdfFileName,
   });
 
   final String challengeItemId;
   final String title;
+  final String pdfUrl;
+  final String pdfFileName;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +45,7 @@ class SelectedChallengeItemScreen extends StatelessWidget {
                   },
                   child: Text('AR Practice'),
                 ),
+                const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -53,7 +59,7 @@ class SelectedChallengeItemScreen extends StatelessWidget {
                   },
                   child: const Text('Music Sheet Reading'),
                 ),
-                const SizedBox(height: 17),
+                const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -62,6 +68,23 @@ class SelectedChallengeItemScreen extends StatelessWidget {
                   },
                   child: Text('Synthesia'),
                 ),
+                if (pdfUrl.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MusicSheetPdfScreen(
+                            title: title,
+                            pdfUrl: pdfUrl,
+                            pdfFileName: pdfFileName,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('View Music Sheet'),
+                  ),
+                ],
               ],
             ),
           ),

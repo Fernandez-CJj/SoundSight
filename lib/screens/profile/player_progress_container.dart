@@ -24,14 +24,14 @@ class PlayerProgressContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = experienceToNextLevel <= 0
         ? 0.0
-        : (experiencePoints / experienceToNextLevel)
-              .clamp(0.0, 1.0)
-              .toDouble();
+        : (experiencePoints / experienceToNextLevel).clamp(0.0, 1.0).toDouble();
     final remainingExperience = (experienceToNextLevel - experiencePoints)
         .clamp(0, experienceToNextLevel);
-    final rank = skillLevel.isEmpty
-        ? 'Beginner'
-        : '${skillLevel[0].toUpperCase()}${skillLevel.substring(1)}';
+    final normalizedSkillLevel = skillLevel.trim();
+    final isUnderAssessment = normalizedSkillLevel.isEmpty;
+    final rank = isUnderAssessment
+        ? 'Under Assessment'
+        : '${normalizedSkillLevel[0].toUpperCase()}${normalizedSkillLevel.substring(1)}';
 
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
@@ -74,7 +74,7 @@ class PlayerProgressContainer extends StatelessWidget {
                     ),
                     Gap(AppSpacing.xs),
                     Text(
-                      '$rank rank',
+                      isUnderAssessment ? rank : '$rank rank',
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -137,11 +137,7 @@ class PlayerProgressContainer extends StatelessWidget {
           Gap(AppSpacing.sm),
           Row(
             children: [
-              Icon(
-                Icons.bolt_rounded,
-                color: colors.primaryColor,
-                size: 17,
-              ),
+              Icon(Icons.bolt_rounded, color: colors.primaryColor, size: 17),
               Gap(AppSpacing.xs),
               Text(
                 '$remainingExperience XP needed',

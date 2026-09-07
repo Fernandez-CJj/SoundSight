@@ -9,12 +9,10 @@ class AccountContainer extends StatelessWidget {
     super.key,
     required this.colors,
     required this.onEditProfile,
-    required this.onChangePassword,
   });
 
   final AppThemeColors colors;
   final VoidCallback onEditProfile;
-  final VoidCallback onChangePassword;
 
   @override
   Widget build(BuildContext context) {
@@ -56,26 +54,6 @@ class AccountContainer extends StatelessWidget {
                   color: colors.secondaryTextColor,
                 ),
                 onTap: onEditProfile,
-              ),
-              Divider(height: 1, indent: 56, color: colors.borderColor),
-              ListTile(
-                leading: Icon(
-                  Icons.lock_outline_rounded,
-                  color: colors.primaryColor,
-                ),
-                title: Text(
-                  'Change Password',
-                  style: TextStyle(
-                    color: colors.primaryColor,
-                    fontSize: AppTextSizes.label,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  color: colors.secondaryTextColor,
-                ),
-                onTap: onChangePassword,
               ),
             ],
           ),

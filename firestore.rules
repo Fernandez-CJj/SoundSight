@@ -2,6 +2,11 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isVerifiedUser() {
+      return request.auth != null
+             && request.auth.token.email_verified == true;
+    }
+
     function validMusicSheet(data) {
       return data.title is string
              && data.title.size() > 0
@@ -70,7 +75,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       function ownsUser() {
-        return request.auth != null
+        return isVerifiedUser()
                && request.auth.uid == userId;
       }
 
@@ -119,13 +124,13 @@ service cloud.firestore {
                     );
 
       match /pianoCalibrations/{calibrationId} {
-        allow create, read, update, delete: if request.auth != null
+        allow create, read, update, delete: if isVerifiedUser()
                                             && request.auth.uid == userId;
       }
 
       match /assessment/{assessmentId} {
         function ownsCurrentAssessment() {
-          return request.auth != null
+          return isVerifiedUser()
                  && request.auth.uid == userId
                  && assessmentId == 'current';
         }
@@ -747,10 +752,10 @@ service cloud.firestore {
       }
 
       match /challenge_progress/{challengeItemId} {
-        allow read: if request.auth != null
+        allow read: if isVerifiedUser()
                     && request.auth.uid == userId;
 
-        allow create: if request.auth != null
+        allow create: if isVerifiedUser()
                       && request.auth.uid == userId
                       && exists(
                            /databases/$(database)/documents/challenge_items/$(challengeItemId)
@@ -788,34 +793,34 @@ service cloud.firestore {
     }
 
     match /challenge_levels/{levelId} {
-      allow read: if request.auth != null;
+      allow read: if isVerifiedUser();
       allow create, update, delete: if false;
     }
 
     match /challenge_items/{itemId} {
-      allow read: if request.auth != null;
+      allow read: if isVerifiedUser();
       allow create, update, delete: if false;
     }
 
     match /fundamentals_folders/{folderId} {
-      allow read: if request.auth != null;
+      allow read: if isVerifiedUser();
       allow create, update, delete: if false;
 
       match /lessons/{lessonId} {
-        allow read: if request.auth != null;
+        allow read: if isVerifiedUser();
         allow create, update, delete: if false;
       }
     }
 
     match /musicSheets/{sheetId} {
-      allow create: if request.auth != null
+      allow create: if isVerifiedUser()
                     && request.resource.data.ownerId == request.auth.uid
                     && validMusicSheet(request.resource.data);
 
-      allow read, delete: if request.auth != null
+      allow read, delete: if isVerifiedUser()
                           && resource.data.ownerId == request.auth.uid;
 
-      allow update: if request.auth != null
+      allow update: if isVerifiedUser()
                     && resource.data.ownerId == request.auth.uid
                     && request.resource.data.ownerId
                        == resource.data.ownerId
@@ -823,16 +828,16 @@ service cloud.firestore {
     }
 
     match /compositions/{compositionId} {
-      allow create: if request.auth != null
+      allow create: if isVerifiedUser()
                     && request.resource.data.ownerId == request.auth.uid
                     && request.resource.data.createdAt == request.time
                     && request.resource.data.updatedAt == request.time
                     && validComposition(request.resource.data);
 
-      allow read, delete: if request.auth != null
+      allow read, delete: if isVerifiedUser()
                           && resource.data.ownerId == request.auth.uid;
 
-      allow update: if request.auth != null
+      allow update: if isVerifiedUser()
                     && resource.data.ownerId == request.auth.uid
                     && request.resource.data.ownerId
                        == resource.data.ownerId
@@ -843,19 +848,19 @@ service cloud.firestore {
     }
 
     match /compositionPosts/{postId} {
-      allow read: if request.auth != null;
+      allow read: if isVerifiedUser();
 
       allow create, update, delete: if false;
 
       match /versions/{versionId} {
-        allow read: if request.auth != null;
+        allow read: if isVerifiedUser();
 
         allow create, update, delete: if false;
 
         match /likes/{userId} {
-          allow read: if request.auth != null;
+          allow read: if isVerifiedUser();
 
-          allow create: if request.auth != null
+          allow create: if isVerifiedUser()
                         && request.auth.uid == userId
                         && request.resource.data.keys().hasOnly([
                              'userId',
@@ -866,14 +871,14 @@ service cloud.firestore {
 
           allow update: if false;
 
-          allow delete: if request.auth != null
+          allow delete: if isVerifiedUser()
                         && request.auth.uid == userId;
         }
 
         match /comments/{commentId} {
-          allow read: if request.auth != null;
+          allow read: if isVerifiedUser();
 
-          allow create: if request.auth != null
+          allow create: if isVerifiedUser()
                         && request.resource.data.keys().hasOnly([
                              'userId',
                              'username',
@@ -891,7 +896,7 @@ service cloud.firestore {
 
           allow update: if false;
 
-          allow delete: if request.auth != null
+          allow delete: if isVerifiedUser()
                         && (
                           request.auth.uid == resource.data.userId
                           || request.auth.uid == get(
@@ -903,13 +908,13 @@ service cloud.firestore {
     }
 
     match /savedCompositionPosts/{saveId} {
-      allow get: if request.auth != null
+      allow get: if isVerifiedUser()
                  && saveId.matches(request.auth.uid + '_.*');
 
-      allow list: if request.auth != null
+      allow list: if isVerifiedUser()
                   && resource.data.userId == request.auth.uid;
 
-      allow create: if request.auth != null
+      allow create: if isVerifiedUser()
                     && request.resource.data.keys().hasOnly([
                          'userId',
                          'postId',
@@ -924,7 +929,7 @@ service cloud.firestore {
 
       allow update: if false;
 
-      allow delete: if request.auth != null
+      allow delete: if isVerifiedUser()
                     && resource.data.userId == request.auth.uid;
     }
   }

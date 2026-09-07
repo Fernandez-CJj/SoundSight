@@ -11,6 +11,7 @@ class QuickActions extends StatelessWidget {
     required this.onUploadSheet,
     required this.onCaptureSheet,
     required this.onComposition,
+    required this.onPublishedCompositions,
   });
 
   final AppThemeColors colors;
@@ -18,6 +19,7 @@ class QuickActions extends StatelessWidget {
   final VoidCallback onUploadSheet;
   final VoidCallback onCaptureSheet;
   final VoidCallback onComposition;
+  final VoidCallback onPublishedCompositions;
 
   @override
   Widget build(BuildContext context) {
@@ -52,11 +54,11 @@ class QuickActions extends StatelessWidget {
         const Color(0xFFEC4899),
         onComposition,
       ),
-      const _QuickAction(
-        'Practice Results',
-        Icons.bar_chart,
-        Color(0xFF06B6D4),
-        null,
+      _QuickAction(
+        'Published Compositions',
+        Icons.public_rounded,
+        const Color(0xFF06B6D4),
+        onPublishedCompositions,
       ),
     ];
 
@@ -114,7 +116,7 @@ class QuickActions extends StatelessWidget {
                         Text(
                           action.label,
                           textAlign: TextAlign.center,
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: colors.primaryColor,

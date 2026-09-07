@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
-import 'package:soundsight/screens/auth/login_screen.dart';
+import 'package:soundsight/screens/auth/login/login_screen.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
@@ -27,7 +27,6 @@ enum DrawerItem {
   savedSheets,
   composition,
   publishedCompositions,
-  practiceResults,
   profile,
 }
 
@@ -224,13 +223,6 @@ class AppDrawer extends StatelessWidget {
                   );
                 }
               },
-            ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.practiceResults,
-              icon: Icons.bar_chart_outlined,
-              title: 'Practice Results',
-              onTap: () {},
             ),
             Divider(color: colors.borderColor),
             SwitchListTile(

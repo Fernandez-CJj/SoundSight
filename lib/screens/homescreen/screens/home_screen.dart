@@ -9,7 +9,7 @@ import 'package:soundsight/screens/composition/screens/my_compositions_screen.da
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_composition_viewer_screen.dart';
 import 'package:soundsight/screens/homescreen/widgets/community_compositions_section.dart';
-import 'package:soundsight/screens/homescreen/widgets/level_card.dart';
+import 'package:soundsight/screens/profile/player_progress_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/practice_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/quick_actions.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
@@ -31,6 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String username = '';
   String skillLevel = '';
+  int level = 1;
+  int experiencePoints = 0;
+  int experienceToNextLevel = 100;
 
   @override
   void initState() {
@@ -110,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           children: [
             Text(
-              'Good Morning, $username',
+              'Hello, $username',
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -127,7 +130,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const Gap(AppSpacing.md),
-            TopCard(colors: colors, skillLevel: skillLevel),
+            PlayerProgressContainer(
+              colors: colors,
+              skillLevel: skillLevel,
+              level: level,
+              experiencePoints: experiencePoints,
+              experienceToNextLevel: experienceToNextLevel,
+            ),
             const Gap(AppSpacing.md),
             PracticeContainer(
               practiceImage: practiceImage,
@@ -147,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 openAddSheet(SheetInputAction.capture);
               },
               onComposition: openCompositions,
+              onPublishedCompositions: openPublishedCompositions,
             ),
             const Gap(AppSpacing.md),
             CommunityCompositionsSection(
@@ -181,6 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
       isDarkMode = theme == 'dark';
       username = userData?['username'] ?? '';
       skillLevel = userData?['skillLevel'] ?? '';
+      level = (userData?['level'] as num?)?.toInt() ?? 1;
+      experiencePoints =
+          (userData?['experiencePoints'] as num?)?.toInt() ?? 0;
+      experienceToNextLevel =
+          (userData?['experienceToNextLevel'] as num?)?.toInt() ?? 100;
     });
   }
 
@@ -214,9 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void openPublishedCompositions() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => PublishedCompositionsScreen(
-          isDarkMode: isDarkMode,
-        ),
+        builder: (_) => PublishedCompositionsScreen(isDarkMode: isDarkMode),
       ),
     );
   }

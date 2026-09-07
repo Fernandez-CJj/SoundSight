@@ -118,7 +118,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             AccountContainer(
               colors: colors,
               onEditProfile: () => showEditProfileSheet(colors),
-              onChangePassword: () {},
             ),
             Gap(AppSpacing.md),
             PreferencesContainer(

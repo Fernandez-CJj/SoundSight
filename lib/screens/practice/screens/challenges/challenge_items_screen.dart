@@ -128,6 +128,10 @@ class ChallengeItemsScreen extends StatelessWidget {
                                   builder: (_) => SelectedChallengeItemScreen(
                                     challengeItemId: item.id,
                                     title: title,
+                                    pdfUrl:
+                                        data['pdfUrl'] as String? ?? '',
+                                    pdfFileName:
+                                        data['pdfFileName'] as String? ?? '',
                                   ),
                                 ),
                               );

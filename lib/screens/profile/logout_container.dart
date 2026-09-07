@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:soundsight/screens/auth/login_screen.dart';
+import 'package:soundsight/screens/auth/login/login_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../constants/constant.dart';
