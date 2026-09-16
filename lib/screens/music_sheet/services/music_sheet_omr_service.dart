@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart';
 
 class MusicSheetOmrService {
-  static const String backendUrl = 'http://10.93.200.3:8000';
+  static const String backendUrl = 'http://132.168.12.36:8000';
 
   Future<OmrConversionResult> recognizeMusicSheet({
     required String sheetId,
@@ -30,12 +30,8 @@ class MusicSheetOmrService {
       response = await http
           .post(
             url,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'ownerId': ownerId,
-            }),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'ownerId': ownerId}),
           )
           .timeout(const Duration(minutes: 15));
     } on TimeoutException {
@@ -77,8 +73,7 @@ class MusicSheetOmrService {
       omrStatus: responseData['omrStatus'] as String? ?? '',
       partCount: (responseData['partCount'] as num?)?.toInt() ?? 0,
       noteCount: (responseData['noteCount'] as num?)?.toInt() ?? 0,
-      musicXmlStoragePath:
-          responseData['musicXmlStoragePath'] as String? ?? '',
+      musicXmlStoragePath: responseData['musicXmlStoragePath'] as String? ?? '',
       previewAudioStoragePath:
           responseData['previewAudioStoragePath'] as String? ?? '',
     );

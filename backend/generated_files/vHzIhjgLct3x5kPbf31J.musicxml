@@ -8,7 +8,7 @@
   <identification>
     <creator type="composer">cf</creator>
     <encoding>
-      <encoding-date>2026-09-08</encoding-date>
+      <encoding-date>2026-09-16</encoding-date>
       <software>music21 v.10.5.0</software>
       <supports element="beam" type="yes" />
       <supports element="stem" type="yes" />
@@ -22,21 +22,21 @@
     </scaling>
   </defaults>
   <part-list>
-    <score-part id="P8f54d5ee3c833fa24f10d8d661954444">
+    <score-part id="P78c0e206fb4ad12749de2c78ac86cbc1">
       <part-name>Piano</part-name>
       <part-abbreviation>Pno</part-abbreviation>
-      <score-instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a">
+      <score-instrument id="Icefc4903f7303130c62b9fc61e2a6f0a">
         <instrument-name>Piano</instrument-name>
         <instrument-abbreviation>Pno</instrument-abbreviation>
       </score-instrument>
-      <midi-instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a">
+      <midi-instrument id="Icefc4903f7303130c62b9fc61e2a6f0a">
         <midi-channel>1</midi-channel>
         <midi-program>1</midi-program>
       </midi-instrument>
     </score-part>
   </part-list>
   <!--=========================== Part 1 ===========================-->
-  <part id="P8f54d5ee3c833fa24f10d8d661954444">
+  <part id="P78c0e206fb4ad12749de2c78ac86cbc1">
     <!--========================= Measure 1 ==========================-->
     <measure implicit="no" number="1">
       <attributes>
@@ -75,29 +75,18 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
       </note>
       <note dynamics="112.89">
         <pitch>
-          <step>C</step>
+          <step>D</step>
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
-        <voice>1</voice>
-        <type>quarter</type>
-        <staff>1</staff>
-      </note>
-      <note dynamics="112.89">
-        <pitch>
-          <step>G</step>
-          <octave>4</octave>
-        </pitch>
-        <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -108,7 +97,18 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
+        <voice>1</voice>
+        <type>quarter</type>
+        <staff>1</staff>
+      </note>
+      <note dynamics="112.89">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>10080</duration>
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -131,7 +131,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -142,7 +142,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -153,7 +153,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -164,7 +164,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -187,7 +187,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -198,7 +198,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -209,7 +209,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -220,7 +220,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -243,7 +243,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -254,7 +254,7 @@
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
-        <instrument id="Id32295f6b37252d1d6b59ab7d8c7b04a" />
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
@@ -273,6 +273,71 @@
         <rest measure="yes" />
         <duration>40320</duration>
         <voice>2</voice>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 5 ==========================-->
+    <measure implicit="no" number="5">
+      <note dynamics="112.89">
+        <pitch>
+          <step>C</step>
+          <octave>7</octave>
+        </pitch>
+        <duration>10080</duration>
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
+        <voice>1</voice>
+        <type>quarter</type>
+        <staff>1</staff>
+      </note>
+      <note>
+        <rest />
+        <duration>30240</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <dot />
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <note>
+        <rest />
+        <duration>10080</duration>
+        <voice>2</voice>
+        <type>quarter</type>
+        <staff>2</staff>
+      </note>
+      <note dynamics="112.89">
+        <pitch>
+          <step>C</step>
+          <octave>1</octave>
+        </pitch>
+        <duration>10080</duration>
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
+        <voice>2</voice>
+        <type>quarter</type>
+        <staff>2</staff>
+      </note>
+      <note dynamics="112.89">
+        <pitch>
+          <step>D</step>
+          <octave>1</octave>
+        </pitch>
+        <duration>10080</duration>
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
+        <voice>2</voice>
+        <type>quarter</type>
+        <staff>2</staff>
+      </note>
+      <note dynamics="112.89">
+        <pitch>
+          <step>C</step>
+          <octave>1</octave>
+        </pitch>
+        <duration>10080</duration>
+        <instrument id="Icefc4903f7303130c62b9fc61e2a6f0a" />
+        <voice>2</voice>
+        <type>quarter</type>
         <staff>2</staff>
       </note>
     </measure>

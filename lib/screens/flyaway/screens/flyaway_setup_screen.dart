@@ -119,9 +119,6 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
           // Middle layer: circles drawn over detected hand landmarks.
           buildHandLandmarkOverlay(),
 
-          // Left-side layer: calibrated depth ranges for each finger.
-          buildCalibrationRangePanel(),
-
           // Middle layer: temporary finger-depth measurement display.
           buildMeasurementPanel(),
 
@@ -1247,105 +1244,6 @@ class _FlyawaySetupScreenState extends State<FlyawaySetupScreen> {
         ),
       ),
     );
-  }
-
-  /// Builds the left-side panel containing calibrated lift references.
-  Widget buildCalibrationRangePanel() {
-    if (calibrationRanges.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Positioned(
-      left: 12,
-      top: 72,
-      child: SafeArea(
-        child: IgnorePointer(
-          child: Container(
-            width: 230,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white54, width: 1),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'LIFT CALIBRATION',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  getCalibrationRangeText(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Converts the calibrated lift references into readable debug text.
-  String getCalibrationRangeText() {
-    final handSections = <String>[];
-
-    for (final handEntry in calibrationRanges.entries) {
-      final fingerLines = <String>[];
-
-      final handLabel = getCalibrationHandednessLabel(handEntry.key);
-      fingerLines.add(handLabel);
-
-      for (final finger in FlyawayFinger.values) {
-        final fingerRange = handEntry.value[finger];
-
-        if (fingerRange != null) {
-          final fingerLabel = getFingerLabel(finger);
-
-          final resting = fingerRange.restingDepth.toStringAsFixed(2);
-          final maximum = fingerRange.maximumNormalLift.toStringAsFixed(2);
-          final independentMaximum = fingerRange.maximumNormalIndependentLift
-              .toStringAsFixed(2);
-
-          final threshold = calculateLiftThreshold(
-            fingerRange,
-          ).toStringAsFixed(2);
-
-          final independentThreshold = calculateIndependentLiftThreshold(
-            fingerRange,
-          ).toStringAsFixed(2);
-
-          fingerLines.add(
-            '$fingerLabel  base $resting  raw $maximum/$threshold  '
-            'ind $independentMaximum/$independentThreshold',
-          );
-        }
-      }
-
-      handSections.add(fingerLines.join('\n'));
-    }
-
-    return handSections.join('\n\n');
-  }
-
-  /// Returns the display name for a calibrated hand.
-  String getCalibrationHandednessLabel(Handedness handedness) {
-    if (handedness == Handedness.left) {
-      return 'LEFT HAND';
-    } else {
-      return 'RIGHT HAND';
-    }
   }
 
   /// Builds the temporary panel used to inspect raw finger measurements.

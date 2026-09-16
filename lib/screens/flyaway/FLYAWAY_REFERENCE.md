@@ -20,8 +20,8 @@ not recorded.
 6. The camera uses high resolution, disables audio, and uses 1x zoom when the
    device supports it.
 7. The hand detector starts and begins processing camera frames.
-8. The screen shows the live camera, landmark dots, detector status, calibration
-   values, and current measurements.
+8. The screen shows the live camera, landmark dots, detector status, and current
+   measurements.
 9. The user presses **Start calibration**.
 10. A 3-second preparation countdown begins.
 11. The user rests the visible fingers on the keys for 3 seconds.
@@ -259,7 +259,6 @@ it still needs a calibration profile for its handedness.
 - The second detected hand uses orange landmark dots.
 - The top-right label shows detector errors, loading state, no-hand state, or
   the number of detected hands.
-- The left panel shows resting, raw, and independent calibration values.
 - The bottom panel shows the current `Z`, raw lift (`L`), independent lift
   (`IL`), and any `HIGH` or `FLYAWAY` result.
 
