@@ -27,11 +27,17 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+/.dart-tool/
+/.tmp/
+/.flutter
+/.flutter_tool_state
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+/backend/venv/
+/soundsight_admin/
 
 # Backend processing artifacts
 /backend/generated_files/
