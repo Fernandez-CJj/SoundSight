@@ -57,10 +57,7 @@ The PDF function does not set a timeout and does not directly verify that the ou
 
 The core services do not store screen state.
 
-MuseScore reads and writes local files supplied by its callers. Whether those files are temporary depends on the calling feature:
-
-- OMR files are removed with their job folder;
-- composition files under `backend/generated_files` remain on disk.
+MuseScore reads and writes local files supplied by its callers. OMR and composition files are removed with their temporary folders after each request.
 
 Firebase data and files written through the shared Admin objects are permanent until another operation deletes or replaces them.
 

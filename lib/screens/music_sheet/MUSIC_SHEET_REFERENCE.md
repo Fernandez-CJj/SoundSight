@@ -178,7 +178,7 @@ These audio bytes and playback values are not saved when the viewer closes.
 
 ### Backend job files
 
-The backend creates `backend/omr_jobs/{sheetId}/input` and `output` folders during recognition. It deletes the entire sheet job folder in a `finally` step after success or failure.
+The backend creates a unique temporary system folder with `input` and `output` subfolders during recognition. It deletes the entire job folder in a `finally` step after success or failure.
 
 ## 4. When information is saved permanently
 

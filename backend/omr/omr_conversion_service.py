@@ -28,9 +28,7 @@ def convertMusicSheet(
             sheetId
         )
 
-        jobFolders = createOmrJobFolders(
-            sheetId
-        )
+        jobFolders = createOmrJobFolders()
 
         jobFolder = jobFolders[
             "jobFolder"

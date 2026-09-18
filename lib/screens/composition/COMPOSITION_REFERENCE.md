@@ -263,7 +263,7 @@ Public data is saved only after the backend successfully generates and uploads t
 | Publish endpoint | `POST /compositions` |
 | Unpublish endpoint | `DELETE /compositions/{compositionId}` |
 
-The backend also writes generated MusicXML and PDF files into its local `backend/generated_files` folder. The mobile app reads the published PDF from Firebase Storage, not from this local folder.
+The backend writes generated MusicXML and PDF files to a temporary system folder during publishing. It removes that folder after the request. The mobile app reads the published PDF from Firebase Storage.
 
 ## 6. Created and updated fields
 

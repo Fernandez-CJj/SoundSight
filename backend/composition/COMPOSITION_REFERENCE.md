@@ -53,14 +53,11 @@ The tie becomes `start`, `continue`, or `stop` depending on the neighboring note
 
 During a request, the backend holds the validated request, music21 score, counters, and Firebase data in memory.
 
-Generated files are written to:
-
-- `backend/generated_files/{compositionId}.musicxml`;
-- `backend/generated_files/{compositionId}.pdf`.
+Generated MusicXML and PDF files are written to a unique temporary system folder for each publish request.
 
 If the composition ID is empty, the MusicXML file is named `composition.musicxml`.
 
-These generated files are local backend files. The current code does not delete them after publishing or unpublishing.
+These local files are removed when publishing finishes, whether it succeeds or fails. The published PDF remains in Firebase Storage.
 
 ## Permanent Firebase information
 
@@ -192,11 +189,11 @@ These response statistics are not all saved in Firestore. The post only stores t
 9. Every `savedCompositionPosts` document whose `postId` matches the composition is deleted.
 10. The current post is deleted.
 
-Unpublishing does not delete the owner's private `compositions/{compositionId}` document or local files in `backend/generated_files`.
+Unpublishing does not delete the owner's private `compositions/{compositionId}` document. Publish requests leave no generated local files after they finish.
 
 ## Failure and retry behavior
 
-Publishing has no transaction covering local generation, Storage upload, and Firestore writes together. A failure after an earlier step can leave a generated local file or uploaded PDF behind.
+Publishing has no transaction covering local generation, Storage upload, and Firestore writes together. A failure after the Storage upload can leave an uploaded PDF behind. Temporary local files are removed when the request ends.
 
 The two Firestore writes for the current post and version document are committed in one Firestore batch.
 

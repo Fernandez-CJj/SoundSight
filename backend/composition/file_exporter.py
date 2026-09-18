@@ -1,23 +1,7 @@
 import os
 
 
-def saveMusicXml(score, compositionId):
-    backendFolder = os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-
-    outputFolder = os.path.join(
-        backendFolder,
-        "generated_files",
-    )
-
-    os.makedirs(
-        outputFolder,
-        exist_ok=True,
-    )
-
+def saveMusicXml(score, compositionId, outputFolder):
     if compositionId == "":
         fileName = "composition.musicxml"
     else:

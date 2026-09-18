@@ -33,6 +33,11 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Backend processing artifacts
+/backend/generated_files/
+/backend/omr_jobs/
+/backend/omr_test/
+
 # Symbolication related
 app.*.symbols
 

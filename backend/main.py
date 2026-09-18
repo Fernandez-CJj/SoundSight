@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from fastapi import FastAPI
 from fastapi import HTTPException
@@ -132,53 +133,57 @@ def receive_composition(
         elif musicalObject.isRest:
             restCount = restCount + 1
 
-    musicXmlPath = saveMusicXml(
-        score,
-        composition.id,
-    )
+    with tempfile.TemporaryDirectory(
+        prefix="soundsight-composition-"
+    ) as outputFolder:
+        musicXmlPath = saveMusicXml(
+            score,
+            composition.id,
+            outputFolder,
+        )
 
-    pdfPath = exportPdf(
-        musicXmlPath
-    )
-
-    pdfStoragePath = uploadPdf(
-        pdfPath,
-        composition.ownerId,
-        composition.id,
-        versionNumber,
-    )
-
-    postId = saveCompositionPost(
-        composition,
-        pdfStoragePath,
-        publicProfile,
-        versionNumber,
-    )
-
-    return {
-        "message": "Composition published successfully.",
-        "postId": postId,
-        "compositionId": composition.id,
-        "title": score.metadata.title,
-        "authorName": publicProfile["username"],
-        "versionNumber": versionNumber,
-        "receivedNoteCount": len(composition.notes),
-        "scoreNoteCount": scoreNoteCount,
-        "chordCount": chordCount,
-        "restCount": restCount,
-        "tiedNoteCount": tiedNoteCount,
-        "partCount": len(score.parts),
-        "musicXmlCreated": os.path.exists(
+        pdfPath = exportPdf(
             musicXmlPath
-        ),
-        "pdfCreated": os.path.exists(
-            pdfPath
-        ),
-        "pdfFileName": os.path.basename(
-            pdfPath
-        ),
-        "pdfStoragePath": pdfStoragePath,
-    }
+        )
+
+        pdfStoragePath = uploadPdf(
+            pdfPath,
+            composition.ownerId,
+            composition.id,
+            versionNumber,
+        )
+
+        postId = saveCompositionPost(
+            composition,
+            pdfStoragePath,
+            publicProfile,
+            versionNumber,
+        )
+
+        return {
+            "message": "Composition published successfully.",
+            "postId": postId,
+            "compositionId": composition.id,
+            "title": score.metadata.title,
+            "authorName": publicProfile["username"],
+            "versionNumber": versionNumber,
+            "receivedNoteCount": len(composition.notes),
+            "scoreNoteCount": scoreNoteCount,
+            "chordCount": chordCount,
+            "restCount": restCount,
+            "tiedNoteCount": tiedNoteCount,
+            "partCount": len(score.parts),
+            "musicXmlCreated": os.path.exists(
+                musicXmlPath
+            ),
+            "pdfCreated": os.path.exists(
+                pdfPath
+            ),
+            "pdfFileName": os.path.basename(
+                pdfPath
+            ),
+            "pdfStoragePath": pdfStoragePath,
+        }
 
 
 @app.delete("/compositions/{compositionId}")

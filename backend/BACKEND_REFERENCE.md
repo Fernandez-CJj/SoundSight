@@ -61,7 +61,7 @@ Unpublishes a composition. The request body contains `ownerId`.
 1. The Flutter app sends a saved composition to `POST /compositions`.
 2. The backend reads the owner's public profile from Firebase.
 3. music21 creates a two-staff piano score.
-4. A MusicXML file is written under `backend/generated_files`.
+4. A MusicXML file is written to a temporary system folder.
 5. MuseScore converts the MusicXML file to PDF.
 6. The PDF is uploaded to Firebase Storage.
 7. The current published post and a permanent version document are saved in Firestore.
@@ -85,9 +85,9 @@ Unpublishes a composition. The request body contains `ownerId`.
 
 The backend temporarily holds Python objects for requests, scores, validation results, and response data.
 
-OMR input and output files are placed under `backend/omr_jobs/{sheetId}` and removed after the recognition attempt finishes.
+OMR input and output files use a unique temporary system folder for each attempt. The folder is removed after recognition finishes.
 
-Composition MusicXML and PDF files are placed under `backend/generated_files`. The current code does not remove these files automatically.
+Composition MusicXML and PDF files use a temporary system folder and are removed after publishing finishes, including on failure.
 
 ## Information saved permanently
 

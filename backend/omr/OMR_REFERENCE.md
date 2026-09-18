@@ -45,14 +45,7 @@ These values are not permanent Firebase fields.
 
 The backend temporarily stores the sheet data, downloaded paths, validation result, and output paths during the request.
 
-Each attempt uses:
-
-- `backend/omr_jobs/{safeSheetId}/input`;
-- `backend/omr_jobs/{safeSheetId}/output`.
-
-Slashes in the sheet ID are replaced with underscores for the local folder name.
-
-If a folder already exists for that sheet, it is deleted before the new attempt starts. The attempt folder is deleted in the final cleanup after success or failure.
+Each attempt uses a unique temporary system folder with `input` and `output` subfolders. The attempt folder is deleted in the final cleanup after success or failure.
 
 ## Original sheet information
 
@@ -199,7 +192,7 @@ If the sheet lookup itself fails because the sheet is missing, belongs to anothe
 
 There is no pause, resume, skip, expiration, background queue, or automatic retry.
 
-The user can manually retry. A new attempt deletes any existing local job folder and starts again. A completed sheet can also be recognized again; the successful result files are replaced at the same Storage paths.
+The user can manually retry. A new attempt uses a fresh temporary folder. A completed sheet can also be recognized again; the successful result files are replaced at the same Storage paths.
 
 The backend does not block two separate clients from requesting the same sheet at the same time. The `isConverting` check only protects one open Flutter screen instance.
 

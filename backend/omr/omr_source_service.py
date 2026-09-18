@@ -1,38 +1,16 @@
 import os
 import shutil
+import tempfile
 
 from PIL import Image
 
 from core.firebase_service import getStorageBucket
 
 
-def createOmrJobFolders(sheetId):
-    backendFolder = os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
+def createOmrJobFolders():
+    jobFolder = tempfile.mkdtemp(
+        prefix="soundsight-omr-"
     )
-
-    jobsFolder = os.path.join(
-        backendFolder,
-        "omr_jobs",
-    )
-
-    safeSheetId = (
-        sheetId
-        .replace("/", "_")
-        .replace("\\", "_")
-    )
-
-    jobFolder = os.path.join(
-        jobsFolder,
-        safeSheetId,
-    )
-
-    if os.path.exists(jobFolder):
-        shutil.rmtree(
-            jobFolder
-        )
 
     inputFolder = os.path.join(
         jobFolder,
@@ -44,13 +22,12 @@ def createOmrJobFolders(sheetId):
         "output",
     )
 
-    os.makedirs(
-        inputFolder
-    )
-
-    os.makedirs(
-        outputFolder
-    )
+    try:
+        os.makedirs(inputFolder)
+        os.makedirs(outputFolder)
+    except Exception:
+        shutil.rmtree(jobFolder)
+        raise
 
     return {
         "jobFolder": jobFolder,
