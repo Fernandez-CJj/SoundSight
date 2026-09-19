@@ -359,7 +359,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
         ),
         Gap(AppSpacing.sm),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           isExpanded: true,
           dropdownColor: colors.surfaceColor,
           icon: Icon(

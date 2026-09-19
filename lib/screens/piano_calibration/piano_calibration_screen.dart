@@ -477,7 +477,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
               noteResultsByStartMicroseconds:
                   practicePerformanceTracker.noteResultsByStartMicroseconds,
             ),
-          if (keyboardOverlay != null) keyboardOverlay,
+          ?keyboardOverlay,
         ],
       ),
     );

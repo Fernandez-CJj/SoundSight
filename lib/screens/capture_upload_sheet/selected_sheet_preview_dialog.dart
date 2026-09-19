@@ -1,8 +1,8 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class SelectedSheetPreviewDialog extends StatelessWidget {
@@ -13,7 +13,7 @@ class SelectedSheetPreviewDialog extends StatelessWidget {
   });
 
   final AppThemeColors colors;
-  final PlatformFile file;
+  final SelectedSheetFile file;
 
   @override
   Widget build(BuildContext context) {
@@ -55,27 +55,19 @@ class SelectedSheetPreviewDialog extends StatelessWidget {
               ],
             ),
             Gap(AppSpacing.md),
-            if (isPdf && file.bytes != null)
+            if (isPdf)
               SizedBox(
                 height: previewHeight,
                 width: double.infinity,
-                child: PdfViewer.data(file.bytes!, sourceName: file.name),
+                child: PdfViewer.data(file.bytes, sourceName: file.name),
               )
-            else if (file.bytes != null)
+            else
               SizedBox(
                 height: previewHeight,
                 width: double.infinity,
                 child: InteractiveViewer(
                   maxScale: 4,
-                  child: Image.memory(file.bytes!, fit: BoxFit.contain),
-                ),
-              )
-            else
-              Padding(
-                padding: EdgeInsets.all(AppSpacing.xl),
-                child: Text(
-                  'Preview is not available.',
-                  style: TextStyle(color: colors.secondaryTextColor),
+                  child: Image.memory(file.bytes, fit: BoxFit.contain),
                 ),
               ),
           ],

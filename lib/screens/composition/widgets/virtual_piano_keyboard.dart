@@ -243,7 +243,7 @@ class _VirtualPianoKeyboardState extends State<VirtualPianoKeyboard> {
           border: Border.all(color: colors.borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: widget.compact ? 8 : 14,
               offset: Offset(0, widget.compact ? 3 : 6),
             ),

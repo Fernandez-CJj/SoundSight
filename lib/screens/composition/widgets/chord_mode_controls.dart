@@ -33,7 +33,7 @@ class ChordModeControls extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         decoration: BoxDecoration(
           color: isChordMode
-              ? colors.primaryColor.withOpacity(0.08)
+              ? colors.primaryColor.withValues(alpha: 0.08)
               : colors.surfaceColor,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
@@ -90,7 +90,7 @@ class ChordModeControls extends StatelessWidget {
               scale: 0.78,
               child: Switch.adaptive(
                 value: isChordMode,
-                activeColor: colors.primaryColor,
+                activeThumbColor: colors.primaryColor,
                 onChanged: enabled ? onChordModeChanged : null,
               ),
             ),
@@ -103,7 +103,7 @@ class ChordModeControls extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: isChordMode
-            ? colors.primaryColor.withOpacity(0.08)
+            ? colors.primaryColor.withValues(alpha: 0.08)
             : colors.surfaceColor,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
@@ -154,7 +154,7 @@ class ChordModeControls extends StatelessWidget {
               ),
               Switch.adaptive(
                 value: isChordMode,
-                activeColor: colors.primaryColor,
+                activeThumbColor: colors.primaryColor,
                 onChanged: enabled ? onChordModeChanged : null,
               ),
             ],

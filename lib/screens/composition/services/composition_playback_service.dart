@@ -46,7 +46,7 @@ class CompositionPlaybackService {
   int _totalMicroseconds = 0;
   double _volume = 1;
   bool _sustainEnabled = false;
-  bool _metronomeEnabled = false;
+  bool metronomeEnabled = false;
   Completer<void>? _resumeSignal;
 
   void Function(CompositionNote?)? _onNoteChanged;
@@ -57,7 +57,6 @@ class CompositionPlaybackService {
   bool get isPaused => _isPaused;
   double get volume => _volume;
   bool get sustainEnabled => _sustainEnabled;
-  bool get metronomeEnabled => _metronomeEnabled;
 
   set sustainEnabled(bool value) {
     final shouldReleasePreviewVoices = _sustainEnabled && !value;
@@ -66,10 +65,6 @@ class CompositionPlaybackService {
     if (shouldReleasePreviewVoices) {
       unawaited(_stopActivePreviewSound());
     }
-  }
-
-  set metronomeEnabled(bool value) {
-    _metronomeEnabled = value;
   }
 
   Future<void> setVolume(double value) async {
@@ -569,7 +564,7 @@ class CompositionPlaybackService {
         if (!completedWait) return false;
       }
 
-      if (_metronomeEnabled && boundary.isMetronomeBeat) {
+      if (metronomeEnabled && boundary.isMetronomeBeat) {
         unawaited(_playMetronomeClick());
       }
 

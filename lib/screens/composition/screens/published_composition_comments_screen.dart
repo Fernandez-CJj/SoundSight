@@ -339,6 +339,8 @@ class _PublishedCompositionCommentsScreenState
         text,
       );
 
+      if (!mounted) return;
+
       commentController.clear();
       FocusScope.of(context).unfocus();
     } catch (_) {

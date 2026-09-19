@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 
 class MusicSheetUploadService {
   static const int maxSheetPages = 20;
@@ -11,7 +11,7 @@ class MusicSheetUploadService {
   Future<String> saveSheet({
     required String ownerId,
     required String title,
-    required List<PlatformFile> files,
+    required List<SelectedSheetFile> files,
     required int? pdfPageCount,
     required void Function(double progress) onProgress,
   }) async {
@@ -24,14 +24,14 @@ class MusicSheetUploadService {
     final uploadedFiles = <Map<String, dynamic>>[];
     final totalBytes = files.fold<int>(
       0,
-      (total, file) => total + file.bytes!.length,
+      (total, file) => total + file.bytes.length,
     );
     var completedBytes = 0;
 
     try {
       for (var index = 0; index < files.length; index++) {
         final file = files[index];
-        final bytes = file.bytes!;
+        final bytes = file.bytes;
         final isPdf = file.extension?.toLowerCase() == 'pdf';
         final extension = _getSafeFileExtension(file);
         final contentType = _getContentType(extension);
@@ -106,7 +106,7 @@ class MusicSheetUploadService {
     }
   }
 
-  void _validateFiles(List<PlatformFile> files, int? pdfPageCount) {
+  void _validateFiles(List<SelectedSheetFile> files, int? pdfPageCount) {
     if (files.isEmpty || files.length > maxSheetPages) {
       throw StateError('Invalid number of selected files.');
     }
@@ -127,7 +127,7 @@ class MusicSheetUploadService {
 
     for (final file in files) {
       final bytes = file.bytes;
-      if (bytes == null || bytes.isEmpty) {
+      if (bytes.isEmpty) {
         throw StateError('A selected file could not be read.');
       }
 
@@ -140,7 +140,7 @@ class MusicSheetUploadService {
     }
   }
 
-  String _getSafeFileExtension(PlatformFile file) {
+  String _getSafeFileExtension(SelectedSheetFile file) {
     final extension = file.extension?.toLowerCase();
 
     if (extension == 'pdf' ||

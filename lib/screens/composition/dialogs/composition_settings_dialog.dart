@@ -125,7 +125,7 @@ class _CompositionSettingsDialogState
                 ),
                 const Gap(AppSpacing.md),
                 DropdownButtonFormField<String>(
-                  value: selectedKey,
+                  initialValue: selectedKey,
                   isExpanded: true,
                   dropdownColor: colors.surfaceColor,
                   style: TextStyle(color: colors.primaryColor),
@@ -139,7 +139,7 @@ class _CompositionSettingsDialogState
                 ),
                 const Gap(AppSpacing.md),
                 DropdownButtonFormField<String>(
-                  value: selectedTimeSignature,
+                  initialValue: selectedTimeSignature,
                   isExpanded: true,
                   dropdownColor: colors.surfaceColor,
                   style: TextStyle(color: colors.primaryColor),

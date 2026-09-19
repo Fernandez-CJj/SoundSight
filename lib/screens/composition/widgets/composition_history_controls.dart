@@ -142,7 +142,9 @@ class CompositionHistoryControls extends StatelessWidget {
         border: Border.all(color: colors.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(colors.isDarkMode ? 0.18 : 0.05),
+            color: Colors.black.withValues(
+              alpha: colors.isDarkMode ? 0.18 : 0.05,
+            ),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -226,7 +228,7 @@ class _CompactHistoryButton extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         constraints: const BoxConstraints.tightFor(width: 40, height: 40),
         color: activeColor,
-        disabledColor: colors.secondaryTextColor.withOpacity(0.4),
+        disabledColor: colors.secondaryTextColor.withValues(alpha: 0.4),
         iconSize: AppIconSizes.sm,
         icon: Icon(action.icon),
       ),
@@ -263,7 +265,9 @@ class _LabeledHistoryButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(46),
         foregroundColor: activeColor,
-        disabledForegroundColor: colors.secondaryTextColor.withOpacity(0.4),
+        disabledForegroundColor: colors.secondaryTextColor.withValues(
+          alpha: 0.4,
+        ),
         side: BorderSide(
           color: canPress ? activeColor : colors.borderColor,
         ),

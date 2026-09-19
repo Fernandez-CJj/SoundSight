@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart';
 
 class MusicSheetOmrService {
-  static const String backendUrl = 'http://132.168.12.36:8000';
+  static const String backendUrl = 'http://192.168.0.104:8000';
 
   Future<OmrConversionResult> recognizeMusicSheet({
     required String sheetId,

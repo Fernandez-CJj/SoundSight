@@ -247,7 +247,9 @@ class _PerformancePanel extends StatelessWidget {
         border: Border.all(color: colors.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(colors.isDarkMode ? 0.24 : 0.08),
+            color: Colors.black.withValues(
+              alpha: colors.isDarkMode ? 0.24 : 0.08,
+            ),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -479,7 +481,7 @@ class _PerformanceToggle extends StatelessWidget {
       padding: const EdgeInsets.only(left: AppSpacing.sm),
       decoration: BoxDecoration(
         color: value
-            ? colors.primaryColor.withOpacity(0.08)
+            ? colors.primaryColor.withValues(alpha: 0.08)
             : colors.backgroundColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
@@ -506,7 +508,7 @@ class _PerformanceToggle extends StatelessWidget {
             scale: 0.78,
             child: Switch.adaptive(
               value: value,
-              activeColor: colors.primaryColor,
+              activeThumbColor: colors.primaryColor,
               onChanged: enabled ? onChanged : null,
             ),
           ),

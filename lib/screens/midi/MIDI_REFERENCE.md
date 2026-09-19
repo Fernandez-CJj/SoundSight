@@ -8,7 +8,7 @@ The MIDI feature lets the user connect a MIDI device, such as a digital piano, a
 
 It is a live note identifier. It does not record a performance, create a music sheet, calculate a score, or save detected notes.
 
-The feature uses the `flutter_midi_command` package. Android uses the local `flutter_midi_command_android` package configured in `pubspec.yaml`.
+The feature uses the published `flutter_midi_command` package and its Android implementation from pub.dev.
 
 ## 2. Complete user flow
 

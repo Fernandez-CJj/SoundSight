@@ -18,7 +18,7 @@ class LogoutContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     const logoutColor = Color(0xFFDC2626);
 
-    return Container(
+    return SizedBox(
       height: 52,
       child: ElevatedButton.icon(
         onPressed: () async {

@@ -1671,8 +1671,8 @@ class _InformationCard extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(
-                    colors.isDarkMode ? 0.16 : 0.04,
+                  color: Colors.black.withValues(
+                    alpha: colors.isDarkMode ? 0.16 : 0.04,
                   ),
                   blurRadius: 12,
                   offset: const Offset(0, 4),

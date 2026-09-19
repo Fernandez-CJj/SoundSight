@@ -230,7 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (unfinishedUser == null || unfinishedUser.emailVerified) {
         await auth.signOut();
-        throw createError;
+        rethrow;
       }
 
       await unfinishedUser.delete();

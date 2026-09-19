@@ -11,6 +11,7 @@ import 'package:soundsight/screens/capture_upload_sheet/capture_upload_dialogs.d
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_header.dart';
 import 'package:soundsight/screens/capture_upload_sheet/music_sheet_upload_service.dart';
 import 'package:soundsight/screens/capture_upload_sheet/save_sheet_container.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_preview_dialog.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheets_container.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -39,7 +40,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   static const int maxPdfFileSize = MusicSheetUploadService.maxPdfFileSize;
 
   late bool isDarkMode;
-  List<PlatformFile> selectedSheets = [];
+  List<SelectedSheetFile> selectedSheets = [];
   int? selectedPdfPageCount;
   bool isPickingFiles = false;
   bool isSavingSheet = false;
@@ -197,7 +198,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     if (title == null || !mounted) return;
 
-    final files = List<PlatformFile>.from(selectedSheets);
+    final files = List<SelectedSheetFile>.from(selectedSheets);
     final pdfPageCount = selectedPdfPageCount;
 
     setState(() {
@@ -309,25 +310,33 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     });
 
     try {
-      final result = await FilePicker.pickFiles(
-        allowMultiple: true,
+      final pickedFiles = await FilePicker.pickFiles(
         type: FileType.custom,
-        withData: true,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
       );
 
-      if (result == null) return;
+      if (pickedFiles.isEmpty) return;
 
-      final pdfFiles = result.files.where((file) {
+      final files = await Future.wait(
+        pickedFiles.map((file) async {
+          return SelectedSheetFile(
+            name: file.name,
+            bytes: await file.readAsBytes(),
+            path: file.path,
+          );
+        }),
+      );
+
+      final pdfFiles = files.where((file) {
         return file.extension?.toLowerCase() == 'pdf';
       }).toList();
 
       if (pdfFiles.isNotEmpty) {
-        await selectPdf(result.files, pdfFiles.singleOrNull);
+        await selectPdf(files, pdfFiles.singleOrNull);
         return;
       }
 
-      selectImages(result.files);
+      selectImages(files);
     } finally {
       if (mounted) {
         setState(() {
@@ -338,8 +347,8 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   }
 
   Future<void> selectPdf(
-    List<PlatformFile> pickedFiles,
-    PlatformFile? pdf,
+    List<SelectedSheetFile> pickedFiles,
+    SelectedSheetFile? pdf,
   ) async {
     if (pickedFiles.length != 1 || pdf == null) {
       showSelectionMessage(
@@ -386,7 +395,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
   }
 
-  void selectImages(List<PlatformFile> pickedFiles) {
+  void selectImages(List<SelectedSheetFile> pickedFiles) {
     final oversizedImages = pickedFiles.where((file) {
       return file.size > maxImageFileSize;
     }).toList();
@@ -429,9 +438,8 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     });
   }
 
-  Future<int> getPdfPageCount(PlatformFile pdf) async {
+  Future<int> getPdfPageCount(SelectedSheetFile pdf) async {
     final bytes = pdf.bytes;
-    if (bytes == null) throw Exception('PDF data is unavailable.');
 
     await pdfrxFlutterInitialize();
     final document = await PdfDocument.openData(bytes, sourceName: pdf.name);
@@ -452,7 +460,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     });
   }
 
-  void viewSelectedSheet(PlatformFile file, AppThemeColors colors) {
+  void viewSelectedSheet(SelectedSheetFile file, AppThemeColors colors) {
     showDialog<void>(
       context: context,
       builder: (_) => SelectedSheetPreviewDialog(colors: colors, file: file),
@@ -496,9 +504,8 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     if (!mounted) return;
 
-    final capturedFile = PlatformFile(
+    final capturedFile = SelectedSheetFile(
       name: image.name,
-      size: bytes.length,
       bytes: bytes,
       path: image.path,
     );

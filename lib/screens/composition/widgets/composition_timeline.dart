@@ -113,8 +113,8 @@ class _CompositionTimelineState extends State<CompositionTimeline> {
             ? null
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(
-                    widget.colors.isDarkMode ? 0.18 : 0.05,
+                  color: Colors.black.withValues(
+                    alpha: widget.colors.isDarkMode ? 0.18 : 0.05,
                   ),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
@@ -238,7 +238,9 @@ class _MeasureSelector extends StatelessWidget {
         border: Border.all(color: colors.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(colors.isDarkMode ? 0.18 : 0.05),
+            color: Colors.black.withValues(
+              alpha: colors.isDarkMode ? 0.18 : 0.05,
+            ),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -278,7 +280,7 @@ class _MeasureSelector extends StatelessWidget {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: measureCount,
-      separatorBuilder: (_, __) => Gap(compact ? AppSpacing.xs : AppSpacing.sm),
+      separatorBuilder: (_, _) => Gap(compact ? AppSpacing.xs : AppSpacing.sm),
       itemBuilder: (context, index) {
         final selected = currentMeasureIndex == index;
 
@@ -355,7 +357,7 @@ class _SongOverview extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: measureCount,
-        separatorBuilder: (_, __) => const SizedBox(width: 3),
+        separatorBuilder: (_, _) => const SizedBox(width: 3),
         itemBuilder: (context, measureIndex) {
           return SizedBox(
             width: compact ? 46 : 62,
@@ -408,7 +410,7 @@ class _OverviewMeasure extends StatelessWidget {
 
     return Material(
       color: selected
-          ? colors.primaryColor.withOpacity(0.14)
+          ? colors.primaryColor.withValues(alpha: 0.14)
           : colors.backgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(3),
@@ -491,7 +493,9 @@ class _OverviewMeasure extends StatelessWidget {
       height: blockHeight,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colors.primaryColor.withOpacity(selected ? 0.95 : 0.65),
+          color: colors.primaryColor.withValues(
+            alpha: selected ? 0.95 : 0.65,
+          ),
           borderRadius: BorderRadius.circular(1.5),
         ),
       ),

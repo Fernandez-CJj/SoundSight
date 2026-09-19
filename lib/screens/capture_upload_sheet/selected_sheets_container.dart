@@ -1,8 +1,8 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_dialogs.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class SelectedSheetsContainer extends StatelessWidget {
@@ -17,10 +17,10 @@ class SelectedSheetsContainer extends StatelessWidget {
   });
 
   final AppThemeColors colors;
-  final List<PlatformFile> selectedSheets;
+  final List<SelectedSheetFile> selectedSheets;
   final int? selectedPdfPageCount;
   final bool isSavingSheet;
-  final ValueChanged<PlatformFile> onView;
+  final ValueChanged<SelectedSheetFile> onView;
   final ValueChanged<int> onRemove;
 
   @override

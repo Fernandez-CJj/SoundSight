@@ -475,7 +475,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                         : colors.secondaryTextColor
                   : isEnabled
                   ? colors.primaryColor
-                  : colors.secondaryTextColor.withOpacity(0.45),
+                  : colors.secondaryTextColor.withValues(alpha: 0.45),
             ),
           ),
         ),
@@ -695,7 +695,9 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       border: Border.all(color: colors.borderColor),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(colors.isDarkMode ? 0.16 : 0.04),
+          color: Colors.black.withValues(
+            alpha: colors.isDarkMode ? 0.16 : 0.04,
+          ),
           blurRadius: 16,
           offset: const Offset(0, 6),
         ),

@@ -637,7 +637,7 @@ class _AllNotesDialog extends StatelessWidget {
               )
             : ListView.separated(
                 itemCount: measuresWithNotes.length,
-                separatorBuilder: (_, __) {
+                separatorBuilder: (_, _) {
                   return const Gap(AppSpacing.sm);
                 },
                 itemBuilder: (context, index) {

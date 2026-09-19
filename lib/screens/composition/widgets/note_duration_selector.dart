@@ -80,7 +80,7 @@ class NoteDurationSelector extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: options.length,
-                separatorBuilder: (_, __) => const Gap(AppSpacing.xs),
+                separatorBuilder: (_, _) => const Gap(AppSpacing.xs),
                 itemBuilder: (context, index) {
                   final option = options[index];
 
@@ -112,7 +112,9 @@ class NoteDurationSelector extends StatelessWidget {
         border: Border.all(color: colors.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(colors.isDarkMode ? 0.18 : 0.05),
+            color: Colors.black.withValues(
+              alpha: colors.isDarkMode ? 0.18 : 0.05,
+            ),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
