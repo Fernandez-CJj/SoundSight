@@ -37,7 +37,7 @@ migrate_working_dir/
 /build/
 /coverage/
 /backend/venv/
-/soundsight_admin/
+
 
 # Backend processing artifacts
 /backend/generated_files/
