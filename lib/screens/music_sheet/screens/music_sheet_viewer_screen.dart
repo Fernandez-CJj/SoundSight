@@ -12,7 +12,7 @@ import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart
 import 'package:soundsight/screens/music_sheet/services/music_sheet_omr_service.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_audio_preview.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_omr_status_card.dart';
-import 'package:soundsight/screens/practice/screens/challenges/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/challenges/synthesia/synthesia_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class MusicSheetViewerScreen extends StatefulWidget {
@@ -149,9 +149,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     );
 
     if (selectedMode == 'synthesia' && mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SynthesiaScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const SynthesiaScreen()));
     }
   }
 
@@ -485,5 +485,4 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       ),
     );
   }
-
 }

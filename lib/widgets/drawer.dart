@@ -10,6 +10,7 @@ import 'package:soundsight/screens/composition/screens/published_compositions_sc
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
 import 'package:soundsight/screens/flyaway/flyaway_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
+import 'package:soundsight/screens/micNiKen/microphone_screen.dart';
 import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
 import 'package:soundsight/screens/practice/practice_screen.dart';
@@ -23,6 +24,7 @@ enum DrawerItem {
   captureUpload,
   practice,
   midi,
+  mic,
   flyaway,
   savedSheets,
   composition,
@@ -132,9 +134,7 @@ class AppDrawer extends StatelessWidget {
 
                 if (activeItem != DrawerItem.practice) {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const PracticeScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const PracticeScreen()),
                   );
                 }
               },
@@ -151,6 +151,19 @@ class AppDrawer extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) => const MidiNoteIdentifierScreen(),
                   ),
+                );
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.mic,
+              icon: Icons.mic_none_outlined,
+              title: 'Mic',
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MicrophoneScreen()),
                 );
               },
             ),

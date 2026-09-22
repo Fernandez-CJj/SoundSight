@@ -30,11 +30,11 @@ import 'widgets/calibration_name_dialog.dart';
 import 'models/restored_piano_calibration.dart';
 import 'models/saved_piano_calibration.dart';
 import 'services/piano_calibration_restorer.dart';
-import '../practice/screens/challenges/ar/models/ar_score_timeline.dart';
-import '../practice/screens/challenges/ar/services/ar_practice_performance_tracker.dart';
-import '../practice/screens/challenges/ar/utils/midi_note_utils.dart';
-import '../practice/screens/challenges/ar/widgets/ar_falling_notes_overlay.dart';
-import '../practice/screens/challenges/ar/number_notation_video_screen.dart';
+import '../challenges/ar/models/ar_score_timeline.dart';
+import '../challenges/ar/services/ar_practice_performance_tracker.dart';
+import '../challenges/ar/utils/midi_note_utils.dart';
+import '../challenges/ar/widgets/ar_falling_notes_overlay.dart';
+import '../challenges/ar/number_notation_video_screen.dart';
 
 /// Camera-based piano calibration and AR practice screen.
 ///
@@ -539,9 +539,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                 )
                               : const Icon(Icons.usb),
                           label: Text(
-                            isConnectingMidi
-                                ? 'Connecting...'
-                                : 'Connect MIDI',
+                            isConnectingMidi ? 'Connecting...' : 'Connect MIDI',
                           ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.white,
@@ -600,9 +598,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                     style: practiceIconButtonStyle(),
                   ),
                   const SizedBox(width: 8),
-                  buildPracticeProgressIndicator(
-                    currentAnimationController,
-                  ),
+                  buildPracticeProgressIndicator(currentAnimationController),
                   if (hasPracticePlaybackStarted &&
                       !isPracticePlaybackComplete) ...[
                     const SizedBox(width: 8),
@@ -1407,8 +1403,10 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       }
 
       if (isWaitingForCorrectNotes) {
-        bool feedbackChanged = practicePerformanceTracker
-            .recordWaitModeNoteOn(waitModeTargetGroupIndex, midiNote);
+        bool feedbackChanged = practicePerformanceTracker.recordWaitModeNoteOn(
+          waitModeTargetGroupIndex,
+          midiNote,
+        );
 
         waitModePressedNotes.add(midiNote);
         waitModeNotePressedAt[midiNote] = DateTime.now();
@@ -1476,11 +1474,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         context: context,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
-            icon: const Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 40,
-            ),
+            icon: const Icon(Icons.check_circle, color: Colors.green, size: 40),
             title: const Text('MIDI connected'),
             content: Text('${device.name} is ready to use.'),
             actions: [
@@ -1606,9 +1600,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          icon: Icon(
-            switchingToWaitMode ? Icons.hourglass_empty : Icons.timer,
-          ),
+          icon: Icon(switchingToWaitMode ? Icons.hourglass_empty : Icons.timer),
           title: Text(
             switchingToWaitMode
                 ? 'Switch to Wait Mode?'
@@ -1720,8 +1712,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     waitModePressedNotes.clear();
     waitModeNotePressedAt.clear();
     controller.stop();
-    controller.value =
-        targetMicroseconds / animationDuration.inMicroseconds;
+    controller.value = targetMicroseconds / animationDuration.inMicroseconds;
 
     if (mounted) {
       setState(() {});
@@ -1770,9 +1761,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return;
     }
 
-    practicePerformanceTracker.completeWaitModeGroup(
-      waitModeTargetGroupIndex,
-    );
+    practicePerformanceTracker.completeWaitModeGroup(waitModeTargetGroupIndex);
 
     waitModeTargetGroupIndex++;
     isWaitingForCorrectNotes = false;
@@ -1875,12 +1864,8 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                   'Correct: ${practicePerformanceTracker.correctGroupCount}',
                 ),
                 Text('Wrong: ${practicePerformanceTracker.wrongGroupCount}'),
-                Text(
-                  'Missed: ${practicePerformanceTracker.missedGroupCount}',
-                ),
-                Text(
-                  'Mistakes: ${practicePerformanceTracker.mistakeCount}',
-                ),
+                Text('Missed: ${practicePerformanceTracker.missedGroupCount}'),
+                Text('Mistakes: ${practicePerformanceTracker.mistakeCount}'),
               ],
             ),
           ),
@@ -2106,8 +2091,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       isRestoringSavedCalibration = false;
       isPracticeMode = false;
       activeMidiNotes = <int>{};
-      practicePerformanceTracker.noteGroups =
-          const <ArPracticeNoteGroup>[];
+      practicePerformanceTracker.noteGroups = const <ArPracticeNoteGroup>[];
       practicePerformanceTracker.resetAttempt();
       resetWaitModeProgress();
       hasPracticePlaybackStarted = false;

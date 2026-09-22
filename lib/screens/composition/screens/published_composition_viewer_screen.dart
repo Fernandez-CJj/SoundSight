@@ -7,7 +7,7 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
-import 'package:soundsight/screens/practice/screens/challenges/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/challenges/synthesia/synthesia_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class PublishedCompositionViewerScreen extends StatefulWidget {
@@ -37,9 +37,7 @@ class _PublishedCompositionViewerScreenState
   @override
   void initState() {
     super.initState();
-    pdfFuture = compositionService.loadPdf(
-      widget.composition.pdfStoragePath,
-    );
+    pdfFuture = compositionService.loadPdf(widget.composition.pdfStoragePath);
     playbackController.addListener(updatePlaybackState);
   }
 
@@ -91,9 +89,7 @@ class _PublishedCompositionViewerScreenState
                 tooltip: playbackController.isPlaying(widget.composition)
                     ? 'Stop playback'
                     : 'Play composition',
-                onPressed: playbackController.isBusy
-                    ? null
-                    : playComposition,
+                onPressed: playbackController.isBusy ? null : playComposition,
                 icon: playbackController.isBusy
                     ? SizedBox(
                         width: 22,
@@ -182,9 +178,9 @@ class _PublishedCompositionViewerScreenState
     );
 
     if (selectedMode == 'synthesia' && mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SynthesiaScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const SynthesiaScreen()));
     }
   }
 
@@ -268,9 +264,7 @@ class _PublishedCompositionViewerScreenState
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
-            child: CircularProgressIndicator(
-              color: colors.primaryColor,
-            ),
+            child: CircularProgressIndicator(color: colors.primaryColor),
           );
         }
 
@@ -288,11 +282,10 @@ class _PublishedCompositionViewerScreenState
               params: PdfViewerParams(
                 margin: AppSpacing.sm,
                 backgroundColor: colors.backgroundColor,
-                sizeDelegateProvider:
-                    const PdfViewerSizeDelegateProviderSmart(
-                      smartMaxScale: 2,
-                      maxPagesVisible: 1,
-                    ),
+                sizeDelegateProvider: const PdfViewerSizeDelegateProviderSmart(
+                  smartMaxScale: 2,
+                  maxPagesVisible: 1,
+                ),
               ),
             ),
           ),
@@ -355,9 +348,7 @@ class _PublishedCompositionViewerScreenState
 
   void retryLoading() {
     setState(() {
-      pdfFuture = compositionService.loadPdf(
-        widget.composition.pdfStoragePath,
-      );
+      pdfFuture = compositionService.loadPdf(widget.composition.pdfStoragePath);
     });
   }
 
