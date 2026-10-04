@@ -17,7 +17,13 @@ from core.musescore_service import exportPdf
 from omr.audiveris_service import isAudiverisInstalled
 from omr.music_sheet_models import OmrConversionRequest
 from omr.omr_conversion_service import convertMusicSheet
-
+from composition.generation_service import generateCompositionFiles
+from composition.private_composition_service import (
+    generatedFilesAreCurrent,
+    getOwnedCompositionReference,
+    saveGeneratedFilePaths,
+    saveGenerationStatus,
+)
 
 app = FastAPI(
     title="SoundSight API",
@@ -89,6 +95,24 @@ def recognize_music_sheet(
 def receive_composition(
     composition: CompositionRequest,
 ):
+    compositionReference = getOwnedCompositionReference(
+        composition.id,
+        composition.ownerId,
+    )
+
+    compositionData = (
+        compositionReference.get().to_dict() or {}
+    )
+
+    if not generatedFilesAreCurrent(compositionData):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Prepare the sheet music and playback "
+                "files before publishing."
+            ),
+        )
+
     publicProfile = getPublicProfile(
         composition.ownerId
     )
@@ -137,9 +161,7 @@ def receive_composition(
         prefix="soundsight-composition-"
     ) as outputFolder:
         musicXmlPath = saveMusicXml(
-            score,
-            composition.id,
-            outputFolder,
+            score, composition.id, outputFolder
         )
 
         pdfPath = exportPdf(
@@ -158,6 +180,7 @@ def receive_composition(
             pdfStoragePath,
             publicProfile,
             versionNumber,
+            compositionData.get("updatedAt"),
         )
 
         return {
@@ -215,4 +238,111 @@ def unpublish_composition(
             "Composition unpublished successfully."
         ),
         "compositionId": compositionId,
+    }
+
+@app.post("/compositions/generate")
+def generatePrivateCompositionFiles(
+    composition: CompositionRequest,
+):
+    try:
+        getOwnedCompositionReference(
+            composition.id,
+            composition.ownerId,
+        )
+    except FileNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except PermissionError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        ) from error
+
+    saveGenerationStatus(
+        composition.id,
+        composition.ownerId,
+        "generating",
+    )
+
+    try:
+        publicProfile = getPublicProfile(
+            composition.ownerId
+        )
+
+        storagePaths = generateCompositionFiles(
+            composition,
+            publicProfile["username"],
+        )
+
+        saveGeneratedFilePaths(
+            composition.id,
+            composition.ownerId,
+            storagePaths,
+        )
+    except PermissionError as error:
+        saveGenerationStatus(
+            composition.id,
+            composition.ownerId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except ValueError as error:
+        saveGenerationStatus(
+            composition.id,
+            composition.ownerId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        ) from error
+    except (FileNotFoundError, RuntimeError) as error:
+        saveGenerationStatus(
+            composition.id,
+            composition.ownerId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        ) from error
+    except Exception as error:
+        saveGenerationStatus(
+            composition.id,
+            composition.ownerId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "The composition files could not be generated."
+            ),
+        ) from error
+    return {
+        "message": (
+            "Composition files generated successfully."
+        ),
+        "compositionId": composition.id,
+        "pdfStoragePath": (
+            storagePaths["pdfStoragePath"]
+        ),
+        "musicXmlStoragePath": (
+            storagePaths["musicXmlStoragePath"]
+        ),
+        "midiStoragePath": (
+            storagePaths["midiStoragePath"]
+        ),
+        "mp3StoragePath": (
+            storagePaths["mp3StoragePath"]
+        ),
     }

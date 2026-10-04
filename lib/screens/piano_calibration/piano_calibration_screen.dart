@@ -30,11 +30,11 @@ import 'widgets/calibration_name_dialog.dart';
 import 'models/restored_piano_calibration.dart';
 import 'models/saved_piano_calibration.dart';
 import 'services/piano_calibration_restorer.dart';
-import '../challenges/ar/models/ar_score_timeline.dart';
-import '../challenges/ar/services/ar_practice_performance_tracker.dart';
-import '../challenges/ar/utils/midi_note_utils.dart';
-import '../challenges/ar/widgets/ar_falling_notes_overlay.dart';
-import '../challenges/ar/number_notation_video_screen.dart';
+import '../players/ar/models/ar_score_timeline.dart';
+import '../players/ar/services/ar_practice_performance_tracker.dart';
+import '../players/ar/utils/midi_note_utils.dart';
+import '../players/ar/widgets/ar_falling_notes_overlay.dart';
+import '../players/ar/number_notation_video_screen.dart';
 
 /// Camera-based piano calibration and AR practice screen.
 ///

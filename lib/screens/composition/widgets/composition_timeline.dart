@@ -27,6 +27,7 @@ class CompositionTimeline extends StatefulWidget {
     this.showSongOverview = false,
     this.compact = false,
     this.enabled = true,
+    this.pianoRollHeight = 190,
   });
 
   final AppThemeColors colors;
@@ -46,6 +47,7 @@ class CompositionTimeline extends StatefulWidget {
   final bool showSongOverview;
   final bool compact;
   final bool enabled;
+  final double pianoRollHeight;
 
   @override
   State<CompositionTimeline> createState() => _CompositionTimelineState();
@@ -153,7 +155,7 @@ class _CompositionTimelineState extends State<CompositionTimeline> {
           if (widget.compact)
             Expanded(child: pianoGrid)
           else
-            SizedBox(height: 190, child: pianoGrid),
+            SizedBox(height: widget.pianoRollHeight, child: pianoGrid),
         ],
       ),
     );

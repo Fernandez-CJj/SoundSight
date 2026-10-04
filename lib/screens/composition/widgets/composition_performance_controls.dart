@@ -21,6 +21,7 @@ class CompositionPerformanceControls extends StatelessWidget {
     required this.onMetronomeChanged,
     this.enabled = true,
     this.compact = false,
+    this.showVelocity = true,
   });
 
   final AppThemeColors colors;
@@ -38,6 +39,7 @@ class CompositionPerformanceControls extends StatelessWidget {
   final ValueChanged<bool> onMetronomeChanged;
   final bool enabled;
   final bool compact;
+  final bool showVelocity;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +107,7 @@ class CompositionPerformanceControls extends StatelessWidget {
       isSustainEnabled: isSustainEnabled,
       isMetronomeEnabled: isMetronomeEnabled,
       enabled: enabled,
+      showVelocity: showVelocity,
       onVolumeChanged: onVolumeChanged,
       onVelocityChanged: onVelocityChanged,
       onPlayFromCursorChanged: onPlayFromCursorChanged,
@@ -146,6 +149,7 @@ class CompositionPerformanceControls extends StatelessWidget {
                   isSustainEnabled: currentSustain,
                   isMetronomeEnabled: currentMetronome,
                   enabled: enabled,
+                  showVelocity: showVelocity,
                   showCloseButton: true,
                   onClose: () {
                     Navigator.of(sheetContext).pop();
@@ -210,6 +214,7 @@ class _PerformancePanel extends StatelessWidget {
     required this.isSustainEnabled,
     required this.isMetronomeEnabled,
     required this.enabled,
+    required this.showVelocity,
     required this.onVolumeChanged,
     required this.onVelocityChanged,
     required this.onPlayFromCursorChanged,
@@ -228,6 +233,7 @@ class _PerformancePanel extends StatelessWidget {
   final bool isSustainEnabled;
   final bool isMetronomeEnabled;
   final bool enabled;
+  final bool showVelocity;
   final ValueChanged<double> onVolumeChanged;
   final ValueChanged<double> onVelocityChanged;
   final ValueChanged<bool> onPlayFromCursorChanged;
@@ -319,14 +325,15 @@ class _PerformancePanel extends StatelessWidget {
             enabled: enabled,
             onChanged: onVolumeChanged,
           ),
-          _PerformanceSlider(
-            colors: colors,
-            icon: Icons.bolt_rounded,
-            label: 'Note velocity',
-            value: velocity,
-            enabled: enabled,
-            onChanged: onVelocityChanged,
-          ),
+          if (showVelocity)
+            _PerformanceSlider(
+              colors: colors,
+              icon: Icons.bolt_rounded,
+              label: 'Note velocity',
+              value: velocity,
+              enabled: enabled,
+              onChanged: onVelocityChanged,
+            ),
           const Gap(AppSpacing.xs),
           LayoutBuilder(
             builder: (context, constraints) {

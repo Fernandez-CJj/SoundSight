@@ -1,4 +1,4 @@
-import '../../../piano_calibration/models/piano_key_marker.dart';
+import '../../piano_calibration/models/piano_key_marker.dart';
 
 /// Conversion helpers shared by calibration markers and MIDI score events.
 class MidiNoteUtils {

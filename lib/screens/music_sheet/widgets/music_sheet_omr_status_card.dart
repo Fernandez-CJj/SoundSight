@@ -49,7 +49,7 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
         ? 'The sheet could not be translated. You can try again.'
         : isProcessing
         ? 'Audiveris is recognizing the notes.'
-        : 'Create MusicXML and an audio preview.';
+        : 'Create MusicXML, MIDI, a clean PDF, and an audio preview.';
 
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
@@ -75,11 +75,7 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
                       strokeWidth: 2.5,
                     ),
                   )
-                : Icon(
-                    icon,
-                    color: accentColor,
-                    size: AppIconSizes.md,
-                  ),
+                : Icon(icon, color: accentColor, size: AppIconSizes.md),
           ),
           Gap(AppSpacing.sm),
           Expanded(

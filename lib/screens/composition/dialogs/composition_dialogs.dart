@@ -110,3 +110,4 @@ class DeleteCompositionDialog extends StatelessWidget {
     );
   }
 }
+

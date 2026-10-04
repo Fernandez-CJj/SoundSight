@@ -43,6 +43,13 @@ service cloud.firestore {
                'beatUnit',
                'measureCount',
                'notes',
+               'creationMethod',
+               'pdfStoragePath',
+               'musicXmlStoragePath',
+               'midiStoragePath',
+               'mp3StoragePath',
+               'generationStatus',
+               'filesGeneratedAt',
                'createdAt',
                'updatedAt'
              ])
@@ -76,6 +83,24 @@ service cloud.firestore {
              && data.measureCount <= 128
              && data.notes is list
              && data.notes.size() <= 256
+             && data.creationMethod in ['manual', 'recording']
+             && (!('pdfStoragePath' in data)
+                 || data.pdfStoragePath is string)
+             && (!('musicXmlStoragePath' in data)
+                 || data.musicXmlStoragePath is string)
+             && (!('midiStoragePath' in data)
+                 || data.midiStoragePath is string)
+             && (!('mp3StoragePath' in data)
+                 || data.mp3StoragePath is string)
+             && (!('generationStatus' in data)
+                 || data.generationStatus in [
+                      'pending',
+                      'generating',
+                      'completed',
+                      'failed'
+                    ])
+             && (!('filesGeneratedAt' in data)
+                 || data.filesGeneratedAt is timestamp)
              && data.createdAt is timestamp
              && data.updatedAt is timestamp;
     }
@@ -833,26 +858,66 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
     }
 
-    match /musicSheets/{sheetId} {
+    match /users/{userId}/musicSheets/{sheetId} {
       allow create: if isVerifiedUser()
-                    && request.resource.data.ownerId == request.auth.uid
+                    && request.auth.uid == userId
+                    && request.resource.data.ownerId == userId
                     && validMusicSheet(request.resource.data);
 
-      allow read, delete: if isVerifiedUser()
-                          && resource.data.ownerId == request.auth.uid;
+      allow read: if isVerifiedUser()
+                  && request.auth.uid == userId;
+
+      allow delete: if isVerifiedUser()
+                    && request.auth.uid == userId
+                    && resource.data.ownerId == userId;
 
       allow update: if isVerifiedUser()
-                    && resource.data.ownerId == request.auth.uid
-                    && request.resource.data.ownerId
-                       == resource.data.ownerId
+                    && request.auth.uid == userId
+                    && resource.data.ownerId == userId
+                    && request.resource.data.ownerId == userId
                     && validMusicSheet(request.resource.data);
     }
 
     match /compositions/{compositionId} {
+      function isCompositionContentUpdate() {
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasOnly([
+                   'title',
+                   'key',
+                   'tempo',
+                   'beatsPerMeasure',
+                   'beatUnit',
+                   'measureCount',
+                   'notes',
+                   'creationMethod',
+                   'generationStatus',
+                   'updatedAt'
+                 ])
+               && request.resource.data.generationStatus == 'pending'
+               && request.resource.data.updatedAt == request.time;
+      }
+
+      function isGenerationRetry() {
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasOnly(['generationStatus'])
+               && request.resource.data.generationStatus == 'pending'
+               && request.resource.data.updatedAt == resource.data.updatedAt;
+      }
+
       allow create: if isVerifiedUser()
                     && request.resource.data.ownerId == request.auth.uid
                     && request.resource.data.createdAt == request.time
                     && request.resource.data.updatedAt == request.time
+                    && request.resource.data.generationStatus == 'pending'
+                    && !request.resource.data.keys().hasAny([
+                         'pdfStoragePath',
+                         'musicXmlStoragePath',
+                         'midiStoragePath',
+                         'mp3StoragePath',
+                         'filesGeneratedAt'
+                       ])
                     && validComposition(request.resource.data);
 
       allow read, delete: if isVerifiedUser()
@@ -864,7 +929,15 @@ service cloud.firestore {
                        == resource.data.ownerId
                     && request.resource.data.createdAt
                        == resource.data.createdAt
-                    && request.resource.data.updatedAt == request.time
+                    && (
+                      !('creationMethod' in resource.data)
+                      || request.resource.data.creationMethod
+                         == resource.data.creationMethod
+                    )
+                    && (
+                      isCompositionContentUpdate()
+                      || isGenerationRetry()
+                    )
                     && validComposition(request.resource.data);
     }
 

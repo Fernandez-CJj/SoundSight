@@ -13,6 +13,7 @@ class NoteDurationSelector extends StatelessWidget {
     required this.onDurationSelected,
     this.compact = false,
     this.enabled = true,
+    this.helperText,
   });
 
   final AppThemeColors colors;
@@ -22,6 +23,7 @@ class NoteDurationSelector extends StatelessWidget {
   final ValueChanged<double> onDurationSelected;
   final bool compact;
   final bool enabled;
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) {
@@ -54,52 +56,61 @@ class NoteDurationSelector extends StatelessWidget {
     }).toList();
 
     if (compact) {
-      return Container(
-        height: 60,
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        decoration: BoxDecoration(
-          color: colors.surfaceColor,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colors.borderColor),
-        ),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-              child: Text(
-                'Duration',
-                style: TextStyle(
-                  color: colors.primaryColor,
-                  fontSize: AppTextSizes.caption,
-                  fontWeight: FontWeight.w700,
+      return Tooltip(
+        message:
+            helperText ?? 'Choose the length before tapping a piano key.',
+        child: Container(
+          height: 60,
+          padding: const EdgeInsets.all(AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: colors.surfaceColor,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: colors.borderColor),
+          ),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                ),
+                child: Text(
+                  helperText == null ? 'Duration' : 'Edit Duration',
+                  style: TextStyle(
+                    color: colors.primaryColor,
+                    fontSize: AppTextSizes.caption,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
-            const Gap(AppSpacing.xs),
-            Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: options.length,
-                separatorBuilder: (_, _) => const Gap(AppSpacing.xs),
-                itemBuilder: (context, index) {
-                  final option = options[index];
+              const Gap(AppSpacing.xs),
+              Expanded(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: options.length,
+                  separatorBuilder: (_, _) => const Gap(AppSpacing.xs),
+                  itemBuilder: (context, index) {
+                    final option = options[index];
 
-                  return SizedBox(
-                    width: 104,
-                    child: _CompactDurationButton(
-                      colors: colors,
-                      option: option,
-                      selected: _sameDuration(selectedDuration, option.beats),
-                      enabled: enabled,
-                      onTap: () {
-                        onDurationSelected(option.beats);
-                      },
-                    ),
-                  );
-                },
+                    return SizedBox(
+                      width: 104,
+                      child: _CompactDurationButton(
+                        colors: colors,
+                        option: option,
+                        selected: _sameDuration(
+                          selectedDuration,
+                          option.beats,
+                        ),
+                        enabled: enabled,
+                        onTap: () {
+                          onDurationSelected(option.beats);
+                        },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -133,7 +144,7 @@ class NoteDurationSelector extends StatelessWidget {
           ),
           const Gap(AppSpacing.xs),
           Text(
-            'Choose the length before tapping a piano key.',
+            helperText ?? 'Choose the length before tapping a piano key.',
             style: TextStyle(
               color: colors.secondaryTextColor,
               fontSize: AppTextSizes.caption,

@@ -5,11 +5,14 @@ import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/dialogs/composition_dialogs.dart';
-import 'package:soundsight/screens/composition/screens/composition_editor_screen.dart';
+import 'package:soundsight/screens/composition/screens/manual/composition_editor_screen.dart';
 import 'package:soundsight/screens/composition/services/composition_playback_service.dart';
+import 'package:soundsight/screens/composition/services/composition_generation_service.dart';
 import 'package:soundsight/screens/composition/services/composition_publish_service.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
 import 'package:soundsight/screens/composition/dialogs/publish_composition_dialog.dart';
+import 'package:soundsight/screens/composition/dialogs/unpublish_composition_dialog.dart';
+import 'package:soundsight/screens/composition/widgets/composition_generated_preview.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionDetailsScreen extends StatefulWidget {
@@ -32,6 +35,8 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   final CompositionPlaybackService playbackService =
       CompositionPlaybackService();
   final CompositionPublishService publishService = CompositionPublishService();
+  final CompositionGenerationService generationService =
+      CompositionGenerationService();
 
   late Composition composition;
   late Duration playbackDuration;
@@ -44,6 +49,8 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   bool isPaused = false;
   bool isPreparingPlayback = false;
   bool isPublishing = false;
+  bool isGeneratingFiles = false;
+  CompositionPublicationAction? activePublicationAction;
 
   int playbackRunId = 0;
 
@@ -99,23 +106,25 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               },
               itemBuilder: (context) {
                 return [
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          color: colors.primaryColor,
-                          size: AppIconSizes.sm,
-                        ),
-                        const Gap(AppSpacing.sm),
-                        Text(
-                          'Edit Composition',
-                          style: TextStyle(color: colors.primaryColor),
-                        ),
-                      ],
+                  if (composition.creationMethod !=
+                      Composition.recordingCreationMethod)
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            color: colors.primaryColor,
+                            size: AppIconSizes.sm,
+                          ),
+                          const Gap(AppSpacing.sm),
+                          Text(
+                            'Edit Composition',
+                            style: TextStyle(color: colors.primaryColor),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   PopupMenuItem(
                     value: 'delete',
                     child: Row(
@@ -153,9 +162,23 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                   children: [
                     buildOverviewCard(colors),
                     const Gap(AppSpacing.md),
-                    buildPlaybackCard(colors),
+                    if (composition.generatedFilesAreCurrent)
+                      CompositionGeneratedPreview(
+                        key: ValueKey(
+                          '${composition.pdfStoragePath}-'
+                          '${composition.filesGeneratedAt?.millisecondsSinceEpoch}',
+                        ),
+                        colors: colors,
+                        title: composition.title,
+                        pdfStoragePath: composition.pdfStoragePath!,
+                        mp3StoragePath: composition.mp3StoragePath!,
+                      )
+                    else
+                      buildPlaybackCard(colors),
                     const Gap(AppSpacing.md),
                     buildSummaryCard(colors),
+                    const Gap(AppSpacing.md),
+                    buildGeneratedFilesCard(colors),
                     const Gap(AppSpacing.md),
                     buildActionsCard(colors),
                   ],
@@ -534,6 +557,115 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     );
   }
 
+  Widget buildGeneratedFilesCard(AppThemeColors colors) {
+    final filesAreReady = composition.generatedFilesAreCurrent;
+    final filesAreOutOfDate = composition.generatedFilesAreOutOfDate;
+    final generationIsRunning =
+        isGeneratingFiles ||
+        composition.generationStatus == Composition.generatingStatus;
+    final statusColor = filesAreReady
+        ? const Color(0xFF16A34A)
+        : generationIsRunning
+        ? colors.primaryColor
+        : filesAreOutOfDate
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFFDC2626);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: statusColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.surfaceColor,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: statusColor),
+            ),
+            child: generationIsRunning
+                ? Padding(
+                    padding: const EdgeInsets.all(11),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: statusColor,
+                    ),
+                  )
+                : Icon(
+                    filesAreReady
+                        ? Icons.check_circle_outline_rounded
+                        : filesAreOutOfDate
+                        ? Icons.update_rounded
+                        : Icons.warning_amber_rounded,
+                    color: statusColor,
+                    size: AppIconSizes.md,
+                  ),
+          ),
+          const Gap(AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  filesAreReady
+                      ? 'Music files are ready'
+                      : generationIsRunning
+                      ? 'Preparing your music files'
+                      : filesAreOutOfDate
+                      ? 'Music files need updating'
+                      : 'Music files are not ready',
+                  style: TextStyle(
+                    color: colors.primaryColor,
+                    fontSize: AppTextSizes.label,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Gap(2),
+                Text(
+                  filesAreReady
+                      ? composition.filesGeneratedAt == null
+                            ? 'Your sheet music and playback files are ready.'
+                            : 'Prepared ${formatDate(composition.filesGeneratedAt)}.'
+                      : filesAreOutOfDate
+                      ? 'Your latest changes are saved, but the available '
+                            'files contain an older version.'
+                      : 'Your composition is saved safely. Its sheet music '
+                            'and playback files are not ready yet.',
+                  style: TextStyle(
+                    color: colors.secondaryTextColor,
+                    fontSize: AppTextSizes.caption,
+                    height: 1.4,
+                  ),
+                ),
+                if (!filesAreReady && !generationIsRunning) ...[
+                  const Gap(AppSpacing.sm),
+                  ElevatedButton.icon(
+                    onPressed: isDeleting || isPublishing
+                        ? null
+                        : retryCompositionGeneration,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Retry Generation'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primaryColor,
+                      foregroundColor: colors.backgroundColor,
+                      elevation: 0,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget buildStatisticCard({
     required AppThemeColors colors,
     required IconData icon,
@@ -587,24 +719,100 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       decoration: buildCardDecoration(colors),
       child: Column(
         children: [
-          buildActionRow(
-            colors: colors,
-            icon: Icons.publish_rounded,
-            title: isPublishing ? 'Publishing...' : 'Publish Composition',
-            isLoading: isPublishing,
-            onTap: isDeleting || isPlaying || isPublishing
-                ? null
-                : publishComposition,
+          StreamBuilder<CompositionPublication?>(
+            stream: publishService.watchCompositionPublication(composition.id),
+            builder: (context, snapshot) {
+              final publication = snapshot.data;
+              final isCheckingPublication =
+                  snapshot.connectionState == ConnectionState.waiting;
+              final publicationAction = publication == null
+                  ? CompositionPublicationAction.publish
+                  : publication.hasUnpublishedChanges(composition)
+                  ? CompositionPublicationAction.publishUpdate
+                  : CompositionPublicationAction.unpublish;
+              final isPublishingUpdate =
+                  publicationAction ==
+                  CompositionPublicationAction.publishUpdate;
+              final mainActionIsLoading =
+                  isPublishing && activePublicationAction == publicationAction;
+
+              return Column(
+                children: [
+                  buildActionRow(
+                    colors: colors,
+                    icon: isPublishingUpdate
+                        ? Icons.update_rounded
+                        : publicationAction ==
+                              CompositionPublicationAction.unpublish
+                        ? Icons.public_off_rounded
+                        : Icons.publish_rounded,
+                    title: isCheckingPublication
+                        ? 'Checking publication status...'
+                        : mainActionIsLoading
+                        ? publicationAction ==
+                                  CompositionPublicationAction.publishUpdate
+                              ? 'Publishing Update...'
+                              : publicationAction ==
+                                    CompositionPublicationAction.unpublish
+                              ? 'Unpublishing...'
+                              : 'Publishing...'
+                        : isPublishingUpdate
+                        ? 'Publish Update'
+                        : publicationAction ==
+                              CompositionPublicationAction.unpublish
+                        ? 'Unpublish Composition'
+                        : 'Publish Composition',
+                    isLoading: mainActionIsLoading || isCheckingPublication,
+                    onTap:
+                        isDeleting ||
+                            isPlaying ||
+                            isPublishing ||
+                            isCheckingPublication
+                        ? null
+                        : () {
+                            changeCompositionPublication(publicationAction);
+                          },
+                  ),
+                  if (isPublishingUpdate) ...[
+                    Divider(height: 1, color: colors.borderColor),
+                    buildActionRow(
+                      colors: colors,
+                      icon: Icons.public_off_rounded,
+                      title:
+                          isPublishing &&
+                              activePublicationAction ==
+                                  CompositionPublicationAction.unpublish
+                          ? 'Unpublishing...'
+                          : 'Unpublish Composition',
+                      isLoading:
+                          isPublishing &&
+                          activePublicationAction ==
+                              CompositionPublicationAction.unpublish,
+                      onTap: isDeleting || isPlaying || isPublishing
+                          ? null
+                          : () {
+                              changeCompositionPublication(
+                                CompositionPublicationAction.unpublish,
+                              );
+                            },
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
-          Divider(height: 1, color: colors.borderColor),
-          buildActionRow(
-            colors: colors,
-            icon: Icons.edit_outlined,
-            title: 'Edit Composition',
-            onTap: isDeleting || isPlaying || isPublishing
-                ? null
-                : editComposition,
-          ),
+          if (composition.creationMethod !=
+              Composition.recordingCreationMethod) ...[
+            Divider(height: 1, color: colors.borderColor),
+            buildActionRow(
+              colors: colors,
+              icon: Icons.edit_outlined,
+              title: 'Edit Composition',
+              onTap: isDeleting || isPlaying || isPublishing
+                  ? null
+                  : editComposition,
+            ),
+          ],
           Divider(height: 1, color: colors.borderColor),
           buildActionRow(
             colors: colors,
@@ -864,52 +1072,157 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  Future<void> publishComposition() async {
-    if (composition.notes.isEmpty) {
+  Future<void> changeCompositionPublication(
+    CompositionPublicationAction action,
+  ) async {
+    final isUnpublishing = action == CompositionPublicationAction.unpublish;
+    final isPublishingUpdate =
+        action == CompositionPublicationAction.publishUpdate;
+
+    if (!isUnpublishing && composition.notes.isEmpty) {
       showMessage('Add at least one note before publishing.');
       return;
     }
 
-    final shouldPublish = await showDialog<bool>(
+    if (!isUnpublishing && !composition.generatedFilesAreCurrent) {
+      showMessage(
+        'Prepare the sheet music and playback files before publishing.',
+      );
+      return;
+    }
+
+    final shouldChangePublication = await showDialog<bool>(
       context: context,
       builder: (_) {
+        if (isUnpublishing) {
+          return UnpublishCompositionDialog(
+            colors: widget.colors,
+            compositionTitle: composition.title,
+          );
+        }
+
         return PublishCompositionDialog(
           colors: widget.colors,
           composition: composition,
+          isUpdate: isPublishingUpdate,
         );
       },
     );
 
-    if (shouldPublish != true || !mounted) return;
+    if (shouldChangePublication != true || !mounted) return;
 
     setState(() {
       isPublishing = true;
+      activePublicationAction = action;
     });
 
     try {
-      await publishService.publishComposition(composition);
+      if (isUnpublishing) {
+        await publishService.unpublishComposition(
+          compositionId: composition.id,
+          ownerId: composition.ownerId,
+        );
+      } else {
+        await publishService.publishComposition(composition);
+      }
 
       if (!mounted) return;
 
-      showMessage('Composition published successfully.');
+      showMessage(
+        isUnpublishing
+            ? 'Composition unpublished successfully.'
+            : isPublishingUpdate
+            ? 'Composition update published successfully.'
+            : 'Composition published successfully.',
+      );
     } catch (_) {
       if (!mounted) return;
 
       showMessage(
-        'The composition could not be published. '
-        'Make sure the backend is running.',
+        isUnpublishing
+            ? 'The composition could not be unpublished.'
+            : 'The composition could not be published. '
+                  'Make sure the backend is running.',
       );
     } finally {
       if (mounted) {
         setState(() {
           isPublishing = false;
+          activePublicationAction = null;
         });
       }
     }
   }
 
+  Future<void> retryCompositionGeneration() async {
+    if (isGeneratingFiles || isDeleting || isPublishing) {
+      return;
+    }
+
+    if (isPlaying || isPaused || isPreparingPlayback) {
+      await stopComposition();
+
+      if (!mounted) return;
+    }
+
+    setState(() {
+      isGeneratingFiles = true;
+    });
+
+    try {
+      await generationService.generateCompositionFiles(composition);
+
+      final updatedComposition = await getLatestCompositionSafely();
+
+      if (!mounted) return;
+
+      if (updatedComposition != null) {
+        setState(() {
+          composition = updatedComposition;
+        });
+      }
+
+      showMessage('Your music files are ready.');
+    } catch (_) {
+      if (!mounted) return;
+
+      final updatedComposition = await getLatestCompositionSafely();
+
+      if (!mounted) return;
+
+      if (updatedComposition != null) {
+        setState(() {
+          composition = updatedComposition;
+        });
+      }
+
+      showMessage(
+        'Your composition is saved, but the music files still could not be '
+        'prepared. Try again when the service is available.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isGeneratingFiles = false;
+        });
+      }
+    }
+  }
+
+  Future<Composition?> getLatestCompositionSafely() async {
+    try {
+      return await compositionService.getComposition(composition.id);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> editComposition() async {
-    if (isPlaying || isPublishing) return;
+    if (composition.creationMethod == Composition.recordingCreationMethod ||
+        isPlaying ||
+        isPublishing) {
+      return;
+    }
 
     final savedCompositionId = await Navigator.of(context).push<String>(
       MaterialPageRoute(

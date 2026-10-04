@@ -10,10 +10,12 @@ class PublishCompositionDialog extends StatelessWidget {
     super.key,
     required this.colors,
     required this.composition,
+    this.isUpdate = false,
   });
 
   final AppThemeColors colors;
   final Composition composition;
+  final bool isUpdate;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,7 @@ class PublishCompositionDialog extends StatelessWidget {
           const Gap(AppSpacing.sm),
           Expanded(
             child: Text(
-              'Publish Composition',
+              isUpdate ? 'Publish Update' : 'Publish Composition',
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -57,7 +59,9 @@ class PublishCompositionDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Publish "${composition.title}"?',
+            isUpdate
+                ? 'Publish the latest changes to "${composition.title}"?'
+                : 'Publish "${composition.title}"?',
             style: TextStyle(
               color: colors.primaryColor,
               fontSize: AppTextSizes.body,
@@ -66,8 +70,11 @@ class PublishCompositionDialog extends StatelessWidget {
           ),
           const Gap(AppSpacing.xs),
           Text(
-            'A PDF music sheet will be created and shared with other '
-            'SoundSight users.',
+            isUpdate
+                ? 'A new published version and PDF will be created. Previous '
+                      'versions, likes, comments, and saves will remain.'
+                : 'A PDF music sheet will be created and shared with other '
+                      'SoundSight users.',
             style: TextStyle(
               color: colors.secondaryTextColor,
               fontSize: AppTextSizes.label,
@@ -131,11 +138,8 @@ class PublishCompositionDialog extends StatelessWidget {
           onPressed: () {
             Navigator.pop(context, true);
           },
-          icon: const Icon(
-            Icons.publish_rounded,
-            size: AppIconSizes.sm,
-          ),
-          label: const Text('Publish'),
+          icon: const Icon(Icons.publish_rounded, size: AppIconSizes.sm),
+          label: Text(isUpdate ? 'Publish Update' : 'Publish'),
           style: ElevatedButton.styleFrom(
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
@@ -149,10 +153,7 @@ class PublishCompositionDialog extends StatelessWidget {
     );
   }
 
-  Widget buildInformationRow({
-    required String label,
-    required String value,
-  }) {
+  Widget buildInformationRow({required String label, required String value}) {
     return Row(
       children: [
         Expanded(

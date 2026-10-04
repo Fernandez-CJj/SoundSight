@@ -4,8 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
-import 'package:soundsight/screens/composition/screens/composition_editor_screen.dart';
+import 'package:soundsight/screens/composition/screens/manual/composition_editor_screen.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';
+import 'package:soundsight/screens/composition/screens/recording/record_composition_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class NewCompositionScreen extends StatefulWidget {
@@ -71,164 +72,309 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                 AppSpacing.xl,
               ),
               children: [
-                buildHeader(colors),
+                Column(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: colors.surfaceColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.borderColor),
+                      ),
+                      child: Icon(
+                        Icons.edit_note_rounded,
+                        color: colors.primaryColor,
+                        size: AppIconSizes.xl,
+                      ),
+                    ),
+                    Gap(AppSpacing.md),
+                    Text(
+                      'Create your piano piece',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.sectionTitle,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Gap(AppSpacing.xs),
+                    Text(
+                      'Choose the starting title, key, tempo, and meter. You can '
+                      'change them later in the composition workspace.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.label,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
                 Gap(AppSpacing.xl),
-                buildTitleField(colors),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Composition Title',
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.label,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Gap(AppSpacing.sm),
+                    TextFormField(
+                      controller: titleController,
+                      enabled: !isOpeningEditor,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      maxLength: 80,
+                      cursorColor: colors.primaryColor,
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.body,
+                      ),
+                      decoration: buildInputDecoration(
+                        colors: colors,
+                        hintText: 'Example: My First Song',
+                        prefixIcon: Icons.music_note_rounded,
+                      ),
+                      validator: (value) {
+                        final title = value?.trim() ?? '';
+
+                        if (title.isEmpty) {
+                          return 'Enter a composition title.';
+                        }
+
+                        if (title.length > 80) {
+                          return 'The title must be 80 characters or fewer.';
+                        }
+
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
                 Gap(AppSpacing.md),
-                buildTempoField(colors),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tempo',
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.label,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Gap(AppSpacing.xs),
+                    Text(
+                      'A lower BPM sounds slower. A higher BPM sounds faster.',
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                      ),
+                    ),
+                    Gap(AppSpacing.sm),
+                    TextFormField(
+                      controller: tempoController,
+                      enabled: !isOpeningEditor,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      cursorColor: colors.primaryColor,
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.body,
+                      ),
+                      decoration: buildInputDecoration(
+                        colors: colors,
+                        hintText: '40 to 200',
+                        prefixIcon: Icons.speed_rounded,
+                        suffixText: 'BPM',
+                      ),
+                      validator: (value) {
+                        final tempo = int.tryParse(value ?? '');
+
+                        if (tempo == null) {
+                          return 'Enter a valid tempo.';
+                        }
+
+                        if (tempo < 40 || tempo > 200) {
+                          return 'Tempo must be between 40 and 200 BPM.';
+                        }
+
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
                 Gap(AppSpacing.xl),
-                buildCompositionSettings(colors),
+                Container(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceColor,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: colors.borderColor),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Composition Settings',
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.label,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Gap(AppSpacing.xs),
+                      Text(
+                        'Set the musical structure for this piece.',
+                        style: TextStyle(
+                          color: colors.secondaryTextColor,
+                          fontSize: AppTextSizes.caption,
+                        ),
+                      ),
+                      Gap(AppSpacing.md),
+                      Text(
+                        'Key Signature',
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.label,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Gap(AppSpacing.sm),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedKeySignature,
+                        isExpanded: true,
+                        dropdownColor: colors.surfaceColor,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: colors.secondaryTextColor,
+                        ),
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.body,
+                        ),
+                        decoration: buildInputDecoration(
+                          colors: colors,
+                          hintText: 'Key Signature',
+                          prefixIcon: Icons.music_note_rounded,
+                        ),
+                        items: keySignatures.map((option) {
+                          return DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(option),
+                          );
+                        }).toList(),
+                        onChanged: isOpeningEditor
+                            ? null
+                            : (newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    selectedKeySignature = newValue;
+                                  });
+                                }
+                              },
+                      ),
+                      Gap(AppSpacing.md),
+                      Text(
+                        'Time Signature',
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.label,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Gap(AppSpacing.sm),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedTimeSignature,
+                        isExpanded: true,
+                        dropdownColor: colors.surfaceColor,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: colors.secondaryTextColor,
+                        ),
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.body,
+                        ),
+                        decoration: buildInputDecoration(
+                          colors: colors,
+                          hintText: 'Time Signature',
+                          prefixIcon: Icons.grid_view_rounded,
+                        ),
+                        items: timeSignatures.map((option) {
+                          return DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(option),
+                          );
+                        }).toList(),
+                        onChanged: isOpeningEditor
+                            ? null
+                            : (newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    selectedTimeSignature = newValue;
+                                  });
+                                }
+                              },
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ),
-        bottomNavigationBar: buildStartButton(colors),
+        bottomNavigationBar: SafeArea(
+          child: Container(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
+            decoration: BoxDecoration(
+              color: colors.backgroundColor,
+              border: Border(top: BorderSide(color: colors.borderColor)),
+            ),
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: isOpeningEditor ? null : startComposing,
+                icon: isOpeningEditor
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: colors.backgroundColor,
+                        ),
+                      )
+                    : Icon(Icons.edit_note_rounded),
+                label: Text(
+                  isOpeningEditor ? 'Opening Editor...' : 'Start Composing',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primaryColor,
+                  foregroundColor: colors.backgroundColor,
+                  disabledBackgroundColor: colors.primaryColor,
+                  disabledForegroundColor: colors.backgroundColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
-    );
-  }
-
-  Widget buildHeader(AppThemeColors colors) {
-    return Column(
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            color: colors.surfaceColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: colors.borderColor),
-          ),
-          child: Icon(
-            Icons.edit_note_rounded,
-            color: colors.primaryColor,
-            size: AppIconSizes.xl,
-          ),
-        ),
-        Gap(AppSpacing.md),
-        Text(
-          'Create your piano piece',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: colors.primaryColor,
-            fontSize: AppTextSizes.sectionTitle,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Gap(AppSpacing.xs),
-        Text(
-          'Choose the starting title, key, tempo, and meter. You can '
-          'change them later in the composition workspace.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: colors.secondaryTextColor,
-            fontSize: AppTextSizes.label,
-            height: 1.4,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget buildTitleField(AppThemeColors colors) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Composition Title',
-          style: TextStyle(
-            color: colors.primaryColor,
-            fontSize: AppTextSizes.label,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Gap(AppSpacing.sm),
-        TextFormField(
-          controller: titleController,
-          enabled: !isOpeningEditor,
-          textCapitalization: TextCapitalization.words,
-          textInputAction: TextInputAction.next,
-          maxLength: 80,
-          cursorColor: colors.primaryColor,
-          style: TextStyle(
-            color: colors.primaryColor,
-            fontSize: AppTextSizes.body,
-          ),
-          decoration: buildInputDecoration(
-            colors: colors,
-            hintText: 'Example: My First Song',
-            prefixIcon: Icons.music_note_rounded,
-          ),
-          validator: (value) {
-            final title = value?.trim() ?? '';
-
-            if (title.isEmpty) {
-              return 'Enter a composition title.';
-            }
-
-            if (title.length > 80) {
-              return 'The title must be 80 characters or fewer.';
-            }
-
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget buildTempoField(AppThemeColors colors) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tempo',
-          style: TextStyle(
-            color: colors.primaryColor,
-            fontSize: AppTextSizes.label,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Gap(AppSpacing.xs),
-        Text(
-          'A lower BPM sounds slower. A higher BPM sounds faster.',
-          style: TextStyle(
-            color: colors.secondaryTextColor,
-            fontSize: AppTextSizes.caption,
-          ),
-        ),
-        Gap(AppSpacing.sm),
-        TextFormField(
-          controller: tempoController,
-          enabled: !isOpeningEditor,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          cursorColor: colors.primaryColor,
-          style: TextStyle(
-            color: colors.primaryColor,
-            fontSize: AppTextSizes.body,
-          ),
-          decoration: buildInputDecoration(
-            colors: colors,
-            hintText: '40 to 200',
-            prefixIcon: Icons.speed_rounded,
-            suffixText: 'BPM',
-          ),
-          validator: (value) {
-            final tempo = int.tryParse(value ?? '');
-
-            if (tempo == null) {
-              return 'Enter a valid tempo.';
-            }
-
-            if (tempo < 40 || tempo > 200) {
-              return 'Tempo must be between 40 and 200 BPM.';
-            }
-
-            return null;
-          },
-        ),
-      ],
     );
   }
 
@@ -280,161 +426,152 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
     );
   }
 
-  Widget buildCompositionSettings(AppThemeColors colors) {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surfaceColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Composition Settings',
-            style: TextStyle(
-              color: colors.primaryColor,
-              fontSize: AppTextSizes.label,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Gap(AppSpacing.xs),
-          Text(
-            'Set the musical structure for this piece.',
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.caption,
-            ),
-          ),
-          Gap(AppSpacing.md),
-          buildChoiceField(
-            colors: colors,
-            label: 'Key Signature',
-            icon: Icons.music_note_rounded,
-            value: selectedKeySignature,
-            options: keySignatures,
-            onChanged: (value) {
-              setState(() {
-                selectedKeySignature = value;
-              });
-            },
-          ),
-          Gap(AppSpacing.md),
-          buildChoiceField(
-            colors: colors,
-            label: 'Time Signature',
-            icon: Icons.grid_view_rounded,
-            value: selectedTimeSignature,
-            options: timeSignatures,
-            onChanged: (value) {
-              setState(() {
-                selectedTimeSignature = value;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  Widget buildCompositionMethodDialog(BuildContext dialogContext) {
+    final colors = widget.colors;
 
-  Widget buildChoiceField({
-    required AppThemeColors colors,
-    required String label,
-    required IconData icon,
-    required String value,
-    required List<String> options,
-    required ValueChanged<String> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: colors.primaryColor,
-            fontSize: AppTextSizes.label,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Gap(AppSpacing.sm),
-        DropdownButtonFormField<String>(
-          initialValue: value,
-          isExpanded: true,
-          dropdownColor: colors.surfaceColor,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: colors.secondaryTextColor,
-          ),
-          style: TextStyle(
-            color: colors.primaryColor,
-            fontSize: AppTextSizes.body,
-          ),
-          decoration: buildInputDecoration(
-            colors: colors,
-            hintText: label,
-            prefixIcon: icon,
-          ),
-          items: options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option),
-            );
-          }).toList(),
-          onChanged: isOpeningEditor
-              ? null
-              : (newValue) {
-                  if (newValue != null) {
-                    onChanged(newValue);
-                  }
-                },
-        ),
-      ],
-    );
-  }
-
-  Widget buildStartButton(AppThemeColors colors) {
-    return SafeArea(
-      child: Container(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.sm,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: colors.backgroundColor,
-          border: Border(top: BorderSide(color: colors.borderColor)),
-        ),
-        child: SizedBox(
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: isOpeningEditor ? null : startComposing,
-            icon: isOpeningEditor
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: colors.backgroundColor,
+    return Dialog(
+      backgroundColor: colors.surfaceColor,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(color: colors.borderColor),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: colors.backgroundColor,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: colors.borderColor),
+                  ),
+                  child: Icon(
+                    Icons.library_music_rounded,
+                    color: colors.primaryColor,
+                    size: AppIconSizes.md,
+                  ),
+                ),
+                Gap(AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    'Choose how to compose',
+                    style: TextStyle(
+                      color: colors.primaryColor,
+                      fontSize: AppTextSizes.sectionTitle,
+                      fontWeight: FontWeight.w700,
                     ),
-                  )
-                : Icon(Icons.edit_note_rounded),
-            label: Text(
-              isOpeningEditor ? 'Opening Editor...' : 'Start Composing',
-              style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colors.primaryColor,
-              foregroundColor: colors.backgroundColor,
-              disabledBackgroundColor: colors.primaryColor,
-              disabledForegroundColor: colors.backgroundColor,
-              elevation: 0,
+            Gap(AppSpacing.lg),
+            Material(
+              color: colors.backgroundColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
+                side: BorderSide(color: colors.borderColor),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () {
+                  Navigator.of(dialogContext).pop(_CompositionMethod.manual);
+                },
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceColor,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: colors.borderColor),
+                        ),
+                        child: Icon(
+                          Icons.edit_note_rounded,
+                          color: colors.primaryColor,
+                          size: AppIconSizes.md,
+                        ),
+                      ),
+                      Gap(AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          'Compose Manually',
+                          style: TextStyle(
+                            color: colors.primaryColor,
+                            fontSize: AppTextSizes.label,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: colors.secondaryTextColor,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            Gap(AppSpacing.sm),
+            Material(
+              color: colors.backgroundColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                side: BorderSide(color: colors.borderColor),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () {
+                  Navigator.of(dialogContext).pop(_CompositionMethod.recording);
+                },
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceColor,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: colors.borderColor),
+                        ),
+                        child: Icon(
+                          Icons.videocam_rounded,
+                          color: colors.primaryColor,
+                          size: AppIconSizes.md,
+                        ),
+                      ),
+                      Gap(AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          'Record Performance',
+                          style: TextStyle(
+                            color: colors.primaryColor,
+                            fontSize: AppTextSizes.label,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: colors.secondaryTextColor,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -452,9 +589,14 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
       return;
     }
 
-    setState(() {
-      isOpeningEditor = true;
-    });
+    final compositionMethod = await showDialog<_CompositionMethod>(
+      context: context,
+      builder: buildCompositionMethodDialog,
+    );
+
+    if (!mounted || compositionMethod == null) {
+      return;
+    }
 
     final composition = Composition(
       id: '',
@@ -463,10 +605,36 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
       tempo: int.parse(tempoController.text),
       measureCount: 1,
       notes: [],
+      creationMethod: compositionMethod == _CompositionMethod.recording
+          ? Composition.recordingCreationMethod
+          : Composition.manualCreationMethod,
       keySignature: selectedKeySignature,
       beatsPerMeasure: int.parse(selectedTimeSignature.split('/').first),
       beatUnit: int.parse(selectedTimeSignature.split('/').last),
     );
+
+    if (compositionMethod == _CompositionMethod.recording) {
+      final savedCompositionId = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) => RecordCompositionScreen(
+            colors: widget.colors,
+            composition: composition,
+          ),
+        ),
+      );
+
+      if (!mounted || savedCompositionId == null) {
+        return;
+      }
+
+      Navigator.pop(context, savedCompositionId);
+
+      return;
+    }
+
+    setState(() {
+      isOpeningEditor = true;
+    });
 
     String? savedCompositionId;
 
@@ -500,3 +668,5 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
+
+enum _CompositionMethod { manual, recording }

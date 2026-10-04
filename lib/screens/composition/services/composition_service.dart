@@ -61,6 +61,7 @@ class CompositionService {
     final compositionData = composition.toMap();
 
     compositionData.addAll({
+      'generationStatus': Composition.pendingGenerationStatus,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -80,12 +81,23 @@ class CompositionService {
 
     final compositionData = composition.toMap();
 
+    compositionData['generationStatus'] = Composition.pendingGenerationStatus;
     compositionData['updatedAt'] = FieldValue.serverTimestamp();
 
     await firestore
         .collection('compositions')
         .doc(composition.id)
         .update(compositionData);
+  }
+
+  Future<void> markGenerationPending(String compositionId) async {
+    if (compositionId.isEmpty) {
+      throw StateError('The composition does not have an ID.');
+    }
+
+    await firestore.collection('compositions').doc(compositionId).update({
+      'generationStatus': Composition.pendingGenerationStatus,
+    });
   }
 
   Future<void> deleteComposition(String compositionId) async {
@@ -102,6 +114,10 @@ class CompositionService {
     }
     if (composition.title.trim().isEmpty || composition.title.length > 80) {
       return 'The title must contain 1 to 80 characters.';
+    }
+    if (composition.creationMethod != Composition.manualCreationMethod &&
+        composition.creationMethod != Composition.recordingCreationMethod) {
+      return 'Choose a supported composition creation method.';
     }
     if (!compositionKeySignatures.contains(composition.keySignature)) {
       return 'Choose a supported key signature.';

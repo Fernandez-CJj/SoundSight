@@ -42,14 +42,23 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
   static const int maxPdfFileSize = 20 * 1024 * 1024;
 
   late final List<Map<String, dynamic>> files;
+  late final DocumentReference<Map<String, dynamic>> sheetReference;
   final Map<String, Future<Uint8List?>> imageFutures = {};
   final MusicSheetOmrService omrService = MusicSheetOmrService();
   Future<Uint8List?>? pdfFuture;
+  Future<Uint8List?>? recognizedPdfFuture;
+  String? recognizedPdfCacheKey;
   bool isConverting = false;
+  bool showRecognizedPdf = true;
 
   @override
   void initState() {
     super.initState();
+    sheetReference = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.ownerId)
+        .collection('musicSheets')
+        .doc(widget.sheetId);
     files = List<Map<String, dynamic>>.from(widget.files);
     files.sort((first, second) {
       final firstPage = (first['pageNumber'] as num?)?.toInt() ?? 0;
@@ -102,7 +111,20 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.only(bottom: 72),
-        child: files.isEmpty ? buildEmptyState() : buildViewerBody(),
+        child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: sheetReference.snapshots(),
+          builder: (context, snapshot) {
+            final sheetData = snapshot.data?.data() ?? {};
+            final recognizedPdfStoragePath =
+                sheetData['recognizedPdfStoragePath'] as String? ?? '';
+
+            if (files.isEmpty && recognizedPdfStoragePath.isEmpty) {
+              return buildEmptyState();
+            }
+
+            return buildViewerBody(sheetData);
+          },
+        ),
       ),
     );
   }
@@ -155,14 +177,21 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     }
   }
 
-  Widget buildViewerBody() {
+  Widget buildViewerBody(Map<String, dynamic> sheetData) {
+    final recognizedPdfStoragePath =
+        sheetData['recognizedPdfStoragePath'] as String? ?? '';
+    final hasRecognizedPdf = recognizedPdfStoragePath.isNotEmpty;
+    final sheetViewer = hasRecognizedPdf && showRecognizedPdf
+        ? buildRecognizedPdfViewer(
+            recognizedPdfStoragePath,
+            sheetData['omrProcessedAt'],
+          )
+        : buildOriginalViewer();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isLandscape =
             MediaQuery.orientationOf(context) == Orientation.landscape;
-        final sheetViewer = widget.type == 'pdf'
-            ? buildPdfViewer()
-            : buildImageViewer();
 
         if (isLandscape) {
           final sidePanelWidth = (constraints.maxWidth * 0.36)
@@ -175,7 +204,12 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                 width: sidePanelWidth,
                 child: SingleChildScrollView(
                   padding: EdgeInsets.only(bottom: AppSpacing.md),
-                  child: buildOmrSection(),
+                  child: Column(
+                    children: [
+                      buildOmrSection(sheetData),
+                      if (hasRecognizedPdf) buildSourceToggle(),
+                    ],
+                  ),
                 ),
               ),
               VerticalDivider(
@@ -190,7 +224,8 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
         return Column(
           children: [
-            buildOmrSection(),
+            buildOmrSection(sheetData),
+            if (hasRecognizedPdf) buildSourceToggle(),
             Expanded(child: sheetViewer),
           ],
         );
@@ -198,56 +233,174 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     );
   }
 
-  Widget buildOmrSection() {
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('musicSheets')
-          .doc(widget.sheetId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        final sheetData = snapshot.data?.data() ?? {};
-        final status = sheetData['omrStatus'] as String? ?? 'notStarted';
-        final partCount = (sheetData['omrPartCount'] as num?)?.toInt() ?? 0;
-        final noteCount = (sheetData['omrNoteCount'] as num?)?.toInt() ?? 0;
-        final previewAudioStoragePath =
-            sheetData['previewAudioStoragePath'] as String? ?? '';
+  Widget buildOmrSection(Map<String, dynamic> sheetData) {
+    final status = sheetData['omrStatus'] as String? ?? 'notStarted';
+    final partCount = (sheetData['omrPartCount'] as num?)?.toInt() ?? 0;
+    final noteCount = (sheetData['omrNoteCount'] as num?)?.toInt() ?? 0;
+    final previewAudioStoragePath =
+        sheetData['previewAudioStoragePath'] as String? ?? '';
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                0,
-              ),
-              child: MusicSheetOmrStatusCard(
-                colors: widget.colors,
-                status: status,
-                partCount: partCount,
-                noteCount: noteCount,
-                isConverting: isConverting,
-                onRecognize: () =>
-                    recognizeMusicSheet(isReconversion: status == 'completed'),
-              ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            0,
+          ),
+          child: MusicSheetOmrStatusCard(
+            colors: widget.colors,
+            status: status,
+            partCount: partCount,
+            noteCount: noteCount,
+            isConverting: isConverting,
+            onRecognize: () =>
+                recognizeMusicSheet(isReconversion: status == 'completed'),
+          ),
+        ),
+        if (status != 'processing' && previewAudioStoragePath.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              0,
             ),
-            if (status != 'processing' && previewAudioStoragePath.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.sm,
-                  AppSpacing.md,
-                  0,
-                ),
-                child: MusicSheetAudioPreview(
-                  colors: widget.colors,
-                  storagePath: previewAudioStoragePath,
-                ),
-              ),
+            child: MusicSheetAudioPreview(
+              colors: widget.colors,
+              storagePath: previewAudioStoragePath,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget buildSourceToggle() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        0,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment<bool>(
+              value: true,
+              label: Text('Recognized'),
+              icon: Icon(Icons.picture_as_pdf_outlined),
+            ),
+            ButtonSegment<bool>(
+              value: false,
+              label: Text('Original'),
+              icon: Icon(Icons.image_outlined),
+            ),
           ],
+          selected: {showRecognizedPdf},
+          onSelectionChanged: (selection) {
+            setState(() {
+              showRecognizedPdf = selection.first;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget buildOriginalViewer() {
+    if (files.isEmpty) return buildEmptyState();
+    return widget.type == 'pdf' ? buildPdfViewer() : buildImageViewer();
+  }
+
+  Widget buildRecognizedPdfViewer(String storagePath, dynamic processedAt) {
+    final processedAtVersion = processedAt is Timestamp
+        ? processedAt.millisecondsSinceEpoch.toString()
+        : processedAt?.toString() ?? '';
+    final cacheKey = '$storagePath:$processedAtVersion';
+
+    if (recognizedPdfCacheKey != cacheKey) {
+      recognizedPdfCacheKey = cacheKey;
+      recognizedPdfFuture = loadFile(storagePath, maxPdfFileSize);
+    }
+
+    return FutureBuilder<Uint8List?>(
+      future: recognizedPdfFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(color: widget.colors.primaryColor),
+          );
+        }
+
+        if (snapshot.hasError || snapshot.data == null) {
+          return buildRecognizedPdfFallback();
+        }
+
+        return Padding(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: PdfViewer.data(
+              snapshot.data!,
+              sourceName: '${widget.title} - Recognized',
+            ),
+          ),
         );
       },
+    );
+  }
+
+  Widget buildRecognizedPdfFallback() {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            0,
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
+              Gap(AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'The recognized PDF could not be loaded. Showing the '
+                  'original sheet instead.',
+                  style: TextStyle(
+                    color: widget.colors.primaryColor,
+                    fontSize: AppTextSizes.caption,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    recognizedPdfCacheKey = null;
+                    recognizedPdfFuture = null;
+                  });
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(child: buildOriginalViewer()),
+      ],
     );
   }
 

@@ -110,7 +110,7 @@ class AppDrawer extends StatelessWidget {
               colors: colors,
               active: activeItem == DrawerItem.captureUpload,
               icon: Icons.add_photo_alternate_outlined,
-              title: 'Upload / Capture Sheet',
+              title: 'Upload Sheet',
               onTap: () {
                 Navigator.pop(context);
 

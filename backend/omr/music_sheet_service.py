@@ -9,6 +9,8 @@ def getMusicSheet(
 
     sheetDocument = (
         database
+        .collection("users")
+        .document(ownerId)
         .collection("musicSheets")
         .document(sheetId)
         .get()

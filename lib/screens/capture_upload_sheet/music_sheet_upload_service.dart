@@ -18,6 +18,8 @@ class MusicSheetUploadService {
     _validateFiles(files, pdfPageCount);
 
     final sheetDocument = FirebaseFirestore.instance
+        .collection('users')
+        .doc(ownerId)
         .collection('musicSheets')
         .doc();
     final uploadedReferences = <Reference>[];
@@ -74,8 +76,8 @@ class MusicSheetUploadService {
         });
       }
 
-      final isPdf = files.length == 1 &&
-          files.first.extension?.toLowerCase() == 'pdf';
+      final isPdf =
+          files.length == 1 && files.first.extension?.toLowerCase() == 'pdf';
 
       await sheetDocument.set({
         'ownerId': ownerId,

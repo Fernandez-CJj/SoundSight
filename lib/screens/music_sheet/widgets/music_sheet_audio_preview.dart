@@ -13,10 +13,20 @@ class MusicSheetAudioPreview extends StatefulWidget {
     super.key,
     required this.colors,
     required this.storagePath,
+    this.title = 'Audio preview',
+    this.loadingText = 'Loading audio from Firebase...',
+    this.playingText = 'Playing translated music',
+    this.pausedText = 'Playback paused',
+    this.idleText = 'Listen to the translated music sheet',
   });
 
   final AppThemeColors colors;
   final String storagePath;
+  final String title;
+  final String loadingText;
+  final String playingText;
+  final String pausedText;
+  final String idleText;
 
   @override
   State<MusicSheetAudioPreview> createState() => _MusicSheetAudioPreviewState();
@@ -152,7 +162,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Audio preview',
+                      widget.title,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -344,10 +354,10 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
   }
 
   String getStatusText() {
-    if (isLoading) return 'Loading audio from Firebase...';
-    if (isPlaying) return 'Playing translated music';
-    if (isPaused) return 'Playback paused';
-    return 'Listen to the translated music sheet';
+    if (isLoading) return widget.loadingText;
+    if (isPlaying) return widget.playingText;
+    if (isPaused) return widget.pausedText;
+    return widget.idleText;
   }
 
   String formatDuration(Duration value) {

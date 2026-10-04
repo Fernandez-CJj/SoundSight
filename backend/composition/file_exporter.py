@@ -21,3 +21,18 @@ def saveMusicXml(score, compositionId, outputFolder):
     )
 
     return str(savedFilePath)
+
+def saveMidi(score, compositionId, outputFolder):
+    if compositionId == "":
+        fileName = "composition.mid"
+    else:
+        fileName = (
+            compositionId
+            + ".mid"
+        )
+
+    filePath = os.path.join(outputFolder, fileName)
+
+    savedFilePath = score.write("midi", fp=filePath)
+
+    return str(savedFilePath)

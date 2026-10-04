@@ -31,6 +31,7 @@ def saveCompositionPost(
     pdfStoragePath,
     publicProfile,
     versionNumber,
+    sourceUpdatedAt,
 ):
     if composition.id == "":
         raise ValueError(
@@ -59,6 +60,7 @@ def saveCompositionPost(
         "measureCount": composition.measureCount,
         "noteCount": len(composition.notes),
         "pdfStoragePath": pdfStoragePath,
+        "sourceUpdatedAt": sourceUpdatedAt,
         "publishedAt": (
             firestore.SERVER_TIMESTAMP
         ),

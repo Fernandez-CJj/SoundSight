@@ -7,8 +7,11 @@ import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/widgets/composition_card.dart';
 import 'package:soundsight/screens/composition/screens/composition_details_screen.dart';
 import 'package:soundsight/screens/composition/dialogs/composition_dialogs.dart';
-import 'package:soundsight/screens/composition/screens/composition_editor_screen.dart';
+import 'package:soundsight/screens/composition/dialogs/publish_composition_dialog.dart';
+import 'package:soundsight/screens/composition/dialogs/unpublish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/services/composition_playback_service.dart';
+import 'package:soundsight/screens/composition/services/composition_generation_service.dart';
+import 'package:soundsight/screens/composition/services/composition_publish_service.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
 import 'package:soundsight/screens/composition/screens/new_composition_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -27,13 +30,20 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   final CompositionService compositionService = CompositionService();
   final CompositionPlaybackService playbackService =
       CompositionPlaybackService();
+  final CompositionPublishService publishService = CompositionPublishService();
+  final CompositionGenerationService generationService =
+      CompositionGenerationService();
 
   final Set<String> deletingCompositionIds = {};
+  final Set<String> generatingCompositionIds = {};
+  final Map<String, CompositionPublicationAction> publicationActionsInProgress =
+      {};
 
   late bool isDarkMode;
   late final String? userId;
 
   Stream<List<Composition>>? compositionsStream;
+  Stream<Map<String, CompositionPublication>>? publicationsStream;
   String? playingCompositionId;
   bool isPlaybackTransitioning = false;
   int playbackRequestId = 0;
@@ -47,6 +57,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
     if (userId != null) {
       compositionsStream = compositionService.getUserCompositions(userId!);
+      publicationsStream = publishService.getCompositionPublications(userId!);
     }
 
     loadTheme();
@@ -120,7 +131,21 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                   return buildEmptyState(colors);
                 }
 
-                return buildCompositionList(colors, compositions);
+                return StreamBuilder<Map<String, CompositionPublication>>(
+                  stream: publicationsStream,
+                  builder: (context, publishedSnapshot) {
+                    final publications =
+                        publishedSnapshot.data ??
+                        <String, CompositionPublication>{};
+
+                    return buildCompositionList(
+                      colors,
+                      compositions,
+                      publications,
+                      publicationStatusIsLoading: !publishedSnapshot.hasData,
+                    );
+                  },
+                );
               },
             ),
     );
@@ -129,7 +154,9 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   Widget buildCompositionList(
     AppThemeColors colors,
     List<Composition> compositions,
-  ) {
+    Map<String, CompositionPublication> publications, {
+    required bool publicationStatusIsLoading,
+  }) {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
@@ -147,6 +174,12 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
         }
 
         final composition = compositions[index - 1];
+        final publication = publications[composition.id];
+        final publicationAction = publication == null
+            ? CompositionPublicationAction.publish
+            : publication.hasUnpublishedChanges(composition)
+            ? CompositionPublicationAction.publishUpdate
+            : CompositionPublicationAction.unpublish;
 
         return CompositionCard(
           colors: colors,
@@ -154,14 +187,34 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           isDeleting: deletingCompositionIds.contains(composition.id),
           isPlaying: playingCompositionId == composition.id,
           isPlaybackBusy: isPlaybackTransitioning,
+          publicationAction: publicationAction,
+          activePublicationAction: publicationActionsInProgress[composition.id],
+          isPublicationStatusLoading: publicationStatusIsLoading,
+          isGeneratingFiles: generatingCompositionIds.contains(
+            composition.id,
+          ),
           onOpen: () {
             openCompositionDetails(colors, composition);
           },
-          onEdit: () {
-            editComposition(colors, composition);
+          onPublicationAction: () {
+            changeCompositionPublication(
+              colors,
+              composition,
+              action: publicationAction,
+            );
+          },
+          onUnpublish: () {
+            changeCompositionPublication(
+              colors,
+              composition,
+              action: CompositionPublicationAction.unpublish,
+            );
           },
           onPlay: () {
             playComposition(composition);
+          },
+          onRetryGeneration: () {
+            retryCompositionGeneration(composition);
           },
           onDelete: () {
             deleteComposition(colors, composition);
@@ -386,8 +439,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
       return;
     }
 
-    final isStoppingCurrentComposition =
-        playingCompositionId == composition.id;
+    final isStoppingCurrentComposition = playingCompositionId == composition.id;
     final currentRequestId = ++playbackRequestId;
 
     setState(() {
@@ -472,7 +524,26 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
     if (!mounted || savedCompositionId == null) return;
 
-    showMessage('Composition saved.');
+    try {
+      final savedComposition = await compositionService.getComposition(
+        savedCompositionId,
+      );
+
+      if (!mounted) return;
+
+      if (savedComposition?.generatedFilesAreCurrent == true) {
+        showMessage('Composition saved and music files are ready.');
+      } else {
+        showMessage(
+          'Composition saved safely. Your sheet music and playback files '
+          'are not ready yet.',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        showMessage('Composition saved.');
+      }
+    }
   }
 
   Future<void> openCompositionDetails(
@@ -495,24 +566,129 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
     showMessage('"${composition.title}" was deleted.');
   }
 
-  Future<void> editComposition(
+  /// Publishes a first version, publishes an updated version, or completely
+  /// unpublishes the composition based on the selected action.
+  Future<void> changeCompositionPublication(
     AppThemeColors colors,
-    Composition composition,
-  ) async {
+    Composition composition, {
+    required CompositionPublicationAction action,
+  }) async {
+    if (publicationActionsInProgress.containsKey(composition.id)) {
+      return;
+    }
+
+    final isUnpublishing = action == CompositionPublicationAction.unpublish;
+    final isPublishingUpdate =
+        action == CompositionPublicationAction.publishUpdate;
+
+    if (!isUnpublishing && composition.notes.isEmpty) {
+      showMessage('Add at least one note before publishing.');
+      return;
+    }
+
+    if (!isUnpublishing && !composition.generatedFilesAreCurrent) {
+      showMessage(
+        'Prepare the sheet music and playback files before publishing.',
+      );
+      return;
+    }
+
+    final shouldChangePublication = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        if (isUnpublishing) {
+          return UnpublishCompositionDialog(
+            colors: colors,
+            compositionTitle: composition.title,
+          );
+        }
+
+        return PublishCompositionDialog(
+          colors: colors,
+          composition: composition,
+          isUpdate: isPublishingUpdate,
+        );
+      },
+    );
+
+    if (shouldChangePublication != true || !mounted) {
+      return;
+    }
+
     await stopPlayback();
 
     if (!mounted) return;
 
-    final savedCompositionId = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) =>
-            CompositionEditorScreen(colors: colors, composition: composition),
-      ),
-    );
+    setState(() {
+      publicationActionsInProgress[composition.id] = action;
+    });
 
-    if (!mounted || savedCompositionId == null) return;
+    try {
+      if (isUnpublishing) {
+        await publishService.unpublishComposition(
+          compositionId: composition.id,
+          ownerId: composition.ownerId,
+        );
+      } else {
+        await publishService.publishComposition(composition);
+      }
 
-    showMessage('Composition updated.');
+      if (!mounted) return;
+
+      showMessage(
+        isUnpublishing
+            ? 'Composition unpublished successfully.'
+            : isPublishingUpdate
+            ? 'Composition update published successfully.'
+            : 'Composition published successfully.',
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      showMessage(
+        isUnpublishing
+            ? 'The composition could not be unpublished.'
+            : 'The composition could not be published. '
+                  'Make sure the backend is running.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          publicationActionsInProgress.remove(composition.id);
+        });
+      }
+    }
+  }
+
+  Future<void> retryCompositionGeneration(Composition composition) async {
+    if (generatingCompositionIds.contains(composition.id)) {
+      return;
+    }
+
+    setState(() {
+      generatingCompositionIds.add(composition.id);
+    });
+
+    try {
+      await generationService.generateCompositionFiles(composition);
+
+      if (!mounted) return;
+
+      showMessage('Your music files are ready.');
+    } catch (_) {
+      if (!mounted) return;
+
+      showMessage(
+        'Your composition is saved, but the music files still could not be '
+        'prepared. Try again when the service is available.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          generatingCompositionIds.remove(composition.id);
+        });
+      }
+    }
   }
 
   Future<void> deleteComposition(

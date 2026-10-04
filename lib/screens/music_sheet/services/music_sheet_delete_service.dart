@@ -19,23 +19,22 @@ class MusicSheetDeleteService {
       }
     }
 
-    addStoragePath(
-      storagePaths,
-      sheetData['musicXmlStoragePath'],
-    );
+    addStoragePath(storagePaths, sheetData['musicXmlStoragePath']);
 
-    addStoragePath(
-      storagePaths,
-      sheetData['previewAudioStoragePath'],
-    );
+    addStoragePath(storagePaths, sheetData['midiStoragePath']);
+
+    addStoragePath(storagePaths, sheetData['recognizedPdfStoragePath']);
+
+    addStoragePath(storagePaths, sheetData['previewAudioStoragePath']);
 
     final ownerId = sheetData['ownerId'] as String? ?? '';
 
     if (ownerId.isNotEmpty) {
-      final sheetFolder =
-          'musicSheets/$ownerId/${sheetReference.id}';
+      final sheetFolder = 'musicSheets/$ownerId/${sheetReference.id}';
 
       storagePaths.add('$sheetFolder/recognized.mxl');
+      storagePaths.add('$sheetFolder/recognized.mid');
+      storagePaths.add('$sheetFolder/recognized.pdf');
       storagePaths.add('$sheetFolder/preview.mp3');
     }
 
@@ -50,10 +49,7 @@ class MusicSheetDeleteService {
     await sheetReference.delete();
   }
 
-  void addStoragePath(
-    Set<String> storagePaths,
-    dynamic storagePath,
-  ) {
+  void addStoragePath(Set<String> storagePaths, dynamic storagePath) {
     if (storagePath is String && storagePath.isNotEmpty) {
       storagePaths.add(storagePath);
     }

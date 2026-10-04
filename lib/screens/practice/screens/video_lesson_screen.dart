@@ -26,6 +26,19 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
   late final Future<void> videoInitialization;
   bool controlsVisible = true;
 
+  void seekBy(Duration amount) {
+    var newPosition = videoController.value.position + amount;
+    final videoDuration = videoController.value.duration;
+
+    if (newPosition < Duration.zero) {
+      newPosition = Duration.zero;
+    } else if (newPosition > videoDuration) {
+      newPosition = videoDuration;
+    }
+
+    videoController.seekTo(newPosition);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -84,13 +97,37 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                       ),
                     ),
                     Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          setState(() {
-                            controlsVisible = !controlsVisible;
-                          });
-                        },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                setState(() {
+                                  controlsVisible = !controlsVisible;
+                                });
+                              },
+                              onDoubleTap: () {
+                                seekBy(const Duration(seconds: -5));
+                              },
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                setState(() {
+                                  controlsVisible = !controlsVisible;
+                                });
+                              },
+                              onDoubleTap: () {
+                                seekBy(const Duration(seconds: 5));
+                              },
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     if (controlsVisible)
@@ -254,10 +291,21 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                     ],
                   ),
                   child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.of(
-                        context,
-                      ).push(MaterialPageRoute(builder: (_) => Level1Screen()));
+                    onPressed: () async {
+                      await SystemChrome.setPreferredOrientations([
+                        DeviceOrientation.portraitUp,
+                      ]);
+                      if (!context.mounted) return;
+
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const Level1Screen()),
+                      );
+                      if (!context.mounted) return;
+
+                      SystemChrome.setPreferredOrientations([
+                        DeviceOrientation.landscapeLeft,
+                        DeviceOrientation.landscapeRight,
+                      ]);
                     },
                     icon: const Icon(Icons.quiz_outlined, size: 20),
                     label: const Text(

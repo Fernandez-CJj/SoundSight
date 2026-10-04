@@ -797,6 +797,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.0"
+  midi_util:
+    dependency: "direct main"
+    description:
+      name: midi_util
+      sha256: "188b84cd6d0b234e0d9866b91e77da307cb394e5bab04266c850fd57c7c1b976"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
   mime:
     dependency: transitive
     description:

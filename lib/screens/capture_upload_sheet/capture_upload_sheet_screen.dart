@@ -49,6 +49,12 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   final ImagePicker imagePicker = ImagePicker();
   final MusicSheetUploadService uploadService = MusicSheetUploadService();
 
+  bool get hasSelectedPdf => selectedSheets.any((file) {
+    return file.extension?.toLowerCase() == 'pdf';
+  });
+
+  bool get hasCapturedImages => selectedSheets.isNotEmpty && !hasSelectedPdf;
+
   @override
   void initState() {
     super.initState();
@@ -129,8 +135,11 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                 colors: colors,
                 isPickingFiles: isPickingFiles,
                 isSavingSheet: isSavingSheet,
-                onUpload: pickSheets,
-                onCapture: captureSheet,
+                isUploadLocked: selectedSheets.isNotEmpty,
+                isCaptureLocked:
+                    hasSelectedPdf || selectedSheets.length >= maxSheetPages,
+                onUpload: handleUploadPressed,
+                onCapture: handleCapturePressed,
               ),
               if (selectedSheets.isNotEmpty) ...[
                 Gap(AppSpacing.xl),
@@ -190,10 +199,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     final title = await showDialog<String>(
       context: context,
-      builder: (_) => SheetTitleDialog(
-        colors: colors,
-        initialTitle: getInitialSheetTitle(),
-      ),
+      builder: (_) => SheetTitleDialog(colors: colors),
     );
 
     if (title == null || !mounted) return;
@@ -256,17 +262,6 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
   }
 
-  String getInitialSheetTitle() {
-    final fileName = selectedSheets.first.name;
-    final extensionIndex = fileName.lastIndexOf('.');
-    final title = extensionIndex > 0
-        ? fileName.substring(0, extensionIndex)
-        : fileName;
-
-    if (title.isEmpty) return 'Untitled Sheet';
-    return title.length > 80 ? title.substring(0, 80) : title;
-  }
-
   Future<void> confirmDeleteAllSelectedFiles(AppThemeColors colors) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
@@ -285,22 +280,18 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   }
 
   Future<void> pickSheets() async {
-    if (isSavingSheet) return;
-
-    final hasSelectedPdf = selectedSheets.any((file) {
-      return file.extension?.toLowerCase() == 'pdf';
-    });
+    if (isSavingSheet || isPickingFiles) return;
 
     if (hasSelectedPdf) {
       showSelectionMessage(
-        'Remove the selected PDF before adding another file.',
+        'Only one PDF can be uploaded. Delete the selected PDF before choosing another.',
       );
       return;
     }
 
-    if (selectedSheets.length >= maxSheetPages) {
+    if (hasCapturedImages) {
       showSelectionMessage(
-        'You already selected the maximum of $maxSheetPages images.',
+        'Delete all captured images before uploading a PDF.',
       );
       return;
     }
@@ -312,7 +303,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     try {
       final pickedFiles = await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        allowedExtensions: ['pdf'],
       );
 
       if (pickedFiles.isEmpty) return;
@@ -327,16 +318,8 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
         }),
       );
 
-      final pdfFiles = files.where((file) {
-        return file.extension?.toLowerCase() == 'pdf';
-      }).toList();
-
-      if (pdfFiles.isNotEmpty) {
-        await selectPdf(files, pdfFiles.singleOrNull);
-        return;
-      }
-
-      selectImages(files);
+      final pdf = files.length == 1 ? files.single : null;
+      await selectPdf(files, pdf);
     } finally {
       if (mounted) {
         setState(() {
@@ -351,14 +334,21 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     SelectedSheetFile? pdf,
   ) async {
     if (pickedFiles.length != 1 || pdf == null) {
-      showSelectionMessage(
-        'Select either 1 PDF or up to $maxSheetPages images. PDFs cannot be mixed with images.',
-      );
+      showSelectionMessage('Select exactly one PDF.');
+      return;
+    }
+
+    if (pdf.extension?.toLowerCase() != 'pdf') {
+      showSelectionMessage('Only PDF files can be uploaded.');
       return;
     }
 
     if (selectedSheets.isNotEmpty) {
-      showSelectionMessage('Remove the selected images before choosing a PDF.');
+      showSelectionMessage(
+        hasSelectedPdf
+            ? 'Only one PDF can be uploaded. Delete the selected PDF before choosing another.'
+            : 'Delete all captured images before uploading a PDF.',
+      );
       return;
     }
 
@@ -395,49 +385,6 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
   }
 
-  void selectImages(List<SelectedSheetFile> pickedFiles) {
-    final oversizedImages = pickedFiles.where((file) {
-      return file.size > maxImageFileSize;
-    }).toList();
-    final allowedImages = pickedFiles.where((file) {
-      return file.size <= maxImageFileSize;
-    }).toList();
-    final newImages = allowedImages.where((file) {
-      return !selectedSheets.any((selectedFile) {
-        return selectedFile.name == file.name && selectedFile.size == file.size;
-      });
-    }).toList();
-    final remainingSlots = maxSheetPages - selectedSheets.length;
-    final imagesToAdd = newImages.take(remainingSlots).toList();
-    final duplicateCount = allowedImages.length - newImages.length;
-    final messages = <String>[];
-
-    if (oversizedImages.isNotEmpty) {
-      messages.add(
-        '${oversizedImages.length} image(s) were skipped because each image must be 5 MB or smaller.',
-      );
-    }
-
-    if (duplicateCount > 0) {
-      messages.add('$duplicateCount duplicate image(s) were skipped.');
-    }
-
-    if (newImages.length > remainingSlots) {
-      messages.add('Only $remainingSlots more image(s) could be added.');
-    }
-
-    if (messages.isNotEmpty) {
-      showSelectionMessage(messages.join(' '));
-    }
-
-    if (imagesToAdd.isEmpty || !mounted) return;
-
-    setState(() {
-      selectedSheets.addAll(imagesToAdd);
-      selectedPdfPageCount = null;
-    });
-  }
-
   Future<int> getPdfPageCount(SelectedSheetFile pdf) async {
     final bytes = pdf.bytes;
 
@@ -470,14 +417,8 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   Future<void> captureSheet() async {
     if (isSavingSheet || isPickingFiles) return;
 
-    final hasSelectedPdf = selectedSheets.any((file) {
-      return file.extension?.toLowerCase() == 'pdf';
-    });
-
     if (hasSelectedPdf) {
-      showSelectionMessage(
-        'Remove the selected PDF before adding captured images.',
-      );
+      showSelectionMessage('Delete the selected PDF before capturing images.');
       return;
     }
 
@@ -514,6 +455,42 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
       selectedSheets.add(capturedFile);
       selectedPdfPageCount = null;
     });
+  }
+
+  void handleUploadPressed() {
+    if (isSavingSheet || isPickingFiles) return;
+
+    if (hasSelectedPdf) {
+      showSelectionMessage(
+        'Only one PDF can be uploaded. Delete the selected PDF before choosing another.',
+      );
+      return;
+    }
+
+    if (hasCapturedImages) {
+      showSelectionMessage(
+        'Delete all captured images before uploading a PDF.',
+      );
+      return;
+    }
+
+    pickSheets();
+  }
+
+  void handleCapturePressed() {
+    if (isSavingSheet || isPickingFiles) return;
+
+    if (hasSelectedPdf) {
+      showSelectionMessage('Delete the selected PDF before capturing images.');
+      return;
+    }
+
+    if (selectedSheets.length >= maxSheetPages) {
+      showSelectionMessage('You can only add up to $maxSheetPages images.');
+      return;
+    }
+
+    captureSheet();
   }
 
   void showSelectionMessage(String message) {

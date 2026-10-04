@@ -74,6 +74,9 @@ class MusicSheetOmrService {
       partCount: (responseData['partCount'] as num?)?.toInt() ?? 0,
       noteCount: (responseData['noteCount'] as num?)?.toInt() ?? 0,
       musicXmlStoragePath: responseData['musicXmlStoragePath'] as String? ?? '',
+      midiStoragePath: responseData['midiStoragePath'] as String? ?? '',
+      recognizedPdfStoragePath:
+          responseData['recognizedPdfStoragePath'] as String? ?? '',
       previewAudioStoragePath:
           responseData['previewAudioStoragePath'] as String? ?? '',
     );

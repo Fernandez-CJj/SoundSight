@@ -37,9 +37,11 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
       content: Text(
         isReconversion
             ? 'SoundSight will create a new translation for "$title" and '
-                  'replace its current MusicXML and audio preview.'
-            : 'SoundSight will translate "$title" into playable music. '
-                  'This may take a few minutes.',
+                  'replace its current MusicXML, MIDI, recognized PDF, and '
+                  'audio preview.'
+            : 'SoundSight will translate "$title" into MusicXML, MIDI, a '
+                  'recognized PDF, and an audio preview. This may take a '
+                  'few minutes.',
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -85,9 +87,7 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
-                  child: Text(
-                    isReconversion ? 'Continue' : 'Translate',
-                  ),
+                  child: Text(isReconversion ? 'Continue' : 'Translate'),
                 ),
               ),
             ),
@@ -99,10 +99,7 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
 }
 
 class MusicSheetOmrLoadingDialog extends StatelessWidget {
-  const MusicSheetOmrLoadingDialog({
-    super.key,
-    required this.colors,
-  });
+  const MusicSheetOmrLoadingDialog({super.key, required this.colors});
 
   final AppThemeColors colors;
 

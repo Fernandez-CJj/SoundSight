@@ -132,6 +132,12 @@ class CompositionEditorController {
 
   double get insertionBeat => _insertionBeat;
 
+  double get insertionAbsoluteBeat {
+    return normalizeTiming(
+      (currentMeasureIndex * _beatsPerMeasure) + _insertionBeat,
+    );
+  }
+
   bool get canMoveInsertionCursorBack {
     return currentMeasureIndex > 0 || _insertionBeat > 0;
   }
@@ -657,6 +663,106 @@ class CompositionEditorController {
       _selectedNoteId = newNote.id;
     }
 
+    return null;
+  }
+
+  String? applyMidiStep(
+    List<CompositionNote> midiNotes, {
+    required num stepEndAbsoluteBeat,
+    required num stepDurationBeats,
+    bool replaceSelectedNote = false,
+  }) {
+    if (midiNotes.isEmpty) {
+      return 'No piano notes were entered.';
+    }
+
+    final noteToReplace = replaceSelectedNote ? selectedNote : null;
+    if (replaceSelectedNote &&
+        (noteToReplace == null || _selectedNoteIds.length != 1)) {
+      return 'Select only one note before replacing it.';
+    }
+
+    final replacedNoteCount = noteToReplace == null ? 0 : 1;
+    if (_notes.length - replacedNoteCount + midiNotes.length >
+        maximumNoteCount) {
+      return noteLimitError;
+    }
+
+    final normalizedStepEnd = normalizeTiming(stepEndAbsoluteBeat);
+    final normalizedStepDuration = normalizeTiming(stepDurationBeats);
+    if (normalizedStepEnd < 0 || normalizedStepDuration <= 0) {
+      return 'The MIDI note timing is invalid.';
+    }
+
+    var requiredMeasureCount = _measureCount;
+    for (final note in midiNotes) {
+      requiredMeasureCount = requiredMeasureCount > note.measureIndex
+          ? requiredMeasureCount
+          : note.measureIndex + 1;
+    }
+
+    final cursorMeasure = (normalizedStepEnd / _beatsPerMeasure).floor();
+    final cursorBeat = normalizeTiming(
+      normalizedStepEnd - (cursorMeasure * _beatsPerMeasure),
+    );
+    var measuresNeededForCursor =
+        (normalizedStepEnd / _beatsPerMeasure).ceil().clamp(
+          1,
+          maximumMeasureCount + 1,
+        ).toInt();
+    if (cursorBeat < timingStep / 2 &&
+        normalizedStepEnd > 0 &&
+        cursorMeasure < maximumMeasureCount) {
+      measuresNeededForCursor = cursorMeasure + 1;
+    }
+    if (measuresNeededForCursor > requiredMeasureCount) {
+      requiredMeasureCount = measuresNeededForCursor;
+    }
+
+    if (requiredMeasureCount > maximumMeasureCount) {
+      return measureLimitError;
+    }
+
+    final candidates = midiNotes.map((note) {
+      return note.copyWith(
+        id: createNoteId(),
+        startBeat: normalizeTiming(note.startBeat),
+        durationBeats: normalizeTiming(note.durationBeats),
+      );
+    }).toList();
+
+    final validationError = _validateMidiStepNotes(
+      candidates,
+      availableMeasureCount: requiredMeasureCount,
+      ignoredExistingIds: noteToReplace == null
+          ? const {}
+          : {noteToReplace.id},
+    );
+    if (validationError != null) {
+      return validationError;
+    }
+
+    _recordUndo();
+    if (noteToReplace != null) {
+      _notes.removeWhere((note) => note.id == noteToReplace.id);
+    }
+    _measureCount = requiredMeasureCount;
+    _notes.addAll(candidates);
+    clearSelection();
+    selectedDuration = normalizedStepDuration;
+    selectedVelocity = candidates.last.velocity;
+
+    if (cursorMeasure >= _measureCount) {
+      currentMeasureIndex = _measureCount - 1;
+      _insertionBeat = normalizeTiming(
+        (_beatsPerMeasure - timingStep).clamp(0, _beatsPerMeasure),
+      );
+    } else {
+      currentMeasureIndex = cursorMeasure;
+      _insertionBeat = cursorBeat;
+    }
+    _removeBrokenTiesWithoutHistory();
+    _clearChord();
     return null;
   }
 
@@ -1381,6 +1487,65 @@ class CompositionEditorController {
 
   String? _validateNewNotes(List<CompositionNote> candidates) {
     return _validateCandidates(candidates);
+  }
+
+  String? _validateMidiStepNotes(
+    List<CompositionNote> candidates, {
+    required int availableMeasureCount,
+    Set<String> ignoredExistingIds = const {},
+  }) {
+    for (final note in candidates) {
+      if (note.measureIndex < 0 ||
+          note.measureIndex >= availableMeasureCount ||
+          note.durationBeats <= 0 ||
+          note.startBeat < 0 ||
+          note.startBeat + note.durationBeats >
+              _beatsPerMeasure + timingStep / 2) {
+        return 'The MIDI notes do not fit in the composition.';
+      }
+
+      for (final existing in _notes) {
+        if (ignoredExistingIds.contains(existing.id) ||
+            existing.measureIndex != note.measureIndex ||
+            existing.midiNumber != note.midiNumber) {
+          continue;
+        }
+        if (_rangesOverlap(
+          note.startBeat,
+          note.startBeat + note.durationBeats,
+          existing.startBeat,
+          existing.startBeat + existing.durationBeats,
+        )) {
+          return 'The MIDI notes would overlap the existing composition.';
+        }
+      }
+    }
+
+    for (var firstIndex = 0; firstIndex < candidates.length; firstIndex++) {
+      final first = candidates[firstIndex];
+
+      for (
+        var secondIndex = firstIndex + 1;
+        secondIndex < candidates.length;
+        secondIndex++
+      ) {
+        final second = candidates[secondIndex];
+        if (first.measureIndex != second.measureIndex ||
+            first.midiNumber != second.midiNumber) {
+          continue;
+        }
+        if (_rangesOverlap(
+          first.startBeat,
+          first.startBeat + first.durationBeats,
+          second.startBeat,
+          second.startBeat + second.durationBeats,
+        )) {
+          return 'The same MIDI key overlaps itself.';
+        }
+      }
+    }
+
+    return null;
   }
 
   String? _validateCandidates(

@@ -136,14 +136,9 @@ class RemoveSelectedSheetDialog extends StatelessWidget {
 }
 
 class SheetTitleDialog extends StatefulWidget {
-  const SheetTitleDialog({
-    super.key,
-    required this.colors,
-    required this.initialTitle,
-  });
+  const SheetTitleDialog({super.key, required this.colors});
 
   final AppThemeColors colors;
-  final String initialTitle;
 
   @override
   State<SheetTitleDialog> createState() => _SheetTitleDialogState();
@@ -156,7 +151,7 @@ class _SheetTitleDialogState extends State<SheetTitleDialog> {
   @override
   void initState() {
     super.initState();
-    titleController = TextEditingController(text: widget.initialTitle);
+    titleController = TextEditingController();
   }
 
   @override
@@ -305,9 +300,7 @@ class SheetSaveResultDialog extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: Icon(
-          isSuccessful
-              ? Icons.check_rounded
-              : Icons.error_outline_rounded,
+          isSuccessful ? Icons.check_rounded : Icons.error_outline_rounded,
           color: statusColor,
           size: 32,
         ),

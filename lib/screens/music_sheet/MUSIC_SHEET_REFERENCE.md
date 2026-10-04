@@ -27,7 +27,7 @@ The current backend uses Audiveris for recognition and MuseScore for MP3 generat
 The user can open **Music Sheets** from the drawer or home screen.
 
 1. The screen reads the current Firebase user's ID.
-2. It subscribes to `/musicSheets` documents whose `ownerId` matches that ID.
+2. It subscribes to `/users/{userId}/musicSheets` for that user.
 3. Sheets are sorted in the app by `createdAt`, newest first.
 4. Each card shows the title, number of pages, PDF or Images type, and creation date.
 
@@ -37,7 +37,7 @@ A signed-out user sees **Sign in to view your music sheets**.
 
 The app-bar add button and empty-library button open `CaptureUploadSheetScreen`.
 
-That feature lets the user upload one PDF or up to 20 images, then creates the source files in Firebase Storage and the initial `/musicSheets/{sheetId}` document.
+That feature lets the user upload one PDF or up to 20 images, then creates the source files in Firebase Storage and the initial `/users/{userId}/musicSheets/{sheetId}` document.
 
 The Music Sheet library updates automatically because it uses a Firestore stream.
 
@@ -47,6 +47,10 @@ Tapping a card opens the viewer.
 
 - A PDF sheet downloads its first file and displays it in a PDF viewer.
 - An image sheet sorts its files by `pageNumber` and shows each page vertically.
+- When a recognized PDF is available, the viewer displays it by default and
+  provides a **Recognized / Original** selector.
+- If the recognized PDF cannot load, the viewer shows the originals with a
+  warning and a retry action.
 - Each image can be panned and zoomed up to five times.
 - A single image download is limited to 5 MB.
 - A PDF download is limited to 20 MB.
@@ -70,8 +74,8 @@ The initial status is treated as `notStarted` when `omrStatus` is missing.
 8. Audiveris converts the prepared PDF into a compressed MusicXML `.mxl` file.
 9. The backend opens the MusicXML and counts its parts and notes.
 10. Recognition fails if the MusicXML cannot be read or contains no notes.
-11. MuseScore converts the MusicXML into an MP3 audio preview.
-12. The MusicXML and MP3 are uploaded to Firebase Storage.
+11. MuseScore converts the MusicXML into a recognized PDF, MIDI file, and MP3 audio preview.
+12. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
 13. The sheet document is updated to `completed` with the output paths and counts.
 14. The temporary backend job folder is deleted.
 15. The app closes the loading dialog and shows the recognized part and note counts.
@@ -89,7 +93,7 @@ The status card displays:
 - **Translation ready** after success; or
 - **Translation failed** after failure.
 
-After success, the button becomes **Reconvert**. Reconvert runs the same flow and overwrites the current `recognized.mxl` and `preview.mp3` files rather than creating numbered versions.
+After success, the button becomes **Reconvert**. Reconvert runs the same flow and overwrites the current `recognized.mxl`, `recognized.mid`, `recognized.pdf`, and `preview.mp3` files rather than creating numbered versions.
 
 After failure, the button becomes **Retry**.
 
@@ -143,8 +147,12 @@ After confirmation, the app collects and deletes:
 
 - every source path inside the `files` list;
 - the stored `musicXmlStoragePath`, when present;
+- the stored `midiStoragePath`, when present;
+- the stored `recognizedPdfStoragePath`, when present;
 - the stored `previewAudioStoragePath`, when present;
-- the expected `recognized.mxl` path; and
+- the expected `recognized.mxl` path;
+- the expected `recognized.mid` path;
+- the expected `recognized.pdf` path; and
 - the expected `preview.mp3` path.
 
 Duplicate paths are removed before deletion. A missing Storage object is ignored. After Storage cleanup succeeds, the Firestore sheet document is deleted.
@@ -162,7 +170,8 @@ Duplicate paths are removed before deletion. A missing Storage object is ignored
 
 - a copied and page-sorted list of source file descriptions;
 - cached download futures for image bytes;
-- the PDF download future;
+- the original and recognized PDF download futures;
+- the selected Recognized or Original viewer mode;
 - whether translation is currently running; and
 - the backend conversion result or error used by the result dialog.
 
@@ -196,7 +205,9 @@ A valid changed title is saved immediately after the Rename dialog returns.
 
 The backend writes a processing status when recognition begins. It then writes either completed result fields or failure fields.
 
-The generated MusicXML and MP3 become permanent Firebase Storage objects after successful upload. Reconversion replaces these same two objects.
+The generated MusicXML, MIDI, recognized PDF, and MP3 become permanent Firebase
+Storage objects after successful upload. Reconversion replaces these same four
+objects.
 
 ### Playback
 
@@ -206,11 +217,13 @@ Playing, pausing, seeking, or stopping the audio preview saves nothing.
 
 | Information | Path |
 | --- | --- |
-| Music-sheet document | `/musicSheets/{sheetId}` |
+| Music-sheet document | `/users/{userId}/musicSheets/{sheetId}` |
 | User theme | `/users/{userId}` field `theme` |
 | Uploaded PDF | `musicSheets/{ownerId}/{sheetId}/sheet.pdf` |
 | Uploaded image page | `musicSheets/{ownerId}/{sheetId}/page_01.{extension}` through `page_20.{extension}` |
 | Recognized MusicXML | `musicSheets/{ownerId}/{sheetId}/recognized.mxl` |
+| Recognized MIDI | `musicSheets/{ownerId}/{sheetId}/recognized.mid` |
+| Recognized PDF | `musicSheets/{ownerId}/{sheetId}/recognized.pdf` |
 | Generated audio preview | `musicSheets/{ownerId}/{sheetId}/preview.mp3` |
 | Recognition endpoint | `POST /music-sheets/{sheetId}/recognize` |
 
@@ -220,7 +233,7 @@ The library reads `theme` from the user document but does not update it.
 
 ### Fields created by Capture and Upload Sheet
 
-The initial `/musicSheets/{sheetId}` document contains:
+The initial `/users/{userId}/musicSheets/{sheetId}` document contains:
 
 - `ownerId`;
 - `title`;
@@ -263,6 +276,8 @@ No other sheet field is changed by rename.
 - `omrProcessedAt`: server timestamp;
 - `omrFailedAt`: deleted if it existed;
 - `musicXmlStoragePath`;
+- `midiStoragePath`;
+- `recognizedPdfStoragePath`;
 - `previewAudioStoragePath`;
 - `omrPartCount`; and
 - `omrNoteCount`.
@@ -319,7 +334,8 @@ Although upload Storage rules support HEIC and WEBP names, the current OMR backe
 Firestore Rules require authentication and enforce that:
 
 - a newly created document's `ownerId` equals the signed-in user's ID;
-- only the owner can read or delete the document;
+- only the path owner can read or list documents in the subcollection;
+- deletion also requires the stored `ownerId` to match the path owner;
 - only the existing owner can update it;
 - `ownerId` cannot be changed during an update;
 - title length is 1 to 80 characters;
@@ -341,7 +357,10 @@ Direct client uploads are limited to:
 - image files up to 5 MB with a valid `page_01` through `page_20` name; or
 - one PDF up to 20 MB named exactly `sheet.pdf`.
 
-The Storage Rules do not permit a client to create or update `recognized.mxl` or `preview.mp3`. The backend uploads those files with Firebase Admin access, which bypasses client Storage Rules.
+The Storage Rules do not permit a client to create or update the generated
+`recognized.mxl`, `recognized.mid`, `recognized.pdf`, or `preview.mp3` files.
+The backend uploads them with Firebase Admin access, which bypasses client
+Storage Rules.
 
 ### Current backend authorization boundary
 
@@ -420,11 +439,14 @@ The card title changes through the live stream, and a success message appears.
 
 ### After translation
 
-The viewer's live sheet stream changes to **Translation ready**. It displays the part and note counts and shows the MP3 audio-preview controls.
+The viewer's live sheet stream changes to **Translation ready**. It displays
+the part and note counts, defaults to the recognized PDF, provides the source
+selector, and shows the MP3 audio-preview controls.
 
 ### After deletion
 
-The source files, recognized MusicXML, audio preview, and Firestore document are removed. The library's live stream removes the card.
+The source files, recognized MusicXML, MIDI, PDF, audio preview, and Firestore
+document are removed. The library's live stream removes the card.
 
 ## 12. Simple example
 
@@ -442,11 +464,13 @@ When the user taps Translate:
 1. the backend combines the two pages into one temporary PDF;
 2. Audiveris creates MusicXML;
 3. the validator finds two musical parts and 120 notes;
-4. MuseScore creates the MP3; and
+4. MuseScore creates the recognized PDF, MIDI, and MP3; and
 5. the backend uploads:
 
 ```text
 musicSheets/USER_ID/SHEET_ID/recognized.mxl
+musicSheets/USER_ID/SHEET_ID/recognized.mid
+musicSheets/USER_ID/SHEET_ID/recognized.pdf
 musicSheets/USER_ID/SHEET_ID/preview.mp3
 ```
 
@@ -458,7 +482,11 @@ omrEngine: audiveris
 omrPartCount: 2
 omrNoteCount: 120
 musicXmlStoragePath: musicSheets/USER_ID/SHEET_ID/recognized.mxl
+midiStoragePath: musicSheets/USER_ID/SHEET_ID/recognized.mid
+recognizedPdfStoragePath: musicSheets/USER_ID/SHEET_ID/recognized.pdf
 previewAudioStoragePath: musicSheets/USER_ID/SHEET_ID/preview.mp3
 ```
 
-The user can listen to the MP3, but the current Sight Reading and Synthesia choices do not yet use this sheet's MusicXML.
+The user can view either the recognized PDF or the originals and listen to the
+MP3, but the current Sight Reading and Synthesia choices do not yet use this
+sheet's MusicXML or MIDI.

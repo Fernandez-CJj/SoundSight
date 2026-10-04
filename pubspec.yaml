@@ -55,6 +55,7 @@ dependencies:
   hand_detection: ^4.1.0
   flutter_litert: ^3.8.0
   video_player: ^2.14.0
+  midi_util: ^1.0.2
 
 dev_dependencies:
   flutter_test:

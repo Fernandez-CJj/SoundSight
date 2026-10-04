@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -39,6 +41,7 @@ class CompositionRequest(BaseModel):
     id: str = ""
     ownerId: str
     title: str
+    creationMethod: Literal["manual", "recording"] = "manual"
 
     tempo: int = Field(
         ge=40,

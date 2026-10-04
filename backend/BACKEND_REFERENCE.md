@@ -76,8 +76,8 @@ Unpublishes a composition. The request body contains `ownerId`.
 5. Image pages are combined into one PDF when necessary.
 6. Audiveris converts the PDF into MusicXML.
 7. music21 confirms that the result is readable and contains notes.
-8. MuseScore creates an MP3 preview.
-9. The MusicXML and MP3 are uploaded to Firebase Storage.
+8. MuseScore creates a recognized PDF, MIDI file, and MP3 preview.
+9. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
 10. The sheet document becomes `completed` and stores the results.
 11. Temporary job files are deleted.
 
@@ -95,7 +95,7 @@ The backend writes to:
 
 - Firestore `compositionPosts/{compositionId}`;
 - Firestore `compositionPosts/{compositionId}/versions/{versionNumber}`;
-- Firestore `musicSheets/{sheetId}`;
+- Firestore `users/{ownerId}/musicSheets/{sheetId}`;
 - Firebase Storage `published_compositions/{ownerId}/{compositionId}/...`;
 - Firebase Storage `musicSheets/{ownerId}/{sheetId}/...`.
 

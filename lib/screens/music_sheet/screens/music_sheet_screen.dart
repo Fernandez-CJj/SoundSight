@@ -35,8 +35,9 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
 
     if (userId != null) {
       musicSheetsStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
           .collection('musicSheets')
-          .where('ownerId', isEqualTo: userId)
           .snapshots();
     }
 

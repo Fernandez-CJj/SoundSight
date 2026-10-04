@@ -1,11 +1,100 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:soundsight/screens/composition/models/composition.dart';
 
+enum CompositionPublicationAction { publish, publishUpdate, unpublish }
+
+class CompositionPublication {
+  const CompositionPublication({
+    required this.compositionId,
+    required this.currentVersion,
+    this.sourceUpdatedAt,
+    this.publishedAt,
+  });
+
+  final String compositionId;
+  final int currentVersion;
+  final DateTime? sourceUpdatedAt;
+  final DateTime? publishedAt;
+
+  factory CompositionPublication.fromMap(
+    String compositionId,
+    Map<String, dynamic> map,
+  ) {
+    final sourceUpdatedAtData = map['sourceUpdatedAt'];
+    final publishedAtData = map['publishedAt'];
+
+    return CompositionPublication(
+      compositionId: compositionId,
+      currentVersion: (map['currentVersion'] as num?)?.toInt() ?? 1,
+      sourceUpdatedAt: sourceUpdatedAtData is Timestamp
+          ? sourceUpdatedAtData.toDate()
+          : null,
+      publishedAt: publishedAtData is Timestamp
+          ? publishedAtData.toDate()
+          : null,
+    );
+  }
+
+  bool hasUnpublishedChanges(Composition composition) {
+    final compositionUpdatedAt = composition.updatedAt;
+    final publishedSourceDate = sourceUpdatedAt ?? publishedAt;
+
+    if (compositionUpdatedAt == null || publishedSourceDate == null) {
+      return false;
+    }
+
+    return compositionUpdatedAt.isAfter(publishedSourceDate);
+  }
+}
+
 class CompositionPublishService {
   static const String backendUrl = 'http://192.168.0.104:8000';
+
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  /// Streams each public post together with the private edit timestamp that
+  /// produced its current version.
+  Stream<Map<String, CompositionPublication>> getCompositionPublications(
+    String ownerId,
+  ) {
+    return firestore
+        .collection('compositionPosts')
+        .where('ownerId', isEqualTo: ownerId)
+        .snapshots()
+        .map((snapshot) {
+          return {
+            for (final document in snapshot.docs)
+              document.id: CompositionPublication.fromMap(
+                document.id,
+                document.data(),
+              ),
+          };
+        });
+  }
+
+  /// Streams the public post for one composition, or null while it is not
+  /// published.
+  Stream<CompositionPublication?> watchCompositionPublication(
+    String compositionId,
+  ) {
+    return firestore
+        .collection('compositionPosts')
+        .doc(compositionId)
+        .snapshots()
+        .map((document) {
+          final data = document.data();
+
+          if (!document.exists || data == null) {
+            return null;
+          }
+
+          return CompositionPublication.fromMap(document.id, data);
+        });
+  }
 
   Future<String> publishComposition(Composition composition) async {
     final requestData = composition.toMap();
