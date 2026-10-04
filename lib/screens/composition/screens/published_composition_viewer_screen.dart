@@ -7,7 +7,7 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
-import 'package:soundsight/screens/challenges/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class PublishedCompositionViewerScreen extends StatefulWidget {

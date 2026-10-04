@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../piano_calibration/models/keyboard_area_corners.dart';
-import '../../piano_calibration/models/piano_key_marker.dart';
+import '../../../piano_calibration/models/keyboard_area_corners.dart';
+import '../../../piano_calibration/models/piano_key_marker.dart';
 import '../models/ar_note_event.dart';
 import '../models/ar_score_timeline.dart';
 import '../services/ar_practice_performance_tracker.dart';
