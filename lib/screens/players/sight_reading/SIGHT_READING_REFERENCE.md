@@ -8,7 +8,7 @@ Sight Reading displays a MusicXML score and checks notes played on a connected M
 
 It supports:
 
-- Wait Mode, where the score advances after the correct note or chord is played;
+- Wait Mode, where the player must press the correct note or chord and hold it for its written duration;
 - Performance Mode, where the cursor follows the MIDI score's timing;
 - listening to a piano-sample preview of the MIDI timeline;
 - immediate correct, wrong, timing, and hint feedback; and
@@ -37,11 +37,26 @@ From a fundamentals lesson:
 3. It reads the supplied Firestore score document.
 4. It reads `musicXmlUrl` and `midiUrl`.
 5. The MusicXML file is downloaded through HTTP.
-6. A WebView loads OpenSheetMusicDisplay version `2.1.1` from jsDelivr.
-7. OpenSheetMusicDisplay renders the score as one horizontal staff line and creates a green cursor.
-8. The WebView counts playable score positions and reports the notes under the cursor to Flutter.
-9. The MIDI file is downloaded separately and parsed into timed note-or-chord events.
-10. The signed-in user's `skillLevel` is loaded to select the Performance Mode timing tolerance.
+6. The WebView removes MusicXML parts that contain only rests from its in-memory rendering copy.
+7. A WebView loads OpenSheetMusicDisplay version `2.1.1` from jsDelivr.
+8. OpenSheetMusicDisplay renders the score as one horizontal staff line and creates a green cursor.
+9. The WebView counts playable score positions and reports the notes under the cursor to Flutter.
+10. The MIDI file is downloaded separately and parsed into timed note-or-chord events.
+11. The signed-in user's `skillLevel` is loaded to select the Performance Mode timing tolerance.
+
+A tied continuation remains visible in the notation but is not counted as a
+new playable position. The player presses the pitch at the start of the tie
+and continues holding it through the tied note instead of pressing it again.
+
+The rendering cleanup does not change Firebase Storage. It first merges parts
+that Audiveris split into sequential, complementary staff fragments: their
+measure numbers and clefs must match, both parts must explicitly hide their
+inactive measures, and their playable measures cannot overlap. It then removes
+entirely rest-only parts and hides loaded OSMD staves whose complete voice
+history contains no visible non-rest note. Real treble-and-bass staves remain
+separate because their playable measures overlap or their clefs differ. The
+WebView reports merged-part, removed-part, loaded-staff, playable-staff, and
+hidden-staff counts to the Flutter debug log.
 
 ### Connecting MIDI
 
@@ -60,11 +75,14 @@ In Wait Mode:
 1. The green score cursor shows the current note or chord.
 2. The expected MIDI notes are read from the MusicXML cursor.
 3. Every expected note must be newly pressed for the current step.
-4. The held-note set must exactly equal the expected set. Extra held notes count as a mistake.
+4. The held-note set may include earlier notes whose MIDI durations continue through the current position; unrelated notes count as mistakes.
 5. Chord notes must be attacked within 200 milliseconds.
-6. A correct match advances the score cursor to the next playable position.
-7. Five consecutive failed attempts reveal a text hint containing the expected note names.
-8. Reaching the end opens the completion dialog.
+6. After the pitches match, the cursor moves toward the next position using the MIDI interval between the two Note On events.
+7. Each key must remain held for at least 80% of its MIDI duration and must produce a Note Off before its release deadline.
+8. A valid sustained note may remain held while later notes are entered.
+9. Releasing early returns to the note's starting position; holding too long blocks progress until release.
+10. Five consecutive failed attempts reveal a text hint containing the expected note names.
+11. The final position completes only after every remaining key is released.
 
 If a hint appeared at any time, the result requires a retry and the **Done** button is hidden. Wait Mode never awards XP.
 
@@ -73,13 +91,19 @@ If a hint appeared at any time, the result requires a retry and the **Done** but
 Performance Mode is the default.
 
 1. The MIDI timeline, rendered score, and MIDI connection must be ready.
-2. The user taps **Start**.
-3. A visible countdown shows `3`, `2`, and `1`.
-4. A stopwatch and 20-millisecond performance update timer begin.
-5. The score cursor slides toward each next playable position according to the MIDI event times.
-6. Note On messages are compared with the closest current event.
-7. The final event is evaluated after its allowed late window.
-8. The cursor is hidden and the completion dialog opens.
+2. The user taps **Start Performance** at the bottom of the score.
+3. The screen waits for the user to press any MIDI key.
+4. That first key starts the stopwatch and is evaluated as correct or wrong input.
+5. A 20-millisecond performance update timer begins.
+6. The score cursor slides toward each next playable position according to the MIDI event times.
+7. Later Note On messages are compared with the closest current event.
+8. Note Off messages are compared with each MIDI note's expected duration. A
+   key must remain held for at least 80% of that duration; releasing it sooner
+   records a `Released too soon` mistake.
+9. Tied notes use their combined MIDI duration and require one continuous key
+   hold rather than another attack at the continuation.
+10. The final event is evaluated after its note duration has been checked.
+11. The cursor is hidden and the completion dialog opens.
 
 Timing tolerance depends on the saved skill level:
 
@@ -124,7 +148,7 @@ The screen and its helpers keep these values only in memory:
 - currently held MIDI notes and individual Note On events;
 - MIDI connection status;
 - current mode and completion state;
-- loading, countdown, preview, and performance-running flags;
+- loading, waiting-for-first-key, preview, and performance-running flags;
 - stopwatch time and timer objects;
 - total and completed score positions;
 - per-position note presses and chord press times;
@@ -224,21 +248,29 @@ If the progress document already says `completed: true`, neither document is cha
 - Standard tick timing and SMPTE timing are supported.
 - Channel 10 percussion is ignored.
 - Only positive-velocity Note On events become timeline targets.
+- Matching Note Off events, including zero-velocity Note On messages, provide each target note's duration.
 - Notes occurring at the same MIDI tick are grouped as one event or chord.
 - At least one playable event is required.
 
-Unlike the AR parser, this parser uses Note On positions only. It does not need Note Off events or note durations.
+Note Off events do not create additional targets. They are used only for duration validation and the complete MIDI timeline.
 
 ### Performance target duration
 
-The displayed target duration is the time from the first playable Note On to the last playable Note On, rounded to a whole second with a minimum display value of one second.
+The displayed target duration uses the complete MIDI timeline through its final end-of-track tick, including sustained notes and rests.
 
 ### Wait Mode note matching
 
 - Expected notes cannot be empty.
-- Held notes must exactly equal the expected set.
+- Held notes must equal the current attack notes plus valid sustained notes from earlier positions.
 - Every expected note must have a new Note On during the current step.
 - Chord attacks must be within 200 milliseconds.
+- Note Off events are checked against each expected note's MIDI duration.
+- The earliest valid release is 80% of the note duration.
+- The latest valid release is the complete duration plus the current skill-level timing tolerance.
+- Notes in a chord may have different durations; each note is checked independently.
+- An early release returns the cursor to the note's originating position for another attempt.
+- An overheld note turns the cursor red and blocks new input until the key is released.
+- A repeated pitch requires the previous instance to be released before another Note On is accepted.
 - One held-note attempt adds at most one mistake until all keys are released or a correct match is completed.
 
 ### Perfect completion
@@ -350,9 +382,9 @@ Exercises and saved challenge completions do not expire.
 
 ### Retry
 
-**Retry** stops score preview, cancels countdown and performance timers, resets the stopwatch and trackers, clears active notes, and renders the downloaded MusicXML again.
+**Retry** stops score preview, cancels the waiting state and performance timers, resets the stopwatch and trackers, clears active notes, and renders the downloaded MusicXML again.
 
-Switching modes runs the same reset. It does not ask for confirmation.
+Switching modes asks for confirmation and then runs the same reset.
 
 If a hint was shown in Wait Mode, Retry is mandatory because the completion dialog hides **Done**.
 

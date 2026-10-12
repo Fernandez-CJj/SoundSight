@@ -71,14 +71,16 @@ The initial status is treated as `notStarted` when `omrStatus` is missing.
 5. The backend changes `omrStatus` to `processing`.
 6. Source files are downloaded from Firebase Storage into a temporary backend job folder.
 7. Image sheets are sorted by page number and combined into a 300-DPI PDF. PDF sheets are used directly.
-8. Audiveris converts the prepared PDF into a compressed MusicXML `.mxl` file.
-9. The backend opens the MusicXML and counts its parts and notes.
-10. Recognition fails if the MusicXML cannot be read or contains no notes.
-11. MuseScore converts the MusicXML into a recognized PDF, MIDI file, and MP3 audio preview.
-12. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
-13. The sheet document is updated to `completed` with the output paths and counts.
-14. The temporary backend job folder is deleted.
-15. The app closes the loading dialog and shows the recognized part and note counts.
+8. Audiveris converts the prepared PDF into a temporary compressed MusicXML `.mxl` file.
+9. The backend extracts the score as a plain `.musicxml` file.
+10. The backend removes score parts and staves that contain only rests.
+11. The backend opens the normalized MusicXML and counts its parts and notes.
+12. Recognition fails if the MusicXML cannot be read or contains no playable parts or notes.
+13. MuseScore converts the normalized MusicXML into a recognized PDF, MIDI file, and MP3 audio preview.
+14. The normalized MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
+15. The sheet document is updated to `completed` with the output paths and counts.
+16. The temporary backend job folder is deleted.
+17. The app closes the loading dialog and shows the recognized part and note counts.
 
 The app waits up to 15 minutes for the HTTP request. Audiveris itself has a 30-minute process timeout, while MuseScore's MP3 export has a 10-minute process timeout.
 
@@ -93,7 +95,7 @@ The status card displays:
 - **Translation ready** after success; or
 - **Translation failed** after failure.
 
-After success, the button becomes **Reconvert**. Reconvert runs the same flow and overwrites the current `recognized.mxl`, `recognized.mid`, `recognized.pdf`, and `preview.mp3` files rather than creating numbered versions.
+After success, the button becomes **Reconvert**. Reconvert runs the same flow and overwrites the current `recognized.musicxml`, `recognized.mid`, `recognized.pdf`, and `preview.mp3` files rather than creating numbered versions.
 
 After failure, the button becomes **Retry**.
 
@@ -150,7 +152,7 @@ After confirmation, the app collects and deletes:
 - the stored `midiStoragePath`, when present;
 - the stored `recognizedPdfStoragePath`, when present;
 - the stored `previewAudioStoragePath`, when present;
-- the expected `recognized.mxl` path;
+- the expected `recognized.musicxml` path;
 - the expected `recognized.mid` path;
 - the expected `recognized.pdf` path; and
 - the expected `preview.mp3` path.
@@ -221,7 +223,7 @@ Playing, pausing, seeking, or stopping the audio preview saves nothing.
 | User theme | `/users/{userId}` field `theme` |
 | Uploaded PDF | `musicSheets/{ownerId}/{sheetId}/sheet.pdf` |
 | Uploaded image page | `musicSheets/{ownerId}/{sheetId}/page_01.{extension}` through `page_20.{extension}` |
-| Recognized MusicXML | `musicSheets/{ownerId}/{sheetId}/recognized.mxl` |
+| Recognized MusicXML | `musicSheets/{ownerId}/{sheetId}/recognized.musicxml` |
 | Recognized MIDI | `musicSheets/{ownerId}/{sheetId}/recognized.mid` |
 | Recognized PDF | `musicSheets/{ownerId}/{sheetId}/recognized.pdf` |
 | Generated audio preview | `musicSheets/{ownerId}/{sheetId}/preview.mp3` |
@@ -358,7 +360,7 @@ Direct client uploads are limited to:
 - one PDF up to 20 MB named exactly `sheet.pdf`.
 
 The Storage Rules do not permit a client to create or update the generated
-`recognized.mxl`, `recognized.mid`, `recognized.pdf`, or `preview.mp3` files.
+`recognized.musicxml`, `recognized.mid`, `recognized.pdf`, or `preview.mp3` files.
 The backend uploads them with Firebase Admin access, which bypasses client
 Storage Rules.
 
@@ -376,7 +378,12 @@ For an image sheet, the backend sorts source file entries by `pageNumber` before
 
 ### Part count
 
-After Audiveris creates MusicXML, `music21` parses the score. `omrPartCount` is the number of musical parts in that parsed score.
+After Audiveris creates MusicXML, the backend removes only parts or staves with
+no pitched or unpitched notes. It keeps rest-only measures inside playable
+parts or staves, keeps every part that contains notes, and preserves a piano
+grand staff when both staves are playable. `music21` then parses the normalized
+score, so `omrPartCount` is the number of remaining musical parts used by all
+generated files and Sight Reading.
 
 ### Note count
 
@@ -462,13 +469,15 @@ musicSheets/USER_ID/SHEET_ID/page_02.jpg
 When the user taps Translate:
 
 1. the backend combines the two pages into one temporary PDF;
-2. Audiveris creates MusicXML;
-3. the validator finds two musical parts and 120 notes;
-4. MuseScore creates the recognized PDF, MIDI, and MP3; and
-5. the backend uploads:
+2. Audiveris creates a temporary compressed `.mxl`;
+3. the backend extracts plain MusicXML;
+4. the backend removes any completely rest-only parts or staves;
+5. the validator counts the remaining musical parts and 120 notes;
+6. MuseScore creates the recognized PDF, MIDI, and MP3; and
+7. the backend uploads:
 
 ```text
-musicSheets/USER_ID/SHEET_ID/recognized.mxl
+musicSheets/USER_ID/SHEET_ID/recognized.musicxml
 musicSheets/USER_ID/SHEET_ID/recognized.mid
 musicSheets/USER_ID/SHEET_ID/recognized.pdf
 musicSheets/USER_ID/SHEET_ID/preview.mp3
@@ -481,7 +490,7 @@ omrStatus: completed
 omrEngine: audiveris
 omrPartCount: 2
 omrNoteCount: 120
-musicXmlStoragePath: musicSheets/USER_ID/SHEET_ID/recognized.mxl
+musicXmlStoragePath: musicSheets/USER_ID/SHEET_ID/recognized.musicxml
 midiStoragePath: musicSheets/USER_ID/SHEET_ID/recognized.mid
 recognizedPdfStoragePath: musicSheets/USER_ID/SHEET_ID/recognized.pdf
 previewAudioStoragePath: musicSheets/USER_ID/SHEET_ID/preview.mp3

@@ -35,6 +35,8 @@ class MidiFileDurationCalculator {
       final noteOnEvents = <RawMidiNoteOn>[];
       final tempoEvents = <MidiTempoEvent>[];
       var tempoOrder = 0;
+      var maximumTrackTick = 0;
+      var maximumNoteOffTick = 0;
 
       for (var trackIndex = 0; trackIndex < trackCount; trackIndex++) {
         if (reader.readText(4) != 'MTrk') {
@@ -54,9 +56,14 @@ class MidiFileDurationCalculator {
 
         var absoluteTick = 0;
         int? runningStatus;
+        final activeNoteOns = <int, List<RawMidiNoteOn>>{};
 
         while (reader.position < trackEnd) {
           absoluteTick += reader.readVariableLength(trackEnd);
+
+          if (absoluteTick > maximumTrackTick) {
+            maximumTrackTick = absoluteTick;
+          }
 
           final nextByte = reader.peekByte(trackEnd);
           late final int status;
@@ -85,8 +92,7 @@ class MidiFileDurationCalculator {
             final metaLength = reader.readVariableLength(trackEnd);
 
             if (metaType == 0x51 && metaLength == 3) {
-              final microsecondsPerQuarter =
-                  reader.readUint24(trackEnd);
+              final microsecondsPerQuarter = reader.readUint24(trackEnd);
 
               if (microsecondsPerQuarter > 0) {
                 tempoEvents.add(
@@ -125,26 +131,50 @@ class MidiFileDurationCalculator {
           }
 
           final messageType = status & 0xF0;
-          final dataLength =
-              messageType == 0xC0 || messageType == 0xD0 ? 1 : 2;
-          final firstData =
-              firstDataByte ?? reader.readByte(trackEnd);
-          final secondData = dataLength == 2
-              ? reader.readByte(trackEnd)
-              : 0;
+          final dataLength = messageType == 0xC0 || messageType == 0xD0 ? 1 : 2;
+          final firstData = firstDataByte ?? reader.readByte(trackEnd);
+          final secondData = dataLength == 2 ? reader.readByte(trackEnd) : 0;
 
           final channel = status & 0x0F;
 
           if (messageType == 0x90 && secondData > 0 && channel != 9) {
-            noteOnEvents.add(
-              RawMidiNoteOn(tick: absoluteTick, midiNote: firstData),
+            final noteOn = RawMidiNoteOn(
+              tick: absoluteTick,
+              midiNote: firstData,
+              channel: channel,
             );
+            noteOnEvents.add(noteOn);
+            final noteKey = channel * 128 + firstData;
+            activeNoteOns.putIfAbsent(noteKey, () => <RawMidiNoteOn>[]);
+            activeNoteOns[noteKey]!.add(noteOn);
+          }
+
+          final isNoteOff =
+              messageType == 0x80 || (messageType == 0x90 && secondData == 0);
+
+          if (isNoteOff && channel != 9 && absoluteTick > maximumNoteOffTick) {
+            maximumNoteOffTick = absoluteTick;
+          }
+
+          if (isNoteOff && channel != 9) {
+            final noteKey = channel * 128 + firstData;
+            final activeNotes = activeNoteOns[noteKey];
+
+            if (activeNotes != null && activeNotes.isNotEmpty) {
+              activeNotes.removeAt(0).endTick = absoluteTick;
+            }
           }
 
           if (firstData > 0x7F || secondData > 0x7F) {
             throw const FormatException(
               'A MIDI event contains an invalid data byte.',
             );
+          }
+        }
+
+        for (final activeNotes in activeNoteOns.values) {
+          for (final activeNote in activeNotes) {
+            activeNote.endTick = absoluteTick;
           }
         }
 
@@ -158,14 +188,22 @@ class MidiFileDurationCalculator {
       }
 
       final notesByTick = <int, Set<int>>{};
+      final noteEndTicksByTick = <int, Map<int, int>>{};
 
       for (final noteEvent in noteOnEvents) {
         notesByTick.putIfAbsent(noteEvent.tick, () => <int>{});
         notesByTick[noteEvent.tick]!.add(noteEvent.midiNote);
+        noteEndTicksByTick.putIfAbsent(noteEvent.tick, () => <int, int>{});
+
+        final endTick = noteEvent.endTick ?? maximumTrackTick;
+        final storedEndTick =
+            noteEndTicksByTick[noteEvent.tick]![noteEvent.midiNote];
+        if (storedEndTick == null || endTick > storedEndTick) {
+          noteEndTicksByTick[noteEvent.tick]![noteEvent.midiNote] = endTick;
+        }
       }
 
       final eventTicks = notesByTick.keys.toList()..sort();
-      final firstNoteTick = eventTicks.first;
 
       tempoEvents.sort((firstEvent, secondEvent) {
         final tickComparison = firstEvent.tick.compareTo(secondEvent.tick);
@@ -181,7 +219,7 @@ class MidiFileDurationCalculator {
 
       for (final eventTick in eventTicks) {
         final eventTimeInSeconds = calculateTimeBetweenTicks(
-          firstTick: firstNoteTick,
+          firstTick: 0,
           finalTick: eventTick,
           timeDivision: timeDivision,
           tempoEvents: tempoEvents,
@@ -193,18 +231,39 @@ class MidiFileDurationCalculator {
           );
         }
 
+        final noteDurations = <int, Duration>{};
+        for (final entry in noteEndTicksByTick[eventTick]!.entries) {
+          final noteDurationInSeconds = calculateTimeBetweenTicks(
+            firstTick: eventTick,
+            finalTick: math.max(eventTick, entry.value),
+            timeDivision: timeDivision,
+            tempoEvents: tempoEvents,
+          );
+
+          if (noteDurationInSeconds == null) {
+            return const MidiDurationResult.unavailable(
+              'The MIDI note duration is invalid.',
+            );
+          }
+
+          noteDurations[entry.key] = Duration(
+            microseconds: math.max(
+              0,
+              (noteDurationInSeconds * Duration.microsecondsPerSecond).round(),
+            ),
+          );
+        }
+
         timelineEvents.add(
           MidiTimelineEvent(
             scheduledTime: Duration(
               milliseconds: math.max(0, (eventTimeInSeconds * 1000).round()),
             ),
             midiNotes: Set<int>.unmodifiable(notesByTick[eventTick]!),
+            noteDurations: Map<int, Duration>.unmodifiable(noteDurations),
           ),
         );
       }
-
-      final durationInSeconds =
-          timelineEvents.last.scheduledTime.inMilliseconds / 1000;
 
       if (timelineEvents.isEmpty) {
         return const MidiDurationResult.unavailable(
@@ -212,10 +271,28 @@ class MidiFileDurationCalculator {
         );
       }
 
-      return MidiDurationResult.available(
-        math.max(1, durationInSeconds.round()),
-        timelineEvents,
+      final finalTick = math.max(maximumTrackTick, maximumNoteOffTick);
+      final durationInSeconds = calculateTimeBetweenTicks(
+        firstTick: 0,
+        finalTick: finalTick,
+        timeDivision: timeDivision,
+        tempoEvents: tempoEvents,
       );
+
+      if (durationInSeconds == null) {
+        return const MidiDurationResult.unavailable(
+          'The MIDI time division is invalid.',
+        );
+      }
+
+      final totalDuration = Duration(
+        microseconds: math.max(
+          0,
+          (durationInSeconds * Duration.microsecondsPerSecond).round(),
+        ),
+      );
+
+      return MidiDurationResult.available(totalDuration, timelineEvents);
     } on FormatException catch (error) {
       return MidiDurationResult.unavailable(error.message.toString());
     } catch (error) {
@@ -247,8 +324,7 @@ class MidiFileDurationCalculator {
           ? 29.97
           : framesPerSecondCode.toDouble();
 
-      return (finalTick - firstTick) /
-          (framesPerSecond * ticksPerFrame);
+      return (finalTick - firstTick) / (framesPerSecond * ticksPerFrame);
     }
 
     final ticksPerQuarter = timeDivision & 0x7FFF;
@@ -280,9 +356,7 @@ class MidiFileDurationCalculator {
     }
 
     elapsedMicroseconds +=
-        (finalTick - currentTick) *
-        microsecondsPerQuarter /
-        ticksPerQuarter;
+        (finalTick - currentTick) * microsecondsPerQuarter / ticksPerQuarter;
 
     return elapsedMicroseconds / 1000000;
   }
@@ -301,14 +375,14 @@ class MidiFileDurationCalculator {
 }
 
 class MidiDurationResult {
-  const MidiDurationResult.available(this.seconds, this.timelineEvents)
+  const MidiDurationResult.available(this.totalDuration, this.timelineEvents)
     : unavailableReason = null;
 
   const MidiDurationResult.unavailable(this.unavailableReason)
-    : seconds = 0,
+    : totalDuration = Duration.zero,
       timelineEvents = const [];
 
-  final int seconds;
+  final Duration totalDuration;
   final String? unavailableReason;
   final List<MidiTimelineEvent> timelineEvents;
 }
@@ -317,17 +391,37 @@ class MidiTimelineEvent {
   const MidiTimelineEvent({
     required this.scheduledTime,
     required this.midiNotes,
+    required this.noteDurations,
   });
 
   final Duration scheduledTime;
   final Set<int> midiNotes;
+  final Map<int, Duration> noteDurations;
+
+  Duration get longestNoteDuration {
+    var longest = Duration.zero;
+
+    for (final duration in noteDurations.values) {
+      if (duration > longest) {
+        longest = duration;
+      }
+    }
+
+    return longest;
+  }
 }
 
 class RawMidiNoteOn {
-  const RawMidiNoteOn({required this.tick, required this.midiNote});
+  RawMidiNoteOn({
+    required this.tick,
+    required this.midiNote,
+    required this.channel,
+  });
 
   final int tick;
   final int midiNote;
+  final int channel;
+  int? endTick;
 }
 
 class MidiTempoEvent {
@@ -375,9 +469,7 @@ class MidiByteReader {
   }
 
   int readUint24(int limit) {
-    return (readByte(limit) << 16) |
-        (readByte(limit) << 8) |
-        readByte(limit);
+    return (readByte(limit) << 16) | (readByte(limit) << 8) | readByte(limit);
   }
 
   int readUint32() {
@@ -399,9 +491,7 @@ class MidiByteReader {
       }
     }
 
-    throw const FormatException(
-      'A MIDI variable-length value is invalid.',
-    );
+    throw const FormatException('A MIDI variable-length value is invalid.');
   }
 
   String readText(int characterCount) {

@@ -32,7 +32,7 @@ class MusicSheetDeleteService {
     if (ownerId.isNotEmpty) {
       final sheetFolder = 'musicSheets/$ownerId/${sheetReference.id}';
 
-      storagePaths.add('$sheetFolder/recognized.mxl');
+      storagePaths.add('$sheetFolder/recognized.musicxml');
       storagePaths.add('$sheetFolder/recognized.mid');
       storagePaths.add('$sheetFolder/recognized.pdf');
       storagePaths.add('$sheetFolder/preview.mp3');

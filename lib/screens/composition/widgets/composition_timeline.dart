@@ -17,6 +17,8 @@ class CompositionTimeline extends StatefulWidget {
     required this.notes,
     required this.onMeasureChanged,
     required this.onNoteSelected,
+    this.onDeleteSelection,
+    this.onSelectionCleared,
     this.selectedNoteId,
     this.selectedNoteIds = const {},
     this.insertionBeat,
@@ -25,6 +27,7 @@ class CompositionTimeline extends StatefulWidget {
     this.selectedOctave = 4,
     this.onOctaveChanged,
     this.showSongOverview = false,
+    this.singleMeasureNavigation = false,
     this.compact = false,
     this.enabled = true,
     this.pianoRollHeight = 190,
@@ -37,6 +40,8 @@ class CompositionTimeline extends StatefulWidget {
   final List<CompositionNote> notes;
   final ValueChanged<int> onMeasureChanged;
   final ValueChanged<String> onNoteSelected;
+  final VoidCallback? onDeleteSelection;
+  final VoidCallback? onSelectionCleared;
   final String? selectedNoteId;
   final Set<String> selectedNoteIds;
   final double? insertionBeat;
@@ -45,6 +50,7 @@ class CompositionTimeline extends StatefulWidget {
   final int selectedOctave;
   final ValueChanged<int>? onOctaveChanged;
   final bool showSongOverview;
+  final bool singleMeasureNavigation;
   final bool compact;
   final bool enabled;
   final double pianoRollHeight;
@@ -63,6 +69,7 @@ class _CompositionTimelineState extends State<CompositionTimeline> {
       onMeasureChanged: widget.onMeasureChanged,
       compact: widget.compact,
       enabled: widget.enabled,
+      singleMeasureNavigation: widget.singleMeasureNavigation,
     );
 
     final pianoRoll = _buildPianoRoll();
@@ -145,6 +152,36 @@ class _CompositionTimelineState extends State<CompositionTimeline> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              if (widget.enabled &&
+                  widget.selectedNoteIds.isNotEmpty &&
+                  widget.onDeleteSelection != null) ...[
+                const Gap(AppSpacing.xs),
+                Tooltip(
+                  message: widget.selectedNoteIds.length == 1
+                      ? 'Delete selected note'
+                      : 'Delete selected notes',
+                  child: InkWell(
+                    onTap: widget.onDeleteSelection,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: Container(
+                      width: widget.compact ? 30 : 34,
+                      height: widget.compact ? 30 : 34,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(
+                          color: const Color(0xFFDC2626),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFFDC2626),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           Gap(widget.compact ? AppSpacing.xs : AppSpacing.sm),
@@ -178,6 +215,7 @@ class _CompositionTimelineState extends State<CompositionTimeline> {
         widget.onOctaveChanged?.call(octave);
       },
       onNoteSelected: widget.onNoteSelected,
+      onSelectionCleared: widget.onSelectionCleared,
       onNoteSelectionToggled: widget.onNoteSelectionToggled,
       onNoteMoved: widget.onNoteMoved,
     );
@@ -192,6 +230,7 @@ class _MeasureSelector extends StatelessWidget {
     required this.onMeasureChanged,
     required this.compact,
     required this.enabled,
+    required this.singleMeasureNavigation,
   });
 
   final AppThemeColors colors;
@@ -200,9 +239,14 @@ class _MeasureSelector extends StatelessWidget {
   final ValueChanged<int> onMeasureChanged;
   final bool compact;
   final bool enabled;
+  final bool singleMeasureNavigation;
 
   @override
   Widget build(BuildContext context) {
+    if (singleMeasureNavigation) {
+      return _buildSingleMeasureNavigation();
+    }
+
     if (compact) {
       return Container(
         height: 40,
@@ -273,6 +317,91 @@ class _MeasureSelector extends StatelessWidget {
           ),
           const Gap(AppSpacing.sm),
           SizedBox(height: 50, child: _buildMeasureList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSingleMeasureNavigation() {
+    return Container(
+      height: compact ? 40 : 58,
+      padding: EdgeInsets.all(compact ? AppSpacing.xs : AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: colors.surfaceColor,
+        borderRadius: BorderRadius.circular(
+          compact ? AppRadius.md : AppRadius.lg,
+        ),
+        border: Border.all(color: colors.borderColor),
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Text(
+              'Measure',
+              style: TextStyle(
+                color: colors.primaryColor,
+                fontSize: AppTextSizes.caption,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: 'Previous measure',
+            onPressed: enabled && currentMeasureIndex > 0
+                ? () {
+                    onMeasureChanged(currentMeasureIndex - 1);
+                  }
+                : null,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          Container(
+            constraints: BoxConstraints(
+              minWidth: compact ? 54 : 86,
+              minHeight: compact ? 30 : 38,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: colors.primaryColor,
+              borderRadius: BorderRadius.circular(
+                compact ? AppRadius.sm : AppRadius.md,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              compact
+                  ? '${currentMeasureIndex + 1}'
+                  : 'Measure ${currentMeasureIndex + 1}',
+              maxLines: 1,
+              style: TextStyle(
+                color: colors.backgroundColor,
+                fontSize: AppTextSizes.caption,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Next measure',
+            onPressed: enabled && currentMeasureIndex < measureCount - 1
+                ? () {
+                    onMeasureChanged(currentMeasureIndex + 1);
+                  }
+                : null,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+          if (!compact) ...[
+            const Gap(AppSpacing.xs),
+            Text(
+              '$measureCount total',
+              style: TextStyle(
+                color: colors.secondaryTextColor,
+                fontSize: AppTextSizes.caption,
+              ),
+            ),
+          ],
         ],
       ),
     );

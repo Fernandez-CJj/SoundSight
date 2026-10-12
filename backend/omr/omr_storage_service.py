@@ -71,7 +71,7 @@ def uploadOmrFiles(
         + ownerId
         + "/"
         + sheetId
-        + "/recognized.mxl"
+        + "/recognized.musicxml"
     )
 
     midiStoragePath = (
@@ -120,7 +120,7 @@ def uploadOmrFiles(
         musicXmlFile.upload_from_filename(
             musicXmlPath,
             content_type=(
-                "application/vnd.recordare.musicxml"
+                "application/vnd.recordare.musicxml+xml"
             ),
         )
 

@@ -33,11 +33,11 @@ All composition data screens require a signed-in Firebase user. A signed-out use
 ### Creating a composition
 
 1. The user taps **New Composition**.
-2. The user enters a title and tempo.
-3. The user chooses a key signature and time signature.
-4. The app creates a new `Composition` object in memory with one empty measure.
-5. The editor opens in landscape orientation.
-6. Nothing has been saved to Firestore yet.
+2. The user chooses **Manual** or **Recording**.
+3. Both methods request a title, key signature, and time signature.
+4. Manual composition also requests tempo and opens the editor.
+5. Recording composition detects tempo and measure count from the captured MIDI performance.
+6. Nothing is saved until the editor saves or the recorder confirms generation.
 
 The default values are:
 
@@ -46,6 +46,18 @@ The default values are:
 - time signature: `4/4`;
 - measure count: `1`; and
 - no notes.
+
+### Performance recording
+
+New recorded compositions store `recordingSchemaVersion: 1`, `performanceNotes`, and `performanceDurationUs`. Each performance note keeps its MIDI number, velocity, microsecond start time, and microsecond held duration. The first Note On becomes time zero and the final matched Note Off becomes the ending, so idle time around the performance is removed.
+
+The backend creates readable MusicXML/PDF notation from those notes and writes an exact MIDI directly from their captured timing. The score uses balanced 16th-note resolution and a tempo chosen to favor ordinary quarter, eighth, and dotted values. The MP3 is rendered from that MIDI, trimmed to the final matched Note Off, and finished with a 5 ms fade, so the Listen preview and Sight Reading timing follow the same performance without recording-stop silence or an added reverb tail. The detected tempo only controls notation layout and does not move the captured Note On or Note Off times.
+
+Tempo is detected between 40 and 200 BPM for readable notation, with an 80 BPM fallback for sparse performances. Detection never moves the captured note times. Measure count is calculated from the detected tempo, selected meter, and trimmed duration.
+
+The silent camera video is temporary review media. It can be played in the completion dialog and is deleted after success, Record Again, finishing a failed generation, or leaving the recorder. It is never uploaded.
+
+The recorder warns at 240 notes and at 90 percent of its duration limit. It stops accepting Note On events at 256 notes, waits for held keys to be released, and then stops. Empty performances cannot be generated.
 
 ### Editing music
 
@@ -58,9 +70,13 @@ The editor lets the user:
 - change a selected note's pitch, duration, velocity, or position;
 - add notes at the current cursor position;
 - enable Chord Mode to place several notes at the same starting beat;
+- enable Layer Notes to enter an independent line while another note keeps
+  sounding;
 - insert a rest by moving the cursor forward without creating a note;
 - move the cursor backward or forward;
 - add, insert, duplicate, move, or delete measures;
+- clear the notes from the remaining measure when a composition has only one
+  measure, while keeping that blank measure available for new input;
 - copy and paste notes;
 - select all notes;
 - tie a note to the immediately following note of the same pitch;
@@ -69,6 +85,21 @@ The editor lets the user:
 - change the title, tempo, key, or time signature through settings;
 - show or hide the full-song overview; and
 - play the composition before saving it.
+
+Layer Notes can start from a selected note or the current cursor. Each new
+virtual-piano note advances the layer cursor by that note's duration. With a
+MIDI piano connected, the played key or chord supplies the duration and the
+layer cursor advances by that captured step. Different pitches may overlap,
+but the same piano key cannot overlap itself. Chord Mode and Layer Notes are
+mutually exclusive.
+
+The duration selector remains visible while a MIDI piano is connected. Its
+default Automatic option converts the longest held key in a MIDI step to the
+nearest supported written duration. Choosing a fixed duration instead ignores
+the held time and assigns that duration to every note in the entered MIDI
+chord. Note Off events are still used to determine when the complete chord has
+been released. The fixed choice remains active until the user chooses another
+duration or returns to Automatic, and it is not stored with the composition.
 
 Changing the time signature can move or resize note timing. The change is rejected if the converted notes cannot fit correctly or would overlap the same piano key.
 
@@ -102,7 +133,7 @@ From **My Compositions**, the user can:
 
 The details screen shows its musical settings, note and measure counts, estimated duration, dates, playback controls, and actions.
 
-Deleting a private composition deletes only `/compositions/{compositionId}`. It does not automatically remove an already published post. Publishing and unpublishing are separate actions.
+Deleting a private composition removes its PDF, MusicXML, MIDI, and MP3 files from `composition_files/{ownerId}/{compositionId}` before deleting `/users/{ownerId}/compositions/{compositionId}`. It does not automatically remove an already published post or its published PDF. Publishing and unpublishing are separate actions.
 
 ### Publishing
 
@@ -187,7 +218,7 @@ The backend removes:
 - every Saved Sheets bookmark that points to the post; and
 - the top-level public post.
 
-Unpublishing does not delete the private composition in `/compositions/{compositionId}`.
+Unpublishing does not delete the private composition in `/users/{ownerId}/compositions/{compositionId}`.
 
 ## 3. Temporary local information
 
@@ -252,7 +283,7 @@ Public data is saved only after the backend successfully generates and uploads t
 
 | Information | Path |
 | --- | --- |
-| Private editable composition | `/compositions/{compositionId}` |
+| Private editable composition | `/users/{ownerId}/compositions/{compositionId}` |
 | Public post describing the newest version | `/compositionPosts/{compositionId}` |
 | One immutable published version | `/compositionPosts/{compositionId}/versions/{versionNumber}` |
 | One user's like on a version | `/compositionPosts/{compositionId}/versions/{versionNumber}/likes/{userId}` |
@@ -293,6 +324,14 @@ Each item inside `notes` contains:
 - `durationBeats`;
 - `velocity`; and
 - `tieToNext`.
+
+New recording documents instead use an empty legacy `notes` list and add:
+
+- `recordingSchemaVersion: 1`;
+- `performanceDurationUs`; and
+- `performanceNotes`, containing `midiNumber`, `velocity`, `startTimeUs`, and `durationUs`.
+
+Older recording documents without the schema version continue using their legacy `notes` data.
 
 A later save updates all musical fields and `updatedAt`. It does not change `ownerId` or `createdAt`.
 
@@ -550,7 +589,7 @@ The public post, all versions, version-specific social data, Saved Sheets refere
 
 Suppose Ana creates **Morning Theme** in `4/4`, adds four quarter notes, and taps Save.
 
-1. Firestore creates `/compositions/abc123` with the musical fields, four note maps, `createdAt`, and `updatedAt`.
+1. Firestore creates `/users/anaUid/compositions/abc123` with the musical fields, four note maps, `createdAt`, and `updatedAt`.
 2. Ana can close the app and later reopen this private composition because it was saved permanently.
 3. Ana publishes it. The backend creates version `1`, uploads `version_1.pdf`, and writes:
    - `/compositionPosts/abc123`; and
@@ -558,4 +597,4 @@ Suppose Ana creates **Morning Theme** in `4/4`, adds four quarter notes, and tap
 4. Ben likes and saves version `1`. His like is stored under version `1`, and his Saved Sheets bookmark also records version `1`.
 5. Ana edits the private composition and publishes again. The public post now points to version `2`, while version `1` still exists.
 6. Ben's saved item still opens version `1`, because bookmarks keep the exact saved version number.
-7. If Ana unpublishes the composition, both public versions, their PDFs, likes, comments, and bookmarks are deleted. Ana's private `/compositions/abc123` document remains editable.
+7. If Ana unpublishes the composition, both public versions, their PDFs, likes, comments, and bookmarks are deleted. Ana's private `/users/anaUid/compositions/abc123` document remains editable.

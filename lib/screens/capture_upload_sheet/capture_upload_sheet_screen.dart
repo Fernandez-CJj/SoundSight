@@ -245,6 +245,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
           sheetTitle: title,
         ),
       );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(true);
     } catch (_) {
       if (!mounted) return;
 

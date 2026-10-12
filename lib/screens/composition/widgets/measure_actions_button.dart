@@ -8,6 +8,7 @@ enum MeasureAction {
   duplicate,
   moveLeft,
   moveRight,
+  clear,
   delete,
 }
 
@@ -19,6 +20,8 @@ class MeasureActionsButton extends StatelessWidget {
     required this.canMoveLeft,
     required this.canMoveRight,
     required this.canDelete,
+    required this.canClear,
+    required this.isOnlyMeasure,
     required this.onSelected,
     this.compact = false,
   });
@@ -28,6 +31,8 @@ class MeasureActionsButton extends StatelessWidget {
   final bool canMoveLeft;
   final bool canMoveRight;
   final bool canDelete;
+  final bool canClear;
+  final bool isOnlyMeasure;
   final ValueChanged<MeasureAction> onSelected;
   final bool compact;
 
@@ -68,13 +73,22 @@ class MeasureActionsButton extends StatelessWidget {
             enabled: canMoveRight,
           ),
           const PopupMenuDivider(),
-          buildItem(
-            action: MeasureAction.delete,
-            icon: Icons.delete_outline_rounded,
-            label: 'Delete measure',
-            enabled: canDelete,
-            destructive: true,
-          ),
+          if (isOnlyMeasure)
+            buildItem(
+              action: MeasureAction.clear,
+              icon: Icons.cleaning_services_outlined,
+              label: 'Clear measure',
+              enabled: canClear,
+              destructive: true,
+            )
+          else
+            buildItem(
+              action: MeasureAction.delete,
+              icon: Icons.delete_outline_rounded,
+              label: 'Delete measure',
+              enabled: canDelete,
+              destructive: true,
+            ),
         ];
       },
       child: Opacity(

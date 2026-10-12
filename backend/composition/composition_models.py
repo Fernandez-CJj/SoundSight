@@ -37,6 +37,13 @@ class CompositionNoteRequest(BaseModel):
     tieToNext: bool = False
 
 
+class RecordedPerformanceNoteRequest(BaseModel):
+    midiNumber: int = Field(ge=21, le=108)
+    velocity: int = Field(ge=1, le=127)
+    startTimeUs: int = Field(ge=0)
+    durationUs: int = Field(gt=0)
+
+
 class CompositionRequest(BaseModel):
     id: str = ""
     ownerId: str
@@ -62,7 +69,12 @@ class CompositionRequest(BaseModel):
         le=128,
     )
 
-    notes: list[CompositionNoteRequest]
+    notes: list[CompositionNoteRequest] = Field(default_factory=list)
+    recordingSchemaVersion: int | None = None
+    performanceNotes: list[RecordedPerformanceNoteRequest] = Field(
+        default_factory=list
+    )
+    performanceDurationUs: int | None = Field(default=None, gt=0)
 
 
 class UnpublishRequest(BaseModel):

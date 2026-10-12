@@ -1,4 +1,5 @@
 import os
+from uuid import uuid4
 
 from core.firebase_service import getStorageBucket
 
@@ -122,6 +123,12 @@ def uploadCompositionFiles(
             storageFile = bucket.blob(
                 storagePath
             )
+
+            storageFile.metadata = {
+                "firebaseStorageDownloadTokens": (
+                    str(uuid4())
+                ),
+            }
 
             storageFile.upload_from_filename(
                 localPath,

@@ -18,6 +18,7 @@ class SyncedOctavePianoRoll extends StatefulWidget {
     required this.selectedOctave,
     required this.onNoteSelected,
     required this.onOctaveChanged,
+    this.onSelectionCleared,
     this.selectedNoteId,
     this.selectedNoteIds = const {},
     this.insertionBeat,
@@ -35,6 +36,7 @@ class SyncedOctavePianoRoll extends StatefulWidget {
   final int selectedOctave;
   final ValueChanged<String> onNoteSelected;
   final ValueChanged<int> onOctaveChanged;
+  final VoidCallback? onSelectionCleared;
   final String? selectedNoteId;
   final Set<String> selectedNoteIds;
   final double? insertionBeat;
@@ -228,16 +230,19 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
         final rowHeight = constraints.maxHeight / rowCount;
         final beatWidth = constraints.maxWidth / safeBeatsPerMeasure;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: widget.colors.backgroundColor,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: widget.colors.borderColor),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.enabled ? widget.onSelectionCleared : null,
+          child: Container(
+            decoration: BoxDecoration(
+              color: widget.colors.backgroundColor,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: widget.colors.borderColor),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
               for (var row = 0; row < rowCount; row++)
                 buildPitchRow(row: row, rowHeight: rowHeight),
               for (var row = 1; row < rowCount; row++)
@@ -297,7 +302,8 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
                     ),
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -375,6 +381,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
         .toDouble();
 
     final selected = isSelected(note);
+    const selectionColor = Color(0xFFDC2626);
     final label =
         '${note.pitch}${note.octave}'
         '${note.tieToNext ? ' →' : ''}';
@@ -412,13 +419,15 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
             message: label,
             child: Material(
               color: selected
-                  ? widget.colors.primaryColor
+                  ? selectionColor.withValues(alpha: 0.14)
                   : widget.colors.primaryColor.withValues(alpha: 0.16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
                 side: BorderSide(
-                  color: widget.colors.primaryColor,
-                  width: selected ? 1.5 : 1,
+                  color: selected
+                      ? selectionColor
+                      : widget.colors.primaryColor,
+                  width: selected ? 2.5 : 1,
                 ),
               ),
               clipBehavior: Clip.antiAlias,
@@ -444,7 +453,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
                         maxLines: 1,
                         style: TextStyle(
                           color: selected
-                              ? widget.colors.backgroundColor
+                              ? selectionColor
                               : widget.colors.primaryColor,
                           fontSize: widget.compact ? 10 : AppTextSizes.caption,
                           fontWeight: FontWeight.w700,

@@ -1,203 +1,220 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:video_player/video_player.dart';
 
-enum RecordingCompletionAction {
-  discard,
-  generate,
-}
+enum RecordingCompletionAction { discard, generate }
 
-class RecordingCompletionDialog extends StatelessWidget {
+class RecordingCompletionDialog extends StatefulWidget {
   const RecordingCompletionDialog({
     super.key,
     required this.colors,
     required this.compositionTitle,
     required this.durationText,
     required this.noteCount,
+    required this.videoPath,
+    required this.detectedTempo,
+    required this.measureCount,
   });
 
   final AppThemeColors colors;
   final String compositionTitle;
   final String durationText;
   final int noteCount;
+  final String videoPath;
+  final int detectedTempo;
+  final int measureCount;
+
+  @override
+  State<RecordingCompletionDialog> createState() =>
+      _RecordingCompletionDialogState();
+}
+
+class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
+  late final VideoPlayerController videoController;
+  bool videoReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    videoController = VideoPlayerController.file(File(widget.videoPath));
+    videoController.initialize().then((_) {
+      if (mounted) setState(() => videoReady = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    videoController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final colors = widget.colors;
+    final maximumHeight = MediaQuery.sizeOf(context).height * 0.82;
+
     return PopScope(
       canPop: false,
-      child: AlertDialog(
+      child: Dialog(
         backgroundColor: colors.surfaceColor,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(color: colors.borderColor),
         ),
-        title: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: colors.backgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: colors.borderColor),
-              ),
-              child: Icon(
-                Icons.video_file_rounded,
-                color: colors.primaryColor,
-                size: AppIconSizes.md,
-              ),
-            ),
-            const Gap(AppSpacing.sm),
-            Expanded(
-              child: Text(
-                'Recording Complete',
-                style: TextStyle(
-                  color: colors.primaryColor,
-                  fontSize: AppTextSizes.sectionTitle,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Generate composition files from this recording or discard it '
-              'and record again.',
-              style: TextStyle(
-                color: colors.secondaryTextColor,
-                fontSize: AppTextSizes.label,
-                height: 1.4,
-              ),
-            ),
-            const Gap(AppSpacing.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.backgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: colors.borderColor),
-              ),
-              child: Column(
-                children: [
-                  buildInformationRow(
-                    label: 'Title',
-                    value: compositionTitle,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  buildInformationRow(
-                    label: 'Duration',
-                    value: durationText,
-                  ),
-                  const Gap(AppSpacing.sm),
-                  buildInformationRow(
-                    label: 'Captured Notes',
-                    value: '$noteCount',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(
-                        context,
-                        RecordingCompletionAction.discard,
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.primaryColor,
-                      side: BorderSide(color: colors.borderColor),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 520, maxHeight: maximumHeight),
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.video_file_rounded, color: colors.primaryColor),
+                    Gap(AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Recording Complete',
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.sectionTitle,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    child: const Text('Discard'),
+                  ],
+                ),
+                Gap(AppSpacing.md),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: videoReady
+                              ? videoController.value.aspectRatio
+                              : 16 / 9,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: ColoredBox(
+                              color: Colors.black,
+                              child: videoReady
+                                  ? Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        VideoPlayer(videoController),
+                                        Center(
+                                          child: IconButton.filled(
+                                            onPressed: () {
+                                              setState(() {
+                                                videoController.value.isPlaying
+                                                    ? videoController.pause()
+                                                    : videoController.play();
+                                              });
+                                            },
+                                            icon: Icon(
+                                              videoController.value.isPlaying
+                                                  ? Icons.pause_rounded
+                                                  : Icons.play_arrow_rounded,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                        Gap(AppSpacing.md),
+                        _informationRow('Title', widget.compositionTitle),
+                        _informationRow('Performance', widget.durationText),
+                        _informationRow(
+                          'Captured notes',
+                          '${widget.noteCount}',
+                        ),
+                        _informationRow(
+                          'Detected tempo',
+                          '${widget.detectedTempo} BPM',
+                        ),
+                        _informationRow(
+                          'Calculated measures',
+                          '${widget.measureCount}',
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const Gap(AppSpacing.sm),
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(
-                        context,
-                        RecordingCompletionAction.generate,
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: AppIconSizes.sm,
-                    ),
-                    label: const Text('Generate'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primaryColor,
-                      foregroundColor: colors.backgroundColor,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                Gap(AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(
+                          context,
+                          RecordingCompletionAction.discard,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colors.primaryColor,
+                          side: BorderSide(color: colors.borderColor),
+                        ),
+                        child: const Text('Record Again'),
                       ),
                     ),
-                  ),
+                    Gap(AppSpacing.sm),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.pop(
+                          context,
+                          RecordingCompletionAction.generate,
+                        ),
+                        icon: const Icon(Icons.auto_awesome_rounded),
+                        label: const Text('Generate'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primaryColor,
+                          foregroundColor: colors.backgroundColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget buildInformationRow({
-    required String label,
-    required String value,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.caption,
+  Widget _informationRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: widget.colors.secondaryTextColor),
             ),
           ),
-        ),
-        const Gap(AppSpacing.sm),
-        Flexible(
-          child: Text(
+          Text(
             value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.end,
             style: TextStyle(
-              color: colors.primaryColor,
-              fontSize: AppTextSizes.caption,
+              color: widget.colors.primaryColor,
               fontWeight: FontWeight.w700,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

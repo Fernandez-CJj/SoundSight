@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'music_sheet_html.dart';
+import 'practice_result_models.dart';
 
 class MusicSheetWebViewController {
   MusicSheetWebViewController({
     required ValueChanged<Set<int>> onExpectedNotesChanged,
     required ValueChanged<int> onTotalPositionsChanged,
+    required ValueChanged<List<ScorePositionMetadata>> onScorePositionsChanged,
     required VoidCallback onScoreRendered,
     required ValueChanged<String> onScoreRenderFailed,
     required VoidCallback onScoreCompleted,
@@ -35,8 +37,35 @@ class MusicSheetWebViewController {
           final totalPositions = int.tryParse(message.message);
 
           if (totalPositions != null) {
+            debugPrint('Sight Reading playable positions: $totalPositions');
             onTotalPositionsChanged(totalPositions);
           }
+        },
+      )
+      ..addJavaScriptChannel(
+        'ScorePositions',
+        onMessageReceived: (message) {
+          final decoded = jsonDecode(message.message);
+
+          if (decoded is! List) {
+            return;
+          }
+
+          final positions = decoded
+              .whereType<Map>()
+              .map((item) {
+                return ScorePositionMetadata.fromJson(
+                  Map<String, dynamic>.from(item),
+                );
+              })
+              .toList(growable: false);
+          onScorePositionsChanged(positions);
+        },
+      )
+      ..addJavaScriptChannel(
+        'ScoreDiagnostics',
+        onMessageReceived: (message) {
+          debugPrint('Sight Reading score diagnostics: ${message.message}');
         },
       )
       ..addJavaScriptChannel(
@@ -64,8 +93,16 @@ class MusicSheetWebViewController {
 
   WebViewController get webViewController => _webViewController;
 
-  Future<void> loadScore(String musicXml) {
-    return _webViewController.loadHtmlString(buildMusicSheetHtml(musicXml));
+  Future<void> loadScore(
+    String musicXml, {
+    bool preserveRestOnlyStaves = false,
+  }) {
+    return _webViewController.loadHtmlString(
+      buildMusicSheetHtml(
+        musicXml,
+        preserveRestOnlyStaves: preserveRestOnlyStaves,
+      ),
+    );
   }
 
   Future<void> showMessage(String message) {
@@ -88,8 +125,33 @@ class MusicSheetWebViewController {
     );
   }
 
+  Future<void> beginWaitCursorHold(
+    Duration duration, {
+    required int positionIndex,
+  }) {
+    final durationMilliseconds = duration.inMilliseconds;
+
+    return _webViewController.runJavaScript(
+      'beginWaitCursorHold($durationMilliseconds, $positionIndex);',
+    );
+  }
+
+  Future<void> completeWaitCursorHold() {
+    return _webViewController.runJavaScript('completeWaitCursorHold();');
+  }
+
+  Future<void> cancelWaitCursorHold(int positionIndex) {
+    return _webViewController.runJavaScript(
+      'cancelWaitCursorHold($positionIndex);',
+    );
+  }
+
   Future<void> hideCursor() {
     return _webViewController.runJavaScript('hideCursorForCompletion();');
+  }
+
+  Future<void> completePerformanceCursor() {
+    return _webViewController.runJavaScript('completePerformanceCursor();');
   }
 
   Future<void> setCursorWrong(bool isWrong) {
@@ -99,6 +161,10 @@ class MusicSheetWebViewController {
     return _webViewController.runJavaScript('''
       if (typeof setCursorColor === "function") {
         setCursorColor($encodedColor);
+      }
+
+      if (typeof keepCursorVisible === "function") {
+        requestAnimationFrame(keepCursorVisible);
       }
     ''');
   }

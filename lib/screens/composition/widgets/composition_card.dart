@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
-import 'package:soundsight/screens/composition/services/composition_publish_service.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionCard extends StatelessWidget {
@@ -11,16 +10,8 @@ class CompositionCard extends StatelessWidget {
     required this.colors,
     required this.composition,
     required this.isDeleting,
-    required this.isPlaying,
-    required this.isPlaybackBusy,
-    required this.publicationAction,
-    required this.activePublicationAction,
-    required this.isPublicationStatusLoading,
     required this.isGeneratingFiles,
     required this.onOpen,
-    required this.onPublicationAction,
-    required this.onUnpublish,
-    required this.onPlay,
     required this.onRetryGeneration,
     required this.onDelete,
   });
@@ -28,16 +19,8 @@ class CompositionCard extends StatelessWidget {
   final AppThemeColors colors;
   final Composition composition;
   final bool isDeleting;
-  final bool isPlaying;
-  final bool isPlaybackBusy;
-  final CompositionPublicationAction publicationAction;
-  final CompositionPublicationAction? activePublicationAction;
-  final bool isPublicationStatusLoading;
   final bool isGeneratingFiles;
   final VoidCallback onOpen;
-  final VoidCallback onPublicationAction;
-  final VoidCallback onUnpublish;
-  final VoidCallback onPlay;
   final VoidCallback onRetryGeneration;
   final VoidCallback onDelete;
 
@@ -46,11 +29,6 @@ class CompositionCard extends StatelessWidget {
     final editedDate = composition.updatedAt ?? composition.createdAt;
     final isRecording =
         composition.creationMethod == Composition.recordingCreationMethod;
-    final isPublished =
-        publicationAction != CompositionPublicationAction.publish;
-    final isPublicationBusy = activePublicationAction != null;
-    final hasUnpublishedChanges =
-        publicationAction == CompositionPublicationAction.publishUpdate;
     final filesNeedAttention = !composition.generatedFilesAreCurrent;
     final filesAreOutOfDate = composition.generatedFilesAreOutOfDate;
     final generationIsRunning =
@@ -74,9 +52,7 @@ class CompositionCard extends StatelessWidget {
         color: colors.surfaceColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isPlaying
-              ? colors.primaryColor
-              : filesNeedAttention
+          color: filesNeedAttention
               ? generationColor
               : colors.borderColor,
         ),
@@ -84,7 +60,7 @@ class CompositionCard extends StatelessWidget {
       child: Column(
         children: [
           ListTile(
-            onTap: isDeleting || isPublicationBusy ? null : onOpen,
+            onTap: isDeleting ? null : onOpen,
             contentPadding: EdgeInsets.all(AppSpacing.md),
             leading: Container(
               width: 52,
@@ -97,9 +73,7 @@ class CompositionCard extends StatelessWidget {
                 ),
               ),
               child: Icon(
-                isPlaying
-                    ? Icons.graphic_eq_rounded
-                    : isRecording
+                isRecording
                     ? Icons.mic_rounded
                     : Icons.edit_note_rounded,
                 color: creationMethodColor,
@@ -155,41 +129,18 @@ class CompositionCard extends StatelessWidget {
                     ),
                   )
                 : PopupMenuButton<String>(
-                    enabled: !isPublicationBusy,
                     color: colors.surfaceColor,
                     icon: Icon(
                       Icons.more_vert_rounded,
                       color: colors.secondaryTextColor,
                     ),
                     onSelected: (value) {
-                      if (value == 'unpublish') {
-                        onUnpublish();
-                      }
-
                       if (value == 'delete') {
                         onDelete();
                       }
                     },
                     itemBuilder: (_) {
                       return [
-                        if (hasUnpublishedChanges)
-                          PopupMenuItem<String>(
-                            value: 'unpublish',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.public_off_rounded,
-                                  color: colors.primaryColor,
-                                  size: AppIconSizes.sm,
-                                ),
-                                Gap(AppSpacing.sm),
-                                Text(
-                                  'Unpublish',
-                                  style: TextStyle(color: colors.primaryColor),
-                                ),
-                              ],
-                            ),
-                          ),
                         PopupMenuItem<String>(
                           value: 'delete',
                           child: Row(
@@ -282,104 +233,27 @@ class CompositionCard extends StatelessWidget {
           Divider(height: 1, color: colors.borderColor),
           Padding(
             padding: EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          isDeleting ||
-                              isPlaybackBusy ||
-                              isPublicationBusy ||
-                              isPublicationStatusLoading
-                          ? null
-                          : onPublicationAction,
-                      icon: isPublicationBusy || isPublicationStatusLoading
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.4,
-                                color: colors.primaryColor,
-                              ),
-                            )
-                          : Icon(
-                              hasUnpublishedChanges
-                                  ? Icons.update_rounded
-                                  : isPublished
-                                  ? Icons.public_off_rounded
-                                  : Icons.publish_rounded,
-                              size: AppIconSizes.sm,
-                            ),
-                      label: Text(
-                        isPublicationStatusLoading
-                            ? 'Checking...'
-                            : isPublicationBusy
-                            ? activePublicationAction ==
-                                      CompositionPublicationAction.unpublish
-                                  ? 'Unpublishing...'
-                                  : 'Publishing...'
-                            : hasUnpublishedChanges
-                            ? 'Publish Update'
-                            : isPublished
-                            ? 'Unpublish'
-                            : 'Publish',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colors.primaryColor,
-                        disabledForegroundColor: colors.secondaryTextColor,
-                        side: BorderSide(color: colors.borderColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                      ),
-                    ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                onPressed: isDeleting ? null : onOpen,
+                icon: const Icon(
+                  Icons.visibility_outlined,
+                  size: AppIconSizes.sm,
+                ),
+                label: const Text('View'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primaryColor,
+                  foregroundColor: colors.backgroundColor,
+                  disabledBackgroundColor: colors.borderColor,
+                  disabledForegroundColor: colors.secondaryTextColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                 ),
-                Gap(AppSpacing.sm),
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          isDeleting || isPlaybackBusy || isPublicationBusy
-                          ? null
-                          : onPlay,
-                      icon: isPlaybackBusy && isPlaying
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.4,
-                                color: colors.backgroundColor,
-                              ),
-                            )
-                          : Icon(
-                              isPlaying
-                                  ? Icons.stop_rounded
-                                  : Icons.play_arrow_rounded,
-                              size: AppIconSizes.md,
-                            ),
-                      label: Text(
-                        isPlaybackBusy && isPlaying
-                            ? 'Please wait'
-                            : isPlaying
-                            ? 'Stop'
-                            : 'Play',
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primaryColor,
-                        foregroundColor: colors.backgroundColor,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],

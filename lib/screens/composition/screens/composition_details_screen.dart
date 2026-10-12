@@ -13,6 +13,8 @@ import 'package:soundsight/screens/composition/services/composition_service.dart
 import 'package:soundsight/screens/composition/dialogs/publish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/dialogs/unpublish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/widgets/composition_generated_preview.dart';
+import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
+import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionDetailsScreen extends StatefulWidget {
@@ -147,6 +149,20 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
             ),
           ],
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: SizedBox(
+            width: double.infinity,
+            child: FloatingActionButton.extended(
+              onPressed: showPlayModeDialog,
+              backgroundColor: colors.primaryColor,
+              foregroundColor: colors.backgroundColor,
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Play'),
+            ),
+          ),
+        ),
         body: isLoading
             ? Center(
                 child: CircularProgressIndicator(color: colors.primaryColor),
@@ -157,7 +173,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                     AppSpacing.md,
                     AppSpacing.sm,
                     AppSpacing.md,
-                    AppSpacing.xl,
+                    96,
                   ),
                   children: [
                     buildOverviewCard(colors),
@@ -184,6 +200,98 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+
+  Future<void> showPlayModeDialog() async {
+    final selectedMode = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: widget.colors.surfaceColor,
+          title: Text(
+            'Choose play mode',
+            style: TextStyle(color: widget.colors.primaryColor),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(
+                  Icons.music_note_rounded,
+                  color: widget.colors.primaryColor,
+                ),
+                title: Text(
+                  'Sight Reading',
+                  style: TextStyle(color: widget.colors.primaryColor),
+                ),
+                onTap: () {
+                  Navigator.of(dialogContext).pop('sightReading');
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.piano_rounded,
+                  color: widget.colors.primaryColor,
+                ),
+                title: Text(
+                  'Synthesia',
+                  style: TextStyle(color: widget.colors.primaryColor),
+                ),
+                onTap: () {
+                  Navigator.of(dialogContext).pop('synthesia');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selectedMode == null) {
+      return;
+    }
+
+    if (selectedMode == 'sightReading') {
+      await openSightReading();
+      return;
+    }
+
+    if (selectedMode == 'synthesia') {
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const SynthesiaScreen()));
+    }
+  }
+
+  Future<void> openSightReading() async {
+    final musicXmlStoragePath = composition.musicXmlStoragePath?.trim() ?? '';
+    final midiStoragePath = composition.midiStoragePath?.trim() ?? '';
+    final mp3StoragePath = composition.mp3StoragePath?.trim() ?? '';
+
+    if (!composition.generatedFilesAreCurrent) {
+      showMessage(
+        'Prepare the latest music files before starting Sight Reading.',
+      );
+      return;
+    }
+
+    if (musicXmlStoragePath.isEmpty ||
+        midiStoragePath.isEmpty ||
+        mp3StoragePath.isEmpty) {
+      showMessage('The generated MusicXML, MIDI, or MP3 file is missing.');
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MusicSheetReadingScreen(
+          scoreDocumentPath:
+              'users/${composition.ownerId}/compositions/${composition.id}',
+          source: SightReadingSource.composition,
+          colors: widget.colors,
+        ),
       ),
     );
   }
@@ -419,7 +527,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 icon: Icons.replay_rounded,
                 tooltip: 'Play from beginning',
                 onTap:
-                    composition.notes.isEmpty ||
+                    !composition.hasPlayableContent ||
                         isDeleting ||
                         isPreparingPlayback
                     ? null
@@ -537,8 +645,8 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 child: buildStatisticCard(
                   colors: colors,
                   icon: Icons.music_note_rounded,
-                  label: composition.notes.length == 1 ? 'Note' : 'Notes',
-                  value: '${composition.notes.length}',
+                  label: composition.playableNoteCount == 1 ? 'Note' : 'Notes',
+                  value: '${composition.playableNoteCount}',
                 ),
               ),
               const Gap(AppSpacing.sm),
@@ -927,7 +1035,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       return;
     }
 
-    if (composition.notes.isEmpty) {
+    if (!composition.hasPlayableContent) {
       showMessage('This composition does not have any notes yet.');
       return;
     }
@@ -1020,7 +1128,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Future<void> restartComposition() async {
-    if (composition.notes.isEmpty) {
+    if (!composition.hasPlayableContent) {
       showMessage('This composition does not have any notes yet.');
       return;
     }
@@ -1033,6 +1141,9 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Duration getCompositionDuration(Composition value) {
+    if (value.usesPerformanceRecording && value.performanceDurationUs != null) {
+      return Duration(microseconds: value.performanceDurationUs!);
+    }
     if (value.tempo <= 0) return Duration.zero;
 
     final totalBeats = value.measureCount * value.beatsPerMeasure;
@@ -1079,7 +1190,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     final isPublishingUpdate =
         action == CompositionPublicationAction.publishUpdate;
 
-    if (!isUnpublishing && composition.notes.isEmpty) {
+    if (!isUnpublishing && !composition.hasPlayableContent) {
       showMessage('Add at least one note before publishing.');
       return;
     }
@@ -1211,7 +1322,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
 
   Future<Composition?> getLatestCompositionSafely() async {
     try {
-      return await compositionService.getComposition(composition.id);
+      return await compositionService.getComposition(
+        composition.ownerId,
+        composition.id,
+      );
     } catch (_) {
       return null;
     }
@@ -1241,6 +1355,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
 
     try {
       final updatedComposition = await compositionService.getComposition(
+        composition.ownerId,
         savedCompositionId,
       );
 
@@ -1289,7 +1404,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     });
 
     try {
-      await compositionService.deleteComposition(composition.id);
+      await compositionService.deleteComposition(
+        composition.ownerId,
+        composition.id,
+      );
 
       if (!mounted) return;
 

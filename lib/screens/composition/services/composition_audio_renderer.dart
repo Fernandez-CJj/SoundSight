@@ -8,10 +8,7 @@ import 'package:soundsight/screens/composition/models/composition_note.dart';
 import 'package:soundsight/screens/composition/models/piano_note.dart';
 
 class CompositionRenderResult {
-  const CompositionRenderResult({
-    required this.file,
-    required this.duration,
-  });
+  const CompositionRenderResult({required this.file, required this.duration});
 
   final File file;
   final Duration duration;
@@ -35,17 +32,18 @@ class CompositionAudioRenderer {
 
     late final Future<CompositionRenderResult> renderFuture;
 
-    renderFuture = _renderComposition(
-      composition,
-      releaseDuration: releaseDuration,
-      cacheKey: cacheKey,
-    ).catchError((Object error, StackTrace stackTrace) {
-      if (identical(_renderCache[cacheKey], renderFuture)) {
-        _renderCache.remove(cacheKey);
-      }
+    renderFuture =
+        _renderComposition(
+          composition,
+          releaseDuration: releaseDuration,
+          cacheKey: cacheKey,
+        ).catchError((Object error, StackTrace stackTrace) {
+          if (identical(_renderCache[cacheKey], renderFuture)) {
+            _renderCache.remove(cacheKey);
+          }
 
-      Error.throwWithStackTrace(error, stackTrace);
-    });
+          Error.throwWithStackTrace(error, stackTrace);
+        });
 
     _renderCache[cacheKey] = renderFuture;
     return renderFuture;
@@ -62,21 +60,29 @@ class CompositionAudioRenderer {
     final releaseFrames =
         sampleRate * releaseDuration.inMicroseconds ~/ 1000000;
     final spans = _buildNoteSpans(composition);
-    var totalFrames = math.max(
-      1,
-      (composition.measureCount *
-              composition.beatsPerMeasure *
-              framesPerBeat)
-          .ceil(),
-    );
+    var totalFrames =
+        composition.usesPerformanceRecording &&
+            composition.performanceDurationUs != null
+        ? math.max(
+            1,
+            composition.performanceDurationUs! *
+                sampleRate ~/
+                Duration.microsecondsPerSecond,
+          )
+        : math.max(
+            1,
+            (composition.measureCount *
+                    composition.beatsPerMeasure *
+                    framesPerBeat)
+                .ceil(),
+          );
 
     for (final span in spans) {
-      final endFrame =
-          ((span.endBeat * framesPerBeat).round() + releaseFrames);
+      final endFrame = ((span.endBeat * framesPerBeat).round() + releaseFrames);
       totalFrames = math.max(totalFrames, endFrame);
     }
 
-    if (totalFrames > sampleRate * maximumDurationSeconds) {
+    if (totalFrames > sampleRate * maximumDurationSeconds + releaseFrames) {
       throw StateError(
         'The composition is too long to render. Keep it under '
         '${maximumDurationSeconds ~/ 60} minutes.',
@@ -84,7 +90,7 @@ class CompositionAudioRenderer {
     }
 
     final requiredMidiNumbers = spans.map((span) {
-      return span.note.midiNumber;
+      return span.midiNumber;
     }).toSet();
     final samplesByMidi = <int, _PcmSample>{};
 
@@ -95,11 +101,11 @@ class CompositionAudioRenderer {
     final mixedSamples = Float32List(totalFrames);
 
     for (final span in spans) {
-      final source = samplesByMidi[span.note.midiNumber]!;
+      final source = samplesByMidi[span.midiNumber]!;
 
       if (source.sampleRate != sampleRate) {
         throw StateError(
-          '${_audioAssetPath(span.note.midiNumber)} must use '
+          '${_audioAssetPath(span.midiNumber)} must use '
           '$sampleRate Hz audio.',
         );
       }
@@ -127,9 +133,7 @@ class CompositionAudioRenderer {
         }
 
         mixedSamples[targetIndex] +=
-            (source.samples[sourceIndex] / 32768) *
-            span.note.velocity *
-            envelope;
+            (source.samples[sourceIndex] / 32768) * span.velocity * envelope;
       }
     }
 
@@ -157,13 +161,28 @@ class CompositionAudioRenderer {
 
     return CompositionRenderResult(
       file: outputFile,
-      duration: Duration(
-        microseconds: totalFrames * 1000000 ~/ sampleRate,
-      ),
+      duration: Duration(microseconds: totalFrames * 1000000 ~/ sampleRate),
     );
   }
 
   List<_RenderedNoteSpan> _buildNoteSpans(Composition composition) {
+    if (composition.usesPerformanceRecording) {
+      final microsecondsPerBeat =
+          (60000000 / composition.tempo) * (4 / composition.beatUnit);
+      return composition.performanceNotes.map((performanceNote) {
+        return _RenderedNoteSpan(
+          midiNumber: performanceNote.midiNumber,
+          velocity: performanceNote.velocity / 127,
+          startBeat: performanceNote.startTimeUs / microsecondsPerBeat,
+          endBeat: performanceNote.endTimeUs / microsecondsPerBeat,
+        );
+      }).toList()..sort((first, second) {
+        final startComparison = first.startBeat.compareTo(second.startBeat);
+        if (startComparison != 0) return startComparison;
+        return first.midiNumber.compareTo(second.midiNumber);
+      });
+    }
+
     final notes = composition.notes.where((note) {
       return note.durationBeats > 0;
     }).toList();
@@ -216,7 +235,8 @@ class CompositionAudioRenderer {
 
       spans.add(
         _RenderedNoteSpan(
-          note: note,
+          midiNumber: note.midiNumber,
+          velocity: note.velocity,
           startBeat: startBeat,
           endBeat: endBeat,
         ),
@@ -226,10 +246,7 @@ class CompositionAudioRenderer {
     return spans;
   }
 
-  double _absoluteStartBeat(
-    CompositionNote note,
-    Composition composition,
-  ) {
+  double _absoluteStartBeat(CompositionNote note, Composition composition) {
     return (note.measureIndex * composition.beatsPerMeasure) + note.startBeat;
   }
 
@@ -264,14 +281,8 @@ class CompositionAudioRenderer {
       if (chunkId == 'fmt ' && chunkLength >= 16) {
         audioFormat = data.getUint16(chunkDataOffset, Endian.little);
         channelCount = data.getUint16(chunkDataOffset + 2, Endian.little);
-        sourceSampleRate = data.getUint32(
-          chunkDataOffset + 4,
-          Endian.little,
-        );
-        bitsPerSample = data.getUint16(
-          chunkDataOffset + 14,
-          Endian.little,
-        );
+        sourceSampleRate = data.getUint32(chunkDataOffset + 4, Endian.little);
+        bitsPerSample = data.getUint16(chunkDataOffset + 14, Endian.little);
       } else if (chunkId == 'data') {
         dataOffset = chunkDataOffset;
         dataLength = chunkLength;
@@ -285,9 +296,7 @@ class CompositionAudioRenderer {
         sourceSampleRate <= 0 ||
         bitsPerSample != 16 ||
         dataOffset < 0) {
-      throw FormatException(
-        '$assetPath must be a 16-bit PCM WAV file.',
-      );
+      throw FormatException('$assetPath must be a 16-bit PCM WAV file.');
     }
 
     final frameCount = dataLength ~/ (channelCount * 2);
@@ -308,10 +317,7 @@ class CompositionAudioRenderer {
     return _PcmSample(samples: samples, sampleRate: sourceSampleRate);
   }
 
-  Uint8List _encodeWav(
-    Float32List samples, {
-    required double outputScale,
-  }) {
+  Uint8List _encodeWav(Float32List samples, {required double outputScale}) {
     final dataLength = samples.length * 2;
     final output = ByteData(44 + dataLength);
 
@@ -380,6 +386,13 @@ class CompositionAudioRenderer {
       addValue(note.tieToNext);
     }
 
+    for (final note in composition.performanceNotes) {
+      addValue(note.midiNumber);
+      addValue(note.velocity);
+      addValue(note.startTimeUs);
+      addValue(note.durationUs);
+    }
+
     final safeId = composition.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
     return '${safeId}_$hash';
   }
@@ -417,12 +430,14 @@ class CompositionAudioRenderer {
 
 class _RenderedNoteSpan {
   const _RenderedNoteSpan({
-    required this.note,
+    required this.midiNumber,
+    required this.velocity,
     required this.startBeat,
     required this.endBeat,
   });
 
-  final CompositionNote note;
+  final int midiNumber;
+  final double velocity;
   final double startBeat;
   final double endBeat;
 }

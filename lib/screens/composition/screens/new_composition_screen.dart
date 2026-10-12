@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
+import 'package:soundsight/screens/composition/models/recording_composition_draft.dart';
 import 'package:soundsight/screens/composition/screens/manual/composition_editor_screen.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';
 import 'package:soundsight/screens/composition/screens/recording/record_composition_screen.dart';
@@ -28,6 +29,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
 
   String selectedKeySignature = 'C Major';
   String selectedTimeSignature = '4/4';
+  _CompositionMethod selectedMethod = _CompositionMethod.manual;
   bool isOpeningEditor = false;
 
   @override
@@ -100,8 +102,11 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     ),
                     Gap(AppSpacing.xs),
                     Text(
-                      'Choose the starting title, key, tempo, and meter. You can '
-                      'change them later in the composition workspace.',
+                      selectedMethod == _CompositionMethod.recording
+                          ? 'Choose a title, key, and meter. Tempo and measures '
+                                'will be detected from your performance.'
+                          : 'Choose the starting title, key, tempo, and meter. '
+                                'You can change them later in the composition workspace.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
@@ -110,6 +115,49 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                       ),
                     ),
                   ],
+                ),
+                Gap(AppSpacing.xl),
+                Container(
+                  padding: EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceColor,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: colors.borderColor),
+                  ),
+                  child: SegmentedButton<_CompositionMethod>(
+                    segments: const [
+                      ButtonSegment(
+                        value: _CompositionMethod.manual,
+                        icon: Icon(Icons.edit_note_rounded),
+                        label: Text('Manual'),
+                      ),
+                      ButtonSegment(
+                        value: _CompositionMethod.recording,
+                        icon: Icon(Icons.videocam_rounded),
+                        label: Text('Recording'),
+                      ),
+                    ],
+                    selected: {selectedMethod},
+                    onSelectionChanged: isOpeningEditor
+                        ? null
+                        : (selection) {
+                            setState(() {
+                              selectedMethod = selection.first;
+                            });
+                          },
+                    style: ButtonStyle(
+                      foregroundColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.selected)
+                            ? colors.backgroundColor
+                            : colors.primaryColor,
+                      ),
+                      backgroundColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.selected)
+                            ? colors.primaryColor
+                            : colors.surfaceColor,
+                      ),
+                    ),
+                  ),
                 ),
                 Gap(AppSpacing.xl),
                 Column(
@@ -156,60 +204,96 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     ),
                   ],
                 ),
-                Gap(AppSpacing.md),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tempo',
-                      style: TextStyle(
-                        color: colors.primaryColor,
-                        fontSize: AppTextSizes.label,
-                        fontWeight: FontWeight.w700,
+                if (selectedMethod == _CompositionMethod.manual) ...[
+                  Gap(AppSpacing.md),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tempo',
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.label,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    Gap(AppSpacing.xs),
-                    Text(
-                      'A lower BPM sounds slower. A higher BPM sounds faster.',
-                      style: TextStyle(
-                        color: colors.secondaryTextColor,
-                        fontSize: AppTextSizes.caption,
+                      Gap(AppSpacing.xs),
+                      Text(
+                        'A lower BPM sounds slower. A higher BPM sounds faster.',
+                        style: TextStyle(
+                          color: colors.secondaryTextColor,
+                          fontSize: AppTextSizes.caption,
+                        ),
                       ),
-                    ),
-                    Gap(AppSpacing.sm),
-                    TextFormField(
-                      controller: tempoController,
-                      enabled: !isOpeningEditor,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      cursorColor: colors.primaryColor,
-                      style: TextStyle(
-                        color: colors.primaryColor,
-                        fontSize: AppTextSizes.body,
-                      ),
-                      decoration: buildInputDecoration(
-                        colors: colors,
-                        hintText: '40 to 200',
-                        prefixIcon: Icons.speed_rounded,
-                        suffixText: 'BPM',
-                      ),
-                      validator: (value) {
-                        final tempo = int.tryParse(value ?? '');
+                      Gap(AppSpacing.sm),
+                      TextFormField(
+                        controller: tempoController,
+                        enabled: !isOpeningEditor,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        cursorColor: colors.primaryColor,
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.body,
+                        ),
+                        decoration: buildInputDecoration(
+                          colors: colors,
+                          hintText: '40 to 200',
+                          prefixIcon: Icons.speed_rounded,
+                          suffixText: 'BPM',
+                        ),
+                        validator: (value) {
+                          if (selectedMethod != _CompositionMethod.manual) {
+                            return null;
+                          }
+                          final tempo = int.tryParse(value ?? '');
 
-                        if (tempo == null) {
-                          return 'Enter a valid tempo.';
-                        }
+                          if (tempo == null) {
+                            return 'Enter a valid tempo.';
+                          }
 
-                        if (tempo < 40 || tempo > 200) {
-                          return 'Tempo must be between 40 and 200 BPM.';
-                        }
+                          if (tempo < 40 || tempo > 200) {
+                            return 'Tempo must be between 40 and 200 BPM.';
+                          }
 
-                        return null;
-                      },
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Gap(AppSpacing.md),
+                  Container(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceColor,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: colors.borderColor),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: colors.primaryColor,
+                        ),
+                        Gap(AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'Tempo and measure count will be detected from how you play.',
+                            style: TextStyle(
+                              color: colors.secondaryTextColor,
+                              fontSize: AppTextSizes.caption,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 Gap(AppSpacing.xl),
                 Container(
                   padding: EdgeInsets.all(AppSpacing.md),
@@ -357,7 +441,11 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                       )
                     : Icon(Icons.edit_note_rounded),
                 label: Text(
-                  isOpeningEditor ? 'Opening Editor...' : 'Start Composing',
+                  isOpeningEditor
+                      ? 'Opening...'
+                      : selectedMethod == _CompositionMethod.recording
+                      ? 'Open Recorder'
+                      : 'Start Composing',
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -426,157 +514,6 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
     );
   }
 
-  Widget buildCompositionMethodDialog(BuildContext dialogContext) {
-    final colors = widget.colors;
-
-    return Dialog(
-      backgroundColor: colors.surfaceColor,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: colors.borderColor),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: colors.backgroundColor,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: colors.borderColor),
-                  ),
-                  child: Icon(
-                    Icons.library_music_rounded,
-                    color: colors.primaryColor,
-                    size: AppIconSizes.md,
-                  ),
-                ),
-                Gap(AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    'Choose how to compose',
-                    style: TextStyle(
-                      color: colors.primaryColor,
-                      fontSize: AppTextSizes.sectionTitle,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Gap(AppSpacing.lg),
-            Material(
-              color: colors.backgroundColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                side: BorderSide(color: colors.borderColor),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () {
-                  Navigator.of(dialogContext).pop(_CompositionMethod.manual);
-                },
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: colors.surfaceColor,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: colors.borderColor),
-                        ),
-                        child: Icon(
-                          Icons.edit_note_rounded,
-                          color: colors.primaryColor,
-                          size: AppIconSizes.md,
-                        ),
-                      ),
-                      Gap(AppSpacing.md),
-                      Expanded(
-                        child: Text(
-                          'Compose Manually',
-                          style: TextStyle(
-                            color: colors.primaryColor,
-                            fontSize: AppTextSizes.label,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: colors.secondaryTextColor,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Gap(AppSpacing.sm),
-            Material(
-              color: colors.backgroundColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                side: BorderSide(color: colors.borderColor),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () {
-                  Navigator.of(dialogContext).pop(_CompositionMethod.recording);
-                },
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: colors.surfaceColor,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: colors.borderColor),
-                        ),
-                        child: Icon(
-                          Icons.videocam_rounded,
-                          color: colors.primaryColor,
-                          size: AppIconSizes.md,
-                        ),
-                      ),
-                      Gap(AppSpacing.md),
-                      Expanded(
-                        child: Text(
-                          'Record Performance',
-                          style: TextStyle(
-                            color: colors.primaryColor,
-                            fontSize: AppTextSizes.label,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: colors.secondaryTextColor,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> startComposing() async {
     if (isOpeningEditor || formKey.currentState?.validate() != true) {
       return;
@@ -589,12 +526,29 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
       return;
     }
 
-    final compositionMethod = await showDialog<_CompositionMethod>(
-      context: context,
-      builder: buildCompositionMethodDialog,
-    );
+    final beatsPerMeasure = int.parse(selectedTimeSignature.split('/').first);
+    final beatUnit = int.parse(selectedTimeSignature.split('/').last);
 
-    if (!mounted || compositionMethod == null) {
+    if (selectedMethod == _CompositionMethod.recording) {
+      final draft = RecordingCompositionDraft(
+        ownerId: user.uid,
+        title: titleController.text.trim(),
+        keySignature: selectedKeySignature,
+        beatsPerMeasure: beatsPerMeasure,
+        beatUnit: beatUnit,
+      );
+      final savedCompositionId = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) =>
+              RecordCompositionScreen(colors: widget.colors, draft: draft),
+        ),
+      );
+
+      if (!mounted || savedCompositionId == null) {
+        return;
+      }
+
+      Navigator.pop(context, savedCompositionId);
       return;
     }
 
@@ -605,32 +559,11 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
       tempo: int.parse(tempoController.text),
       measureCount: 1,
       notes: [],
-      creationMethod: compositionMethod == _CompositionMethod.recording
-          ? Composition.recordingCreationMethod
-          : Composition.manualCreationMethod,
+      creationMethod: Composition.manualCreationMethod,
       keySignature: selectedKeySignature,
-      beatsPerMeasure: int.parse(selectedTimeSignature.split('/').first),
-      beatUnit: int.parse(selectedTimeSignature.split('/').last),
+      beatsPerMeasure: beatsPerMeasure,
+      beatUnit: beatUnit,
     );
-
-    if (compositionMethod == _CompositionMethod.recording) {
-      final savedCompositionId = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-          builder: (_) => RecordCompositionScreen(
-            colors: widget.colors,
-            composition: composition,
-          ),
-        ),
-      );
-
-      if (!mounted || savedCompositionId == null) {
-        return;
-      }
-
-      Navigator.pop(context, savedCompositionId);
-
-      return;
-    }
 
     setState(() {
       isOpeningEditor = true;

@@ -52,7 +52,7 @@ class PublishedCompositionPlaybackController extends ChangeNotifier {
 
       if (isRequestInvalid(currentRequestId)) return null;
 
-      if (composition == null || composition.notes.isEmpty) {
+      if (composition == null || !composition.hasPlayableContent) {
         return 'This version has no playback data. Republish it first.';
       }
 

@@ -2,6 +2,7 @@ import os
 import tempfile
 
 from fastapi import FastAPI
+from fastapi import Depends
 from fastapi import HTTPException
 
 from composition.composition_models import CompositionRequest
@@ -14,6 +15,7 @@ from composition.score_builder import create_basic_score
 from composition.storage_service import uploadPdf
 from composition.unpublish_service import unpublishComposition
 from core.musescore_service import exportPdf
+from core.auth_service import requireVerifiedFirebaseUser
 from omr.audiveris_service import isAudiverisInstalled
 from omr.music_sheet_models import OmrConversionRequest
 from omr.omr_conversion_service import convertMusicSheet
@@ -21,6 +23,7 @@ from composition.generation_service import generateCompositionFiles
 from composition.private_composition_service import (
     generatedFilesAreCurrent,
     getOwnedCompositionReference,
+    loadOwnedComposition,
     saveGeneratedFilePaths,
     saveGenerationStatus,
 )
@@ -190,7 +193,11 @@ def receive_composition(
             "title": score.metadata.title,
             "authorName": publicProfile["username"],
             "versionNumber": versionNumber,
-            "receivedNoteCount": len(composition.notes),
+            "receivedNoteCount": (
+                len(composition.performanceNotes)
+                if composition.recordingSchemaVersion == 1
+                else len(composition.notes)
+            ),
             "scoreNoteCount": scoreNoteCount,
             "chordCount": chordCount,
             "restCount": restCount,
@@ -240,14 +247,17 @@ def unpublish_composition(
         "compositionId": compositionId,
     }
 
-@app.post("/compositions/generate")
+@app.post("/compositions/{compositionId}/generate")
 def generatePrivateCompositionFiles(
-    composition: CompositionRequest,
+    compositionId: str,
+    authenticatedUserId: str = Depends(
+        requireVerifiedFirebaseUser
+    ),
 ):
     try:
-        getOwnedCompositionReference(
-            composition.id,
-            composition.ownerId,
+        composition = loadOwnedComposition(
+            compositionId,
+            authenticatedUserId,
         )
     except FileNotFoundError as error:
         raise HTTPException(
@@ -267,7 +277,7 @@ def generatePrivateCompositionFiles(
 
     saveGenerationStatus(
         composition.id,
-        composition.ownerId,
+        authenticatedUserId,
         "generating",
     )
 
@@ -283,13 +293,14 @@ def generatePrivateCompositionFiles(
 
         saveGeneratedFilePaths(
             composition.id,
-            composition.ownerId,
+            authenticatedUserId,
             storagePaths,
+            composition,
         )
     except PermissionError as error:
         saveGenerationStatus(
             composition.id,
-            composition.ownerId,
+            authenticatedUserId,
             "failed",
         )
         raise HTTPException(
@@ -299,7 +310,7 @@ def generatePrivateCompositionFiles(
     except ValueError as error:
         saveGenerationStatus(
             composition.id,
-            composition.ownerId,
+            authenticatedUserId,
             "failed",
         )
         raise HTTPException(
@@ -309,7 +320,7 @@ def generatePrivateCompositionFiles(
     except (FileNotFoundError, RuntimeError) as error:
         saveGenerationStatus(
             composition.id,
-            composition.ownerId,
+            authenticatedUserId,
             "failed",
         )
         raise HTTPException(
@@ -319,7 +330,7 @@ def generatePrivateCompositionFiles(
     except Exception as error:
         saveGenerationStatus(
             composition.id,
-            composition.ownerId,
+            authenticatedUserId,
             "failed",
         )
         raise HTTPException(

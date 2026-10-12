@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
@@ -16,24 +17,22 @@ class CompositionGenerationService {
       throw StateError('Save the composition before generating its files.');
     }
 
-    await compositionService.markGenerationPending(composition.id);
-
-    final requestData = composition.toMap();
-
-    requestData['id'] = composition.id;
-    requestData['notes'] = composition.notes.map((note) {
-      final noteData = note.toMap();
-
-      noteData['id'] = note.id;
-      noteData.remove('noteId');
-
-      return noteData;
-    }).toList();
+    await compositionService.markGenerationPending(
+      composition.ownerId,
+      composition.id,
+    );
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw StateError('Sign in before generating composition files.');
+    }
+    final idToken = await user.getIdToken(true);
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Your sign-in session could not be verified.');
+    }
     final response = await http
         .post(
-          Uri.parse('$backendUrl/compositions/generate'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(requestData),
+          Uri.parse('$backendUrl/compositions/${composition.id}/generate'),
+          headers: {'Authorization': 'Bearer $idToken'},
         )
         .timeout(const Duration(minutes: 5));
 

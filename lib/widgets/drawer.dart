@@ -14,6 +14,7 @@ import 'package:soundsight/screens/micNiKen/microphone_screen.dart';
 import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
 import 'package:soundsight/screens/practice/practice_screen.dart';
+import 'package:soundsight/screens/practice_result/practice_results_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer_profile_header.dart';
@@ -23,6 +24,7 @@ enum DrawerItem {
   musicSheets,
   captureUpload,
   practice,
+  practiceResults,
   midi,
   mic,
   flyaway,
@@ -111,16 +113,25 @@ class AppDrawer extends StatelessWidget {
               active: activeItem == DrawerItem.captureUpload,
               icon: Icons.add_photo_alternate_outlined,
               title: 'Upload Sheet',
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
 
                 if (activeItem != DrawerItem.captureUpload) {
-                  Navigator.of(context).push(
+                  final wasUploaded = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
                       builder: (_) =>
                           CaptureUploadSheetScreen(isDarkMode: isDarkMode),
                     ),
                   );
+
+                  if (wasUploaded == true && context.mounted) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            MusicSheetScreen(isDarkMode: isDarkMode),
+                      ),
+                    );
+                  }
                 }
               },
             ),
@@ -135,6 +146,24 @@ class AppDrawer extends StatelessWidget {
                 if (activeItem != DrawerItem.practice) {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const PracticeScreen()),
+                  );
+                }
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.practiceResults,
+              icon: Icons.insights_outlined,
+              title: 'Practice Results',
+              onTap: () {
+                Navigator.pop(context);
+
+                if (activeItem != DrawerItem.practiceResults) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          PracticeResultsScreen(isDarkMode: isDarkMode),
+                    ),
                   );
                 }
               },

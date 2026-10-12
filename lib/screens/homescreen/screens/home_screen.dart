@@ -209,13 +209,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void openAddSheet(SheetInputAction initialAction) {
-    Navigator.of(context).push(
+  Future<void> openAddSheet(SheetInputAction initialAction) async {
+    final wasUploaded = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => CaptureUploadSheetScreen(
           isDarkMode: isDarkMode,
           initialAction: initialAction,
         ),
+      ),
+    );
+
+    if (!mounted || wasUploaded != true) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MusicSheetScreen(isDarkMode: isDarkMode),
       ),
     );
   }

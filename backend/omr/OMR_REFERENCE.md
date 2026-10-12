@@ -4,9 +4,10 @@
 
 The `omr` folder recognizes notes from a music sheet that the user previously uploaded.
 
-Audiveris performs optical music recognition and exports MusicXML. music21
-validates the result, and MuseScore creates a recognized PDF, MIDI file, and
-MP3 preview.
+Audiveris performs optical music recognition and exports compressed MusicXML.
+The backend extracts the score as plain MusicXML and uses that extracted score
+for validation and every generated file. MuseScore creates a recognized PDF,
+MIDI file, and MP3 preview.
 
 ## Complete user flow
 
@@ -22,13 +23,14 @@ MP3 preview.
 10. A fresh local job folder is created for the sheet.
 11. Source files are downloaded from Firebase Storage.
 12. Image pages are sorted and combined into one RGB PDF at 300 DPI. An uploaded PDF is used directly.
-13. Audiveris processes the PDF and exports an `.mxl` MusicXML file.
-14. music21 verifies that the MusicXML is readable and contains at least one note.
-15. MuseScore converts the MusicXML into a recognized PDF, MIDI file, and MP3 preview.
-16. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
-17. The Firestore sheet becomes `completed` and receives its result fields.
-18. The temporary job folder is deleted.
-19. The Flutter screen receives the response and displays a success dialog.
+13. Audiveris processes the PDF and exports a temporary compressed `.mxl` file.
+14. The backend extracts the archive's declared root score as plain `.musicxml`.
+15. music21 verifies that the extracted MusicXML is readable and contains at least one note.
+16. MuseScore converts the extracted MusicXML into a recognized PDF, MIDI file, and MP3 preview.
+17. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
+18. The Firestore sheet becomes `completed` and receives its result fields.
+19. The temporary job folder, including the `.mxl`, is deleted.
+20. The Flutter screen receives the response and displays a success dialog.
 
 ## Temporary local information
 
@@ -48,7 +50,10 @@ These values are not permanent Firebase fields.
 
 The backend temporarily stores the sheet data, downloaded paths, validation result, and output paths during the request.
 
-Each attempt uses a unique temporary system folder with `input` and `output` subfolders. The attempt folder is deleted in the final cleanup after success or failure.
+Each attempt uses a unique temporary system folder with `input` and `output`
+subfolders. The Audiveris `.mxl` and extracted `.musicxml` are both temporary
+local files. The attempt folder is deleted in the final cleanup after success
+or failure.
 
 ## Original sheet information
 
@@ -119,7 +124,7 @@ Failure does not clear older successful result paths, counts, or `omrProcessedAt
 
 Successful recognition creates or replaces:
 
-- `musicSheets/{ownerId}/{sheetId}/recognized.mxl`;
+- `musicSheets/{ownerId}/{sheetId}/recognized.musicxml`;
 - `musicSheets/{ownerId}/{sheetId}/recognized.mid`;
 - `musicSheets/{ownerId}/{sheetId}/recognized.pdf`;
 - `musicSheets/{ownerId}/{sheetId}/preview.mp3`.
@@ -154,7 +159,9 @@ The backend requires:
 - JPG, JPEG, or PNG extensions for image-based recognition;
 - an Audiveris installation at the configured paths;
 - Audiveris to produce an `.mxl` file;
-- music21 to read that file;
+- the `.mxl` archive to contain a readable container declaration and a
+  non-empty root score that can be written as plain `.musicxml`;
+- music21 to read the extracted plain MusicXML file;
 - at least one recognized note;
 - MuseScore to create a non-empty PDF, MIDI file, and MP3.
 
@@ -162,7 +169,9 @@ There is a current mismatch: the upload client accepts HEIC and WebP images, but
 
 ## Note and part calculation
 
-music21 reads the recognized score.
+The backend calculates note and part counts from the extracted MusicXML without
+removing or merging any score parts or staves. Sight Reading handles its own
+display-only cleanup without changing the permanently stored MusicXML.
 
 - A normal note adds one to `omrNoteCount`.
 - Every pitch inside a chord adds one to `omrNoteCount`.
@@ -225,7 +234,7 @@ The API response also returns the sheet ID, title, completed status, counts, and
 
 For sheet `sheet123` owned by `userA`, a successful attempt stores:
 
-- `musicSheets/userA/sheet123/recognized.mxl`;
+- `musicSheets/userA/sheet123/recognized.musicxml`;
 - `musicSheets/userA/sheet123/recognized.mid`;
 - `musicSheets/userA/sheet123/recognized.pdf`;
 - `musicSheets/userA/sheet123/preview.mp3`.

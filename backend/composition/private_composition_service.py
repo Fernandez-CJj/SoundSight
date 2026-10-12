@@ -1,6 +1,13 @@
 from firebase_admin import firestore
 
 from core.firebase_service import getDatabase
+from composition.composition_models import CompositionRequest
+from composition.performance_timing import (
+    normalizeRecordedCompositionTiming,
+)
+
+
+CURRENT_GENERATED_FILES_VERSION = 2
 
 
 def getOwnedCompositionReference(
@@ -21,6 +28,8 @@ def getOwnedCompositionReference(
 
     compositionReference = (
         database
+        .collection("users")
+        .document(ownerId)
         .collection("compositions")
         .document(compositionId)
     )
@@ -46,10 +55,64 @@ def getOwnedCompositionReference(
     return compositionReference
 
 
+def loadOwnedComposition(
+    compositionId,
+    ownerId,
+):
+    compositionReference = getOwnedCompositionReference(
+        compositionId,
+        ownerId,
+    )
+    compositionData = compositionReference.get().to_dict() or {}
+    compositionData["id"] = compositionId
+
+    storedNotes = compositionData.get("notes", [])
+    normalizedNotes = []
+    for storedNote in storedNotes:
+        noteData = dict(storedNote)
+        if "id" not in noteData and "noteId" in noteData:
+            noteData["id"] = noteData.pop("noteId")
+        normalizedNotes.append(noteData)
+    compositionData["notes"] = normalizedNotes
+
+    try:
+        composition = CompositionRequest.model_validate(compositionData)
+    except AttributeError:
+        composition = CompositionRequest.parse_obj(compositionData)
+
+    if len(composition.notes) > 256:
+        raise ValueError(
+            "A composition can contain up to 256 notes."
+        )
+
+    if composition.recordingSchemaVersion not in [None, 1]:
+        raise ValueError(
+            "The recording schema version is not supported."
+        )
+
+    if composition.recordingSchemaVersion == 1:
+        if (
+            composition.creationMethod != "recording"
+            or len(composition.performanceNotes) == 0
+            or len(composition.performanceNotes) > 256
+        ):
+            raise ValueError(
+                "The recorded performance data is incomplete."
+            )
+        normalizeRecordedCompositionTiming(composition)
+        if composition.performanceDurationUs > 600_000_000:
+            raise ValueError(
+                "The recorded performance is longer than 10 minutes."
+            )
+
+    return composition
+
+
 def saveGeneratedFilePaths(
     compositionId,
     ownerId,
     storagePaths,
+    composition=None,
 ):
     compositionReference = (
         getOwnedCompositionReference(
@@ -58,7 +121,7 @@ def saveGeneratedFilePaths(
         )
     )
 
-    compositionReference.update({
+    generatedData = {
         "pdfStoragePath": (
             storagePaths["pdfStoragePath"]
         ),
@@ -72,10 +135,28 @@ def saveGeneratedFilePaths(
             storagePaths["mp3StoragePath"]
         ),
         "generationStatus": "completed",
+        "generatedFilesVersion": (
+            CURRENT_GENERATED_FILES_VERSION
+        ),
         "filesGeneratedAt": (
             firestore.SERVER_TIMESTAMP
         ),
-    })
+    }
+
+    if (
+        composition is not None
+        and composition.creationMethod == "recording"
+        and composition.recordingSchemaVersion == 1
+    ):
+        generatedData.update({
+            "tempo": composition.tempo,
+            "measureCount": composition.measureCount,
+            "performanceDurationUs": (
+                composition.performanceDurationUs
+            ),
+        })
+
+    compositionReference.update(generatedData)
 
 
 def saveGenerationStatus(
@@ -127,6 +208,12 @@ def generatedFilesAreCurrent(compositionData):
     )
 
     if generationStatus not in [None, "completed"]:
+        return False
+
+    if (
+        compositionData.get("generatedFilesVersion")
+        != CURRENT_GENERATED_FILES_VERSION
+    ):
         return False
 
     filesGeneratedAt = compositionData.get(

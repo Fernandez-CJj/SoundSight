@@ -12,6 +12,7 @@ import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart
 import 'package:soundsight/screens/music_sheet/services/music_sheet_omr_service.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_audio_preview.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_omr_status_card.dart';
+import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
 import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -151,7 +152,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                   'Sight Reading',
                   style: TextStyle(color: widget.colors.primaryColor),
                 ),
-                onTap: () => Navigator.of(dialogContext).pop('sightReading'),
+                onTap: () {
+                  Navigator.of(dialogContext).pop('sightReading');
+                },
               ),
               ListTile(
                 leading: Icon(
@@ -162,7 +165,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                   'Synthesia',
                   style: TextStyle(color: widget.colors.primaryColor),
                 ),
-                onTap: () => Navigator.of(dialogContext).pop('synthesia'),
+                onTap: () {
+                  Navigator.of(dialogContext).pop('synthesia');
+                },
               ),
             ],
           ),
@@ -170,10 +175,83 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       },
     );
 
-    if (selectedMode == 'synthesia' && mounted) {
-      Navigator.of(
+    if (!mounted || selectedMode == null) {
+      return;
+    }
+
+    if (selectedMode == 'sightReading') {
+      await openSightReading();
+      return;
+    }
+
+    if (selectedMode == 'synthesia') {
+      await Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const SynthesiaScreen()));
+    }
+  }
+
+  Future<void> openSightReading() async {
+    try {
+      final sheetSnapshot = await sheetReference.get();
+      final sheetData = sheetSnapshot.data();
+
+      if (!mounted) {
+        return;
+      }
+
+      final omrStatus = sheetData?['omrStatus'] as String? ?? '';
+
+      final musicXmlStoragePath =
+          sheetData?['musicXmlStoragePath'] as String? ?? '';
+
+      final midiStoragePath = sheetData?['midiStoragePath'] as String? ?? '';
+      final previewAudioStoragePath =
+          sheetData?['previewAudioStoragePath'] as String? ?? '';
+
+      if (omrStatus != 'completed') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Translate the music sheet before starting Sight Reading.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      if (musicXmlStoragePath.isEmpty ||
+          midiStoragePath.isEmpty ||
+          previewAudioStoragePath.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'The translated MusicXML, MIDI, or MP3 file is missing.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MusicSheetReadingScreen(
+            scoreDocumentPath: sheetReference.path,
+            source: SightReadingSource.musicSheet,
+            colors: widget.colors,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open Sight Reading: $error')),
+      );
     }
   }
 

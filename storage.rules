@@ -66,7 +66,10 @@ service firebase.storage {
       allow read: if isVerifiedUser()
                   && request.auth.uid == ownerId;
 
-      allow create, update, delete: if false;
+      allow delete: if isVerifiedUser()
+                    && request.auth.uid == ownerId;
+
+      allow create, update: if false;
     }
 
     match /published_compositions/{ownerId}/{fileName} {

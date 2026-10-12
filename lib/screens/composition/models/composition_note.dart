@@ -14,6 +14,7 @@ class CompositionNote {
        velocity = normalizeVelocity(velocity);
 
   static const double timingStep = 1 / 12;
+  static const double timingEpsilon = 0.000001;
 
   final String id;
   final String pitch;

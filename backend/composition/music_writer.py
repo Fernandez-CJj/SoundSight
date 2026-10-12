@@ -1,5 +1,6 @@
 from music21 import chord
 from music21 import note
+from music21 import stream
 from music21 import tie
 
 from composition.composition_models import CompositionRequest
@@ -108,109 +109,159 @@ def addRest(
     )
 
 
+def groupMeasureNotes(measureNotes):
+    groupsByTiming = {}
+    for compositionNote in measureNotes:
+        timingKey = (
+            round(compositionNote.startBeat, 8),
+            round(compositionNote.durationBeats, 8),
+        )
+        groupsByTiming.setdefault(
+            timingKey,
+            [],
+        ).append(compositionNote)
+
+    groups = list(groupsByTiming.values())
+    groups.sort(
+        key=lambda group: (
+            group[0].startBeat,
+            -group[0].durationBeats,
+            min(item.midiNumber for item in group),
+        )
+    )
+    return groups
+
+
+def assignGroupsToVoices(groups):
+    voices = []
+    voiceEndBeats = []
+
+    for group in groups:
+        startBeat = group[0].startBeat
+        endBeat = startBeat + group[0].durationBeats
+        voiceIndex = None
+
+        for index, voiceEndBeat in enumerate(voiceEndBeats):
+            if voiceEndBeat <= startBeat + 0.0001:
+                voiceIndex = index
+                break
+
+        if voiceIndex is None:
+            voiceIndex = len(voices)
+            voices.append([])
+            voiceEndBeats.append(0)
+
+        voices[voiceIndex].append(group)
+        voiceEndBeats[voiceIndex] = endBeat
+
+    return voices
+
+
+def createManualMusicalObject(
+    noteGroup,
+    composition,
+    beatLength,
+):
+    musicNotes = [
+        createMusicNote(
+            compositionNote,
+            composition,
+            beatLength,
+        )
+        for compositionNote in noteGroup
+    ]
+
+    if len(musicNotes) == 1:
+        return musicNotes[0]
+
+    musicChord = chord.Chord(musicNotes)
+    musicChord.duration.quarterLength = (
+        noteGroup[0].durationBeats * beatLength
+    )
+    return musicChord
+
+
+def addGroupsToContainer(
+    container,
+    groups,
+    composition,
+    beatLength,
+):
+    currentBeat = 0
+
+    for noteGroup in groups:
+        compositionNote = noteGroup[0]
+        if compositionNote.startBeat > currentBeat + 0.0001:
+            addRest(
+                container,
+                currentBeat,
+                compositionNote.startBeat - currentBeat,
+                beatLength,
+            )
+
+        musicalObject = createManualMusicalObject(
+            noteGroup,
+            composition,
+            beatLength,
+        )
+        container.insert(
+            compositionNote.startBeat * beatLength,
+            musicalObject,
+        )
+        currentBeat = max(
+            currentBeat,
+            compositionNote.startBeat
+            + compositionNote.durationBeats,
+        )
+
+    if currentBeat < composition.beatsPerMeasure - 0.0001:
+        addRest(
+            container,
+            currentBeat,
+            composition.beatsPerMeasure - currentBeat,
+            beatLength,
+        )
+
+
 def addMeasureMusic(
     measure,
     measureNotes,
     composition,
     beatLength,
 ):
-    currentBeat = 0
-    handledNoteIds = []
-
-    for compositionNote in measureNotes:
-        if compositionNote.id in handledNoteIds:
-            continue
-
-        notesAtSameBeat = []
-
-        for possibleChordNote in measureNotes:
-            sameStartBeat = (
-                abs(
-                    possibleChordNote.startBeat
-                    - compositionNote.startBeat
-                )
-                < 0.0001
-            )
-
-            sameDuration = (
-                abs(
-                    possibleChordNote.durationBeats
-                    - compositionNote.durationBeats
-                )
-                < 0.0001
-            )
-
-            if sameStartBeat and sameDuration:
-                notesAtSameBeat.append(
-                    possibleChordNote
-                )
-
-        for groupedNote in notesAtSameBeat:
-            handledNoteIds.append(
-                groupedNote.id
-            )
-
-        if compositionNote.startBeat > currentBeat:
-            restDuration = (
-                compositionNote.startBeat
-                - currentBeat
-            )
-
-            addRest(
-                measure,
-                currentBeat,
-                restDuration,
-                beatLength,
-            )
-
-        musicNotes = []
-
-        for groupedNote in notesAtSameBeat:
-            musicNote = createMusicNote(
-                groupedNote,
-                composition,
-                beatLength,
-            )
-
-            musicNotes.append(musicNote)
-
-        if len(musicNotes) == 1:
-            musicalObject = musicNotes[0]
-        else:
-            musicalObject = chord.Chord(
-                musicNotes
-            )
-
-        startPosition = (
-            compositionNote.startBeat
-            * beatLength
-        )
-
-        measure.insert(
-            startPosition,
-            musicalObject,
-        )
-
-        noteEnd = (
-            compositionNote.startBeat
-            + compositionNote.durationBeats
-        )
-
-        if noteEnd > currentBeat:
-            currentBeat = noteEnd
-
-    if currentBeat < composition.beatsPerMeasure:
-        remainingBeats = (
-            composition.beatsPerMeasure
-            - currentBeat
-        )
-
+    if len(measureNotes) == 0:
         addRest(
             measure,
-            currentBeat,
-            remainingBeats,
+            0,
+            composition.beatsPerMeasure,
             beatLength,
         )
+        return
+
+    voices = assignGroupsToVoices(
+        groupMeasureNotes(measureNotes)
+    )
+
+    if len(voices) == 1:
+        addGroupsToContainer(
+            measure,
+            voices[0],
+            composition,
+            beatLength,
+        )
+        return
+
+    for voiceIndex, voiceGroups in enumerate(voices):
+        musicVoice = stream.Voice(
+            id=str(voiceIndex + 1)
+        )
+        addGroupsToContainer(
+            musicVoice,
+            voiceGroups,
+            composition,
+            beatLength,
+        )
+        measure.insert(0, musicVoice)
 
 
 def addCompositionMusic(

@@ -51,6 +51,7 @@ def saveCompositionPost(
         ),
         "currentVersion": versionNumber,
         "title": composition.title,
+        "creationMethod": composition.creationMethod,
         "tempo": composition.tempo,
         "key": composition.key,
         "beatsPerMeasure": (
@@ -58,7 +59,11 @@ def saveCompositionPost(
         ),
         "beatUnit": composition.beatUnit,
         "measureCount": composition.measureCount,
-        "noteCount": len(composition.notes),
+        "noteCount": (
+            len(composition.performanceNotes)
+            if composition.recordingSchemaVersion == 1
+            else len(composition.notes)
+        ),
         "pdfStoragePath": pdfStoragePath,
         "sourceUpdatedAt": sourceUpdatedAt,
         "publishedAt": (
@@ -91,6 +96,21 @@ def saveCompositionPost(
         })
 
     versionData["notes"] = notesData
+
+    if composition.recordingSchemaVersion == 1:
+        versionData["recordingSchemaVersion"] = 1
+        versionData["performanceDurationUs"] = (
+            composition.performanceDurationUs
+        )
+        versionData["performanceNotes"] = [
+            {
+                "midiNumber": performanceNote.midiNumber,
+                "velocity": performanceNote.velocity,
+                "startTimeUs": performanceNote.startTimeUs,
+                "durationUs": performanceNote.durationUs,
+            }
+            for performanceNote in composition.performanceNotes
+        ]
 
     versionReference = postReference.collection(
         "versions"

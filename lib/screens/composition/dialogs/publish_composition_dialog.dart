@@ -114,7 +114,7 @@ class PublishCompositionDialog extends StatelessWidget {
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
                   label: 'Notes',
-                  value: '${composition.notes.length}',
+                  value: '${composition.playableNoteCount}',
                 ),
               ],
             ),

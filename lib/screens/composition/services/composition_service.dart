@@ -1,48 +1,54 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
+import 'package:soundsight/screens/composition/models/composition_note.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';
 import 'package:soundsight/screens/composition/models/piano_note.dart';
 
 class CompositionService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  Stream<List<Composition>> getUserCompositions(String ownerId) {
+  CollectionReference<Map<String, dynamic>> userCompositions(String ownerId) {
+    if (ownerId.trim().isEmpty) {
+      throw StateError('Sign in before accessing compositions.');
+    }
+
     return firestore
-        .collection('compositions')
-        .where('ownerId', isEqualTo: ownerId)
-        .snapshots()
-        .map((snapshot) {
-          final compositions = <Composition>[];
-
-          for (final document in snapshot.docs) {
-            final composition = Composition.fromMap(
-              document.id,
-              document.data(),
-            );
-
-            compositions.add(composition);
-          }
-
-          compositions.sort((first, second) {
-            final firstDate = first.updatedAt ?? first.createdAt;
-            final secondDate = second.updatedAt ?? second.createdAt;
-
-            if (firstDate == null && secondDate == null) return 0;
-            if (firstDate == null) return 1;
-            if (secondDate == null) return -1;
-
-            return secondDate.compareTo(firstDate);
-          });
-
-          return compositions;
-        });
+        .collection('users')
+        .doc(ownerId.trim())
+        .collection('compositions');
   }
 
-  Future<Composition?> getComposition(String compositionId) async {
-    final document = await firestore
-        .collection('compositions')
-        .doc(compositionId)
-        .get();
+  Stream<List<Composition>> getUserCompositions(String ownerId) {
+    return userCompositions(ownerId).snapshots().map((snapshot) {
+      final compositions = <Composition>[];
+
+      for (final document in snapshot.docs) {
+        final composition = Composition.fromMap(document.id, document.data());
+
+        compositions.add(composition);
+      }
+
+      compositions.sort((first, second) {
+        final firstDate = first.updatedAt ?? first.createdAt;
+        final secondDate = second.updatedAt ?? second.createdAt;
+
+        if (firstDate == null && secondDate == null) return 0;
+        if (firstDate == null) return 1;
+        if (secondDate == null) return -1;
+
+        return secondDate.compareTo(firstDate);
+      });
+
+      return compositions;
+    });
+  }
+
+  Future<Composition?> getComposition(
+    String ownerId,
+    String compositionId,
+  ) async {
+    final document = await userCompositions(ownerId).doc(compositionId).get();
 
     final data = document.data();
 
@@ -57,7 +63,10 @@ class CompositionService {
     final validationError = validateComposition(composition);
     if (validationError != null) throw StateError(validationError);
 
-    final document = firestore.collection('compositions').doc();
+    final compositions = userCompositions(composition.ownerId);
+    final document = composition.id.isEmpty
+        ? compositions.doc()
+        : compositions.doc(composition.id);
     final compositionData = composition.toMap();
 
     compositionData.addAll({
@@ -69,6 +78,10 @@ class CompositionService {
     await document.set(compositionData);
 
     return document.id;
+  }
+
+  String reserveCompositionId(String ownerId) {
+    return userCompositions(ownerId).doc().id;
   }
 
   Future<void> updateComposition(Composition composition) async {
@@ -84,28 +97,78 @@ class CompositionService {
     compositionData['generationStatus'] = Composition.pendingGenerationStatus;
     compositionData['updatedAt'] = FieldValue.serverTimestamp();
 
-    await firestore
-        .collection('compositions')
-        .doc(composition.id)
-        .update(compositionData);
+    await userCompositions(
+      composition.ownerId,
+    ).doc(composition.id).update(compositionData);
   }
 
-  Future<void> markGenerationPending(String compositionId) async {
+  Future<void> markGenerationPending(
+    String ownerId,
+    String compositionId,
+  ) async {
     if (compositionId.isEmpty) {
       throw StateError('The composition does not have an ID.');
     }
 
-    await firestore.collection('compositions').doc(compositionId).update({
+    await userCompositions(ownerId).doc(compositionId).update({
       'generationStatus': Composition.pendingGenerationStatus,
     });
   }
 
-  Future<void> deleteComposition(String compositionId) async {
+  Future<void> markGenerationFailed(
+    String ownerId,
+    String compositionId,
+  ) async {
+    if (compositionId.isEmpty) {
+      throw StateError('The composition does not have an ID.');
+    }
+    await userCompositions(ownerId).doc(compositionId).update({
+      'generationStatus': Composition.failedGenerationStatus,
+    });
+  }
+
+  Future<void> deleteComposition(String ownerId, String compositionId) async {
     if (compositionId.isEmpty) {
       throw StateError('The composition does not have an ID.');
     }
 
-    await firestore.collection('compositions').doc(compositionId).delete();
+    final document = userCompositions(ownerId).doc(compositionId);
+    final snapshot = await document.get();
+    final compositionData = snapshot.data();
+
+    if (!snapshot.exists || compositionData == null) return;
+
+    final storagePaths = <String>{};
+    addStoragePath(storagePaths, compositionData['pdfStoragePath']);
+    addStoragePath(storagePaths, compositionData['musicXmlStoragePath']);
+    addStoragePath(storagePaths, compositionData['midiStoragePath']);
+    addStoragePath(storagePaths, compositionData['mp3StoragePath']);
+
+    final storedOwnerId = compositionData['ownerId'] as String? ?? '';
+    if (storedOwnerId.isNotEmpty) {
+      final compositionFolder =
+          'composition_files/$storedOwnerId/$compositionId';
+      storagePaths.add('$compositionFolder/score.pdf');
+      storagePaths.add('$compositionFolder/score.musicxml');
+      storagePaths.add('$compositionFolder/score.mid');
+      storagePaths.add('$compositionFolder/score.mp3');
+    }
+
+    for (final storagePath in storagePaths) {
+      try {
+        await FirebaseStorage.instance.ref(storagePath).delete();
+      } on FirebaseException catch (error) {
+        if (error.code != 'object-not-found') rethrow;
+      }
+    }
+
+    await document.delete();
+  }
+
+  void addStoragePath(Set<String> storagePaths, Object? storagePath) {
+    if (storagePath is String && storagePath.trim().isNotEmpty) {
+      storagePaths.add(storagePath.trim());
+    }
   }
 
   String? validateComposition(Composition composition) {
@@ -133,8 +196,35 @@ class CompositionService {
     if (composition.measureCount < 1 || composition.measureCount > 128) {
       return 'A composition can contain up to 128 measures.';
     }
-    if (composition.notes.length > 256) {
+    if (composition.playableNoteCount > 256) {
       return 'A composition can contain up to 256 notes.';
+    }
+
+    if (composition.usesPerformanceRecording) {
+      if (composition.performanceNotes.isEmpty ||
+          composition.performanceDurationUs == null ||
+          composition.performanceDurationUs! <= 0) {
+        return 'Record at least one complete MIDI note.';
+      }
+      if (composition.performanceDurationUs! >
+          const Duration(minutes: 10).inMicroseconds) {
+        return 'A recorded performance must be 10 minutes or shorter.';
+      }
+      for (final note in composition.performanceNotes) {
+        if (!PianoNote.isValidMidi(note.midiNumber)) {
+          return 'A recorded note is outside the 88-key piano range.';
+        }
+        if (note.velocity < 1 || note.velocity > 127) {
+          return 'Recorded note velocity must be between 1 and 127.';
+        }
+        if (note.startTimeUs < 0 || note.durationUs <= 0) {
+          return 'A recorded note has invalid timing.';
+        }
+        if (note.endTimeUs > composition.performanceDurationUs!) {
+          return 'A recorded note extends past the performance ending.';
+        }
+      }
+      return null;
     }
 
     final noteIds = <String>{};
@@ -166,14 +256,18 @@ class CompositionService {
       }
     }
 
-    for (var firstIndex = 0;
-        firstIndex < composition.notes.length;
-        firstIndex++) {
+    for (
+      var firstIndex = 0;
+      firstIndex < composition.notes.length;
+      firstIndex++
+    ) {
       final first = composition.notes[firstIndex];
 
-      for (var secondIndex = firstIndex + 1;
-          secondIndex < composition.notes.length;
-          secondIndex++) {
+      for (
+        var secondIndex = firstIndex + 1;
+        secondIndex < composition.notes.length;
+        secondIndex++
+      ) {
         final second = composition.notes[secondIndex];
         if (first.measureIndex != second.measureIndex ||
             first.midiNumber != second.midiNumber) {
@@ -181,10 +275,28 @@ class CompositionService {
         }
 
         final overlaps =
-            first.startBeat < second.startBeat + second.durationBeats &&
-            first.startBeat + first.durationBeats > second.startBeat;
+            first.startBeat <
+                second.startBeat +
+                    second.durationBeats -
+                    CompositionNote.timingEpsilon &&
+            first.startBeat + first.durationBeats >
+                second.startBeat + CompositionNote.timingEpsilon;
         if (overlaps) {
-          return 'The same piano key cannot overlap itself.';
+          final overlapStart = first.startBeat > second.startBeat
+              ? first.startBeat
+              : second.startBeat;
+          final beat = overlapStart + 1;
+          final roundedBeat = beat.round();
+          final beatLabel =
+              (beat - roundedBeat).abs() < CompositionNote.timingEpsilon
+              ? '$roundedBeat'
+              : beat
+                    .toStringAsFixed(2)
+                    .replaceFirst(RegExp(r'0+$'), '')
+                    .replaceFirst(RegExp(r'\.$'), '');
+
+          return '${first.pitch}${first.octave} overlaps the same key in '
+              'measure ${first.measureIndex + 1}, near beat $beatLabel.';
         }
       }
     }

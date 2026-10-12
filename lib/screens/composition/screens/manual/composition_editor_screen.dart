@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/widgets/chord_mode_controls.dart';
+import 'package:soundsight/screens/composition/widgets/layer_notes_controls.dart';
 import 'package:soundsight/screens/composition/controllers/composition_editor_controller.dart';
 import 'package:soundsight/screens/composition/widgets/composition_history_controls.dart';
 import 'package:soundsight/screens/composition/models/composition_note.dart';
@@ -18,6 +19,7 @@ import 'package:soundsight/screens/composition/services/composition_playback_ser
 import 'package:soundsight/screens/composition/services/composition_midi_processor.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
 import 'package:soundsight/screens/composition/dialogs/composition_settings_dialog.dart';
+import 'package:soundsight/screens/composition/dialogs/save_composition_confirmation_dialog.dart';
 import 'package:soundsight/screens/composition/widgets/composition_timeline.dart';
 import 'package:soundsight/screens/composition/widgets/measure_actions_button.dart';
 import 'package:soundsight/screens/composition/widgets/note_duration_selector.dart';
@@ -58,6 +60,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   bool isPaused = false;
   bool isPreparingPlayback = false;
   bool isChordMode = false;
+  bool isLayerMode = false;
   bool isDirty = false;
   bool isDiscarding = false;
   bool isShowingDiscardDialog = false;
@@ -67,6 +70,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   bool isMetronomeEnabled = false;
   bool showSongOverview = false;
   double volume = 1;
+  double? midiInputDurationBeats;
   int selectedOctave = 4;
   late String compositionTitle;
   late String keySignature;
@@ -117,7 +121,6 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     );
 
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
@@ -166,8 +169,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         MediaQuery.of(context).orientation == Orientation.landscape;
 
     return PopScope(
-      canPop:
-          !isSaving && !midiStepIsBusy && (!isDirty || isDiscarding),
+      canPop: !isSaving && !midiStepIsBusy && (!isDirty || isDiscarding),
       onPopInvokedWithResult: handlePop,
       child: Scaffold(
         backgroundColor: colors.backgroundColor,
@@ -282,11 +284,14 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           insertionBeat: isPlaying ? null : editorController.insertionBeat,
           onMeasureChanged: changeMeasure,
           onNoteSelected: selectNote,
+          onDeleteSelection: deleteSelectedNotes,
+          onSelectionCleared: clearNoteSelection,
           onNoteSelectionToggled: toggleNoteSelection,
           onNoteMoved: moveNote,
           selectedOctave: selectedOctave,
           onOctaveChanged: changeSelectedOctave,
           showSongOverview: showSongOverview,
+          singleMeasureNavigation: !midiIsConnected,
           enabled: !editorInteractionLocked,
           pianoRollHeight: midiIsConnected ? 300 : 190,
         ),
@@ -300,16 +305,28 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         buildMeasureActions(colors),
         const Gap(AppSpacing.md),
         buildHistoryControls(colors),
+        const Gap(AppSpacing.md),
+        NoteDurationSelector(
+          colors: colors,
+          selectedDuration: midiIsConnected
+              ? midiInputDurationBeats ?? editorController.selectedDuration
+              : editorController.selectedDuration,
+          beatsPerMeasure: editorController.beatsPerMeasure,
+          beatUnit: editorController.beatUnit,
+          onDurationSelected: midiIsConnected
+              ? selectFixedMidiDuration
+              : changeDuration,
+          showAutomatic: midiIsConnected,
+          automaticSelected: midiIsConnected && midiInputDurationBeats == null,
+          onAutomaticSelected: midiIsConnected
+              ? selectAutomaticMidiDuration
+              : null,
+          helperText: midiIsConnected
+              ? 'Automatic follows how long you hold the MIDI keys.'
+              : null,
+          enabled: !editorInteractionLocked,
+        ),
         if (!midiIsConnected) ...[
-          const Gap(AppSpacing.md),
-          NoteDurationSelector(
-            colors: colors,
-            selectedDuration: editorController.selectedDuration,
-            beatsPerMeasure: editorController.beatsPerMeasure,
-            beatUnit: editorController.beatUnit,
-            onDurationSelected: changeDuration,
-            enabled: !editorInteractionLocked,
-          ),
           const Gap(AppSpacing.md),
           ChordModeControls(
             colors: colors,
@@ -320,6 +337,17 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
             onChordModeChanged: toggleChordMode,
             onFinishChord: finishChord,
           ),
+        ],
+        const Gap(AppSpacing.md),
+        LayerNotesControls(
+          colors: colors,
+          isLayerMode: isLayerMode,
+          measureIndex: editorController.currentMeasureIndex,
+          startBeat: editorController.insertionBeat,
+          enabled: !editorInteractionLocked,
+          onLayerModeChanged: toggleLayerMode,
+        ),
+        if (!midiIsConnected) ...[
           const Gap(AppSpacing.md),
           VirtualPianoKeyboard(
             colors: colors,
@@ -421,15 +449,60 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   compact: true,
                 ),
               ),
+              const Gap(AppSpacing.sm),
+              Expanded(
+                child: LayerNotesControls(
+                  colors: colors,
+                  isLayerMode: isLayerMode,
+                  measureIndex: editorController.currentMeasureIndex,
+                  startBeat: editorController.insertionBeat,
+                  enabled: !editorInteractionLocked,
+                  onLayerModeChanged: toggleLayerMode,
+                  compact: true,
+                ),
+              ),
+            ],
+          ),
+        ] else ...[
+          const Gap(AppSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: NoteDurationSelector(
+                  colors: colors,
+                  selectedDuration:
+                      midiInputDurationBeats ??
+                      editorController.selectedDuration,
+                  beatsPerMeasure: editorController.beatsPerMeasure,
+                  beatUnit: editorController.beatUnit,
+                  onDurationSelected: selectFixedMidiDuration,
+                  showAutomatic: true,
+                  automaticSelected: midiInputDurationBeats == null,
+                  onAutomaticSelected: selectAutomaticMidiDuration,
+                  helperText: 'Automatic uses key hold time.',
+                  compact: true,
+                  enabled: !editorInteractionLocked,
+                ),
+              ),
+              const Gap(AppSpacing.sm),
+              SizedBox(
+                width: 360,
+                child: LayerNotesControls(
+                  colors: colors,
+                  isLayerMode: isLayerMode,
+                  measureIndex: editorController.currentMeasureIndex,
+                  startBeat: editorController.insertionBeat,
+                  enabled: !editorInteractionLocked,
+                  onLayerModeChanged: toggleLayerMode,
+                  compact: true,
+                ),
+              ),
             ],
           ),
         ],
         const Gap(AppSpacing.sm),
         if (midiIsConnected) ...[
-          SizedBox(
-            height: 420,
-            child: buildLandscapeTimeline(colors),
-          ),
+          SizedBox(height: 420, child: buildLandscapeTimeline(colors)),
           const Gap(AppSpacing.sm),
           SizedBox(height: 104, child: buildLandscapeActions(colors)),
         ] else
@@ -501,10 +574,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     );
   }
 
-  Widget buildMidiAppBarAction(
-    AppThemeColors colors,
-    bool isLandscape,
-  ) {
+  Widget buildMidiAppBarAction(AppThemeColors colors, bool isLandscape) {
     if (midiIsConnected) {
       return PopupMenuButton<String>(
         enabled: !isSaving,
@@ -553,8 +623,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     }
 
     return TextButton.icon(
-      onPressed:
-          isConnectingMidi || isSaving || isPlaying ? null : connectToMidi,
+      onPressed: isConnectingMidi || isSaving || isPlaying
+          ? null
+          : connectToMidi,
       icon: isConnectingMidi
           ? SizedBox(
               width: 18,
@@ -593,11 +664,14 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       insertionBeat: isPlaying ? null : editorController.insertionBeat,
       onMeasureChanged: changeMeasure,
       onNoteSelected: selectNote,
+      onDeleteSelection: deleteSelectedNotes,
+      onSelectionCleared: clearNoteSelection,
       onNoteSelectionToggled: toggleNoteSelection,
       onNoteMoved: moveNote,
       selectedOctave: selectedOctave,
       onOctaveChanged: changeSelectedOctave,
       showSongOverview: showSongOverview,
+      singleMeasureNavigation: !midiIsConnected,
       compact: true,
       enabled: !editorInteractionLocked,
     );
@@ -677,6 +751,12 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                       editorController.currentMeasureIndex <
                       editorController.measureCount - 1,
                   canDelete: editorController.measureCount > 1,
+                  canClear: editorController.notes.any(
+                    (note) =>
+                        note.measureIndex ==
+                        editorController.currentMeasureIndex,
+                  ),
+                  isOnlyMeasure: editorController.measureCount == 1,
                   onSelected: handleMeasureAction,
                 ),
               ),
@@ -766,6 +846,11 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                 editorController.currentMeasureIndex <
                 editorController.measureCount - 1,
             canDelete: editorController.measureCount > 1,
+            canClear: editorController.notes.any(
+              (note) =>
+                  note.measureIndex == editorController.currentMeasureIndex,
+            ),
+            isOnlyMeasure: editorController.measureCount == 1,
             onSelected: handleMeasureAction,
           ),
         ),
@@ -1122,7 +1207,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           isConnectingMidi = false;
           midiStatus = 'No MIDI piano detected';
         });
-        showMessage('No MIDI piano was detected. Check the cable and try again.');
+        showMessage(
+          'No MIDI piano was detected. Check the cable and try again.',
+        );
         return;
       }
 
@@ -1139,7 +1226,6 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         midiStatus = 'Connected: ${device.name}';
         isChordMode = false;
         editorController.finishChord();
-        editorController.selectedDuration = 1;
       });
     } catch (_) {
       if (!mounted) return;
@@ -1163,6 +1249,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
     setState(() {
       isConnectingMidi = false;
+      if (!connected) {
+        showSongOverview = false;
+      }
       midiStatus = connected
           ? deviceName == null
                 ? 'MIDI piano connected'
@@ -1201,9 +1290,13 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         return;
       }
 
+      if (isLayerMode && editorController.selectedNote != null) {
+        editorController.startLayerFromSelectedNote();
+      }
+
       midiStepStartAbsoluteBeat = editorController.insertionAbsoluteBeat;
       midiStepReplacesSelectedNote =
-          editorController.selectedNoteIds.length == 1;
+          !isLayerMode && editorController.selectedNoteIds.length == 1;
       midiStepStopwatch
         ..stop()
         ..reset()
@@ -1262,9 +1355,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
     if (midiStepReplacesSelectedNote && stepNotes.length > 1) {
       cancelPendingMidiStep();
-      showMessage(
-        'Clear the selected note before entering a chord.',
-      );
+      showMessage('Clear the selected note before entering a chord.');
       return;
     }
 
@@ -1275,23 +1366,28 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       isApplyingMidiStep = true;
     });
 
-    var longestHold = Duration.zero;
-    for (final note in stepNotes) {
-      final holdDuration = note.releasedAt! - note.pressedAt;
-      if (holdDuration > longestHold) {
-        longestHold = holdDuration;
-      }
-    }
-
     final processor = CompositionMidiProcessor(
       tempo: tempo,
       beatUnit: editorController.beatUnit,
       beatsPerMeasure: editorController.beatsPerMeasure,
     );
-    final rawDurationBeats = processor.ticksToCompositionBeats(
-      processor.timeToTicks(longestHold),
-    );
-    final stepDuration = nearestStandardMidiDuration(rawDurationBeats);
+    final fixedDuration = midiInputDurationBeats;
+    late final double stepDuration;
+    if (fixedDuration != null) {
+      stepDuration = fixedDuration;
+    } else {
+      var longestHold = Duration.zero;
+      for (final note in stepNotes) {
+        final holdDuration = note.releasedAt! - note.pressedAt;
+        if (holdDuration > longestHold) {
+          longestHold = holdDuration;
+        }
+      }
+      final rawDurationBeats = processor.ticksToCompositionBeats(
+        processor.timeToTicks(longestHold),
+      );
+      stepDuration = nearestStandardMidiDuration(rawDurationBeats);
+    }
     final durationTicks = processor.compositionBeatsToTicks(stepDuration);
     final quantizedNotes = stepNotes.map((note) {
       return QuantizedNote(
@@ -1390,7 +1486,22 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     if (editorInteractionLocked) return;
 
     setState(() {
-      editorController.selectNote(noteId);
+      if (editorController.selectedNoteIds.length == 1 &&
+          editorController.selectedNoteIds.contains(noteId)) {
+        editorController.clearSelection();
+      } else {
+        editorController.selectNote(noteId);
+      }
+    });
+  }
+
+  void clearNoteSelection() {
+    if (editorInteractionLocked || editorController.selectedNoteIds.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      editorController.clearSelection();
     });
   }
 
@@ -1415,6 +1526,10 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                 editorController.sameTiming(
                   note.startBeat,
                   sourceNote.startBeat,
+                ) &&
+                editorController.sameTiming(
+                  note.durationBeats,
+                  sourceNote.durationBeats,
                 );
           })
           .map((note) => note.id);
@@ -1424,7 +1539,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     final errorMessage = editorController.moveSelectedNotes(
       measureIndex: editorController.currentMeasureIndex,
       startBeat: startBeat,
-      allowStacking: isChordMode,
+      allowStacking: isChordMode || isLayerMode,
     );
     if (errorMessage != null) {
       showMessage(errorMessage);
@@ -1454,14 +1569,48 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     });
   }
 
+  void selectAutomaticMidiDuration() {
+    if (editorInteractionLocked) return;
+
+    setState(() {
+      midiInputDurationBeats = null;
+    });
+  }
+
+  void selectFixedMidiDuration(double durationBeats) {
+    if (editorInteractionLocked) return;
+
+    setState(() {
+      midiInputDurationBeats = CompositionEditorController.normalizeTiming(
+        durationBeats,
+      );
+      editorController.selectedDuration = midiInputDurationBeats!;
+    });
+  }
+
   void toggleChordMode(bool value) {
     setState(() {
       isChordMode = value;
 
       if (value) {
+        isLayerMode = false;
         editorController.startChordFromSelectedNote();
       } else {
         editorController.finishChord();
+      }
+    });
+  }
+
+  void toggleLayerMode(bool value) {
+    setState(() {
+      isLayerMode = value;
+
+      if (value) {
+        if (isChordMode) {
+          editorController.finishChord();
+          isChordMode = false;
+        }
+        editorController.startLayerFromSelectedNote();
       }
     });
   }
@@ -1481,6 +1630,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       octave: octave,
       midiNumber: midiNumber,
       addToChord: isChordMode,
+      addAsLayer: isLayerMode,
     );
 
     if (errorMessage != null) {
@@ -1503,7 +1653,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     try {
       await playbackService.playPreview(
         midiNumber,
-        allowOverlap: isChordMode,
+        allowOverlap: isChordMode || isLayerMode,
         velocity: editorController.selectedVelocity,
       );
     } catch (_) {
@@ -1594,6 +1744,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           currentMeasure + 1,
         );
         break;
+      case MeasureAction.clear:
+        changed = editorController.clearMeasure(currentMeasure);
+        break;
       case MeasureAction.delete:
         changed = editorController.deleteMeasure(currentMeasure);
         break;
@@ -1617,6 +1770,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     if (!editorController.undo()) return;
     setState(() {
       isChordMode = editorController.isBuildingChord;
+      if (isChordMode) {
+        isLayerMode = false;
+      }
       updateDirtyState();
     });
   }
@@ -1625,6 +1781,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     if (!editorController.redo()) return;
     setState(() {
       isChordMode = editorController.isBuildingChord;
+      if (isChordMode) {
+        isLayerMode = false;
+      }
       updateDirtyState();
     });
   }
@@ -1640,7 +1799,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
   void pasteSelection() {
     applyEditorResult(
-      editorController.pasteNotes(allowStacking: isChordMode),
+      editorController.pasteNotes(allowStacking: isChordMode || isLayerMode),
     );
   }
 
@@ -1755,6 +1914,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         settings.beatUnit == editorController.beatUnit;
     if (settingsUnchanged) return;
 
+    final previousBeatUnit = editorController.beatUnit;
     final errorMessage = editorController.updateTimeSignature(
       beatsPerMeasure: settings.beatsPerMeasure,
       beatUnit: settings.beatUnit,
@@ -1765,6 +1925,19 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     }
 
     setState(() {
+      if (midiInputDurationBeats != null) {
+        final convertedDuration = CompositionEditorController.normalizeTiming(
+          previousBeatUnit == settings.beatUnit
+              ? midiInputDurationBeats!
+              : midiInputDurationBeats! * settings.beatUnit / previousBeatUnit,
+        );
+        midiInputDurationBeats = convertedDuration <= settings.beatsPerMeasure
+            ? convertedDuration
+            : null;
+        if (midiInputDurationBeats != null) {
+          editorController.selectedDuration = midiInputDurationBeats!;
+        }
+      }
       compositionTitle = settings.title;
       tempo = settings.tempo;
       keySignature = settings.keySignature;
@@ -1970,6 +2143,16 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       return;
     }
 
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (_) => SaveCompositionConfirmationDialog(
+        colors: widget.colors,
+        isExistingComposition: compositionId.isNotEmpty,
+      ),
+    );
+
+    if (!mounted || shouldSave != true || editorInteractionLocked) return;
+
     setState(() {
       isSaving = true;
     });
@@ -1983,9 +2166,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           updatedComposition,
         );
 
-        savedComposition = updatedComposition.copyWith(
-          id: compositionId,
-        );
+        savedComposition = updatedComposition.copyWith(id: compositionId);
       } else {
         await compositionService.updateComposition(updatedComposition);
       }
