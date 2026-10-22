@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 
 class RecordingControlButton extends StatelessWidget {
   const RecordingControlButton({
@@ -35,9 +36,9 @@ class RecordingControlButton extends StatelessWidget {
               ? onStartRecording
               : null,
           tooltip: isRecording
-              ? 'Stop recording'
+              ? context.l10n.stopRecording
               : midiIsConnected
-              ? 'Start recording'
+              ? context.l10n.startRecording
               : 'Connect MIDI to start',
           style: IconButton.styleFrom(
             backgroundColor: isRecording

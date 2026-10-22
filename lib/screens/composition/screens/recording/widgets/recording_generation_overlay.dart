@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class RecordingGenerationOverlay extends StatelessWidget {
@@ -37,7 +38,7 @@ class RecordingGenerationOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    'Generating composition files...',
+                    context.l10n.generatingCompositionFiles,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colors.primaryColor,
@@ -46,7 +47,7 @@ class RecordingGenerationOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Please keep this screen open.',
+                    context.l10n.keepScreenOpen,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colors.secondaryTextColor,

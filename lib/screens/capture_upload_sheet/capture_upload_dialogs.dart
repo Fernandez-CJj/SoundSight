@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class DeleteSelectedSheetsDialog extends StatelessWidget {
@@ -15,8 +16,6 @@ class DeleteSelectedSheetsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fileLabel = fileCount == 1 ? 'file' : 'files';
-
     return AlertDialog(
       backgroundColor: colors.surfaceColor,
       surfaceTintColor: colors.surfaceColor,
@@ -41,7 +40,7 @@ class DeleteSelectedSheetsDialog extends StatelessWidget {
           Gap(AppSpacing.sm),
           Expanded(
             child: Text(
-              'Delete all files?',
+              context.l10n.deleteAllFilesQuestion,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -52,7 +51,7 @@ class DeleteSelectedSheetsDialog extends StatelessWidget {
         ],
       ),
       content: Text(
-        'This will remove all $fileCount selected $fileLabel.',
+        context.l10n.deleteSelectedFilesConfirmation(fileCount),
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -62,7 +61,7 @@ class DeleteSelectedSheetsDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.pop(context, false),
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
           ),
         ),
@@ -76,7 +75,7 @@ class DeleteSelectedSheetsDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-          child: const Text('Delete All'),
+          child: Text(context.l10n.deleteAll),
         ),
       ],
     );
@@ -102,28 +101,28 @@ class RemoveSelectedSheetDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       title: Text(
-        'Remove file?',
+        context.l10n.removeFileQuestion,
         style: TextStyle(
           color: colors.primaryColor,
           fontWeight: FontWeight.w700,
         ),
       ),
       content: Text(
-        'Do you want to remove $fileName?',
+        context.l10n.removeFileConfirmation(fileName),
         style: TextStyle(color: colors.secondaryTextColor),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
           ),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text(
-            'Remove',
+          child: Text(
+            context.l10n.remove,
             style: TextStyle(
               color: Color(0xFFDC2626),
               fontWeight: FontWeight.w700,
@@ -188,7 +187,7 @@ class _SheetTitleDialogState extends State<SheetTitleDialog> {
           Gap(AppSpacing.sm),
           Expanded(
             child: Text(
-              'Name your sheet',
+              context.l10n.nameYourSheet,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -207,7 +206,7 @@ class _SheetTitleDialogState extends State<SheetTitleDialog> {
           textInputAction: TextInputAction.done,
           style: TextStyle(color: colors.primaryColor),
           decoration: InputDecoration(
-            labelText: 'Sheet title',
+            labelText: context.l10n.sheetTitle,
             labelStyle: TextStyle(color: colors.secondaryTextColor),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -228,7 +227,7 @@ class _SheetTitleDialogState extends State<SheetTitleDialog> {
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Enter a title for this sheet.';
+              return context.l10n.enterSheetTitle;
             }
             return null;
           },
@@ -239,7 +238,7 @@ class _SheetTitleDialogState extends State<SheetTitleDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
           ),
         ),
@@ -253,8 +252,8 @@ class _SheetTitleDialogState extends State<SheetTitleDialog> {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-          child: const Text(
-            'Upload',
+          child: Text(
+            context.l10n.upload,
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
@@ -306,7 +305,7 @@ class SheetSaveResultDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        isSuccessful ? 'Sheet saved' : 'Unable to save',
+        isSuccessful ? context.l10n.sheetSaved : context.l10n.unableToSave,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -316,8 +315,8 @@ class SheetSaveResultDialog extends StatelessWidget {
       ),
       content: Text(
         isSuccessful
-            ? '"$sheetTitle" was uploaded and saved successfully.'
-            : 'The sheet could not be saved. Check your connection and try again.',
+            ? context.l10n.sheetSavedDescription(sheetTitle ?? '')
+            : context.l10n.sheetSaveFailedDescription,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.secondaryTextColor,
@@ -337,7 +336,9 @@ class SheetSaveResultDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-          child: Text(isSuccessful ? 'Done' : 'Back to selection'),
+          child: Text(
+            isSuccessful ? context.l10n.done : context.l10n.backToSelection,
+          ),
         ),
       ],
     );

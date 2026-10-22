@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import 'package:soundsight/localization/localization_extension.dart';
+
 /// Plays the number-notation demonstration without on-screen controls.
 class NumberNotationVideoScreen extends StatefulWidget {
   const NumberNotationVideoScreen({super.key});
@@ -30,10 +32,11 @@ class NumberNotationVideoScreenState extends State<NumberNotationVideoScreen> {
     Widget content;
 
     if (videoFailedToLoad) {
-      content = const Center(
+      content = Center(
         child: Text(
-          'The number notation video could not be opened.',
-          style: TextStyle(color: Colors.white),
+          context.l10n.arPracticeNumberNotationVideoFailed,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white),
         ),
       );
     } else if (!videoIsReady) {

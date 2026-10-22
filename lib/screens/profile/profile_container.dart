@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../constants/constant.dart';
@@ -123,7 +124,7 @@ class ProfileContainer extends StatelessWidget {
                 ),
                 Gap(AppSpacing.xs),
                 Text(
-                  'Piano Player',
+                  context.l10n.pianoPlayer,
                   style: TextStyle(
                     color: colors.primaryColor,
                     fontSize: AppTextSizes.caption,
@@ -158,7 +159,7 @@ class ProfileContainer extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Profile Picture',
+                        context.l10n.profilePicture,
                         style: TextStyle(
                           color: colors.primaryColor,
                           fontSize: AppTextSizes.sectionTitle,
@@ -167,6 +168,7 @@ class ProfileContainer extends StatelessWidget {
                       ),
                     ),
                     IconButton(
+                      tooltip: context.l10n.close,
                       onPressed: () => Navigator.pop(dialogContext),
                       icon: Icon(
                         Icons.close_rounded,

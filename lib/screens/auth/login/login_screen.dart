@@ -9,6 +9,7 @@ import 'package:soundsight/screens/auth/login/login_form.dart';
 import 'package:soundsight/screens/auth/register/register_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/theme/app_colors.dart';
+import 'package:soundsight/localization/app_locale_controller.dart';
 
 import '../../../constants/constant.dart';
 
@@ -140,6 +141,12 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         return;
+      }
+
+      if (mounted) {
+        AppLocaleScope.of(
+          context,
+        ).applyLanguageCode(userDocument.data()?['languageCode']);
       }
 
       // The service uses Firestore server time to detect expiration.

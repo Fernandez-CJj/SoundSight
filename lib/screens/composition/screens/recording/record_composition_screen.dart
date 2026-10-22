@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/models/recorded_midi_event.dart';
 import 'package:soundsight/screens/composition/models/recording_composition_draft.dart';
@@ -135,7 +136,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
         if (!mounted) return;
         setState(() {
           isInitializingCamera = false;
-          cameraError = 'No camera is available on this device.';
+          cameraError = context.l10n.noCameraAvailable;
         });
         return;
       }
@@ -165,14 +166,14 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       if (!mounted) return;
       setState(() {
         isInitializingCamera = false;
-        cameraError = error.description ?? 'The camera could not be opened.';
+        cameraError = error.description ?? context.l10n.cameraOpenFailed;
       });
     } catch (_) {
       await newController?.dispose();
       if (!mounted) return;
       setState(() {
         isInitializingCamera = false;
-        cameraError = 'The camera could not be opened.';
+        cameraError = context.l10n.cameraOpenFailed;
       });
     }
   }
@@ -268,13 +269,11 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       acceptedNoteOnCount++;
       if (acceptedNoteOnCount == 240 && !noteWarningShown) {
         noteWarningShown = true;
-        showMessage('You have captured 240 of the 256-note limit.');
+        showMessage(context.l10n.recordingNoteLimitWarning(240, 256));
       }
       if (acceptedNoteOnCount == RecordedPerformanceProcessor.maximumNotes) {
         stopWhenHeldKeysAreReleased = true;
-        showMessage(
-          'The 256-note limit was reached. Release held keys to finish.',
-        );
+        showMessage(context.l10n.recordingNoteLimitReached(256));
       }
     }
 
@@ -317,7 +316,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       });
       startRecordingTimer();
     } on CameraException catch (error) {
-      showMessage(error.description ?? 'Could not start recording.');
+      showMessage(error.description ?? context.l10n.recordingStartFailed);
     }
   }
 
@@ -335,10 +334,10 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       setState(() => recordingDuration = elapsed);
       if (!durationWarningShown && elapsed >= warningDuration) {
         durationWarningShown = true;
-        showMessage('You are close to the maximum recording length.');
+        showMessage(context.l10n.recordingLengthWarning);
       }
       if (elapsed >= maximumDuration) {
-        showMessage('The maximum recording length was reached.');
+        showMessage(context.l10n.recordingLengthReached);
         unawaited(
           stopRecording(closeHeldNotes: true, maximumEndTime: maximumDuration),
         );
@@ -353,7 +352,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
     if (isStoppingRecording) return;
     if (!closeHeldNotes && activeMidiNotes.isNotEmpty) {
       stopWhenHeldKeysAreReleased = true;
-      showMessage('Release the held keys to finish the recording.');
+      showMessage(context.l10n.releaseHeldKeysToFinish);
       return;
     }
     final controller = cameraController;
@@ -411,12 +410,12 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
     } on TimeoutException {
       await recoverCameraAfterRecordingFailure(
         controller,
-        'The camera could not finish saving the video. The camera was restarted.',
+        context.l10n.cameraSaveRestarted,
       );
     } on CameraException catch (error) {
       await recoverCameraAfterRecordingFailure(
         controller,
-        error.description ?? 'The video recording failed.',
+        error.description ?? context.l10n.videoRecordingFailed,
       );
     } finally {
       isStoppingRecording = false;
@@ -448,11 +447,11 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       builder: (dialogContext) => AlertDialog(
         backgroundColor: widget.colors.surfaceColor,
         title: Text(
-          'No notes were recorded',
+          context.l10n.noNotesRecorded,
           style: TextStyle(color: widget.colors.primaryColor),
         ),
         content: Text(
-          'Play at least one complete note on the connected MIDI piano before stopping.',
+          context.l10n.noNotesRecordedDescription,
           style: TextStyle(color: widget.colors.secondaryTextColor),
         ),
         actions: [
@@ -462,7 +461,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
               backgroundColor: widget.colors.primaryColor,
               foregroundColor: widget.colors.backgroundColor,
             ),
-            child: const Text('Record Again'),
+            child: Text(context.l10n.recordAgain),
           ),
         ],
       ),
@@ -548,7 +547,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       await deleteTemporaryVideo();
       if (!mounted) return;
       setState(() => isGeneratingComposition = false);
-      showMessage('Composition created successfully.');
+      showMessage(context.l10n.compositionCreated);
       await Future<void>.delayed(const Duration(milliseconds: 700));
       if (mounted) Navigator.pop(context, composition.id);
     } catch (_) {
@@ -571,11 +570,11 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       builder: (dialogContext) => AlertDialog(
         backgroundColor: widget.colors.surfaceColor,
         title: Text(
-          'Composition not saved',
+          context.l10n.compositionNotSaved,
           style: TextStyle(color: widget.colors.primaryColor),
         ),
         content: Text(
-          'Your recording is still available. Check your connection and try saving again.',
+          context.l10n.recordingStillAvailable,
           style: TextStyle(color: widget.colors.secondaryTextColor),
         ),
         actions: [
@@ -584,7 +583,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
             style: TextButton.styleFrom(
               foregroundColor: widget.colors.secondaryTextColor,
             ),
-            child: const Text('Record Again'),
+            child: Text(context.l10n.recordAgain),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -592,7 +591,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
               backgroundColor: widget.colors.primaryColor,
               foregroundColor: widget.colors.backgroundColor,
             ),
-            child: const Text('Retry Save'),
+            child: Text(context.l10n.retrySave),
           ),
         ],
       ),
@@ -611,11 +610,11 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       builder: (dialogContext) => AlertDialog(
         backgroundColor: widget.colors.surfaceColor,
         title: Text(
-          'Files were not generated',
+          context.l10n.filesNotGenerated,
           style: TextStyle(color: widget.colors.primaryColor),
         ),
         content: Text(
-          'The composition was saved, but its PDF, MIDI, MusicXML, and MP3 could not be created.',
+          context.l10n.filesNotGeneratedDescription,
           style: TextStyle(color: widget.colors.secondaryTextColor),
         ),
         actions: [
@@ -624,7 +623,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
             style: TextButton.styleFrom(
               foregroundColor: widget.colors.secondaryTextColor,
             ),
-            child: const Text('Finish'),
+            child: Text(context.l10n.finish),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -632,7 +631,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
               backgroundColor: widget.colors.primaryColor,
               foregroundColor: widget.colors.backgroundColor,
             ),
-            child: const Text('Retry Generation'),
+            child: Text(context.l10n.retryGeneration),
           ),
         ],
       ),
@@ -782,7 +781,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
                             OutlinedButton.icon(
                               onPressed: initializeCamera,
                               icon: const Icon(Icons.refresh_rounded),
-                              label: const Text('Try Again'),
+                              label: Text(context.l10n.tryAgain),
                             ),
                           ],
                         ),

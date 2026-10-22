@@ -3,6 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/app_language.dart';
+import 'package:soundsight/localization/app_locale_controller.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/auth/login/login_screen.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
@@ -51,6 +54,8 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
+    final l10n = context.l10n;
+    final selectedLanguage = AppLocaleScope.of(context).language;
 
     return Drawer(
       backgroundColor: colors.surfaceColor,
@@ -78,7 +83,7 @@ class AppDrawer extends StatelessWidget {
               colors: colors,
               active: activeItem == DrawerItem.home,
               icon: Icons.home_outlined,
-              title: 'Home',
+              title: l10n.drawerHome,
               onTap: () {
                 Navigator.pop(context);
 
@@ -93,9 +98,37 @@ class AppDrawer extends StatelessWidget {
             ),
             _DrawerTile(
               colors: colors,
+              active: activeItem == DrawerItem.captureUpload,
+              icon: Icons.add_photo_alternate_outlined,
+              title: l10n.drawerUploadSheet,
+              onTap: () async {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+
+                if (activeItem != DrawerItem.captureUpload) {
+                  final wasUploaded = await navigator.push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          CaptureUploadSheetScreen(isDarkMode: isDarkMode),
+                    ),
+                  );
+
+                  if (wasUploaded == true && navigator.mounted) {
+                    navigator.pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            MusicSheetScreen(isDarkMode: isDarkMode),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
               active: activeItem == DrawerItem.musicSheets,
               icon: Icons.library_music_outlined,
-              title: 'Music Sheets',
+              title: l10n.drawerMusicSheets,
               onTap: () {
                 Navigator.pop(context);
 
@@ -110,36 +143,9 @@ class AppDrawer extends StatelessWidget {
             ),
             _DrawerTile(
               colors: colors,
-              active: activeItem == DrawerItem.captureUpload,
-              icon: Icons.add_photo_alternate_outlined,
-              title: 'Upload Sheet',
-              onTap: () async {
-                Navigator.pop(context);
-
-                if (activeItem != DrawerItem.captureUpload) {
-                  final wasUploaded = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          CaptureUploadSheetScreen(isDarkMode: isDarkMode),
-                    ),
-                  );
-
-                  if (wasUploaded == true && context.mounted) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            MusicSheetScreen(isDarkMode: isDarkMode),
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-            _DrawerTile(
-              colors: colors,
               active: activeItem == DrawerItem.practice,
               icon: Icons.school_outlined,
-              title: 'Practice',
+              title: l10n.drawerPractice,
               onTap: () {
                 Navigator.pop(context);
 
@@ -154,7 +160,7 @@ class AppDrawer extends StatelessWidget {
               colors: colors,
               active: activeItem == DrawerItem.practiceResults,
               icon: Icons.insights_outlined,
-              title: 'Practice Results',
+              title: l10n.drawerPracticeResults,
               onTap: () {
                 Navigator.pop(context);
 
@@ -168,73 +174,12 @@ class AppDrawer extends StatelessWidget {
                 }
               },
             ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.midi,
-              icon: Icons.usb_outlined,
-              title: 'MIDI',
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const MidiNoteIdentifierScreen(),
-                  ),
-                );
-              },
-            ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.mic,
-              icon: Icons.mic_none_outlined,
-              title: 'Mic',
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MicrophoneScreen()),
-                );
-              },
-            ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.flyaway,
-              icon: Icons.back_hand_outlined,
-              title: 'Flyaway',
-              onTap: () {
-                Navigator.pop(context);
-
-                if (activeItem != DrawerItem.flyaway) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const FlyawayScreen()),
-                  );
-                }
-              },
-            ),
             Divider(color: colors.borderColor),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.savedSheets,
-              icon: Icons.bookmark_border,
-              title: 'Saved Sheets',
-              onTap: () {
-                Navigator.pop(context);
-
-                if (activeItem != DrawerItem.savedSheets) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          SavedCompositionsScreen(isDarkMode: isDarkMode),
-                    ),
-                  );
-                }
-              },
-            ),
             _DrawerTile(
               colors: colors,
               active: activeItem == DrawerItem.composition,
               icon: Icons.edit_outlined,
-              title: 'Composition',
+              title: l10n.drawerComposition,
               onTap: () {
                 Navigator.pop(context);
 
@@ -252,7 +197,7 @@ class AppDrawer extends StatelessWidget {
               colors: colors,
               active: activeItem == DrawerItem.publishedCompositions,
               icon: Icons.public_rounded,
-              title: 'Published Compositions',
+              title: l10n.drawerPublishedCompositions,
               onTap: () {
                 Navigator.pop(context);
 
@@ -266,7 +211,94 @@ class AppDrawer extends StatelessWidget {
                 }
               },
             ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.savedSheets,
+              icon: Icons.bookmark_border,
+              title: l10n.drawerSavedSheets,
+              onTap: () {
+                Navigator.pop(context);
+
+                if (activeItem != DrawerItem.savedSheets) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          SavedCompositionsScreen(isDarkMode: isDarkMode),
+                    ),
+                  );
+                }
+              },
+            ),
             Divider(color: colors.borderColor),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.midi,
+              icon: Icons.usb_outlined,
+              title: l10n.drawerMidi,
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const MidiNoteIdentifierScreen(),
+                  ),
+                );
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.mic,
+              icon: Icons.mic_none_outlined,
+              title: l10n.drawerMic,
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MicrophoneScreen()),
+                );
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.flyaway,
+              icon: Icons.back_hand_outlined,
+              title: l10n.drawerFlyaway,
+              onTap: () {
+                Navigator.pop(context);
+
+                if (activeItem != DrawerItem.flyaway) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FlyawayScreen()),
+                  );
+                }
+              },
+            ),
+            Divider(color: colors.borderColor),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              leading: Icon(
+                Icons.language_rounded,
+                color: colors.primaryColor,
+              ),
+              title: Text(
+                l10n.language,
+                style: TextStyle(
+                  fontSize: AppTextSizes.body,
+                  color: colors.primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                selectedLanguage == AppLanguage.filipino
+                    ? l10n.filipino
+                    : l10n.english,
+                style: TextStyle(color: colors.secondaryTextColor),
+              ),
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: colors.secondaryTextColor,
+              ),
+              onTap: () => _showLanguageDialog(context, colors),
+            ),
             SwitchListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               secondary: Icon(
@@ -276,7 +308,7 @@ class AppDrawer extends StatelessWidget {
                 color: colors.primaryColor,
               ),
               title: Text(
-                'Dark Mode',
+                l10n.darkMode,
                 style: TextStyle(
                   fontSize: AppTextSizes.body,
                   color: colors.primaryColor,
@@ -291,8 +323,8 @@ class AppDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: _logoutColor),
-              title: const Text(
-                'Logout',
+              title: Text(
+                l10n.logout,
                 style: TextStyle(
                   fontSize: AppTextSizes.body,
                   color: _logoutColor,
@@ -305,6 +337,10 @@ class AppDrawer extends StatelessWidget {
                 if (!context.mounted || !shouldLogout) return;
 
                 await FirebaseAuth.instance.signOut();
+
+                if (context.mounted) {
+                  AppLocaleScope.of(context).reset();
+                }
 
                 if (!context.mounted) return;
 
@@ -331,6 +367,77 @@ class AppDrawer extends StatelessWidget {
       'theme': value ? 'dark' : 'light',
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> _showLanguageDialog(
+    BuildContext context,
+    AppThemeColors colors,
+  ) async {
+    final l10n = context.l10n;
+    final controller = AppLocaleScope.of(context);
+    final selected = await showDialog<AppLanguage>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: colors.surfaceColor,
+          title: Text(
+            l10n.language,
+            style: TextStyle(color: colors.primaryColor),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(
+                  l10n.english,
+                  style: TextStyle(color: colors.primaryColor),
+                ),
+                trailing: controller.language == AppLanguage.english
+                    ? Icon(Icons.check_rounded, color: colors.primaryColor)
+                    : null,
+                onTap: () {
+                  Navigator.pop(dialogContext, AppLanguage.english);
+                },
+              ),
+              ListTile(
+                title: Text(
+                  l10n.filipino,
+                  style: TextStyle(color: colors.primaryColor),
+                ),
+                trailing: controller.language == AppLanguage.filipino
+                    ? Icon(Icons.check_rounded, color: colors.primaryColor)
+                    : null,
+                onTap: () {
+                  Navigator.pop(dialogContext, AppLanguage.filipino);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected == null || selected == controller.language) return;
+
+    final previous = controller.language;
+    controller.setLanguage(selected);
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'languageCode': selected.code,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } on FirebaseException {
+      controller.setLanguage(previous);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(context.l10n.languageSaveFailed)));
+    }
   }
 
   Future<bool> _showLogoutDialog(
@@ -362,9 +469,9 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   const Gap(AppSpacing.sm),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Logout?',
+                      context.l10n.logoutQuestion,
                       style: TextStyle(
                         color: _logoutColor,
                         fontSize: AppTextSizes.sectionTitle,
@@ -375,7 +482,7 @@ class AppDrawer extends StatelessWidget {
                 ],
               ),
               content: Text(
-                'Are you sure you want to logout?',
+                context.l10n.logoutConfirmation,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
                   fontSize: AppTextSizes.body,
@@ -408,7 +515,7 @@ class AppDrawer extends StatelessWidget {
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                             ),
                           ),
-                          child: const Text('Cancel'),
+                          child: Text(context.l10n.cancel),
                         ),
                       ),
                     ),
@@ -428,7 +535,7 @@ class AppDrawer extends StatelessWidget {
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                             ),
                           ),
-                          child: const Text('Logout'),
+                          child: Text(context.l10n.logout),
                         ),
                       ),
                     ),

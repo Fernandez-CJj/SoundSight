@@ -6,6 +6,7 @@ import '../../../piano_calibration/models/keyboard_area_corners.dart';
 import '../../../piano_calibration/models/piano_key_marker.dart';
 import '../models/ar_note_event.dart';
 import '../models/ar_score_timeline.dart';
+import '../models/ar_wait_note_occurrence.dart';
 import '../services/ar_practice_performance_tracker.dart';
 import '../utils/midi_note_utils.dart';
 
@@ -19,6 +20,11 @@ class ArFallingNotesOverlay extends StatelessWidget {
     required this.animation,
     required this.approachDuration,
     required this.noteResultsByStartMicroseconds,
+    required this.waitModePreviewOriginStartMicroseconds,
+    required this.waitModeHoldProgressByOccurrence,
+    required this.waitModeTimelinePreviewAdvanceMicroseconds,
+    required this.hiddenGroupStartMicroseconds,
+    required this.hiddenWaitModeNoteOccurrences,
   });
 
   /// Playable-area geometry used to place the perspective-aware hit line.
@@ -39,6 +45,21 @@ class ArFallingNotesOverlay extends StatelessWidget {
   /// Evaluation colors keyed by simultaneous note-group start time.
   final Map<int, ArPracticeNoteResult> noteResultsByStartMicroseconds;
 
+  /// Group from which upcoming Wait Mode notes are temporarily moving.
+  final int? waitModePreviewOriginStartMicroseconds;
+
+  /// Visible consumption progress for independently held Wait Mode notes.
+  final Map<ArWaitNoteOccurrence, double> waitModeHoldProgressByOccurrence;
+
+  /// Temporary visual timeline movement while the active Wait Mode group is held.
+  final int waitModeTimelinePreviewAdvanceMicroseconds;
+
+  /// Completed Wait Mode groups that must no longer be painted.
+  final Set<int> hiddenGroupStartMicroseconds;
+
+  /// Individually released Wait Mode notes that must no longer be painted.
+  final Set<ArWaitNoteOccurrence> hiddenWaitModeNoteOccurrences;
+
   @override
   /// Creates a repainting custom painter while allowing touches to pass through.
   Widget build(BuildContext context) {
@@ -51,6 +72,14 @@ class ArFallingNotesOverlay extends StatelessWidget {
           animation: animation,
           approachDuration: approachDuration,
           noteResultsByStartMicroseconds: noteResultsByStartMicroseconds,
+          waitModePreviewOriginStartMicroseconds:
+              waitModePreviewOriginStartMicroseconds,
+          waitModeHoldProgressByOccurrence:
+              waitModeHoldProgressByOccurrence,
+          waitModeTimelinePreviewAdvanceMicroseconds:
+              waitModeTimelinePreviewAdvanceMicroseconds,
+          hiddenGroupStartMicroseconds: hiddenGroupStartMicroseconds,
+          hiddenWaitModeNoteOccurrences: hiddenWaitModeNoteOccurrences,
         ),
       ),
     );
@@ -66,6 +95,11 @@ class ArFallingNotesPainter extends CustomPainter {
     required this.animation,
     required this.approachDuration,
     required this.noteResultsByStartMicroseconds,
+    required this.waitModePreviewOriginStartMicroseconds,
+    required this.waitModeHoldProgressByOccurrence,
+    required this.waitModeTimelinePreviewAdvanceMicroseconds,
+    required this.hiddenGroupStartMicroseconds,
+    required this.hiddenWaitModeNoteOccurrences,
   }) : super(repaint: animation) {
     for (PianoKeyMarker marker in pianoKeyMarkers) {
       int? midiNote = MidiNoteUtils.fromPianoKeyMarker(marker);
@@ -73,6 +107,19 @@ class ArFallingNotesPainter extends CustomPainter {
       if (midiNote != null) {
         markersByMidiNote[midiNote] = marker;
       }
+    }
+
+    List<int> orderedGroupStarts = timeline.noteEvents
+        .map((ArNoteEvent noteEvent) => noteEvent.startTime.inMicroseconds)
+        .toSet()
+        .toList()
+      ..sort();
+
+    for (int groupIndex = 0;
+        groupIndex < orderedGroupStarts.length;
+        groupIndex++) {
+      groupIndexByStartMicroseconds[orderedGroupStarts[groupIndex]] =
+          groupIndex;
     }
   }
 
@@ -82,8 +129,14 @@ class ArFallingNotesPainter extends CustomPainter {
   final Animation<double> animation;
   final Duration approachDuration;
   final Map<int, ArPracticeNoteResult> noteResultsByStartMicroseconds;
+  final int? waitModePreviewOriginStartMicroseconds;
+  final Map<ArWaitNoteOccurrence, double> waitModeHoldProgressByOccurrence;
+  final int waitModeTimelinePreviewAdvanceMicroseconds;
+  final Set<int> hiddenGroupStartMicroseconds;
+  final Set<ArWaitNoteOccurrence> hiddenWaitModeNoteOccurrences;
 
   final Map<int, PianoKeyMarker> markersByMidiNote = {};
+  final Map<int, int> groupIndexByStartMicroseconds = {};
 
   final double hitLineInsetFraction = 0.08;
 
@@ -136,6 +189,11 @@ class ArFallingNotesPainter extends CustomPainter {
       hitLineInsetFraction,
     )!;
 
+    double sharedDurationDistance = math.max(
+      1,
+      (leftHitPoint.dy + rightHitPoint.dy) / 2,
+    );
+
     int totalAnimationMicroseconds =
         approachDuration.inMicroseconds + timeline.totalDuration.inMicroseconds;
 
@@ -148,6 +206,18 @@ class ArFallingNotesPainter extends CustomPainter {
     double whiteKeySpacing = calculateWhiteKeySpacing(horizontalScale);
 
     for (ArNoteEvent noteEvent in timeline.noteEvents) {
+      int groupStartMicroseconds = noteEvent.startTime.inMicroseconds;
+      ArWaitNoteOccurrence occurrence = ArWaitNoteOccurrence(
+        groupIndex: groupIndexByStartMicroseconds[groupStartMicroseconds] ?? 0,
+        groupStartMicroseconds: groupStartMicroseconds,
+        midiNote: noteEvent.midiNote,
+      );
+
+      if (hiddenGroupStartMicroseconds.contains(groupStartMicroseconds) ||
+          hiddenWaitModeNoteOccurrences.contains(occurrence)) {
+        continue;
+      }
+
       PianoKeyMarker? marker = markersByMidiNote[noteEvent.midiNote];
 
       // The note is outside the range covered by this calibration.
@@ -155,18 +225,33 @@ class ArFallingNotesPainter extends CustomPainter {
         continue;
       }
 
+      double? waitModeHoldProgress =
+          waitModeHoldProgressByOccurrence[occurrence];
+      int notePlaybackMicroseconds = waitModeHoldProgress == null
+          ? playbackMicroseconds
+          : groupStartMicroseconds;
+
+      if (waitModeHoldProgress == null &&
+          waitModePreviewOriginStartMicroseconds != null &&
+          groupStartMicroseconds > waitModePreviewOriginStartMicroseconds!) {
+        notePlaybackMicroseconds +=
+            waitModeTimelinePreviewAdvanceMicroseconds;
+      }
+
       drawFallingNote(
         canvas: canvas,
         marker: marker,
         noteEvent: noteEvent,
-        playbackMicroseconds: playbackMicroseconds,
+        playbackMicroseconds: notePlaybackMicroseconds,
         approachMicroseconds: approachDuration.inMicroseconds,
         horizontalScale: horizontalScale,
         leftHitPoint: leftHitPoint,
         rightHitPoint: rightHitPoint,
+        sharedDurationDistance: sharedDurationDistance,
         whiteKeySpacing: whiteKeySpacing,
         noteResult:
-            noteResultsByStartMicroseconds[noteEvent.startTime.inMicroseconds],
+            noteResultsByStartMicroseconds[groupStartMicroseconds],
+        waitModeHoldProgress: waitModeHoldProgress,
       );
     }
   }
@@ -184,8 +269,10 @@ class ArFallingNotesPainter extends CustomPainter {
     required double horizontalScale,
     required Offset leftHitPoint,
     required Offset rightHitPoint,
+    required double sharedDurationDistance,
     required double whiteKeySpacing,
     required ArPracticeNoteResult? noteResult,
+    required double? waitModeHoldProgress,
   }) {
     double displayedX = marker.position.dx * horizontalScale;
 
@@ -219,7 +306,7 @@ class ArFallingNotesPainter extends CustomPainter {
 
     double noteHeight = math.max(
       18,
-      fallingDistance *
+      sharedDurationDistance *
           noteEvent.duration.inMicroseconds /
           approachMicroseconds,
     );
@@ -229,6 +316,18 @@ class ArFallingNotesPainter extends CustomPainter {
     // Clip each note at the top of the screen and at the timing line.
     double visibleTop = math.max(fallingAreaTop, noteTop);
     double visibleBottom = math.min(hitLineY, noteBottom);
+
+    if (waitModeHoldProgress != null) {
+      double safeHoldProgress = waitModeHoldProgress
+          .clamp(0.0, 1.0)
+          .toDouble();
+      double consumedTop = noteTop + (noteHeight * safeHoldProgress);
+      visibleTop = math.max(visibleTop, consumedTop);
+
+      if (safeHoldProgress >= 1) {
+        return;
+      }
+    }
 
     if (visibleBottom <= visibleTop) {
       int elapsedSinceHit =
@@ -380,6 +479,16 @@ class ArFallingNotesPainter extends CustomPainter {
         oldPainter.timeline != timeline ||
         oldPainter.approachDuration != approachDuration ||
         oldPainter.noteResultsByStartMicroseconds !=
-            noteResultsByStartMicroseconds;
+            noteResultsByStartMicroseconds ||
+        oldPainter.waitModePreviewOriginStartMicroseconds !=
+            waitModePreviewOriginStartMicroseconds ||
+        oldPainter.waitModeHoldProgressByOccurrence !=
+            waitModeHoldProgressByOccurrence ||
+        oldPainter.waitModeTimelinePreviewAdvanceMicroseconds !=
+            waitModeTimelinePreviewAdvanceMicroseconds ||
+        oldPainter.hiddenGroupStartMicroseconds !=
+            hiddenGroupStartMicroseconds ||
+        oldPainter.hiddenWaitModeNoteOccurrences !=
+            hiddenWaitModeNoteOccurrences;
   }
 }

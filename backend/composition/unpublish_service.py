@@ -1,4 +1,4 @@
-from composition.storage_service import deletePublishedPdfs
+from composition.storage_service import deletePublishedCompositionFiles
 from core.firebase_service import getDatabase
 
 
@@ -26,7 +26,7 @@ def unpublishComposition(
             "Only the owner can unpublish this composition."
         )
 
-    deletePublishedPdfs(
+    deletePublishedCompositionFiles(
         ownerId,
         compositionId,
     )

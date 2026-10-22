@@ -1,5 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum PracticeResultType { sightReading, synthesia, arPerformance }
+
+extension PracticeResultTypeWireName on PracticeResultType {
+  String get wireName {
+    return switch (this) {
+      PracticeResultType.sightReading => 'sightReading',
+      PracticeResultType.synthesia => 'synthesia',
+      PracticeResultType.arPerformance => 'arPerformance',
+    };
+  }
+
+  String get label {
+    return switch (this) {
+      PracticeResultType.sightReading => 'SIGHT READING',
+      PracticeResultType.synthesia => 'SYNTHESIA',
+      PracticeResultType.arPerformance => 'AR PERFORMANCE',
+    };
+  }
+}
+
+PracticeResultType practiceResultTypeFromWireName(Object? value) {
+  for (final type in PracticeResultType.values) {
+    if (type.wireName == value) return type;
+  }
+  return PracticeResultType.sightReading;
+}
+
 enum PerformanceIssueType {
   wrongNote,
   early,
@@ -215,6 +242,7 @@ class PracticeResultErrorEvent {
 class PracticeResultSummary {
   const PracticeResultSummary({
     this.id,
+    this.practiceType = PracticeResultType.sightReading,
     required this.ownerId,
     required this.scoreDocumentPath,
     required this.source,
@@ -242,6 +270,7 @@ class PracticeResultSummary {
 
     return PracticeResultSummary(
       id: document.id,
+      practiceType: practiceResultTypeFromWireName(data['practiceType']),
       ownerId: data['ownerId'] as String? ?? '',
       scoreDocumentPath: data['scoreDocumentPath'] as String? ?? '',
       source: data['source'] as String? ?? 'musicSheet',
@@ -268,6 +297,7 @@ class PracticeResultSummary {
   }
 
   final String? id;
+  final PracticeResultType practiceType;
   final String ownerId;
   final String scoreDocumentPath;
   final String source;
@@ -312,9 +342,11 @@ class PracticeResultSummary {
     String? id,
     DateTime? completedAt,
     String? storageStatus,
+    PracticeResultType? practiceType,
   }) {
     return PracticeResultSummary(
       id: id ?? this.id,
+      practiceType: practiceType ?? this.practiceType,
       ownerId: ownerId,
       scoreDocumentPath: scoreDocumentPath,
       source: source,
@@ -337,7 +369,8 @@ class PracticeResultSummary {
 
   Map<String, dynamic> toMap({required Object completedAtValue}) {
     return {
-      'schemaVersion': 1,
+      'schemaVersion': 2,
+      'practiceType': practiceType.wireName,
       'ownerId': ownerId,
       'scoreDocumentPath': scoreDocumentPath,
       'source': source,

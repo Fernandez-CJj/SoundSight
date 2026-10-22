@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_tips_container.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_dialogs.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_header.dart';
@@ -89,7 +90,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
           foregroundColor: colors.primaryColor,
           centerTitle: true,
           title: Text(
-            'Add Sheet',
+            context.l10n.addSheet,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: AppTextSizes.sectionTitle,
@@ -98,7 +99,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
           actions: [
             if (selectedSheets.isNotEmpty)
               IconButton(
-                tooltip: 'Delete all selected files',
+                tooltip: context.l10n.deleteAllSelectedFilesTooltip,
                 onPressed: isSavingSheet
                     ? null
                     : () => confirmDeleteAllSelectedFiles(colors),
@@ -193,7 +194,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      showSelectionMessage('You need to sign in before saving a sheet.');
+      showSelectionMessage(context.l10n.signInBeforeSaving);
       return;
     }
 
@@ -288,14 +289,14 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     if (hasSelectedPdf) {
       showSelectionMessage(
-        'Only one PDF can be uploaded. Delete the selected PDF before choosing another.',
+        context.l10n.onlyOnePdf,
       );
       return;
     }
 
     if (hasCapturedImages) {
       showSelectionMessage(
-        'Delete all captured images before uploading a PDF.',
+        context.l10n.deleteImagesBeforePdf,
       );
       return;
     }
@@ -338,26 +339,26 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     SelectedSheetFile? pdf,
   ) async {
     if (pickedFiles.length != 1 || pdf == null) {
-      showSelectionMessage('Select exactly one PDF.');
+      showSelectionMessage(context.l10n.selectExactlyOnePdf);
       return;
     }
 
     if (pdf.extension?.toLowerCase() != 'pdf') {
-      showSelectionMessage('Only PDF files can be uploaded.');
+      showSelectionMessage(context.l10n.onlyPdfFiles);
       return;
     }
 
     if (selectedSheets.isNotEmpty) {
       showSelectionMessage(
         hasSelectedPdf
-            ? 'Only one PDF can be uploaded. Delete the selected PDF before choosing another.'
-            : 'Delete all captured images before uploading a PDF.',
+            ? context.l10n.onlyOnePdf
+            : context.l10n.deleteImagesBeforePdf,
       );
       return;
     }
 
     if (pdf.size > maxPdfFileSize) {
-      showSelectionMessage('The PDF must be 20 MB or smaller.');
+      showSelectionMessage(context.l10n.pdfSizeLimit);
       return;
     }
 
@@ -365,13 +366,13 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
       final pageCount = await getPdfPageCount(pdf);
 
       if (pageCount < 1) {
-        showSelectionMessage('The PDF does not contain any pages.');
+        showSelectionMessage(context.l10n.pdfHasNoPages);
         return;
       }
 
       if (pageCount > maxSheetPages) {
         showSelectionMessage(
-          'This PDF has $pageCount pages. The maximum is $maxSheetPages pages.',
+          context.l10n.pdfPageLimit(pageCount, maxSheetPages),
         );
         return;
       }
@@ -384,7 +385,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
       });
     } catch (_) {
       showSelectionMessage(
-        'The PDF could not be read. Make sure it is a valid, unlocked PDF.',
+        context.l10n.pdfReadFailed,
       );
     }
   }
@@ -422,12 +423,12 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     if (isSavingSheet || isPickingFiles) return;
 
     if (hasSelectedPdf) {
-      showSelectionMessage('Delete the selected PDF before capturing images.');
+      showSelectionMessage(context.l10n.deletePdfBeforeCapture);
       return;
     }
 
     if (selectedSheets.length >= maxSheetPages) {
-      showSelectionMessage('You can only add up to $maxSheetPages images.');
+      showSelectionMessage(context.l10n.imageCountLimit(maxSheetPages));
       return;
     }
 
@@ -442,7 +443,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     if (bytes.length > maxImageFileSize) {
       showSelectionMessage(
-        'The captured image is larger than 5 MB. Try capturing it again.',
+        context.l10n.capturedImageSizeLimit,
       );
       return;
     }
@@ -466,14 +467,14 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
     if (hasSelectedPdf) {
       showSelectionMessage(
-        'Only one PDF can be uploaded. Delete the selected PDF before choosing another.',
+        context.l10n.onlyOnePdf,
       );
       return;
     }
 
     if (hasCapturedImages) {
       showSelectionMessage(
-        'Delete all captured images before uploading a PDF.',
+        context.l10n.deleteImagesBeforePdf,
       );
       return;
     }
@@ -485,12 +486,12 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     if (isSavingSheet || isPickingFiles) return;
 
     if (hasSelectedPdf) {
-      showSelectionMessage('Delete the selected PDF before capturing images.');
+      showSelectionMessage(context.l10n.deletePdfBeforeCapture);
       return;
     }
 
     if (selectedSheets.length >= maxSheetPages) {
-      showSelectionMessage('You can only add up to $maxSheetPages images.');
+      showSelectionMessage(context.l10n.imageCountLimit(maxSheetPages));
       return;
     }
 

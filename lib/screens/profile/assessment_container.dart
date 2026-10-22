@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 /// Provides one consistent Profile entry point for the skill assessment.
@@ -26,7 +27,7 @@ class AssessmentContainer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Assessment',
+          context.l10n.assessment,
           style: TextStyle(
             color: colors.primaryColor,
             fontSize: AppTextSizes.label,

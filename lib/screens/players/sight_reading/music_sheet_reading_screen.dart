@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/midi/models/midi_note_event.dart';
 import 'package:soundsight/screens/midi/services/midi_input_service.dart';
 import 'package:soundsight/screens/midi/utils/midi_note_converter.dart';
@@ -102,7 +103,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   Set<int> activeMidiNotes = <int>{};
   Future<void> cursorAdvanceQueue = Future<void>.value();
   int? completedElapsedSeconds;
-  static const double waitMinimumHoldRatio = 0.8;
+  static const double waitMinimumHoldRatio = 0.6;
   Timer? waitHoldTicker;
   bool waitHoldInProgress = false;
   bool waitRetryRequiresRelease = false;
@@ -169,7 +170,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
       onScoreRenderFailed: (message) {
         hideScoreLoadingDialog();
-        showScoreLoadingError(message);
+        showScoreLoadingError(context.l10n.sightReadingScorePreparationFailed);
       },
 
       onScoreCompleted: () {
@@ -417,11 +418,11 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final sortedActiveNotes = activeMidiNotes.toList()..sort();
 
     final activeNotesText = sortedActiveNotes.isEmpty
-        ? 'None'
+        ? context.l10n.sightReadingNone
         : sortedActiveNotes.map(midiToNoteName).join(' + ');
 
     final expectedNotesText = sortedExpectedNotes.isEmpty
-        ? 'Waiting...'
+        ? context.l10n.sightReadingWaitingEllipsis
         : sortedExpectedNotes.map(midiToNoteName).join(' + ');
 
     final showExpectedHint =
@@ -506,45 +507,62 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         ? (completedPositions / positionTotal).clamp(0.0, 1.0).toDouble()
         : 0.0;
     final percentage = (progress * 100).round();
-    final feedbackText = scoreCompleted ? 'Completed' : resultText;
-    final feedbackVisual = feedbackAppearance(feedbackText, colors);
+    final rawFeedbackText = scoreCompleted ? 'Completed' : resultText;
+    final feedbackText = localizedFeedback(rawFeedbackText);
+    final feedbackVisual = feedbackAppearance(rawFeedbackText, colors);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final showTitle = screenWidth >= 700;
+    final showProgress = screenWidth >= 620;
 
     return Row(
       children: [
-        SizedBox(
+        if (showTitle) SizedBox(
           width: 132,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Sight Reading',
-                maxLines: 1,
-                style: TextStyle(
-                  fontSize: AppTextSizes.body,
-                  fontWeight: FontWeight.w800,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  context.l10n.sightReading,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: AppTextSizes.body,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              Text(
-                '$pieceTitle · ${sourceLabel()}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: colors.secondaryTextColor,
-                  fontSize: AppTextSizes.caption,
-                  fontWeight: FontWeight.w500,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '${pieceTitle == 'Untitled score' ? context.l10n.sightReadingUntitledScore : pieceTitle} · ${sourceLabel()}',
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: colors.secondaryTextColor,
+                    fontSize: AppTextSizes.caption,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        const Gap(AppSpacing.sm),
+        if (showTitle) const Gap(AppSpacing.sm),
         SizedBox(
           height: 38,
           child: SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment<bool>(value: false, label: Text('Wait')),
-              ButtonSegment<bool>(value: true, label: Text('Performance')),
+            segments: [
+              ButtonSegment<bool>(
+                value: false,
+                label: Text(context.l10n.sightReadingWait),
+              ),
+              ButtonSegment<bool>(
+                value: true,
+                label: Text(context.l10n.sightReadingPerformance),
+              ),
             ],
             selected: {performanceModeEnabled},
             showSelectedIcon: false,
@@ -579,22 +597,25 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           ),
         ),
         const Gap(AppSpacing.sm),
-        Expanded(
+        if (showProgress) Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  positionTotal > 0
-                      ? '$completedPositions / $positionTotal · $percentage% · ${compactTimeStatus()}'
-                      : 'Preparing progress',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: colors.primaryColor,
-                    fontSize: AppTextSizes.caption,
-                    fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    positionTotal > 0
+                        ? '$completedPositions / $positionTotal · $percentage% · ${compactTimeStatus()}'
+                        : context.l10n.sightReadingPreparingProgress,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: colors.primaryColor,
+                      fontSize: AppTextSizes.caption,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -612,7 +633,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               ),
             ],
           ),
-        ),
+        ) else const Spacer(),
         const Gap(AppSpacing.sm),
         Tooltip(
           message: feedbackText,
@@ -640,7 +661,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             ),
           ),
           icon: const Icon(Icons.tune_rounded, size: 18),
-          label: const Text('Controls'),
+          label: Text(context.l10n.sightReadingControls),
         ),
         const Gap(AppSpacing.sm),
       ],
@@ -653,23 +674,25 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
 
     final colors = widget.colors;
-    final modeName = selectedMode ? 'Performance Mode' : 'Wait Mode';
+    final modeName = selectedMode
+        ? context.l10n.sightReadingPerformanceMode
+        : context.l10n.sightReadingWaitMode;
     final modeIcon = selectedMode
         ? Icons.timer_outlined
         : Icons.hourglass_empty_rounded;
     final modeDescription = selectedMode
-        ? 'Press Start, then begin when you are ready by playing any MIDI key.'
-        : 'Practice at your own pace while learning how long to hold each note.';
+        ? context.l10n.sightReadingPerformanceModeDescription
+        : context.l10n.sightReadingWaitModeDescription;
     final modeDetails = selectedMode
-        ? const [
-            'The score does not pause when a note is missed.',
-            'Your notes and timing are evaluated against the MIDI timeline.',
-            'Your first key starts the timeline and is evaluated, whether it is correct or wrong.',
+        ? [
+            context.l10n.sightReadingPerformanceDetailNoPause,
+            context.l10n.sightReadingPerformanceDetailEvaluation,
+            context.l10n.sightReadingPerformanceDetailFirstKey,
           ]
-        : const [
-            'There is no time limit while you practise.',
-            'Hold each key for its written length, then release it when prompted.',
-            'Some notes continue across later notes; releasing early returns the cursor so you can retry.',
+        : [
+            context.l10n.sightReadingWaitDetailNoTimeLimit,
+            context.l10n.sightReadingWaitDetailHoldLength,
+            context.l10n.sightReadingWaitDetailContinuedNotes,
           ];
 
     final confirmed = await showDialog<bool>(
@@ -713,7 +736,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             AppSpacing.xs,
           ),
           title: Text(
-            'Switch to $modeName?',
+            context.l10n.sightReadingSwitchToModeQuestion(modeName),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.primaryColor,
@@ -799,8 +822,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height: 42,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 46),
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
                       style: OutlinedButton.styleFrom(
@@ -810,14 +833,17 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(
+                        context.l10n.cancel,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
                 const Gap(AppSpacing.sm),
                 Expanded(
-                  child: SizedBox(
-                    height: 42,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 46),
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(dialogContext).pop(true),
                       style: ElevatedButton.styleFrom(
@@ -828,9 +854,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
-                      child: const Text(
-                        'Switch Mode',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      child: Text(
+                        context.l10n.sightReadingSwitchMode,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -880,8 +907,13 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          scrollable: true,
           backgroundColor: colors.surfaceColor,
           surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -900,7 +932,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             ),
           ),
           title: Text(
-            'Connect your MIDI keyboard',
+            context.l10n.sightReadingConnectMidiKeyboard,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.primaryColor,
@@ -910,8 +942,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           ),
           content: Text(
             forPerformanceMode
-                ? 'Performance Mode needs your MIDI keyboard to hear the notes you play. Connect it now, then press any key when you are ready to begin.'
-                : 'Wait Mode needs your MIDI keyboard to hear each note and move the cursor forward.',
+                ? context.l10n.sightReadingPerformanceRequiresMidi
+                : context.l10n.sightReadingWaitRequiresMidi,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.secondaryTextColor,
@@ -929,8 +961,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height: 46,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 46),
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
                       style: OutlinedButton.styleFrom(
@@ -940,14 +972,17 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(
+                        context.l10n.cancel,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
                 const Gap(AppSpacing.sm),
                 Expanded(
-                  child: SizedBox(
-                    height: 46,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 46),
                     child: ElevatedButton.icon(
                       onPressed: () => Navigator.of(dialogContext).pop(true),
                       style: ElevatedButton.styleFrom(
@@ -959,9 +994,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                         ),
                       ),
                       icon: const Icon(Icons.usb_rounded, size: 18),
-                      label: const Text(
-                        'Connect MIDI',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      label: Text(
+                        context.l10n.sightReadingConnectMidi,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -1061,9 +1097,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       right: 0,
       bottom: AppSpacing.sm,
       child: Center(
-        child: SizedBox(
-          width: 220,
-          height: 46,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 240,
+            minHeight: 46,
+            maxWidth: 300,
+          ),
           child: FilledButton.icon(
             onPressed: canStartPerformance()
                 ? () {
@@ -1079,9 +1118,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               ),
             ),
             icon: const Icon(Icons.play_arrow_rounded),
-            label: const Text(
-              'Start Performance',
-              style: TextStyle(fontWeight: FontWeight.w800),
+            label: Text(
+              context.l10n.sightReadingStartPerformance,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
         ),
@@ -1096,8 +1136,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     required String resultText,
     required bool showExpectedHint,
   }) {
-    final feedbackText = scoreCompleted ? 'Completed' : resultText;
-    final feedbackVisual = feedbackAppearance(feedbackText, colors);
+    final rawFeedbackText = scoreCompleted ? 'Completed' : resultText;
+    final feedbackText = localizedFeedback(rawFeedbackText);
+    final feedbackVisual = feedbackAppearance(rawFeedbackText, colors);
 
     return Positioned(
       top: AppSpacing.sm,
@@ -1106,7 +1147,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       child: Center(
         child: IgnorePointer(
           child: Container(
-            width: 430,
+            constraints: const BoxConstraints(maxWidth: 540),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,
               vertical: AppSpacing.xs,
@@ -1141,9 +1182,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        '$feedbackText · Played: $activeNotesText',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        context.l10n.sightReadingPlayedNotes(
+                          feedbackText,
+                          activeNotesText,
+                        ),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.black87,
@@ -1153,9 +1195,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                       ),
                       if (!scoreCompleted && showExpectedHint)
                         Text(
-                          'Hint: play $expectedNotesText',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          context.l10n.sightReadingHintPlay(
+                            expectedNotesText,
+                          ),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Color(0xFFF59E0B),
@@ -1184,7 +1226,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             CircularProgressIndicator(color: colors.primaryColor),
             const Gap(AppSpacing.md),
             Text(
-              'Preparing your score',
+              context.l10n.sightReadingPreparingScore,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.body,
@@ -1193,7 +1235,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             ),
             const Gap(AppSpacing.xs),
             Text(
-              'Loading notation, timing, and audio…',
+              context.l10n.sightReadingLoadingNotationTimingAudio,
               style: TextStyle(
                 color: colors.secondaryTextColor,
                 fontSize: AppTextSizes.caption,
@@ -1221,7 +1263,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               ),
               const Gap(AppSpacing.sm),
               Text(
-                'Could not prepare this score',
+                context.l10n.sightReadingCouldNotPrepareScore,
                 style: TextStyle(
                   color: colors.primaryColor,
                   fontSize: AppTextSizes.body,
@@ -1230,9 +1272,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               ),
               const Gap(AppSpacing.xs),
               Text(
-                scoreLoadingError ?? 'Unknown score-loading problem.',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                scoreLoadingError ?? context.l10n.sightReadingUnknownLoadError,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
@@ -1246,7 +1286,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                 },
                 style: secondaryButtonStyle(colors),
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Try Again'),
+                label: Text(context.l10n.sightReadingTryAgain),
               ),
             ],
           ),
@@ -1279,10 +1319,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                 size: AppIconSizes.lg,
               ),
               const Gap(AppSpacing.sm),
-              const Text(
-                'Press any MIDI key to begin',
+              Text(
+                context.l10n.sightReadingPressAnyMidiKey,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: AppTextSizes.body,
                   fontWeight: FontWeight.w800,
@@ -1307,12 +1347,14 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
 
     practiceControlsSheetOpen = true;
-    final feedbackText = scoreCompleted ? 'Completed' : resultText;
-    final feedbackVisual = feedbackAppearance(feedbackText, colors);
+    final rawFeedbackText = scoreCompleted ? 'Completed' : resultText;
+    final feedbackText = localizedFeedback(rawFeedbackText);
+    final feedbackVisual = feedbackAppearance(rawFeedbackText, colors);
 
     try {
       await showModalBottomSheet<void>(
         context: context,
+        isScrollControlled: true,
         backgroundColor: Colors.transparent,
         barrierColor: Colors.black.withValues(alpha: 0.35),
         enableDrag: false,
@@ -1379,6 +1421,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                   midiStatus == 'Not connected';
 
               return SafeArea(
+              child: SingleChildScrollView(
               child: Container(
                 margin: const EdgeInsets.all(AppSpacing.sm),
                 padding: const EdgeInsets.all(AppSpacing.md),
@@ -1419,8 +1462,6 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                             children: [
                               Text(
                                 feedbackText,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: colors.primaryColor,
                                   fontSize: AppTextSizes.label,
@@ -1429,10 +1470,13 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                               ),
                               Text(
                                 showExpectedHint
-                                    ? 'Played: $activeNotesText · Hint: play $expectedNotesText'
-                                    : 'Played: $activeNotesText',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                    ? context.l10n.sightReadingPlayedWithHint(
+                                        activeNotesText,
+                                        expectedNotesText,
+                                      )
+                                    : context.l10n.sightReadingPlayed(
+                                        activeNotesText,
+                                      ),
                                 style: TextStyle(
                                   color: showExpectedHint
                                       ? const Color(0xFFF59E0B)
@@ -1447,7 +1491,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                         buildMidiStatusChip(colors),
                         const Gap(AppSpacing.sm),
                         IconButton(
-                          tooltip: 'Close controls',
+                          tooltip: context.l10n.sightReadingCloseControls,
                           onPressed: () => Navigator.of(sheetContext).pop(),
                           icon: const Icon(Icons.close_rounded),
                           color: colors.primaryColor,
@@ -1479,7 +1523,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                             const Gap(AppSpacing.xs),
                             Expanded(
                               child: Text(
-                                'MIDI keyboard not connected. Turn it on or reconnect it, then tap Connect MIDI to try again.',
+                                context.l10n.sightReadingMidiReconnectPrompt,
                                 style: TextStyle(
                                   color: colors.primaryColor,
                                   fontSize: AppTextSizes.caption,
@@ -1520,10 +1564,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                   ),
                             label: Text(
                               scorePreviewPreparing
-                                  ? 'Loading'
+                                  ? context.l10n.loading
                                   : scorePreviewPlaying
-                                  ? 'Stop'
-                                  : 'Listen',
+                                  ? context.l10n.stop
+                                  : context.l10n.sightReadingListen,
                             ),
                           ),
                         ),
@@ -1550,13 +1594,14 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                 : null,
                             style: secondaryButtonStyle(colors),
                             icon: const Icon(Icons.replay_rounded),
-                            label: const Text('Retry'),
+                            label: Text(context.l10n.retry),
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
+              ),
               ),
               );
             },
@@ -1576,10 +1621,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final sortedActiveNotes = activeMidiNotes.toList()..sort();
     final sortedExpectedNotes = noteMatcher.expectedMidiNotes.toList()..sort();
     final activeNotesText = sortedActiveNotes.isEmpty
-        ? 'None'
+        ? context.l10n.sightReadingNone
         : sortedActiveNotes.map(midiToNoteName).join(' + ');
     final expectedNotesText = sortedExpectedNotes.isEmpty
-        ? 'Waiting...'
+        ? context.l10n.sightReadingWaitingEllipsis
         : sortedExpectedNotes.map(midiToNoteName).join(' + ');
 
     await showPracticeControlsSheet(
@@ -1626,8 +1671,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     required bool canConnectMidi,
     required bool canRetry,
   }) {
-    final feedbackText = scoreCompleted ? 'Completed' : resultText;
-    final feedbackVisual = feedbackAppearance(feedbackText, colors);
+    final rawFeedbackText = scoreCompleted ? 'Completed' : resultText;
+    final feedbackText = localizedFeedback(rawFeedbackText);
+    final feedbackVisual = feedbackAppearance(rawFeedbackText, colors);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -1658,8 +1704,6 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                     Expanded(
                       child: Text(
                         feedbackText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: colors.primaryColor,
                           fontSize: AppTextSizes.label,
@@ -1670,7 +1714,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                     buildStatusChip(
                       colors: colors,
                       icon: Icons.piano_rounded,
-                      label: 'Played: $activeNotesText',
+                      label: context.l10n.sightReadingPlayed(activeNotesText),
                     ),
                   ],
                 ),
@@ -1689,9 +1733,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                 child: Align(
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    'Hint: play $expectedNotesText',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                    context.l10n.sightReadingHintPlay(
+                                      expectedNotesText,
+                                    ),
                                     style: const TextStyle(
                                       color: Color(0xFFF59E0B),
                                       fontSize: AppTextSizes.caption,
@@ -1704,10 +1748,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                 alignment: Alignment.centerLeft,
                                 child: Text(
                                   performanceRunning
-                                      ? 'Follow the moving cursor'
-                                      : 'Start when your MIDI keyboard is ready',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                      ? context.l10n.sightReadingFollowCursor
+                                      : context
+                                            .l10n
+                                            .sightReadingStartWhenMidiReady,
                                   style: TextStyle(
                                     color: colors.secondaryTextColor,
                                     fontSize: AppTextSizes.caption,
@@ -1745,10 +1789,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                           ),
                           label: Text(
                             performanceRunning
-                                ? 'Playing'
+                                ? context.l10n.sightReadingPlaying
                                 : performanceWaitingForFirstKey
-                                ? 'Waiting'
-                                : 'Start',
+                                ? context.l10n.sightReadingWaiting
+                                : context.l10n.sightReadingStart,
                           ),
                         )
                       : Container(
@@ -1773,9 +1817,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                               const Gap(AppSpacing.xs),
                               Flexible(
                                 child: Text(
-                                  'Hold until cursor arrives',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  context.l10n.sightReadingHoldUntilCursor,
                                   style: TextStyle(
                                     color: colors.primaryColor,
                                     fontSize: AppTextSizes.caption,
@@ -1809,10 +1851,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                           ),
                     label: Text(
                       scorePreviewPreparing
-                          ? 'Loading'
+                          ? context.l10n.loading
                           : scorePreviewPlaying
-                          ? 'Stop'
-                          : 'Listen',
+                          ? context.l10n.stop
+                          : context.l10n.sightReadingListen,
                     ),
                   ),
                 ),
@@ -1835,7 +1877,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                         : null,
                     style: secondaryButtonStyle(colors),
                     icon: const Icon(Icons.replay_rounded),
-                    label: const Text('Retry'),
+                    label: Text(context.l10n.retry),
                   ),
                 ),
               ],
@@ -1912,8 +1954,6 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           Flexible(
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: foreground,
                 fontSize: AppTextSizes.caption,
@@ -1947,7 +1987,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     return buildStatusChip(
       colors: colors,
       icon: icon,
-      label: midiStatus,
+      label: localizedMidiStatus(),
       accentColor: color,
     );
   }
@@ -1988,23 +2028,121 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     );
   }
 
+  String localizedFeedback(String feedback) {
+    final keepHolding = RegExp(
+      r'^Keep holding (?:·|Â·) (\d+)%$',
+    ).firstMatch(feedback);
+    if (keepHolding != null) {
+      return context.l10n.sightReadingKeepHolding(
+        int.parse(keepHolding.group(1)!),
+      );
+    }
+
+    final releaseBefore = RegExp(
+      r'^Release (.+) before playing it again$',
+    ).firstMatch(feedback);
+    if (releaseBefore != null) {
+      return context.l10n.sightReadingReleaseBeforePlayingAgain(
+        releaseBefore.group(1)!,
+      );
+    }
+
+    final releaseHeldTooLong = RegExp(
+      r'^Release (.+) (?:—|â€”) held too long$',
+    ).firstMatch(feedback);
+    if (releaseHeldTooLong != null) {
+      return context.l10n.sightReadingReleaseHeldTooLong(
+        releaseHeldTooLong.group(1)!,
+      );
+    }
+
+    final heldTooLong = RegExp(
+      r'^(.+) was held too long$',
+    ).firstMatch(feedback);
+    if (heldTooLong != null) {
+      return context.l10n.sightReadingNoteHeldTooLong(heldTooLong.group(1)!);
+    }
+
+    final releasedTooSoon = RegExp(
+      r'^(.+) was released too soon$',
+    ).firstMatch(feedback);
+    if (releasedTooSoon != null) {
+      return context.l10n.sightReadingNoteReleasedTooSoon(
+        releasedTooSoon.group(1)!,
+      );
+    }
+
+    final holdNext = RegExp(
+      r'^Hold (.+) while playing the next notes$',
+    ).firstMatch(feedback);
+    if (holdNext != null) {
+      return context.l10n.sightReadingHoldWhilePlayingNext(
+        holdNext.group(1)!,
+      );
+    }
+
+    final holdWhilePlaying = RegExp(
+      r'^Hold (.+) while playing (.+)$',
+    ).firstMatch(feedback);
+    if (holdWhilePlaying != null) {
+      return context.l10n.sightReadingHoldWhilePlaying(
+        holdWhilePlaying.group(1)!,
+        holdWhilePlaying.group(2)!,
+      );
+    }
+
+    final release = RegExp(r'^Release (.+)$').firstMatch(feedback);
+    if (release != null) {
+      return context.l10n.sightReadingReleaseNotes(release.group(1)!);
+    }
+
+    return switch (feedback) {
+      'Ready' => context.l10n.sightReadingReady,
+      'Waiting' => context.l10n.sightReadingWaiting,
+      'Waiting for MIDI file' => context.l10n.sightReadingWaitingForMidi,
+      'Play on time' => context.l10n.sightReadingPlayOnTime,
+      'Missed' => context.l10n.sightReadingMissed,
+      'Wrong note' => context.l10n.sightReadingWrongNote,
+      'Complete the chord' => context.l10n.sightReadingCompleteChord,
+      'Chord notes were not together' =>
+        context.l10n.sightReadingChordNotesNotTogether,
+      'Correct after mistake' => context.l10n.sightReadingCorrectAfterMistake,
+      'Correct — keep holding' || 'Correct notes — keep holding' =>
+        context.l10n.sightReadingCorrectNotesKeepHolding,
+      'Correct' => context.l10n.sightReadingCorrect,
+      'Released too soon' => context.l10n.sightReadingReleasedTooSoon,
+      'Too early' => context.l10n.sightReadingTooEarly,
+      'Too late' => context.l10n.sightReadingTooLate,
+      'Wrong' => context.l10n.sightReadingWrong,
+      'Keep playing' => context.l10n.sightReadingKeepPlaying,
+      'Duration complete' => context.l10n.sightReadingDurationComplete,
+      'Released — continue with the highlighted note' =>
+        context.l10n.sightReadingReleasedContinue,
+      'Try again — hold until the cursor reaches the next note' =>
+        context.l10n.sightReadingTryAgainHoldUntilCursor,
+      'Press any MIDI key to begin' => context.l10n.sightReadingPressAnyMidiKey,
+      'Completed' => context.l10n.sightReadingCompleted,
+      _ => feedback,
+    };
+  }
+
   String sourceLabel() {
     return widget.source == SightReadingSource.composition
-        ? 'Composition'
-        : 'Music Sheet';
+        ? context.l10n.sightReadingComposition
+        : context.l10n.sightReadingMusicSheet;
   }
 
   String compactTimeStatus() {
     if (!performanceModeEnabled) {
-      return 'No time limit';
+      return context.l10n.sightReadingNoTimeLimit;
     }
 
     if (!targetDurationCalculated) {
-      return 'Reading timeline…';
+      return context.l10n.sightReadingReadingTimeline;
     }
 
     if (targetDurationSeconds <= 0) {
-      return 'Timeline unavailable';
+      return context.l10n.sightReadingTimelineUnavailable;
     }
 
     final elapsedSeconds = scoreCompleted
@@ -2014,11 +2152,13 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     if (!performanceRunning &&
         !scoreCompleted &&
         !performanceWaitingForFirstKey) {
-      return 'Target ${formatDuration(targetDurationSeconds)}';
+      return context.l10n.sightReadingTargetDuration(
+        formatDuration(targetDurationSeconds),
+      );
     }
 
     if (performanceWaitingForFirstKey) {
-      return 'Press any key to start';
+      return context.l10n.sightReadingPressAnyKeyToStart;
     }
 
     return '${formatDuration(elapsedSeconds)} / '
@@ -2039,18 +2179,33 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
   String midiActionLabel() {
     if (midiStatus.startsWith('Connected:')) {
-      return 'Connected';
+      return context.l10n.sightReadingConnected;
     }
 
     if (midiStatus == 'Searching...') {
-      return 'Searching';
+      return context.l10n.sightReadingSearching;
     }
 
     if (midiStatus == 'Connecting...') {
-      return 'Connecting';
+      return context.l10n.sightReadingConnecting;
     }
 
-    return 'Connect MIDI';
+    return context.l10n.sightReadingConnectMidi;
+  }
+
+  String localizedMidiStatus() {
+    if (midiStatus.startsWith('Connected:')) {
+      final device = midiStatus.substring('Connected:'.length).trim();
+      return context.l10n.sightReadingConnectedDevice(device);
+    }
+
+    return switch (midiStatus) {
+      'Searching...' => context.l10n.sightReadingSearchingEllipsis,
+      'Connecting...' => context.l10n.sightReadingConnectingEllipsis,
+      'No device detected' => context.l10n.sightReadingNoDeviceDetected,
+      'Connection failed' => context.l10n.sightReadingConnectionFailed,
+      _ => context.l10n.sightReadingNotConnected,
+    };
   }
 
   Future<void> connectToMidi() async {
@@ -2127,7 +2282,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final audioUrl = scoreAudioUrl;
 
     if (audioUrl == null || audioUrl.isEmpty) {
-      showThemedSnackBar('The score has no MP3 audio preview.', isError: true);
+      showThemedSnackBar(context.l10n.sightReadingNoMp3Preview, isError: true);
       return;
     }
 
@@ -2168,7 +2323,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           scorePreviewPlaying = false;
         });
 
-        showThemedSnackBar('Score playback failed: $error', isError: true);
+        showThemedSnackBar(
+          context.l10n.sightReadingPlaybackFailed,
+          isError: true,
+        );
       },
     );
   }
@@ -2738,7 +2896,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       debugPrint('MP3 URL found: ${mp3Url != null}');
 
       if (musicXmlUrl == null) {
-        showScoreLoadingError('The MusicXML file is missing.');
+        showScoreLoadingError(context.l10n.sightReadingMusicXmlMissing);
 
         return;
       }
@@ -2749,8 +2907,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
       if (musicXmlResponse.statusCode != 200) {
         showScoreLoadingError(
-          'MusicXML download failed with status '
-          '${musicXmlResponse.statusCode}.',
+          context.l10n.sightReadingMusicXmlDownloadFailed,
         );
 
         return;
@@ -2772,7 +2929,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         scoreAudioUrl = mp3Url;
         pieceTitle = loadedTitle is String && loadedTitle.trim().isNotEmpty
             ? loadedTitle.trim()
-            : 'Untitled score';
+            : context.l10n.sightReadingUntitledScore;
         scoreLoadingError = null;
       });
 
@@ -2786,7 +2943,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         return;
       }
 
-      showScoreLoadingError('Score loading failed: $error');
+      showScoreLoadingError(context.l10n.sightReadingScoreLoadFailed);
     }
   }
 
@@ -2799,7 +2956,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       setState(() {
         performanceTracker.loadTimeline(const [], totalDuration: Duration.zero);
         targetDurationCalculated = true;
-        targetDurationUnavailableReason = 'The challenge has no MIDI file.';
+        targetDurationUnavailableReason = context
+            .l10n
+            .sightReadingMidiFileMissing;
       });
 
       return;
@@ -2821,8 +2980,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             totalDuration: Duration.zero,
           );
           targetDurationCalculated = true;
-          targetDurationUnavailableReason =
-              'MIDI download failed: ${midiResponse.statusCode}.';
+          targetDurationUnavailableReason = context
+              .l10n
+              .sightReadingMidiTimelineUnavailable;
         });
 
         return;
@@ -2858,7 +3018,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       setState(() {
         performanceTracker.loadTimeline(const [], totalDuration: Duration.zero);
         targetDurationCalculated = true;
-        targetDurationUnavailableReason = 'MIDI loading failed: $error';
+        targetDurationUnavailableReason = context
+            .l10n
+            .sightReadingMidiTimelineUnavailable;
       });
     }
   }
@@ -2887,17 +3049,17 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     late final String xpMessage;
 
     if (!performanceModeEnabled) {
-      xpMessage = 'Wait Mode does not award XP.';
+      xpMessage = context.l10n.sightReadingWaitModeNoXp;
     } else if (widget.challengeItemId == null) {
-      xpMessage = 'This lesson does not award XP.';
+      xpMessage = context.l10n.sightReadingLessonNoXp;
     } else if (!isPerfect) {
-      xpMessage = 'No XP awarded. Complete Performance Mode without mistakes.';
+      xpMessage = context.l10n.sightReadingNoXpImperfect;
     } else if (progressSaveFailed) {
-      xpMessage = 'Progress could not be saved. Please try again.';
+      xpMessage = context.l10n.sightReadingProgressSaveFailed;
     } else if (completionResult?.newlyCompleted == true) {
       xpMessage = '+${completionResult!.xpAwarded} XP';
     } else {
-      xpMessage = 'Already completed. XP is only awarded once.';
+      xpMessage = context.l10n.sightReadingAlreadyCompleted;
     }
 
     late final String title;
@@ -2906,31 +3068,22 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     late final IconData icon;
 
     if (retryIsRequired) {
-      title = 'Retry Required';
-      message =
-          'A hint was shown during this attempt. '
-          'Please retry and complete the score without '
-          'reaching five consecutive mistakes.';
+      title = context.l10n.sightReadingRetryRequired;
+      message = context.l10n.sightReadingRetryRequiredDescription;
 
       accentColor = Colors.red.shade700;
       icon = Icons.replay_circle_filled;
     } else if (isPerfect) {
-      title = 'Perfect!';
-      message =
-          'You completed the score without any '
-          'mistakes or hints.';
+      title = context.l10n.sightReadingPerfect;
+      message = context.l10n.sightReadingPerfectDescription;
 
       accentColor = Colors.green.shade700;
       icon = Icons.check_circle;
     } else {
-      final mistakeWord = totalMistakes == 1 ? 'mistake' : 'mistakes';
-
-      title = 'Exercise Completed';
+      title = context.l10n.sightReadingExerciseCompleted;
       message = performanceModeEnabled
-          ? 'You completed the score with $totalMistakes $mistakeWord. '
-                'Review the detailed feedback below.'
-          : 'You completed the score with $totalMistakes $mistakeWord, '
-                'but you did not need a hint.';
+          ? context.l10n.sightReadingCompletedWithMistakes(totalMistakes)
+          : context.l10n.sightReadingWaitCompletedWithMistakes(totalMistakes);
 
       accentColor = Colors.amber.shade800;
       icon = Icons.warning_amber_rounded;
@@ -2940,35 +3093,46 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final resultStats = performanceModeEnabled
         ? <({String label, String value})>[
             (
-              label: 'Correct on time',
+              label: context.l10n.sightReadingCorrectOnTime,
               value:
                   '${performanceTracker.correctEventCount}/'
                   '${performanceTracker.totalEventCount}',
             ),
             (
-              label: 'Wrong notes',
+              label: context.l10n.sightReadingWrongNotes,
               value: '${performanceTracker.wrongEventCount}',
             ),
             (
-              label: 'Not played',
+              label: context.l10n.sightReadingNotPlayed,
               value: '${performanceTracker.missedEventCount}',
             ),
             (
-              label: 'Played on time',
+              label: context.l10n.sightReadingPlayedOnTime,
               value: '${performanceTracker.timingAccuracyPercentage}%',
             ),
             (
-              label: 'Music length',
+              label: context.l10n.sightReadingMusicLength,
               value: hasTargetDuration
                   ? formatDuration(targetDurationSeconds)
-                  : 'Unavailable',
+                  : context.l10n.unavailable,
             ),
           ]
         : <({String label, String value})>[
-            (label: 'First try', value: scoreText),
-            (label: 'Mistakes', value: '$totalMistakes'),
-            (label: 'Hint used', value: hintWasShown ? 'Yes' : 'No'),
-            (label: 'Time', value: 'No limit'),
+            (label: context.l10n.sightReadingFirstTry, value: scoreText),
+            (
+              label: context.l10n.sightReadingMistakes,
+              value: '$totalMistakes',
+            ),
+            (
+              label: context.l10n.sightReadingHintUsed,
+              value: hintWasShown
+                  ? context.l10n.sightReadingYes
+                  : context.l10n.sightReadingNo,
+            ),
+            (
+              label: context.l10n.sightReadingTime,
+              value: context.l10n.sightReadingNoLimit,
+            ),
           ];
 
     var activeResultSaveFuture = resultSaveFuture;
@@ -3026,8 +3190,6 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                 ),
                                 Text(
                                   message,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: colors.secondaryTextColor,
                                     fontSize: AppTextSizes.caption,
@@ -3040,7 +3202,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                           Column(
                             children: [
                               Text(
-                                'SCORE',
+                                context.l10n.sightReadingScoreLabel,
                                 style: TextStyle(
                                   color: colors.secondaryTextColor,
                                   fontSize: AppTextSizes.caption,
@@ -3153,7 +3315,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                 },
                                 style: secondaryButtonStyle(colors),
                                 icon: const Icon(Icons.replay_rounded),
-                                label: const Text('Retry'),
+                                label: Text(context.l10n.retry),
                               ),
                             ),
                             if (!retryIsRequired) ...[
@@ -3166,7 +3328,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                     Navigator.of(context).pop();
                                   },
                                   icon: const Icon(Icons.check_rounded),
-                                  label: const Text('Done'),
+                                  label: Text(context.l10n.done),
                                 ),
                               ),
                             ],
@@ -3211,6 +3373,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           DeviceOrientation.landscapeLeft,
           DeviceOrientation.landscapeRight,
         ]);
+
+        if (mounted) {
+          await retryExercise();
+        }
       }
     }
   }
@@ -3228,7 +3394,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           child: buildInsightPanel(
             colors: colors,
             icon: Icons.troubleshoot_rounded,
-            title: 'What to work on',
+            title: context.l10n.sightReadingWhatToWorkOn,
             items: attentionItems,
           ),
         ),
@@ -3237,7 +3403,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           child: buildInsightPanel(
             colors: colors,
             icon: Icons.lightbulb_outline_rounded,
-            title: 'How to improve',
+            title: context.l10n.sightReadingHowToImprove,
             items: report.suggestions,
           ),
         ),
@@ -3281,8 +3447,6 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               padding: const EdgeInsets.only(bottom: AppSpacing.xs),
               child: Text(
                 '• $item',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
                   fontSize: AppTextSizes.caption,
@@ -3298,7 +3462,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
   List<String> buildAttentionItems(SightReadingPerformanceReport report) {
     if (report.errorEvents.isEmpty) {
-      return const ['You did not have any repeated problems.'];
+      return [context.l10n.sightReadingNoRepeatedProblems];
     }
 
     final items = <String>[];
@@ -3306,8 +3470,11 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
     if (weakClef != null) {
       items.add(
-        '${friendlyClefDescription(weakClef.clef)} was difficult in '
-        '${weakClef.errorCount} of ${weakClef.totalCount} note groups.',
+        context.l10n.sightReadingClefDifficulty(
+          friendlyClefDescription(weakClef.clef),
+          weakClef.errorCount,
+          weakClef.totalCount,
+        ),
       );
     }
 
@@ -3322,14 +3489,18 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     if (difficultNotes.isNotEmpty) {
       final note = difficultNotes.first;
       items.add(
-        'You had trouble with ${midiToNoteName(note.midiNote)} '
-        '${note.errorCount} time${note.errorCount == 1 ? '' : 's'}.',
+        context.l10n.sightReadingTroubleWithNoteTimes(
+          midiToNoteName(note.midiNote),
+          note.errorCount,
+        ),
       );
     }
 
     items.add(
-      '${report.summary.wrongCount} note groups had wrong keys, and '
-      '${report.summary.missedCount} were not played.',
+      context.l10n.sightReadingWrongAndMissedGroups(
+        report.summary.wrongCount,
+        report.summary.missedCount,
+      ),
     );
     return items.take(3).toList(growable: false);
   }
@@ -3383,10 +3554,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               Expanded(
                 child: Text(
                   isSaving
-                      ? 'Saving this practice result…'
+                      ? context.l10n.sightReadingSavingResult
                       : isSaved
-                      ? 'Practice result saved'
-                      : 'Result not saved',
+                      ? context.l10n.sightReadingResultSaved
+                      : context.l10n.sightReadingResultNotSaved,
                   style: TextStyle(
                     color: color,
                     fontSize: AppTextSizes.caption,
@@ -3400,7 +3571,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                   style: TextButton.styleFrom(
                     foregroundColor: colors.primaryColor,
                   ),
-                  child: const Text('Retry save'),
+                  child: Text(context.l10n.sightReadingRetrySave),
                 ),
               if (snapshot.hasData)
                 TextButton.icon(
@@ -3409,7 +3580,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                     foregroundColor: colors.primaryColor,
                   ),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('View full result'),
+                  label: Text(context.l10n.sightReadingViewFullResult),
                 ),
             ],
           ),
@@ -3421,16 +3592,17 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   String friendlyClefDescription(String clef) {
     switch (clef.toLowerCase()) {
       case 'treble':
-        return 'Higher-note reading (treble clef)';
+        return context.l10n.sightReadingTrebleClefDescription;
       case 'bass':
-        return 'Lower-note reading (bass clef)';
+        return context.l10n.sightReadingBassClefDescription;
       case 'unknown':
-        return 'One part of the score';
+        return context.l10n.sightReadingUnknownClefDescription;
       default:
         if (clef.isEmpty) {
-          return 'One part of the score';
+          return context.l10n.sightReadingUnknownClefDescription;
         }
-        return '${clef[0].toUpperCase()}${clef.substring(1)} clef reading';
+        final name = '${clef[0].toUpperCase()}${clef.substring(1)}';
+        return context.l10n.sightReadingOtherClefDescription(name);
     }
   }
 
@@ -3440,7 +3612,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     required String value,
   }) {
     return Container(
-      width: 126,
+      width: 150,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.sm,
@@ -3455,8 +3627,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         children: [
           Text(
             value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.primaryColor,
               fontSize: AppTextSizes.body,
@@ -3466,8 +3637,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           const Gap(AppSpacing.xs),
           Text(
             label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.secondaryTextColor,
               fontSize: AppTextSizes.caption,
@@ -3763,6 +3933,20 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       source: widget.source.name,
       pieceTitle: pieceTitle,
       elapsedDurationMs: playingStopwatch.elapsedMilliseconds,
+      messages: SightReadingPerformanceReportMessages(
+        perfectPerformance: context.l10n.sightReadingSuggestionPerfect,
+        almostPerfect: context.l10n.sightReadingSuggestionAlmostPerfect,
+        bassClef: context.l10n.sightReadingSuggestionBassClef,
+        trebleClef: context.l10n.sightReadingSuggestionTrebleClef,
+        otherClef: context.l10n.sightReadingSuggestionOtherClef,
+        difficultNote: context.l10n.sightReadingSuggestionDifficultNote,
+        releasedTooSoon: context.l10n.sightReadingSuggestionReleasedTooSoon,
+        missedNotes: context.l10n.sightReadingSuggestionMissedNotes,
+        playedLate: context.l10n.sightReadingSuggestionPlayedLate,
+        playedEarly: context.l10n.sightReadingSuggestionPlayedEarly,
+        chordTiming: context.l10n.sightReadingSuggestionChordTiming,
+        generalPractice: context.l10n.sightReadingSuggestionGeneralPractice,
+      ),
     );
     final resultSaveFuture = practiceResultService.savePerformanceResult(
       performanceReport,

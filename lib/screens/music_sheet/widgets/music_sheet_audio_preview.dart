@@ -6,27 +6,41 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+
+class MusicSheetAudioPreviewController {
+  Future<void> Function()? _stopPlayback;
+
+  Future<void> stop() async {
+    final stopPlayback = _stopPlayback;
+    if (stopPlayback != null) {
+      await stopPlayback();
+    }
+  }
+}
 
 class MusicSheetAudioPreview extends StatefulWidget {
   const MusicSheetAudioPreview({
     super.key,
     required this.colors,
     required this.storagePath,
-    this.title = 'Audio preview',
-    this.loadingText = 'Loading audio from Firebase...',
-    this.playingText = 'Playing translated music',
-    this.pausedText = 'Playback paused',
-    this.idleText = 'Listen to the translated music sheet',
+    this.title,
+    this.loadingText,
+    this.playingText,
+    this.pausedText,
+    this.idleText,
+    this.controller,
   });
 
   final AppThemeColors colors;
   final String storagePath;
-  final String title;
-  final String loadingText;
-  final String playingText;
-  final String pausedText;
-  final String idleText;
+  final String? title;
+  final String? loadingText;
+  final String? playingText;
+  final String? pausedText;
+  final String? idleText;
+  final MusicSheetAudioPreviewController? controller;
 
   @override
   State<MusicSheetAudioPreview> createState() => _MusicSheetAudioPreviewState();
@@ -56,6 +70,8 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
   @override
   void initState() {
     super.initState();
+
+    widget.controller?._stopPlayback = stopPlayback;
 
     unawaited(
       audioPlayer.setAudioContext(
@@ -109,6 +125,13 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
   void didUpdateWidget(covariant MusicSheetAudioPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (oldWidget.controller != widget.controller) {
+      if (oldWidget.controller?._stopPlayback == stopPlayback) {
+        oldWidget.controller?._stopPlayback = null;
+      }
+      widget.controller?._stopPlayback = stopPlayback;
+    }
+
     if (oldWidget.storagePath != widget.storagePath) {
       audioBytes = null;
       position = Duration.zero;
@@ -120,6 +143,9 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
 
   @override
   void dispose() {
+    if (widget.controller?._stopPlayback == stopPlayback) {
+      widget.controller?._stopPlayback = null;
+    }
     unawaited(playerStateSubscription?.cancel());
     unawaited(positionSubscription?.cancel());
     unawaited(durationSubscription?.cancel());
@@ -162,7 +188,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.title,
+                      widget.title ?? context.l10n.audioPreview,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -171,7 +197,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
                     ),
                     Gap(AppSpacing.xs),
                     Text(
-                      getStatusText(),
+                      getStatusText(context),
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -181,7 +207,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
                 ),
               ),
               buildControlButton(
-                tooltip: isPlaying ? 'Pause' : 'Play',
+                tooltip: isPlaying ? context.l10n.pause : context.l10n.play,
                 icon: isLoading
                     ? null
                     : isPlaying
@@ -192,7 +218,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
               ),
               Gap(AppSpacing.sm),
               buildControlButton(
-                tooltip: 'Stop',
+                tooltip: context.l10n.stop,
                 icon: Icons.stop_rounded,
                 isPrimary: false,
                 onPressed: canStop ? stopPlayback : null,
@@ -311,7 +337,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
             .getData(maximumAudioSize);
 
         if (downloadedBytes == null || downloadedBytes.isEmpty) {
-          throw Exception('The audio preview is empty.');
+          throw StateError('empty-audio-preview');
         }
 
         audioBytes = downloadedBytes;
@@ -322,9 +348,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
 
       await audioPlayer.resume();
     } catch (error) {
-      showMessage(
-        error.toString().replaceFirst('Exception: ', ''),
-      );
+      showMessage(context.l10n.audioPlaybackError);
     } finally {
       if (mounted) {
         setState(() {
@@ -353,11 +377,11 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
     );
   }
 
-  String getStatusText() {
-    if (isLoading) return widget.loadingText;
-    if (isPlaying) return widget.playingText;
-    if (isPaused) return widget.pausedText;
-    return widget.idleText;
+  String getStatusText(BuildContext context) {
+    if (isLoading) return widget.loadingText ?? context.l10n.audioLoading;
+    if (isPlaying) return widget.playingText ?? context.l10n.audioPlaying;
+    if (isPaused) return widget.pausedText ?? context.l10n.audioPaused;
+    return widget.idleText ?? context.l10n.audioIdle;
   }
 
   String formatDuration(Duration value) {
@@ -376,9 +400,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            message.isEmpty
-                ? 'The audio preview could not be played.'
-                : message,
+            message.isEmpty ? context.l10n.audioPlaybackError : message,
           ),
         ),
       );

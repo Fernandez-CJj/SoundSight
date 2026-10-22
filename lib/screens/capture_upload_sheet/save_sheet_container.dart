@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class SaveSheetContainer extends StatelessWidget {
@@ -47,8 +48,10 @@ class SaveSheetContainer extends StatelessWidget {
                 : Icon(Icons.cloud_upload_outlined, size: 21),
             label: Text(
               isSavingSheet
-                  ? 'Saving ${(uploadProgress * 100).round()}%'
-                  : 'Save Sheet',
+                  ? context.l10n.savingProgress(
+                      (uploadProgress * 100).round(),
+                    )
+                  : context.l10n.saveSheet,
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(

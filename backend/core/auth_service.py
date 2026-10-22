@@ -30,7 +30,7 @@ def requireVerifiedFirebaseUser(
     if decodedToken.get("email_verified") is not True:
         raise HTTPException(
             status_code=403,
-            detail="Verify your email before generating files.",
+            detail="Verify your email before using this feature.",
         )
 
     userId = decodedToken.get("uid")

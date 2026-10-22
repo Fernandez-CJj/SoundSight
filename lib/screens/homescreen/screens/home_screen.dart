@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
@@ -89,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: context.l10n.openProfile,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -114,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           children: [
             Text(
-              'Hello, $username',
+              context.l10n.homeGreeting(username),
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -123,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const Gap(AppSpacing.xs),
             Text(
-              'Keep practicing, Great music starts with you.',
+              context.l10n.homeEncouragement,
               style: TextStyle(
                 color: colors.secondaryTextColor,
                 fontSize: AppTextSizes.label,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CaptureUploadHeader extends StatelessWidget {
@@ -29,7 +30,7 @@ class CaptureUploadHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Add your sheet music',
+          context.l10n.addYourSheetMusic,
           style: TextStyle(
             color: colors.primaryColor,
             fontSize: AppTextSizes.screenTitle,
@@ -38,7 +39,7 @@ class CaptureUploadHeader extends StatelessWidget {
         ),
         Gap(AppSpacing.xs),
         Text(
-          'Upload one PDF or capture clear photos of a printed sheet.',
+          context.l10n.addSheetDescription,
           style: TextStyle(
             color: colors.secondaryTextColor,
             fontSize: AppTextSizes.label,
@@ -66,7 +67,7 @@ class CaptureUploadHeader extends StatelessWidget {
                   Gap(AppSpacing.xs),
                   Expanded(
                     child: Text(
-                      'Choose one method per sheet',
+                      context.l10n.chooseOneMethod,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -80,7 +81,7 @@ class CaptureUploadHeader extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(left: AppSpacing.lg),
                 child: Text(
-                  '1 PDF (20 MB, 20 pages) or up to 20 captured images (5 MB each). They cannot be combined.',
+                  context.l10n.sheetMethodLimits,
                   style: TextStyle(
                     color: colors.secondaryTextColor,
                     fontSize: AppTextSizes.caption,
@@ -101,8 +102,10 @@ class CaptureUploadHeader extends StatelessWidget {
                   colors: colors,
                   color: const Color(0xFF3B82F6),
                   icon: Icons.upload_file_rounded,
-                  title: isPickingFiles ? 'Opening PDF...' : 'Upload PDF',
-                  description: 'Choose 1 PDF, up to 20 MB and 20 pages.',
+                  title: isPickingFiles
+                      ? context.l10n.openingPdf
+                      : context.l10n.uploadPdf,
+                  description: context.l10n.uploadPdfDescription,
                   isLoading: isPickingFiles,
                   isLocked: isUploadLocked,
                   onTap: isPickingFiles || isSavingSheet ? null : onUpload,
@@ -114,8 +117,8 @@ class CaptureUploadHeader extends StatelessWidget {
                   colors: colors,
                   color: const Color(0xFFF59E0B),
                   icon: Icons.camera_alt_rounded,
-                  title: 'Capture Pages',
-                  description: 'Capture up to 20 images, 5 MB each.',
+                  title: context.l10n.capturePages,
+                  description: context.l10n.capturePagesDescription,
                   isLocked: isCaptureLocked,
                   onTap: isPickingFiles || isSavingSheet ? null : onCapture,
                 ),

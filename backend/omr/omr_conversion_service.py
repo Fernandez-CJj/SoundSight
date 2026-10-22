@@ -4,6 +4,7 @@ from core.musescore_service import exportPdf
 from omr.audiveris_service import convertToMusicXml
 from omr.music_sheet_service import getMusicSheet
 from omr.music_xml_extractor import extractMusicXml
+from omr.music_xml_piano_normalizer import normalizeMusicXmlForPiano
 from omr.music_xml_validator import validateMusicXml
 from omr.omr_source_service import createOmrJobFolders
 from omr.omr_source_service import deleteOmrJobFolder
@@ -64,6 +65,10 @@ def convertMusicSheet(
 
         musicXmlPath = extractMusicXml(
             compressedMusicXmlPath
+        )
+
+        musicXmlPath = normalizeMusicXmlForPiano(
+            musicXmlPath
         )
 
         validationResult = validateMusicXml(

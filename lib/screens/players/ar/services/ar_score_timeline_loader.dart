@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/ar_score_timeline.dart';
@@ -9,12 +10,17 @@ import 'midi_timeline_parser.dart';
 /// Firestore and HTTP dependencies can be injected for isolated tests. When the
 /// loader creates its own HTTP client, [dispose] closes it.
 class ArScoreTimelineLoader {
-  ArScoreTimelineLoader({FirebaseFirestore? firestore, http.Client? httpClient})
-    : firestore = firestore ?? FirebaseFirestore.instance,
-      httpClient = httpClient ?? http.Client(),
-      ownsHttpClient = httpClient == null;
+  ArScoreTimelineLoader({
+    FirebaseFirestore? firestore,
+    FirebaseStorage? storage,
+    http.Client? httpClient,
+  }) : firestore = firestore ?? FirebaseFirestore.instance,
+       storage = storage ?? FirebaseStorage.instance,
+       httpClient = httpClient ?? http.Client(),
+       ownsHttpClient = httpClient == null;
 
   final FirebaseFirestore firestore;
+  final FirebaseStorage storage;
   final http.Client httpClient;
   final bool ownsHttpClient;
 
@@ -51,18 +57,35 @@ class ArScoreTimelineLoader {
 
     Map<String, dynamic>? scoreData = scoreSnapshot.data();
     Object? midiUrlValue = scoreData?['midiUrl'];
+    Object? midiStoragePathValue = scoreData?['midiStoragePath'];
+    String? midiUrl;
 
-    if (midiUrlValue is! String || midiUrlValue.trim().isEmpty) {
+    if (midiUrlValue is String && midiUrlValue.trim().isNotEmpty) {
+      midiUrl = midiUrlValue.trim();
+    } else if (midiStoragePathValue is String &&
+        midiStoragePathValue.trim().isNotEmpty) {
+      try {
+        midiUrl = await storage
+            .ref(midiStoragePathValue.trim())
+            .getDownloadURL();
+      } on FirebaseException catch (error) {
+        throw ArScoreTimelineLoadException(
+          'The MIDI score could not be opened: ${error.message ?? error.code}',
+        );
+      }
+    }
+
+    if (midiUrl == null) {
       throw const ArScoreTimelineLoadException(
-        'The selected challenge does not contain a MIDI score URL.',
+        'The selected score does not contain a MIDI file.',
       );
     }
 
-    Uri? midiUri = Uri.tryParse(midiUrlValue.trim());
+    Uri? midiUri = Uri.tryParse(midiUrl);
 
     if (midiUri == null || !midiUri.hasScheme) {
       throw const ArScoreTimelineLoadException(
-        'The challenge contains an invalid MIDI score URL.',
+        'The selected score contains an invalid MIDI file address.',
       );
     }
 
@@ -89,7 +112,19 @@ class ArScoreTimelineLoader {
     }
 
     try {
-      return midiTimelineParser.parse(midiResponse.bodyBytes);
+      ArScoreTimeline parsedTimeline = midiTimelineParser.parse(
+        midiResponse.bodyBytes,
+      );
+      Object? titleValue = scoreData?['title'];
+      String pieceTitle = titleValue is String && titleValue.trim().isNotEmpty
+          ? titleValue.trim()
+          : 'Untitled score';
+
+      return ArScoreTimeline(
+        noteEvents: parsedTimeline.noteEvents,
+        totalDuration: parsedTimeline.totalDuration,
+        pieceTitle: pieceTitle,
+      );
     } on FormatException catch (error) {
       throw ArScoreTimelineLoadException(error.message.toString());
     }

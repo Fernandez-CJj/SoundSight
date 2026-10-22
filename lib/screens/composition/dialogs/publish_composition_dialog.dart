@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -44,7 +45,9 @@ class PublishCompositionDialog extends StatelessWidget {
           const Gap(AppSpacing.sm),
           Expanded(
             child: Text(
-              isUpdate ? 'Publish Update' : 'Publish Composition',
+              isUpdate
+                  ? context.l10n.publishUpdate
+                  : context.l10n.publishComposition,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -60,8 +63,8 @@ class PublishCompositionDialog extends StatelessWidget {
         children: [
           Text(
             isUpdate
-                ? 'Publish the latest changes to "${composition.title}"?'
-                : 'Publish "${composition.title}"?',
+                ? context.l10n.publishUpdateQuestion(composition.title)
+                : context.l10n.publishCompositionQuestion(composition.title),
             style: TextStyle(
               color: colors.primaryColor,
               fontSize: AppTextSizes.body,
@@ -71,10 +74,8 @@ class PublishCompositionDialog extends StatelessWidget {
           const Gap(AppSpacing.xs),
           Text(
             isUpdate
-                ? 'A new published version and PDF will be created. Previous '
-                      'versions, likes, comments, and saves will remain.'
-                : 'A PDF music sheet will be created and shared with other '
-                      'SoundSight users.',
+                ? context.l10n.publishUpdateDescription
+                : context.l10n.publishCompositionDescription,
             style: TextStyle(
               color: colors.secondaryTextColor,
               fontSize: AppTextSizes.label,
@@ -92,28 +93,30 @@ class PublishCompositionDialog extends StatelessWidget {
             child: Column(
               children: [
                 buildInformationRow(
-                  label: 'Key',
+                  label: context.l10n.keyLabel,
                   value: composition.keySignature,
                 ),
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
-                  label: 'Tempo',
+                  label: context.l10n.tempo,
                   value: '${composition.tempo} BPM',
                 ),
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
-                  label: 'Time Signature',
+                  label: context.l10n.timeSignature,
                   value:
                       '${composition.beatsPerMeasure}/${composition.beatUnit}',
                 ),
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
-                  label: 'Measures',
+                  label: context.l10n.measureLabel(composition.measureCount),
                   value: '${composition.measureCount}',
                 ),
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
-                  label: 'Notes',
+                  label: context.l10n.noteLabel(
+                    composition.playableNoteCount,
+                  ),
                   value: '${composition.playableNoteCount}',
                 ),
               ],
@@ -127,7 +130,7 @@ class PublishCompositionDialog extends StatelessWidget {
             Navigator.pop(context, false);
           },
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(
               color: colors.secondaryTextColor,
               fontWeight: FontWeight.w600,
@@ -139,7 +142,9 @@ class PublishCompositionDialog extends StatelessWidget {
             Navigator.pop(context, true);
           },
           icon: const Icon(Icons.publish_rounded, size: AppIconSizes.sm),
-          label: Text(isUpdate ? 'Publish Update' : 'Publish'),
+          label: Text(
+            isUpdate ? context.l10n.publishUpdate : context.l10n.publish,
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,

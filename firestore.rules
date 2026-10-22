@@ -135,6 +135,11 @@ service cloud.firestore {
                && request.auth.uid == userId;
       }
 
+      function hasValidLanguageCode(data) {
+        return !data.keys().hasAny(['languageCode'])
+               || data.languageCode in ['en', 'fil'];
+      }
+
       function validAssessmentSkillLevelUpdate() {
         let attempt = getAfter(
           /databases/$(database)/documents/users/$(userId)/assessment/current
@@ -164,6 +169,7 @@ service cloud.firestore {
       }
 
       allow create: if ownsUser()
+                    && hasValidLanguageCode(request.resource.data)
                     && (
                       !request.resource.data.keys().hasAny(['skillLevel'])
                       || request.resource.data.skillLevel == null
@@ -174,6 +180,7 @@ service cloud.firestore {
       allow delete: if ownsUser();
 
       allow update: if ownsUser()
+                    && hasValidLanguageCode(request.resource.data)
                     && (
                       !request.resource.data.diff(resource.data)
                         .affectedKeys()
@@ -858,6 +865,7 @@ service cloud.firestore {
         function validPracticeResult(data) {
           return data.keys().hasOnly([
                    'schemaVersion',
+                   'practiceType',
                    'ownerId',
                    'scoreDocumentPath',
                    'source',
@@ -877,10 +885,16 @@ service cloud.firestore {
                    'errorEventCount',
                    'storageStatus'
                  ])
-                 && data.schemaVersion == 1
+                 && data.schemaVersion in [1, 2]
+                 && (data.schemaVersion == 1
+                     || data.practiceType in [
+                          'sightReading',
+                          'synthesia',
+                          'arPerformance'
+                        ])
                  && data.ownerId == userId
                  && data.scoreDocumentPath is string
-                 && data.source in ['composition', 'musicSheet']
+                 && data.source in ['composition', 'musicSheet', 'challenge']
                  && data.pieceTitle is string
                  && data.pieceTitle.size() > 0
                  && data.pieceTitle.size() <= 200

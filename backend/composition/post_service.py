@@ -28,7 +28,7 @@ def getNextPublishedVersion(compositionId):
 
 def saveCompositionPost(
     composition,
-    pdfStoragePath,
+    publishedStoragePaths,
     publicProfile,
     versionNumber,
     sourceUpdatedAt,
@@ -64,7 +64,13 @@ def saveCompositionPost(
             if composition.recordingSchemaVersion == 1
             else len(composition.notes)
         ),
-        "pdfStoragePath": pdfStoragePath,
+        "publishedFilesVersion": 1,
+        "pdfStoragePath": publishedStoragePaths["pdfStoragePath"],
+        "musicXmlStoragePath": (
+            publishedStoragePaths["musicXmlStoragePath"]
+        ),
+        "midiStoragePath": publishedStoragePaths["midiStoragePath"],
+        "mp3StoragePath": publishedStoragePaths["mp3StoragePath"],
         "sourceUpdatedAt": sourceUpdatedAt,
         "publishedAt": (
             firestore.SERVER_TIMESTAMP

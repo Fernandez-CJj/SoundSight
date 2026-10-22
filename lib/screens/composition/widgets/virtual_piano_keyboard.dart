@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/piano_note.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -109,7 +110,7 @@ class _VirtualPianoKeyboardState extends State<VirtualPianoKeyboard> {
     return Column(
       children: [
         Text(
-          'Swipe horizontally to view the piano',
+          context.l10n.swipeToViewPiano,
           style: TextStyle(
             color: widget.colors.primaryColor,
             fontSize: AppTextSizes.label,
@@ -138,7 +139,7 @@ class _VirtualPianoKeyboardState extends State<VirtualPianoKeyboard> {
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Previous octave',
+            tooltip: context.l10n.previousOctave,
             onPressed: selectedOctave > minimumSelectableOctave
                 ? () {
                     selectOctave(selectedOctave - 1);
@@ -148,7 +149,7 @@ class _VirtualPianoKeyboardState extends State<VirtualPianoKeyboard> {
             icon: const Icon(Icons.chevron_left_rounded),
           ),
           PopupMenuButton<int>(
-            tooltip: 'Select octave',
+            tooltip: context.l10n.selectOctave,
             color: colors.surfaceColor,
             onSelected: selectOctave,
             itemBuilder: (context) {
@@ -161,7 +162,10 @@ class _VirtualPianoKeyboardState extends State<VirtualPianoKeyboard> {
                   PopupMenuItem<int>(
                     value: octave,
                     child: Text(
-                      'Octave $octave  -  ${octaveRangeLabel(octave)}',
+                      context.l10n.octaveWithRange(
+                        octave,
+                        octaveRangeLabel(octave),
+                      ),
                       style: TextStyle(color: colors.primaryColor),
                     ),
                   ),
@@ -187,7 +191,7 @@ class _VirtualPianoKeyboardState extends State<VirtualPianoKeyboard> {
                   ),
                   const Gap(AppSpacing.xs),
                   Text(
-                    'Octave $selectedOctave',
+                    context.l10n.octaveNumber(selectedOctave),
                     style: TextStyle(
                       color: colors.primaryColor,
                       fontSize: AppTextSizes.caption,
@@ -205,7 +209,7 @@ class _VirtualPianoKeyboardState extends State<VirtualPianoKeyboard> {
             ),
           ),
           IconButton(
-            tooltip: 'Next octave',
+            tooltip: context.l10n.nextOctave,
             onPressed: selectedOctave < maximumSelectableOctave
                 ? () {
                     selectOctave(selectedOctave + 1);
@@ -583,7 +587,7 @@ class _PianoKeyPressRegionState extends State<_PianoKeyPressRegion> {
     return Semantics(
       button: true,
       enabled: widget.enabled,
-      label: 'Piano key ${widget.label}',
+      label: context.l10n.pianoKeySemanticLabel(widget.label),
       onTap: widget.enabled ? widget.onPressed : null,
       child: MouseRegion(
         cursor: widget.enabled

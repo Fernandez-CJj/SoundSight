@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_audio_preview.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -92,7 +93,7 @@ class _CompositionGeneratedPreviewState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Generated preview',
+                      context.l10n.generatedPreview,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -101,7 +102,7 @@ class _CompositionGeneratedPreviewState
                     ),
                     const Gap(2),
                     Text(
-                      'Review your sheet music and listen before publishing.',
+                      context.l10n.generatedPreviewDescription,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -118,10 +119,10 @@ class _CompositionGeneratedPreviewState
           MusicSheetAudioPreview(
             colors: colors,
             storagePath: widget.mp3StoragePath,
-            title: 'Composition playback',
-            loadingText: 'Loading your composition...',
-            playingText: 'Playing your composition',
-            idleText: 'Listen to the generated composition',
+            title: context.l10n.compositionPlayback,
+            loadingText: context.l10n.loadingComposition,
+            playingText: context.l10n.playingComposition,
+            idleText: context.l10n.listenGeneratedComposition,
           ),
         ],
       ),
@@ -163,7 +164,7 @@ class _CompositionGeneratedPreviewState
               children: [
                 Expanded(
                   child: Text(
-                    'Sheet music',
+                    context.l10n.sheetMusic,
                     style: TextStyle(
                       color: colors.primaryColor,
                       fontSize: AppTextSizes.label,
@@ -175,8 +176,11 @@ class _CompositionGeneratedPreviewState
                   onPressed: () {
                     openFullScreenPreview(pdfBytes);
                   },
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primaryColor,
+                  ),
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: const Text('Full screen'),
+                  label: Text(context.l10n.fullScreen),
                 ),
               ],
             ),
@@ -232,7 +236,7 @@ class _CompositionGeneratedPreviewState
           ),
           const Gap(AppSpacing.md),
           Text(
-            'The sheet music could not be loaded.',
+            context.l10n.sheetMusicLoadFailed,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.primaryColor,
@@ -242,7 +246,7 @@ class _CompositionGeneratedPreviewState
           ),
           const Gap(AppSpacing.xs),
           Text(
-            'Check your connection, then try again.',
+            context.l10n.checkConnectionTryAgain,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.secondaryTextColor,
@@ -253,7 +257,7 @@ class _CompositionGeneratedPreviewState
           OutlinedButton.icon(
             onPressed: retryLoading,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try Again'),
+            label: Text(context.l10n.tryAgain),
           ),
         ],
       ),

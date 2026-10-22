@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/widgets/composition_card.dart';
 import 'package:soundsight/screens/composition/screens/composition_details_screen.dart';
@@ -63,16 +64,16 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        title: const Text(
-          'My Compositions',
-          style: TextStyle(
+        title: Text(
+          context.l10n.myCompositions,
+          style: const TextStyle(
             fontSize: AppTextSizes.sectionTitle,
             fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
           IconButton(
-            tooltip: 'New composition',
+            tooltip: context.l10n.newComposition,
             onPressed: openNewComposition,
             icon: const Icon(Icons.add_rounded, size: AppIconSizes.lg),
           ),
@@ -151,9 +152,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           onRetryGeneration: () {
             retryCompositionGeneration(composition);
           },
-          onDelete: () {
-            deleteComposition(colors, composition);
-          },
+          onDelete: () => deleteComposition(colors, composition),
         );
       },
     );
@@ -170,7 +169,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Your piano pieces',
+                    context.l10n.yourPianoPieces,
                     style: TextStyle(
                       color: colors.primaryColor,
                       fontSize: AppTextSizes.screenTitle,
@@ -179,7 +178,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                   ),
                   const Gap(AppSpacing.xs),
                   Text(
-                    'Create, play, and manage your simple melodies.',
+                    context.l10n.compositionsDescription,
                     style: TextStyle(
                       color: colors.secondaryTextColor,
                       fontSize: AppTextSizes.label,
@@ -216,9 +215,9 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           child: ElevatedButton.icon(
             onPressed: openNewComposition,
             icon: const Icon(Icons.add_rounded),
-            label: const Text(
-              'New Composition',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            label: Text(
+              context.l10n.newComposition,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primaryColor,
@@ -257,7 +256,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.lg),
             Text(
-              'No compositions yet',
+              context.l10n.noCompositions,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -267,8 +266,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.sm),
             Text(
-              'Create your first piano piece using melodies, chords, '
-              'and custom measures.',
+              context.l10n.noCompositionsDescription,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -280,7 +278,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ElevatedButton.icon(
               onPressed: openNewComposition,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('New Composition'),
+              label: Text(context.l10n.newComposition),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primaryColor,
                 foregroundColor: colors.backgroundColor,
@@ -314,7 +312,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.md),
             Text(
-              'Your compositions could not be loaded.',
+              context.l10n.compositionsLoadError,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -324,7 +322,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.xs),
             Text(
-              'Check your connection and Firestore permissions.',
+              context.l10n.musicSheetsLoadErrorHelp,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -340,7 +338,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   Widget buildSignedOutState(AppThemeColors colors) {
     return Center(
       child: Text(
-        'Sign in to view your compositions.',
+        context.l10n.signInForCompositions,
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -384,16 +382,13 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
       if (!mounted) return;
 
       if (savedComposition?.generatedFilesAreCurrent == true) {
-        showMessage('Composition saved and music files are ready.');
+        showMessage(context.l10n.compositionSavedFilesReady);
       } else {
-        showMessage(
-          'Composition saved safely. Your sheet music and playback files '
-          'are not ready yet.',
-        );
+        showMessage(context.l10n.compositionSavedFilesPending);
       }
     } catch (_) {
       if (mounted) {
-        showMessage('Composition saved.');
+        showMessage(context.l10n.compositionSaved);
       }
     }
   }
@@ -411,7 +406,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
     if (!mounted || wasDeleted != true) return;
 
-    showMessage('"${composition.title}" was deleted.');
+    showMessage(context.l10n.compositionDeleted(composition.title));
   }
 
   Future<void> retryCompositionGeneration(Composition composition) async {
@@ -428,14 +423,11 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
       if (!mounted) return;
 
-      showMessage('Your music files are ready.');
+      showMessage(context.l10n.compositionMusicFilesReady);
     } catch (_) {
       if (!mounted) return;
 
-      showMessage(
-        'Your composition is saved, but the music files still could not be '
-        'prepared. Try again when the service is available.',
-      );
+      showMessage(context.l10n.compositionMusicFilesFailed);
     } finally {
       if (mounted) {
         setState(() {
@@ -473,10 +465,10 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
       if (!mounted) return;
 
-      showMessage('"${composition.title}" was deleted.');
+      showMessage(context.l10n.compositionDeleted(composition.title));
     } catch (_) {
       if (mounted) {
-        showMessage('The composition could not be deleted.');
+        showMessage(context.l10n.compositionDeleteFailed);
       }
     } finally {
       if (mounted) {

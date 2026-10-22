@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../constants/constant.dart';
@@ -32,7 +33,7 @@ class EditProfileActions extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
-              child: Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
           ),
         ),
@@ -50,7 +51,7 @@ class EditProfileActions extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
-              child: Text('Save Changes'),
+              child: Text(context.l10n.saveChanges),
             ),
           ),
         ),

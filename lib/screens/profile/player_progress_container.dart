@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../constants/constant.dart';
@@ -29,9 +30,17 @@ class PlayerProgressContainer extends StatelessWidget {
         .clamp(0, experienceToNextLevel);
     final normalizedSkillLevel = skillLevel.trim();
     final isUnderAssessment = normalizedSkillLevel.isEmpty;
+    final localizedSkillLevel = switch (normalizedSkillLevel.toLowerCase()) {
+      'beginner' => context.l10n.beginner,
+      'intermediate' => context.l10n.intermediate,
+      'advanced' => context.l10n.advanced,
+      _ when normalizedSkillLevel.isNotEmpty =>
+        '${normalizedSkillLevel[0].toUpperCase()}${normalizedSkillLevel.substring(1)}',
+      _ => '',
+    };
     final rank = isUnderAssessment
-        ? 'Under Assessment'
-        : '${normalizedSkillLevel[0].toUpperCase()}${normalizedSkillLevel.substring(1)}';
+        ? context.l10n.underAssessment
+        : context.l10n.rankLabel(localizedSkillLevel);
 
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
@@ -65,7 +74,7 @@ class PlayerProgressContainer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Player Progress',
+                      context.l10n.playerProgress,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.body,
@@ -74,7 +83,7 @@ class PlayerProgressContainer extends StatelessWidget {
                     ),
                     Gap(AppSpacing.xs),
                     Text(
-                      isUnderAssessment ? rank : '$rank rank',
+                      rank,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -93,7 +102,7 @@ class PlayerProgressContainer extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Text(
-                  'LEVEL $level',
+                  context.l10n.levelLabel(level),
                   style: TextStyle(
                     color: colors.backgroundColor,
                     fontSize: AppTextSizes.caption,
@@ -107,7 +116,7 @@ class PlayerProgressContainer extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Experience',
+                context.l10n.experience,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
                   fontSize: AppTextSizes.caption,
@@ -140,7 +149,7 @@ class PlayerProgressContainer extends StatelessWidget {
               Icon(Icons.bolt_rounded, color: colors.primaryColor, size: 17),
               Gap(AppSpacing.xs),
               Text(
-                '$remainingExperience XP needed',
+                context.l10n.xpNeeded(remainingExperience),
                 style: TextStyle(
                   color: colors.secondaryTextColor,
                   fontSize: AppTextSizes.caption,
@@ -148,7 +157,7 @@ class PlayerProgressContainer extends StatelessWidget {
               ),
               Spacer(),
               Text(
-                'Next level',
+                context.l10n.nextLevel,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
                   fontSize: AppTextSizes.caption,

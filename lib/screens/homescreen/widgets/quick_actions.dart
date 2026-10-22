@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class QuickActions extends StatelessWidget {
@@ -27,37 +28,37 @@ class QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final quickActions = [
       _QuickAction(
-        'Music Sheets',
+        context.l10n.musicSheets,
         Icons.queue_music,
         const Color(0xFF3B82F6),
         onMusicSheets,
       ),
       _QuickAction(
-        'Upload Sheet',
+        context.l10n.drawerUploadSheet,
         Icons.upload,
         const Color(0xFF22C55E),
         onUploadSheet,
       ),
       _QuickAction(
-        'Capture Sheet',
+        context.l10n.captureSheet,
         Icons.camera_alt_outlined,
         const Color(0xFFF59E0B),
         onCaptureSheet,
       ),
       _QuickAction(
-        'Saved Sheets',
+        context.l10n.drawerSavedSheets,
         Icons.folder_open,
         const Color(0xFF8B5CF6),
         onSavedSheets,
       ),
       _QuickAction(
-        'Composition',
+        context.l10n.drawerComposition,
         Icons.edit_outlined,
         const Color(0xFFEC4899),
         onComposition,
       ),
       _QuickAction(
-        'Published Compositions',
+        context.l10n.drawerPublishedCompositions,
         Icons.public_rounded,
         const Color(0xFF06B6D4),
         onPublishedCompositions,
@@ -68,7 +69,7 @@ class QuickActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
+          context.l10n.quickActions,
           style: TextStyle(
             color: colors.primaryColor,
             fontSize: AppTextSizes.label,

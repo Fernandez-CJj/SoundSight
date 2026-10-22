@@ -4,44 +4,120 @@ from uuid import uuid4
 from core.firebase_service import getStorageBucket
 
 
-def uploadPdf(
-    pdfPath,
+def copyPublishedCompositionFiles(
+    privateStoragePaths,
     ownerId,
     compositionId,
     versionNumber,
 ):
-    if not os.path.exists(pdfPath):
-        raise FileNotFoundError(
-            "The PDF file does not exist."
-        )
-
-    if compositionId == "":
+    if ownerId == "" or compositionId == "":
         raise ValueError(
-            "The composition ID cannot be empty."
+            "The published composition owner and ID are required."
         )
 
     bucket = getStorageBucket()
-
-    storagePath = (
+    privatePrefix = (
+        "composition_files/"
+        + ownerId
+        + "/"
+        + compositionId
+        + "/"
+    )
+    publicPrefix = (
         "published_compositions/"
         + ownerId
         + "/"
         + compositionId
         + "/version_"
         + str(versionNumber)
-        + ".pdf"
     )
+    fileDefinitions = [
+        {
+            "key": "pdfStoragePath",
+            "extension": "pdf",
+            "contentType": "application/pdf",
+        },
+        {
+            "key": "musicXmlStoragePath",
+            "extension": "musicxml",
+            "contentType": "application/vnd.recordare.musicxml+xml",
+        },
+        {
+            "key": "midiStoragePath",
+            "extension": "mid",
+            "contentType": "audio/midi",
+        },
+        {
+            "key": "mp3StoragePath",
+            "extension": "mp3",
+            "contentType": "audio/mpeg",
+        },
+    ]
+    publishedStoragePaths = {}
+    copiedFiles = []
 
-    pdfFile = bucket.blob(
-        storagePath
-    )
+    try:
+        for fileDefinition in fileDefinitions:
+            resultKey = fileDefinition["key"]
+            privatePath = privateStoragePaths.get(resultKey)
 
-    pdfFile.upload_from_filename(
-        pdfPath,
-        content_type="application/pdf",
-    )
+            if (
+                not isinstance(privatePath, str)
+                or not privatePath.startswith(privatePrefix)
+            ):
+                raise ValueError(
+                    "The private composition file paths are invalid."
+                )
 
-    return storagePath
+            privateFile = bucket.blob(privatePath)
+            if not privateFile.exists():
+                raise FileNotFoundError(
+                    "A private composition file is missing: "
+                    + privatePath
+                )
+
+            publicPath = (
+                publicPrefix
+                + "."
+                + fileDefinition["extension"]
+            )
+            publicFile = bucket.copy_blob(
+                privateFile,
+                bucket,
+                new_name=publicPath,
+            )
+            publicFile.content_type = fileDefinition["contentType"]
+            publicFile.metadata = {
+                "firebaseStorageDownloadTokens": str(uuid4()),
+            }
+            publicFile.patch()
+
+            copiedFiles.append(publicFile)
+            publishedStoragePaths[resultKey] = publicPath
+    except Exception:
+        for copiedFile in copiedFiles:
+            try:
+                copiedFile.delete()
+            except Exception:
+                pass
+        raise
+
+    return publishedStoragePaths
+
+
+def deleteStoragePaths(storagePaths):
+    bucket = getStorageBucket()
+
+    for storagePath in storagePaths:
+        if not isinstance(storagePath, str) or storagePath == "":
+            continue
+
+        try:
+            storageFile = bucket.blob(storagePath)
+            if storageFile.exists():
+                storageFile.delete()
+        except Exception:
+            pass
 
 
 def uploadCompositionFiles(
@@ -157,7 +233,7 @@ def uploadCompositionFiles(
     return storagePaths
 
 
-def deletePublishedPdfs(
+def deletePublishedCompositionFiles(
     ownerId,
     compositionId,
 ):
@@ -171,10 +247,10 @@ def deletePublishedPdfs(
         + "/"
     )
 
-    for pdfFile in bucket.list_blobs(
+    for publishedFile in bucket.list_blobs(
         prefix=versionedPrefix
     ):
-        pdfFile.delete()
+        publishedFile.delete()
 
     legacyPath = (
         "published_compositions/"

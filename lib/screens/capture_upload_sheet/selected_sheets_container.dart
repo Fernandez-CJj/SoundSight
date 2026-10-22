@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_dialogs.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -34,7 +35,7 @@ class SelectedSheetsContainer extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Selected files',
+                context.l10n.selectedFiles,
                 style: TextStyle(
                   color: colors.primaryColor,
                   fontSize: AppTextSizes.body,
@@ -53,8 +54,11 @@ class SelectedSheetsContainer extends StatelessWidget {
               ),
               child: Text(
                 selectedPdfPageCount == null
-                    ? '${selectedSheets.length} / 20'
-                    : '1 PDF',
+                    ? context.l10n.selectedImageLimit(
+                        selectedSheets.length,
+                        20,
+                      )
+                    : context.l10n.onePdf,
                 style: TextStyle(
                   color: colors.backgroundColor,
                   fontSize: AppTextSizes.caption,
@@ -66,7 +70,7 @@ class SelectedSheetsContainer extends StatelessWidget {
         ),
         Gap(AppSpacing.xs),
         Text(
-          'Tap to preview - Swipe right to remove',
+          context.l10n.selectedFileInstructions,
           style: TextStyle(
             color: colors.secondaryTextColor,
             fontSize: AppTextSizes.caption,
@@ -156,8 +160,15 @@ class SelectedSheetsContainer extends StatelessWidget {
                               Gap(2),
                               Text(
                                 isPdf && selectedPdfPageCount != null
-                                    ? 'PDF - $fileSize - $selectedPdfPageCount pages'
-                                    : 'Image - $fileSize',
+                                    ? context.l10n.selectedPdfMetadata(
+                                        fileSize,
+                                        context.l10n.pageCount(
+                                          selectedPdfPageCount!,
+                                        ),
+                                      )
+                                    : context.l10n.selectedImageMetadata(
+                                        fileSize,
+                                      ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(

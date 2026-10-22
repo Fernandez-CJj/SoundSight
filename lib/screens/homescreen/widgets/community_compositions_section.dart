@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
@@ -63,7 +64,7 @@ class _CommunityCompositionsSectionState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Community Compositions',
+                    context.l10n.communityCompositions,
                     style: TextStyle(
                       color: colors.primaryColor,
                       fontSize: AppTextSizes.body,
@@ -72,7 +73,7 @@ class _CommunityCompositionsSectionState
                   ),
                   const Gap(2),
                   Text(
-                    'Discover music shared by other users.',
+                    context.l10n.communityCompositionsDescription,
                     style: TextStyle(
                       color: colors.secondaryTextColor,
                       fontSize: AppTextSizes.caption,
@@ -86,15 +87,18 @@ class _CommunityCompositionsSectionState
               style: TextButton.styleFrom(
                 foregroundColor: colors.primaryColor,
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'See All',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    context.l10n.seeAll,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  Gap(AppSpacing.xs),
-                  Icon(Icons.arrow_forward_rounded, size: AppIconSizes.sm),
+                  const Gap(AppSpacing.xs),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: AppIconSizes.sm,
+                  ),
                 ],
               ),
             ),
@@ -111,7 +115,7 @@ class _CommunityCompositionsSectionState
             if (snapshot.hasError) {
               return buildMessageState(
                 icon: Icons.cloud_off_outlined,
-                message: 'Community compositions could not be loaded.',
+                message: context.l10n.communityCompositionsLoadFailed,
               );
             }
 
@@ -120,7 +124,7 @@ class _CommunityCompositionsSectionState
             if (compositions.isEmpty) {
               return buildMessageState(
                 icon: Icons.music_note_rounded,
-                message: 'No community compositions have been shared yet.',
+                message: context.l10n.noCommunityCompositions,
               );
             }
 
@@ -237,11 +241,7 @@ class _CommunityCompositionsSectionState
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const Gap(AppSpacing.sm),
-                Row(
-                  children: [
+                    const Gap(AppSpacing.sm),
                     StreamBuilder<int>(
                       stream: socialService.getLikeCount(
                         composition.id,
@@ -269,45 +269,48 @@ class _CommunityCompositionsSectionState
                         );
                       },
                     ),
-                    const Spacer(),
-                    SizedBox(
-                      height: 38,
-                      child: ElevatedButton.icon(
-                        onPressed: playbackController.isBusy
-                            ? null
-                            : () {
-                                playComposition(composition);
-                              },
-                        icon: isLoading
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colors.backgroundColor,
-                                ),
-                              )
-                            : Icon(
-                                isPlaying
-                                    ? Icons.stop_rounded
-                                    : Icons.play_arrow_rounded,
-                                size: AppIconSizes.sm,
+                  ],
+                ),
+                const Gap(AppSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  height: 38,
+                  child: ElevatedButton.icon(
+                      onPressed: playbackController.isBusy
+                          ? null
+                          : () {
+                              playComposition(composition);
+                            },
+                      icon: isLoading
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.backgroundColor,
                               ),
-                        label: Text(isPlaying ? 'Stop' : 'Play'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primaryColor,
-                          foregroundColor: colors.backgroundColor,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                          ),
+                            )
+                          : Icon(
+                              isPlaying
+                                  ? Icons.stop_rounded
+                                  : Icons.play_arrow_rounded,
+                              size: AppIconSizes.sm,
+                            ),
+                      label: Text(
+                        isPlaying ? context.l10n.stop : context.l10n.play,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primaryColor,
+                        foregroundColor: colors.backgroundColor,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                       ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -365,13 +368,20 @@ class _CommunityCompositionsSectionState
     final resultMessage = await playbackController.togglePlayback(
       composition,
       onPlaybackStarted: () {
-        showMessage('Playing "${composition.title}".');
+        showMessage(context.l10n.communityPlaying(composition.title));
       },
     );
 
     if (!mounted || resultMessage == null) return;
 
-    showMessage(resultMessage);
+    final localizedMessage = switch (resultMessage) {
+      'Playback stopped.' => context.l10n.communityPlaybackStopped,
+      'This version has no playback data. Republish it first.' =>
+        context.l10n.communityNoPlaybackData,
+      _ => context.l10n.communityPlaybackFailed,
+    };
+
+    showMessage(localizedMessage);
   }
 
   void updatePlaybackState() {

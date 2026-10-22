@@ -9,6 +9,9 @@ class AppThemeColors {
     required this.primaryColor,
     required this.secondaryTextColor,
     required this.borderColor,
+    required this.sightReadingResultColor,
+    required this.synthesiaResultColor,
+    required this.arPerformanceResultColor,
     required this.logoPath,
   });
 
@@ -18,6 +21,9 @@ class AppThemeColors {
   final Color primaryColor;
   final Color secondaryTextColor;
   final Color borderColor;
+  final Color sightReadingResultColor;
+  final Color synthesiaResultColor;
+  final Color arPerformanceResultColor;
   final String logoPath;
 
   factory AppThemeColors.fromDarkMode(bool isDarkMode) {
@@ -29,6 +35,9 @@ class AppThemeColors {
             primaryColor: AppColors.darkPrimary,
             secondaryTextColor: AppColors.darkSecondaryText,
             borderColor: AppColors.darkBorder,
+            sightReadingResultColor: AppColors.darkSightReadingResult,
+            synthesiaResultColor: AppColors.darkSynthesiaResult,
+            arPerformanceResultColor: AppColors.darkArPerformanceResult,
             logoPath: 'assets/images/logo_image_dark.png',
           )
         : const AppThemeColors(
@@ -38,6 +47,9 @@ class AppThemeColors {
             primaryColor: AppColors.lightPrimary,
             secondaryTextColor: AppColors.lightSecondaryText,
             borderColor: AppColors.lightBorder,
+            sightReadingResultColor: AppColors.sightReadingResult,
+            synthesiaResultColor: AppColors.synthesiaResult,
+            arPerformanceResultColor: AppColors.arPerformanceResult,
             logoPath: 'assets/images/logo_image_light.png',
           );
   }

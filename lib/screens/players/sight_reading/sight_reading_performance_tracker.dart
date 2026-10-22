@@ -7,7 +7,7 @@ class SightReadingPerformanceTracker {
   SightReadingPerformanceTracker({
     this.timingTolerance = const Duration(milliseconds: 300),
     this.chordPressWindow = const Duration(milliseconds: 200),
-    this.minimumHoldRatio = 0.8,
+    this.minimumHoldRatio = 0.6,
   });
 
   Duration timingTolerance;
@@ -133,6 +133,20 @@ class SightReadingPerformanceTracker {
     if (stateChanged) {
       cursorIsWrong = false;
       resultText = 'Play on time';
+    }
+
+    final currentEvent = timelineEvents[cursorEventIndex];
+    final currentAttempt = eventAttempts[cursorEventIndex];
+    final pressDeadline = currentEvent.scheduledTime.inMilliseconds +
+        timingTolerance.inMilliseconds;
+    final currentNoteWasMissed =
+        elapsedMilliseconds > pressDeadline &&
+        !(currentAttempt?.matched ?? false);
+
+    if (currentNoteWasMissed && !cursorIsWrong) {
+      cursorIsWrong = true;
+      resultText = 'Missed';
+      stateChanged = true;
     }
 
     while (nextEvaluationIndex < timelineEvents.length) {
@@ -433,6 +447,7 @@ class SightReadingPerformanceTracker {
     required String source,
     required String pieceTitle,
     required int elapsedDurationMs,
+    required SightReadingPerformanceReportMessages messages,
   }) {
     final noteTotals = <int, int>{};
     final noteErrors = <int, int>{};
@@ -547,6 +562,7 @@ class SightReadingPerformanceTracker {
       issueCounts: issueCounts,
       errorEventCount: errorEvents.length,
       totalEventCount: totalEventCount,
+      messages: messages,
     );
 
     final summary = PracticeResultSummary(
@@ -591,19 +607,16 @@ class SightReadingPerformanceTracker {
     required Map<PerformanceIssueType, int> issueCounts,
     required int errorEventCount,
     required int totalEventCount,
+    required SightReadingPerformanceReportMessages messages,
   }) {
     if (errorEventCount == 0) {
-      return const [
-        'Great job! You played every part correctly. Try the same piece a little faster when you feel ready.',
-      ];
+      return [messages.perfectPerformance];
     }
 
     final suggestions = <String>[];
 
     if (errorEventCount <= math.max(1, (totalEventCount * 0.10).ceil())) {
-      suggestions.add(
-        'You were very close. Play it once more at the same speed, then try it a little faster.',
-      );
+      suggestions.add(messages.almostPerfect);
     }
 
     final weakClefs =
@@ -618,17 +631,11 @@ class SightReadingPerformanceTracker {
     if (weakClefs.isNotEmpty) {
       final weakClef = weakClefs.first;
       if (weakClef.clef == 'bass') {
-        suggestions.add(
-          'The lower notes in the bass clef were difficult. Practise the left-hand part slowly by itself first.',
-        );
+        suggestions.add(messages.bassClef);
       } else if (weakClef.clef == 'treble') {
-        suggestions.add(
-          'The higher notes in the treble clef were difficult. Practise the right-hand part slowly by itself first.',
-        );
+        suggestions.add(messages.trebleClef);
       } else {
-        suggestions.add(
-          'The ${_capitalize(weakClef.clef)} clef was difficult. Practise that part slowly before playing the whole piece again.',
-        );
+        suggestions.add(messages.otherClef(weakClef.clef));
       }
     }
 
@@ -643,9 +650,7 @@ class SightReadingPerformanceTracker {
 
     if (difficultNotes.isNotEmpty && suggestions.length < 3) {
       final note = difficultNotes.first;
-      suggestions.add(
-        'You had trouble finding ${_midiNoteName(note.midiNote)}. Practise finding that key slowly, then play it with the notes beside it.',
-      );
+      suggestions.add(messages.difficultNote(_midiNoteName(note.midiNote)));
     }
 
     final missedCount = issueCounts[PerformanceIssueType.missed] ?? 0;
@@ -656,39 +661,27 @@ class SightReadingPerformanceTracker {
         issueCounts[PerformanceIssueType.releasedEarly] ?? 0;
 
     if (suggestions.length < 3 && releasedEarlyCount >= 3) {
-      suggestions.add(
-        'Some notes were released too soon. Keep each key held until its full note value is finished.',
-      );
+      suggestions.add(messages.releasedTooSoon);
     }
 
     if (suggestions.length < 3 && missedCount >= 3) {
-      suggestions.add(
-        'Some notes passed before you played them. Slow the piece down and count the beat aloud while you practise.',
-      );
+      suggestions.add(messages.missedNotes);
     }
 
     if (suggestions.length < 3 && lateCount >= 3 && lateCount > earlyCount) {
-      suggestions.add(
-        'You often played after the beat. Slow down and look one note ahead so your fingers are ready sooner.',
-      );
+      suggestions.add(messages.playedLate);
     } else if (suggestions.length < 3 &&
         earlyCount >= 3 &&
         earlyCount > lateCount) {
-      suggestions.add(
-        'You often played before the beat. Count steadily and wait for the beat before pressing the key.',
-      );
+      suggestions.add(messages.playedEarly);
     }
 
     if (suggestions.length < 3 && chordCount >= 3) {
-      suggestions.add(
-        'Some notes in a chord were pressed at different times. Practise pressing all the chord keys together, one hand at a time.',
-      );
+      suggestions.add(messages.chordTiming);
     }
 
     if (suggestions.isEmpty) {
-      suggestions.add(
-        'Play the difficult parts slowly a few times, then try the whole piece again at its normal speed.',
-      );
+      suggestions.add(messages.generalPractice);
     }
 
     return suggestions.take(3).toList(growable: false);
@@ -714,13 +707,36 @@ class SightReadingPerformanceTracker {
     return '${names[normalized % 12]}$octave';
   }
 
-  String _capitalize(String value) {
-    if (value.isEmpty) {
-      return value;
-    }
+}
 
-    return '${value[0].toUpperCase()}${value.substring(1)}';
-  }
+class SightReadingPerformanceReportMessages {
+  const SightReadingPerformanceReportMessages({
+    required this.perfectPerformance,
+    required this.almostPerfect,
+    required this.bassClef,
+    required this.trebleClef,
+    required this.otherClef,
+    required this.difficultNote,
+    required this.releasedTooSoon,
+    required this.missedNotes,
+    required this.playedLate,
+    required this.playedEarly,
+    required this.chordTiming,
+    required this.generalPractice,
+  });
+
+  final String perfectPerformance;
+  final String almostPerfect;
+  final String bassClef;
+  final String trebleClef;
+  final String Function(String clef) otherClef;
+  final String Function(String note) difficultNote;
+  final String releasedTooSoon;
+  final String missedNotes;
+  final String playedLate;
+  final String playedEarly;
+  final String chordTiming;
+  final String generalPractice;
 }
 
 class PerformanceEventAttempt {

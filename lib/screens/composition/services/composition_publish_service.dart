@@ -1,11 +1,27 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:soundsight/screens/composition/models/composition.dart';
 
 enum CompositionPublicationAction { publish, publishUpdate, unpublish }
+
+class CompositionPublicationException implements Exception {
+  const CompositionPublicationException({
+    required this.statusCode,
+    required this.message,
+  });
+
+  final int statusCode;
+  final String message;
+
+  bool get isUnauthorized => statusCode == 401;
+
+  @override
+  String toString() => message;
+}
 
 class CompositionPublication {
   const CompositionPublication({
@@ -97,30 +113,22 @@ class CompositionPublishService {
   }
 
   Future<String> publishComposition(Composition composition) async {
-    final requestData = composition.toMap();
-
-    requestData['id'] = composition.id;
-    requestData['notes'] = composition.notes.map((note) {
-      final noteData = note.toMap();
-
-      noteData['id'] = note.id;
-      noteData.remove('noteId');
-
-      return noteData;
-    }).toList();
-
-    final response = await http
-        .post(
-          Uri.parse('$backendUrl/compositions'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(requestData),
-        )
-        .timeout(const Duration(minutes: 2));
+    final uri = Uri.parse(
+      '$backendUrl/compositions/${composition.id}/publish',
+    );
+    final response = await sendAuthenticatedRequest(
+      (idToken) => http
+          .post(uri, headers: {'Authorization': 'Bearer $idToken'})
+          .timeout(const Duration(minutes: 2)),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Publishing failed with status '
-        '${response.statusCode}.',
+      throw CompositionPublicationException(
+        statusCode: response.statusCode,
+        message: readErrorMessage(
+          response,
+          'Publishing failed with status ${response.statusCode}.',
+        ),
       );
     }
 
@@ -131,21 +139,65 @@ class CompositionPublishService {
 
   Future<void> unpublishComposition({
     required String compositionId,
-    required String ownerId,
   }) async {
-    final response = await http
-        .delete(
-          Uri.parse('$backendUrl/compositions/$compositionId'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'ownerId': ownerId}),
-        )
-        .timeout(const Duration(minutes: 1));
+    final uri = Uri.parse(
+      '$backendUrl/compositions/$compositionId/publish',
+    );
+    final response = await sendAuthenticatedRequest(
+      (idToken) => http
+          .delete(uri, headers: {'Authorization': 'Bearer $idToken'})
+          .timeout(const Duration(minutes: 1)),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Unpublishing failed with status '
-        '${response.statusCode}.',
+      throw CompositionPublicationException(
+        statusCode: response.statusCode,
+        message: readErrorMessage(
+          response,
+          'Unpublishing failed with status ${response.statusCode}.',
+        ),
       );
     }
+  }
+
+  Future<http.Response> sendAuthenticatedRequest(
+    Future<http.Response> Function(String idToken) request,
+  ) async {
+    var response = await request(await requireIdToken());
+    if (response.statusCode != 401) return response;
+
+    await FirebaseAuth.instance.currentUser?.reload();
+    response = await request(await requireIdToken());
+    return response;
+  }
+
+  String readErrorMessage(http.Response response, String fallback) {
+    try {
+      final responseData = jsonDecode(response.body);
+      if (responseData is Map<String, dynamic>) {
+        final detail = responseData['detail'];
+        if (detail is String && detail.trim().isNotEmpty) {
+          return detail.trim();
+        }
+      }
+    } on FormatException {
+      return fallback;
+    }
+
+    return fallback;
+  }
+
+  Future<String> requireIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw StateError('Sign in before changing a publication.');
+    }
+
+    final idToken = await user.getIdToken(true);
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Your sign-in session could not be verified.');
+    }
+
+    return idToken;
   }
 }

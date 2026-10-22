@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class RenameMusicSheetDialog extends StatefulWidget {
@@ -64,7 +65,7 @@ class _RenameMusicSheetDialogState extends State<RenameMusicSheetDialog> {
           Gap(AppSpacing.sm),
           Expanded(
             child: Text(
-              'Rename sheet',
+              context.l10n.renameSheet,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -83,7 +84,7 @@ class _RenameMusicSheetDialogState extends State<RenameMusicSheetDialog> {
           textInputAction: TextInputAction.done,
           style: TextStyle(color: colors.primaryColor),
           decoration: InputDecoration(
-            labelText: 'Sheet title',
+            labelText: context.l10n.sheetTitle,
             labelStyle: TextStyle(color: colors.secondaryTextColor),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -104,7 +105,7 @@ class _RenameMusicSheetDialogState extends State<RenameMusicSheetDialog> {
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Enter a title for this sheet.';
+              return context.l10n.enterSheetTitle;
             }
             return null;
           },
@@ -115,7 +116,7 @@ class _RenameMusicSheetDialogState extends State<RenameMusicSheetDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
           ),
         ),
@@ -129,7 +130,7 @@ class _RenameMusicSheetDialogState extends State<RenameMusicSheetDialog> {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-          child: const Text('Save'),
+          child: Text(context.l10n.save),
         ),
       ],
     );
@@ -179,7 +180,7 @@ class DeleteMusicSheetDialog extends StatelessWidget {
           Gap(AppSpacing.sm),
           Expanded(
             child: Text(
-              'Delete sheet?',
+              context.l10n.deleteSheetQuestion,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -190,7 +191,7 @@ class DeleteMusicSheetDialog extends StatelessWidget {
         ],
       ),
       content: Text(
-        '"$title" and all of its files will be permanently deleted.',
+        context.l10n.deleteSheetConfirmation(title),
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -201,7 +202,7 @@ class DeleteMusicSheetDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.pop(context, false),
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
           ),
         ),
@@ -215,7 +216,7 @@ class DeleteMusicSheetDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-          child: const Text('Delete'),
+          child: Text(context.l10n.delete),
         ),
       ],
     );

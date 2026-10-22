@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class LayerNotesControls extends StatelessWidget {
@@ -23,7 +24,7 @@ class LayerNotesControls extends StatelessWidget {
   final ValueChanged<bool> onLayerModeChanged;
   final bool compact;
 
-  String get positionLabel {
+  String positionLabel(BuildContext context) {
     final beat = startBeat + 1;
     final roundedBeat = beat.roundToDouble();
     final beatLabel = (beat - roundedBeat).abs() < 0.0001
@@ -32,7 +33,7 @@ class LayerNotesControls extends StatelessWidget {
               .toStringAsFixed(2)
               .replaceFirst(RegExp(r'0+$'), '')
               .replaceFirst(RegExp(r'\.$'), '');
-    return 'Measure ${measureIndex + 1} · Beat $beatLabel';
+    return context.l10n.measureBeatPosition(measureIndex + 1, beatLabel);
   }
 
   @override
@@ -64,7 +65,7 @@ class LayerNotesControls extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Layer Notes',
+                    context.l10n.layerNotes,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -74,7 +75,9 @@ class LayerNotesControls extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    isLayerMode ? positionLabel : 'Independent notes',
+                    isLayerMode
+                        ? positionLabel(context)
+                        : context.l10n.independentNotes,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -131,7 +134,7 @@ class LayerNotesControls extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Layer Notes',
+                  context.l10n.layerNotes,
                   style: TextStyle(
                     color: colors.primaryColor,
                     fontSize: AppTextSizes.label,
@@ -141,8 +144,8 @@ class LayerNotesControls extends StatelessWidget {
                 const Gap(2),
                 Text(
                   isLayerMode
-                      ? '$positionLabel — add the next note here.'
-                      : 'Add shorter notes while another note continues playing.',
+                      ? context.l10n.addNextNoteHere(positionLabel(context))
+                      : context.l10n.layerNotesDescription,
                   style: TextStyle(
                     color: colors.secondaryTextColor,
                     fontSize: AppTextSizes.caption,

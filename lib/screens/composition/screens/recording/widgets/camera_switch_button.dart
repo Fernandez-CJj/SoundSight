@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 
 class CameraSwitchButton extends StatelessWidget {
   const CameraSwitchButton({
@@ -21,7 +22,7 @@ class CameraSwitchButton extends StatelessWidget {
         shape: const CircleBorder(),
         child: IconButton(
           onPressed: isRecording ? null : onSwitch,
-          tooltip: 'Switch camera',
+          tooltip: context.l10n.switchCamera,
           color: Colors.white,
           disabledColor: Colors.white38,
           icon: const Icon(Icons.cameraswitch_rounded),

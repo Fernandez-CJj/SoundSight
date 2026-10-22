@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/dialogs/composition_dialogs.dart';
 import 'package:soundsight/screens/composition/screens/manual/composition_editor_screen.dart';
@@ -13,8 +14,10 @@ import 'package:soundsight/screens/composition/services/composition_service.dart
 import 'package:soundsight/screens/composition/dialogs/publish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/dialogs/unpublish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/widgets/composition_generated_preview.dart';
+import 'package:soundsight/screens/players/ar/ar_practice_screen.dart';
 import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
 import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/players/synthesia/models/synthesia_score_source.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionDetailsScreen extends StatefulWidget {
@@ -85,9 +88,9 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           elevation: 0,
           scrolledUnderElevation: 0,
           centerTitle: true,
-          title: const Text(
-            'Composition Details',
-            style: TextStyle(
+          title: Text(
+            context.l10n.compositionDetails,
+            style: const TextStyle(
               fontSize: AppTextSizes.sectionTitle,
               fontWeight: FontWeight.w700,
             ),
@@ -121,7 +124,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                           ),
                           const Gap(AppSpacing.sm),
                           Text(
-                            'Edit Composition',
+                            context.l10n.editComposition,
                             style: TextStyle(color: colors.primaryColor),
                           ),
                         ],
@@ -138,7 +141,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                         ),
                         const Gap(AppSpacing.sm),
                         Text(
-                          'Delete Composition',
+                          context.l10n.deleteComposition,
                           style: TextStyle(color: colors.primaryColor),
                         ),
                       ],
@@ -159,7 +162,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               backgroundColor: colors.primaryColor,
               foregroundColor: colors.backgroundColor,
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Play'),
+              label: Text(context.l10n.play),
             ),
           ),
         ),
@@ -211,7 +214,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         return AlertDialog(
           backgroundColor: widget.colors.surfaceColor,
           title: Text(
-            'Choose play mode',
+            context.l10n.choosePlayMode,
             style: TextStyle(color: widget.colors.primaryColor),
           ),
           content: Column(
@@ -223,7 +226,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                   color: widget.colors.primaryColor,
                 ),
                 title: Text(
-                  'Sight Reading',
+                  context.l10n.sightReading,
                   style: TextStyle(color: widget.colors.primaryColor),
                 ),
                 onTap: () {
@@ -236,11 +239,24 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                   color: widget.colors.primaryColor,
                 ),
                 title: Text(
-                  'Synthesia',
+                  context.l10n.synthesia,
                   style: TextStyle(color: widget.colors.primaryColor),
                 ),
                 onTap: () {
                   Navigator.of(dialogContext).pop('synthesia');
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.view_in_ar_rounded,
+                  color: widget.colors.primaryColor,
+                ),
+                title: Text(
+                  context.l10n.arPractice,
+                  style: TextStyle(color: widget.colors.primaryColor),
+                ),
+                onTap: () {
+                  Navigator.of(dialogContext).pop('ar');
                 },
               ),
             ],
@@ -259,10 +275,49 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     }
 
     if (selectedMode == 'synthesia') {
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const SynthesiaScreen()));
+      await stopComposition();
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SynthesiaScreen(
+            colors: widget.colors,
+            source: SynthesiaCompositionSource(composition),
+          ),
+        ),
+      );
+      return;
     }
+
+    if (selectedMode == 'ar') {
+      await openArPractice();
+    }
+  }
+
+  Future<void> openArPractice() async {
+    final midiStoragePath = composition.midiStoragePath?.trim() ?? '';
+
+    if (!composition.generatedFilesAreCurrent) {
+      showMessage(context.l10n.prepareLatestFilesBeforeAr);
+      return;
+    }
+
+    if (midiStoragePath.isEmpty) {
+      showMessage(context.l10n.generatedMidiMissing);
+      return;
+    }
+
+    await stopComposition();
+    if (!mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ArPracticeScreen(
+          colors: widget.colors,
+          scoreDocumentPath:
+              'users/${composition.ownerId}/compositions/${composition.id}',
+        ),
+      ),
+    );
   }
 
   Future<void> openSightReading() async {
@@ -271,16 +326,14 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     final mp3StoragePath = composition.mp3StoragePath?.trim() ?? '';
 
     if (!composition.generatedFilesAreCurrent) {
-      showMessage(
-        'Prepare the latest music files before starting Sight Reading.',
-      );
+      showMessage(context.l10n.prepareLatestFilesBeforeSightReading);
       return;
     }
 
     if (musicXmlStoragePath.isEmpty ||
         midiStoragePath.isEmpty ||
         mp3StoragePath.isEmpty) {
-      showMessage('The generated MusicXML, MIDI, or MP3 file is missing.');
+      showMessage(context.l10n.generatedPracticeFilesMissing);
       return;
     }
 
@@ -335,7 +388,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 ),
                 const Gap(AppSpacing.xs),
                 Text(
-                  'Piano Solo',
+                  context.l10n.pianoSolo,
                   style: TextStyle(
                     color: colors.secondaryTextColor,
                     fontSize: AppTextSizes.label,
@@ -345,21 +398,21 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 buildInformationRow(
                   colors: colors,
                   icon: Icons.music_note_rounded,
-                  label: 'Key',
+                  label: context.l10n.keyLabel,
                   value: composition.keySignature,
                 ),
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
                   colors: colors,
                   icon: Icons.speed_rounded,
-                  label: 'Tempo',
+                  label: context.l10n.tempo,
                   value: '${composition.tempo} BPM',
                 ),
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
                   colors: colors,
                   icon: Icons.grid_view_rounded,
-                  label: 'Time',
+                  label: context.l10n.timeLabel,
                   value:
                       '${composition.beatsPerMeasure}/${composition.beatUnit}',
                 ),
@@ -367,7 +420,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 buildInformationRow(
                   colors: colors,
                   icon: Icons.schedule_rounded,
-                  label: 'Edited',
+                  label: context.l10n.editedLabel,
                   value: formatDate(
                     composition.updatedAt ?? composition.createdAt,
                   ),
@@ -424,12 +477,12 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               .toDouble();
 
     final status = isPreparingPlayback
-        ? 'Loading'
+        ? context.l10n.loading
         : isPaused
-        ? 'Paused'
+        ? context.l10n.paused
         : isPlaying
-        ? 'Playing'
-        : 'Ready';
+        ? context.l10n.playing
+        : context.l10n.ready;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -441,7 +494,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Listen to your composition',
+                  context.l10n.listenToComposition,
                   style: TextStyle(
                     color: colors.primaryColor,
                     fontSize: AppTextSizes.label,
@@ -525,7 +578,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               buildPlaybackButton(
                 colors: colors,
                 icon: Icons.replay_rounded,
-                tooltip: 'Play from beginning',
+                tooltip: context.l10n.playFromBeginning,
                 onTap:
                     !composition.hasPlayableContent ||
                         isDeleting ||
@@ -542,10 +595,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                     ? Icons.pause_rounded
                     : Icons.play_arrow_rounded,
                 tooltip: isPreparingPlayback
-                    ? 'Loading'
+                    ? context.l10n.loading
                     : isPlaying && !isPaused
-                    ? 'Pause'
-                    : 'Play',
+                    ? context.l10n.pause
+                    : context.l10n.play,
                 isPrimary: true,
                 onTap: isDeleting || isPreparingPlayback
                     ? null
@@ -557,7 +610,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               buildPlaybackButton(
                 colors: colors,
                 icon: Icons.stop_rounded,
-                tooltip: 'Stop',
+                tooltip: context.l10n.stop,
                 onTap: isPlaying || isPaused || isPreparingPlayback
                     ? stopComposition
                     : null,
@@ -622,7 +675,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Composition Summary',
+            context.l10n.compositionSummary,
             style: TextStyle(
               color: colors.primaryColor,
               fontSize: AppTextSizes.label,
@@ -636,7 +689,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 child: buildStatisticCard(
                   colors: colors,
                   icon: Icons.library_music_outlined,
-                  label: composition.measureCount == 1 ? 'Measure' : 'Measures',
+                  label: context.l10n.measureLabel(composition.measureCount),
                   value: '${composition.measureCount}',
                 ),
               ),
@@ -645,7 +698,9 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 child: buildStatisticCard(
                   colors: colors,
                   icon: Icons.music_note_rounded,
-                  label: composition.playableNoteCount == 1 ? 'Note' : 'Notes',
+                  label: context.l10n.noteLabel(
+                    composition.playableNoteCount,
+                  ),
                   value: '${composition.playableNoteCount}',
                 ),
               ),
@@ -654,7 +709,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 child: buildStatisticCard(
                   colors: colors,
                   icon: Icons.schedule_rounded,
-                  label: 'Duration',
+                  label: context.l10n.duration,
                   value: formatDuration(playbackDuration),
                 ),
               ),
@@ -722,12 +777,12 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               children: [
                 Text(
                   filesAreReady
-                      ? 'Music files are ready'
+                      ? context.l10n.musicFilesReady
                       : generationIsRunning
-                      ? 'Preparing your music files'
+                      ? context.l10n.preparingMusicFiles
                       : filesAreOutOfDate
-                      ? 'Music files need updating'
-                      : 'Music files are not ready',
+                      ? context.l10n.musicFilesNeedUpdating
+                      : context.l10n.musicFilesNotReady,
                   style: TextStyle(
                     color: colors.primaryColor,
                     fontSize: AppTextSizes.label,
@@ -738,13 +793,13 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 Text(
                   filesAreReady
                       ? composition.filesGeneratedAt == null
-                            ? 'Your sheet music and playback files are ready.'
-                            : 'Prepared ${formatDate(composition.filesGeneratedAt)}.'
+                            ? context.l10n.musicFilesReadyDescription
+                            : context.l10n.musicFilesPrepared(
+                                formatDate(composition.filesGeneratedAt),
+                              )
                       : filesAreOutOfDate
-                      ? 'Your latest changes are saved, but the available '
-                            'files contain an older version.'
-                      : 'Your composition is saved safely. Its sheet music '
-                            'and playback files are not ready yet.',
+                      ? context.l10n.musicFilesOutOfDateDescription
+                      : context.l10n.musicFilesNotReadyDescription,
                   style: TextStyle(
                     color: colors.secondaryTextColor,
                     fontSize: AppTextSizes.caption,
@@ -758,7 +813,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                         ? null
                         : retryCompositionGeneration,
                     icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Retry Generation'),
+                    label: Text(context.l10n.retryGeneration),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primaryColor,
                       foregroundColor: colors.backgroundColor,
@@ -855,21 +910,21 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                         ? Icons.public_off_rounded
                         : Icons.publish_rounded,
                     title: isCheckingPublication
-                        ? 'Checking publication status...'
+                        ? context.l10n.checkingPublicationStatus
                         : mainActionIsLoading
                         ? publicationAction ==
                                   CompositionPublicationAction.publishUpdate
-                              ? 'Publishing Update...'
+                              ? context.l10n.publishingUpdateProgress
                               : publicationAction ==
                                     CompositionPublicationAction.unpublish
-                              ? 'Unpublishing...'
-                              : 'Publishing...'
+                              ? context.l10n.unpublishingProgress
+                              : context.l10n.publishingProgress
                         : isPublishingUpdate
-                        ? 'Publish Update'
+                        ? context.l10n.publishUpdate
                         : publicationAction ==
                               CompositionPublicationAction.unpublish
-                        ? 'Unpublish Composition'
-                        : 'Publish Composition',
+                        ? context.l10n.unpublishComposition
+                        : context.l10n.publishComposition,
                     isLoading: mainActionIsLoading || isCheckingPublication,
                     onTap:
                         isDeleting ||
@@ -890,8 +945,8 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                           isPublishing &&
                               activePublicationAction ==
                                   CompositionPublicationAction.unpublish
-                          ? 'Unpublishing...'
-                          : 'Unpublish Composition',
+                          ? context.l10n.unpublishingProgress
+                          : context.l10n.unpublishComposition,
                       isLoading:
                           isPublishing &&
                           activePublicationAction ==
@@ -915,7 +970,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
             buildActionRow(
               colors: colors,
               icon: Icons.edit_outlined,
-              title: 'Edit Composition',
+              title: context.l10n.editComposition,
               onTap: isDeleting || isPlaying || isPublishing
                   ? null
                   : editComposition,
@@ -925,7 +980,9 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           buildActionRow(
             colors: colors,
             icon: Icons.delete_outline_rounded,
-            title: isDeleting ? 'Deleting...' : 'Delete Composition',
+            title: isDeleting
+                ? context.l10n.deletingProgress
+                : context.l10n.deleteComposition,
             isLoading: isDeleting,
             onTap: isDeleting || isPlaying || isPublishing
                 ? null
@@ -1036,13 +1093,13 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     }
 
     if (!composition.hasPlayableContent) {
-      showMessage('This composition does not have any notes yet.');
+      showMessage(context.l10n.compositionHasNoNotes);
       return;
     }
 
     final validationError = compositionService.validateComposition(composition);
     if (validationError != null) {
-      showMessage(validationError);
+      showMessage(context.l10n.compositionValidationFailed);
       return;
     }
 
@@ -1082,9 +1139,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       completed = true;
     } catch (_) {
       if (mounted && currentRunId == playbackRunId) {
-        showMessage(
-          'The composition could not be played. Check the piano audio files.',
-        );
+        showMessage(context.l10n.compositionPlaybackFailed);
       }
     } finally {
       if (mounted && currentRunId == playbackRunId) {
@@ -1129,7 +1184,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
 
   Future<void> restartComposition() async {
     if (!composition.hasPlayableContent) {
-      showMessage('This composition does not have any notes yet.');
+      showMessage(context.l10n.compositionHasNoNotes);
       return;
     }
 
@@ -1163,24 +1218,8 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   String formatDate(DateTime? date) {
-    if (date == null) return 'Unavailable';
-
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    if (date == null) return context.l10n.unavailable;
+    return MaterialLocalizations.of(context).formatMediumDate(date);
   }
 
   Future<void> changeCompositionPublication(
@@ -1191,14 +1230,12 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         action == CompositionPublicationAction.publishUpdate;
 
     if (!isUnpublishing && !composition.hasPlayableContent) {
-      showMessage('Add at least one note before publishing.');
+      showMessage(context.l10n.addNoteBeforePublishing);
       return;
     }
 
     if (!isUnpublishing && !composition.generatedFilesAreCurrent) {
-      showMessage(
-        'Prepare the sheet music and playback files before publishing.',
-      );
+      showMessage(context.l10n.prepareFilesBeforePublishing);
       return;
     }
 
@@ -1231,7 +1268,6 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       if (isUnpublishing) {
         await publishService.unpublishComposition(
           compositionId: composition.id,
-          ownerId: composition.ownerId,
         );
       } else {
         await publishService.publishComposition(composition);
@@ -1241,19 +1277,27 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
 
       showMessage(
         isUnpublishing
-            ? 'Composition unpublished successfully.'
+            ? context.l10n.compositionUnpublished
             : isPublishingUpdate
-            ? 'Composition update published successfully.'
-            : 'Composition published successfully.',
+            ? context.l10n.compositionUpdatePublished
+            : context.l10n.compositionPublished,
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
 
+      if (error is CompositionPublicationException) {
+        debugPrint(
+          'Composition publication failed with status '
+          '${error.statusCode}: ${error.message}',
+        );
+      }
+
       showMessage(
-        isUnpublishing
-            ? 'The composition could not be unpublished.'
-            : 'The composition could not be published. '
-                  'Make sure the backend is running.',
+        error is CompositionPublicationException && error.isUnauthorized
+            ? context.l10n.compositionPublishUnauthorized
+            : isUnpublishing
+            ? context.l10n.compositionUnpublishFailed
+            : context.l10n.compositionPublishFailed,
       );
     } finally {
       if (mounted) {
@@ -1293,7 +1337,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         });
       }
 
-      showMessage('Your music files are ready.');
+      showMessage(context.l10n.compositionMusicFilesReady);
     } catch (_) {
       if (!mounted) return;
 
@@ -1307,10 +1351,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         });
       }
 
-      showMessage(
-        'Your composition is saved, but the music files still could not be '
-        'prepared. Try again when the service is available.',
-      );
+      showMessage(context.l10n.compositionMusicFilesFailed);
     } finally {
       if (mounted) {
         setState(() {
@@ -1362,7 +1403,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       if (!mounted) return;
 
       if (updatedComposition == null) {
-        showMessage('The updated composition could not be loaded.');
+        showMessage(context.l10n.updatedCompositionLoadFailed);
         return;
       }
 
@@ -1373,7 +1414,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       });
     } catch (_) {
       if (mounted) {
-        showMessage('The updated composition could not be loaded.');
+        showMessage(context.l10n.updatedCompositionLoadFailed);
       }
     } finally {
       if (mounted) {
@@ -1423,7 +1464,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         isDeleting = false;
       });
 
-      showMessage('The composition could not be deleted.');
+      showMessage(context.l10n.compositionDeleteFailed);
     }
   }
 

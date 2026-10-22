@@ -16,6 +16,10 @@ class PublishedComposition {
     required this.measureCount,
     required this.noteCount,
     required this.pdfStoragePath,
+    required this.musicXmlStoragePath,
+    required this.midiStoragePath,
+    required this.mp3StoragePath,
+    required this.publishedFilesVersion,
     this.publishedAt,
   });
 
@@ -33,7 +37,18 @@ class PublishedComposition {
   final int measureCount;
   final int noteCount;
   final String pdfStoragePath;
+  final String musicXmlStoragePath;
+  final String midiStoragePath;
+  final String mp3StoragePath;
+  final int publishedFilesVersion;
   final DateTime? publishedAt;
+
+  bool get hasSightReadingFiles {
+    return publishedFilesVersion == 1 &&
+        musicXmlStoragePath.isNotEmpty &&
+        midiStoragePath.isNotEmpty &&
+        mp3StoragePath.isNotEmpty;
+  }
 
   static PublishedComposition fromMap(
     String id,
@@ -60,6 +75,12 @@ class PublishedComposition {
       measureCount: (map['measureCount'] as num?)?.toInt() ?? 1,
       noteCount: (map['noteCount'] as num?)?.toInt() ?? 0,
       pdfStoragePath: map['pdfStoragePath'] as String? ?? '',
+      musicXmlStoragePath:
+          map['musicXmlStoragePath'] as String? ?? '',
+      midiStoragePath: map['midiStoragePath'] as String? ?? '',
+      mp3StoragePath: map['mp3StoragePath'] as String? ?? '',
+      publishedFilesVersion:
+          (map['publishedFilesVersion'] as num?)?.toInt() ?? 0,
       publishedAt: publishedAtData is Timestamp
           ? publishedAtData.toDate()
           : null,

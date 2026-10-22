@@ -362,7 +362,7 @@ class KeyboardAreaPainter extends CustomPainter {
     labelPainter.paint(canvas, Offset(labelLeft, labelTop));
   }
 
-  /// Selects calibration marker colors by key type and reference octave.
+  /// Uses one consistent color for sharps, white keys, and all C notes.
   Color colorForPianoKeyMarker(PianoKeyMarker marker) {
     if (marker.isBlackKey) {
       return Colors.pinkAccent;
@@ -370,14 +370,6 @@ class KeyboardAreaPainter extends CustomPainter {
 
     if (!marker.isC) {
       return Colors.blueAccent;
-    }
-
-    if (marker.octaveNumber < 4) {
-      return Colors.purpleAccent;
-    }
-
-    if (marker.octaveNumber > 4) {
-      return Colors.cyanAccent;
     }
 
     return Colors.amber;

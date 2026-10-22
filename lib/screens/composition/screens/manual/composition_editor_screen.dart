@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/widgets/chord_mode_controls.dart';
 import 'package:soundsight/screens/composition/widgets/layer_notes_controls.dart';
@@ -196,12 +197,12 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           actions: [
             buildMidiAppBarAction(colors, isLandscape),
             IconButton(
-              tooltip: 'Composition settings',
+              tooltip: context.l10n.compositionSettingsTooltip,
               onPressed: editorInteractionLocked ? null : editSettings,
               icon: const Icon(Icons.tune_rounded),
             ),
             IconButton(
-              tooltip: 'Save composition',
+              tooltip: context.l10n.saveCompositionTooltip,
               onPressed: editorInteractionLocked ? null : saveComposition,
               icon: isSaving
                   ? SizedBox(
@@ -524,7 +525,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                             Row(
                               children: [
                                 Text(
-                                  'Piano Keyboard',
+                                  context.l10n.pianoKeyboard,
                                   style: TextStyle(
                                     color: colors.primaryColor,
                                     fontSize: AppTextSizes.caption,
@@ -533,7 +534,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                                 ),
                                 const Spacer(),
                                 Text(
-                                  'Swipe horizontally',
+                                  context.l10n.swipeHorizontally,
                                   style: TextStyle(
                                     color: colors.secondaryTextColor,
                                     fontSize: AppTextSizes.caption,
@@ -694,7 +695,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           child: _InformationCard(
             colors: colors,
             icon: Icons.music_note_rounded,
-            label: 'Key',
+            label: context.l10n.keyLabel,
             value: keySignature,
             compact: compact,
           ),
@@ -704,7 +705,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           child: _InformationCard(
             colors: colors,
             icon: Icons.library_music_outlined,
-            label: 'Notes',
+            label: context.l10n.noteLabel(noteCount),
             value: '$noteCount/256',
             compact: compact,
             accentColor: noteUsageColor,
@@ -715,7 +716,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           child: _InformationCard(
             colors: colors,
             icon: Icons.speed_rounded,
-            label: 'Tempo',
+            label: context.l10n.tempo,
             value: '$tempo BPM',
             compact: compact,
           ),
@@ -725,7 +726,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           child: _InformationCard(
             colors: colors,
             icon: Icons.grid_view_rounded,
-            label: 'Time',
+            label: context.l10n.timeLabel,
             value:
                 '${editorController.beatsPerMeasure}/${editorController.beatUnit}',
             compact: compact,
@@ -764,8 +765,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
               buildLandscapeAction(
                 colors: colors,
                 icon: Icons.arrow_back_rounded,
-                label: 'Back',
-                tooltip: 'Move back using selected duration',
+                label: context.l10n.back,
+                tooltip: context.l10n.moveBackUsingDuration,
                 onTap:
                     editorInteractionLocked ||
                         !editorController.canMoveInsertionCursorBack
@@ -776,8 +777,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
               buildLandscapeAction(
                 colors: colors,
                 icon: Icons.arrow_forward_rounded,
-                label: 'Forward',
-                tooltip: 'Move forward using selected duration',
+                label: context.l10n.forward,
+                tooltip: context.l10n.moveForwardUsingDuration,
                 onTap:
                     editorInteractionLocked ||
                         !editorController.canMoveInsertionCursorForward(
@@ -797,8 +798,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
               buildLandscapeAction(
                 colors: colors,
                 icon: Icons.space_bar_rounded,
-                label: 'Rest',
-                tooltip: 'Insert rest using selected duration',
+                label: context.l10n.rest,
+                tooltip: context.l10n.insertRestUsingDuration,
                 onTap: editorInteractionLocked ? null : insertRest,
               ),
               const Gap(AppSpacing.xs),
@@ -807,8 +808,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                 icon: showSongOverview
                     ? Icons.view_agenda_rounded
                     : Icons.view_week_outlined,
-                label: 'Overview',
-                tooltip: 'Show or hide full-song overview',
+                label: context.l10n.overview,
+                tooltip: context.l10n.toggleSongOverview,
                 onTap: editorInteractionLocked
                     ? null
                     : () {
@@ -821,8 +822,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
               buildLandscapeAction(
                 colors: colors,
                 icon: Icons.save_outlined,
-                label: isSaving ? 'Saving' : 'Save',
-                tooltip: 'Save composition',
+                label: isSaving ? context.l10n.saving : context.l10n.save,
+                tooltip: context.l10n.saveCompositionTooltip,
                 onTap: editorInteractionLocked ? null : saveComposition,
                 filled: true,
                 showLoading: isSaving,
@@ -865,7 +866,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   ? null
                   : moveCursorBack,
               icon: const Icon(Icons.arrow_back_rounded),
-              label: const Text('Back'),
+              label: Text(context.l10n.back),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 side: BorderSide(color: colors.borderColor),
@@ -889,7 +890,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   ? null
                   : moveCursorForward,
               icon: const Icon(Icons.arrow_forward_rounded),
-              label: const Text('Forward'),
+              label: Text(context.l10n.forward),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 side: BorderSide(color: colors.borderColor),
@@ -907,7 +908,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
             child: OutlinedButton.icon(
               onPressed: editorInteractionLocked ? null : insertRest,
               icon: const Icon(Icons.space_bar_rounded),
-              label: const Text('Insert Rest'),
+              label: Text(context.l10n.insertRest),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 side: BorderSide(color: colors.borderColor),
@@ -1064,11 +1065,14 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                 ),
                 const Gap(2),
                 Text(
-                  'Measure ${note.measureIndex + 1}  •  '
-                  'Beat ${formatBeatValue(note.startBeat + 1)}  •  '
-                  '${formatBeatValue(note.durationBeats)} '
-                  '${note.durationBeats == 1 ? 'beat' : 'beats'}'
-                  '${note.tieToNext ? '  •  Tied' : ''}',
+                  '${context.l10n.selectedNotePosition(
+                    note.measureIndex + 1,
+                    formatBeatValue(note.startBeat + 1),
+                    formatBeatValue(note.durationBeats),
+                    note.durationBeats == 1
+                        ? context.l10n.beat
+                        : context.l10n.beats,
+                  )}${note.tieToNext ? ' • ${context.l10n.tied}' : ''}',
                   style: TextStyle(
                     color: colors.secondaryTextColor,
                     fontSize: AppTextSizes.caption,
@@ -1078,7 +1082,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
             ),
           ),
           IconButton(
-            tooltip: 'Clear selection',
+            tooltip: context.l10n.clearSelection,
             onPressed: editorInteractionLocked
                 ? null
                 : () {
@@ -1102,7 +1106,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
             child: OutlinedButton.icon(
               onPressed: editorInteractionLocked ? null : addMeasure,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Measure'),
+              label: Text(context.l10n.addMeasure),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 disabledForegroundColor: colors.secondaryTextColor,
@@ -1125,7 +1129,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   ? null
                   : deleteSelectedNotes,
               icon: const Icon(Icons.delete_outline_rounded),
-              label: const Text('Delete Selection'),
+              label: Text(context.l10n.deleteSelection),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 disabledForegroundColor: colors.secondaryTextColor,
@@ -1169,7 +1173,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   )
                 : const Icon(Icons.save_outlined),
             label: Text(
-              isSaving ? 'Saving...' : 'Save Composition',
+              isSaving
+                  ? context.l10n.savingEllipsis
+                  : context.l10n.saveComposition,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
@@ -1276,7 +1282,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     }
 
     if (!PianoNote.isValidMidi(event.noteNumber)) {
-      showMessage('That piano key is outside the supported A0 to C8 range.');
+    showMessage(context.l10n.unsupportedPianoKey);
       return;
     }
 
@@ -1284,9 +1290,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       if (isSaving || isPlaying) return;
 
       if (editorController.selectedNoteIds.length > 1) {
-        showMessage(
-          'Select only one note, or clear the selection, before playing.',
-        );
+      showMessage(context.l10n.selectSingleNoteBeforePlaying);
         return;
       }
 
@@ -1355,7 +1359,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
     if (midiStepReplacesSelectedNote && stepNotes.length > 1) {
       cancelPendingMidiStep();
-      showMessage('Clear the selected note before entering a chord.');
+      showMessage(context.l10n.clearSelectedNoteBeforeChord);
       return;
     }
 
@@ -1553,7 +1557,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
   void changeDuration(double durationBeats) {
     if (editorInteractionLocked) {
-      showMessage('Stop playback before editing the composition.');
+      showMessage(context.l10n.stopPlaybackBeforeEditing);
       return;
     }
 
@@ -1645,9 +1649,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     final noteCount = editorController.notes.length;
     if (noteCount > previousNoteCount &&
         (noteCount == 240 || noteCount == 250 || noteCount == 255)) {
-      showMessage(
-        'This composition now has $noteCount of the 256 allowed notes.',
-      );
+      showMessage(context.l10n.compositionNoteLimitReached(noteCount));
     }
 
     try {
@@ -1658,7 +1660,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       );
     } catch (_) {
       if (mounted) {
-        showMessage('The piano note could not be played.');
+        showMessage(context.l10n.pianoNotePlaybackFailed);
       }
     }
   }
@@ -1757,7 +1759,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       return;
     }
     if (!changed) {
-      showMessage('That measure action is not available.');
+      showMessage(context.l10n.measureActionUnavailable);
       return;
     }
 
@@ -1790,11 +1792,13 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
   void copySelection() {
     if (!editorController.copySelectedNotes()) {
-      showMessage('Select at least one note first.');
+      showMessage(context.l10n.selectNoteFirst);
       return;
     }
     setState(() {});
-    showMessage('${editorController.clipboardNoteCount} notes copied.');
+    showMessage(
+      context.l10n.notesCopied(editorController.clipboardNoteCount),
+    );
   }
 
   void pasteSelection() {
@@ -1819,7 +1823,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   void deleteSelectedNotes() {
     final deletedCount = editorController.deleteSelectedNotes();
     if (deletedCount == 0) {
-      showMessage('Select at least one note first.');
+      showMessage(context.l10n.selectNoteFirst);
       return;
     }
     setState(updateDirtyState);
@@ -1827,7 +1831,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
   void deleteSelectedChord() {
     if (!editorController.deleteSelectedChord()) {
-      showMessage('Select a chord first.');
+      showMessage(context.l10n.selectChordFirst);
       return;
     }
     setState(updateDirtyState);
@@ -2000,7 +2004,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     }
 
     if (editorController.notes.isEmpty) {
-      showMessage('Add at least one note before playing.');
+      showMessage(context.l10n.addNoteBeforePlaying);
       return;
     }
 
@@ -2009,7 +2013,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       playbackComposition,
     );
     if (validationError != null) {
-      showMessage(validationError);
+      showMessage(context.l10n.compositionValidationFailed);
       return;
     }
 
@@ -2059,9 +2063,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       );
     } catch (_) {
       if (mounted) {
-        showMessage(
-          'The composition could not be played. Check the piano audio files.',
-        );
+        showMessage(context.l10n.compositionPlaybackFailed);
       }
     } finally {
       if (mounted) {
@@ -2139,7 +2141,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       updatedComposition,
     );
     if (validationError != null) {
-      showMessage(validationError);
+      showMessage(context.l10n.compositionValidationFailed);
       return;
     }
 
@@ -2194,14 +2196,11 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           isDirty = false;
         });
 
-        showMessage(
-          'Your composition was saved safely, but its sheet music and '
-          'playback files are not ready yet.',
-        );
+        showMessage(context.l10n.compositionSavedFilesPending);
 
         Navigator.pop(context, compositionId);
       } else {
-        showMessage('The composition could not be saved.');
+        showMessage(context.l10n.compositionSaveFailed);
       }
     } finally {
       if (mounted) {

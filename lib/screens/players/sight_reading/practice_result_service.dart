@@ -69,6 +69,7 @@ class PracticeResultService {
     final resultReference = _resultsReference(user.uid).doc();
     final savingSummary = PracticeResultSummary(
       id: resultReference.id,
+      practiceType: report.summary.practiceType,
       ownerId: user.uid,
       scoreDocumentPath: report.summary.scoreDocumentPath,
       source: report.summary.source,
@@ -134,6 +135,30 @@ class PracticeResultService {
     }
 
     await _deleteResultReference(_resultsReference(user.uid).doc(resultId));
+  }
+
+  Future<void> deleteAllResults() async {
+    final user = firebaseAuth.currentUser;
+
+    if (user == null) {
+      throw StateError(
+        'The user must be signed in to delete practice results.',
+      );
+    }
+
+    final resultsReference = _resultsReference(user.uid);
+
+    while (true) {
+      final results = await resultsReference.limit(50).get();
+
+      if (results.docs.isEmpty) {
+        return;
+      }
+
+      for (final result in results.docs) {
+        await _deleteResultReference(result.reference);
+      }
+    }
   }
 
   Future<void> _deleteResultReference(

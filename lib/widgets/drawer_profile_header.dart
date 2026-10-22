@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class DrawerProfileHeader extends StatelessWidget {
@@ -31,9 +32,12 @@ class DrawerProfileHeader extends StatelessWidget {
         final email = data?['email'] as String?;
         final profileImageUrl = data?['profileImageUrl'] as String?;
         final rawSkillLevel = data?['skillLevel'] as String? ?? '';
-        final skillLevel = rawSkillLevel.isEmpty
-            ? 'Not assessed'
-            : '${rawSkillLevel[0].toUpperCase()}${rawSkillLevel.substring(1)}';
+        final skillLevel = switch (rawSkillLevel) {
+          'beginner' => context.l10n.beginner,
+          'intermediate' => context.l10n.intermediate,
+          'advanced' => context.l10n.advanced,
+          _ => context.l10n.notAssessed,
+        };
 
         return Material(
           color: Colors.transparent,
@@ -87,7 +91,7 @@ class DrawerProfileHeader extends StatelessWidget {
                         Text(
                           username?.isNotEmpty == true
                               ? username!
-                              : 'Piano Player',
+                              : context.l10n.pianoPlayer,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

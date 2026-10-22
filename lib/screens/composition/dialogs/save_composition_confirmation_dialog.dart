@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class SaveCompositionConfirmationDialog extends StatelessWidget {
@@ -19,7 +20,9 @@ class SaveCompositionConfirmationDialog extends StatelessWidget {
       surfaceTintColor: Colors.transparent,
       icon: Icon(Icons.save_outlined, color: colors.primaryColor),
       title: Text(
-        isExistingComposition ? 'Save your changes?' : 'Save composition?',
+        isExistingComposition
+            ? context.l10n.saveChangesQuestion
+            : context.l10n.saveCompositionQuestion,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -28,8 +31,8 @@ class SaveCompositionConfirmationDialog extends StatelessWidget {
       ),
       content: Text(
         isExistingComposition
-            ? 'Your current changes will replace the previously saved version.'
-            : 'Your composition and its music files will be created.',
+            ? context.l10n.replaceSavedCompositionDescription
+            : context.l10n.createCompositionFilesDescription,
         textAlign: TextAlign.center,
         style: TextStyle(color: colors.secondaryTextColor),
       ),
@@ -44,12 +47,12 @@ class SaveCompositionConfirmationDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
-          child: const Text('Keep Editing'),
+          child: Text(context.l10n.keepEditing),
         ),
         FilledButton.icon(
           onPressed: () => Navigator.pop(context, true),
           icon: const Icon(Icons.save_outlined),
-          label: const Text('Save'),
+          label: Text(context.l10n.save),
           style: FilledButton.styleFrom(
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,

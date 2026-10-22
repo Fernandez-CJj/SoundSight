@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../constants/constant.dart';
@@ -35,7 +36,7 @@ class ProfileSaveDialog extends StatelessWidget {
           Gap(AppSpacing.sm),
           Expanded(
             child: Text(
-              'Save changes?',
+              context.l10n.saveChangesQuestion,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.sectionTitle,
@@ -46,7 +47,7 @@ class ProfileSaveDialog extends StatelessWidget {
         ],
       ),
       content: Text(
-        'Are you sure you want to update your profile information?',
+        context.l10n.profileSaveConfirmation,
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -56,7 +57,7 @@ class ProfileSaveDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.pop(context, false),
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
           ),
         ),
@@ -70,7 +71,7 @@ class ProfileSaveDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-          child: Text('Save'),
+          child: Text(context.l10n.save),
         ),
       ],
     );
@@ -111,8 +112,8 @@ class ProfileSavingDialog extends StatelessWidget {
             Gap(AppSpacing.md),
             Text(
               uploadingImage
-                  ? 'Uploading profile picture...'
-                  : 'Saving profile changes...',
+                  ? context.l10n.uploadingProfilePicture
+                  : context.l10n.savingProfileChanges,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -122,7 +123,7 @@ class ProfileSavingDialog extends StatelessWidget {
             ),
             Gap(AppSpacing.xs),
             Text(
-              'Please wait a moment.',
+              context.l10n.pleaseWait,
               style: TextStyle(
                 color: colors.secondaryTextColor,
                 fontSize: AppTextSizes.caption,

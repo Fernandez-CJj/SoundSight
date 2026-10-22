@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:video_player/video_player.dart';
 
@@ -80,7 +81,7 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                     Gap(AppSpacing.sm),
                     Expanded(
                       child: Text(
-                        'Recording Complete',
+                        context.l10n.recordingComplete,
                         style: TextStyle(
                           color: colors.primaryColor,
                           fontSize: AppTextSizes.sectionTitle,
@@ -136,18 +137,24 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                           ),
                         ),
                         Gap(AppSpacing.md),
-                        _informationRow('Title', widget.compositionTitle),
-                        _informationRow('Performance', widget.durationText),
                         _informationRow(
-                          'Captured notes',
+                          context.l10n.compositionTitle,
+                          widget.compositionTitle,
+                        ),
+                        _informationRow(
+                          context.l10n.performance,
+                          widget.durationText,
+                        ),
+                        _informationRow(
+                          context.l10n.capturedNotes,
                           '${widget.noteCount}',
                         ),
                         _informationRow(
-                          'Detected tempo',
+                          context.l10n.detectedTempo,
                           '${widget.detectedTempo} BPM',
                         ),
                         _informationRow(
-                          'Calculated measures',
+                          context.l10n.calculatedMeasures,
                           '${widget.measureCount}',
                         ),
                       ],
@@ -167,7 +174,7 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                           foregroundColor: colors.primaryColor,
                           side: BorderSide(color: colors.borderColor),
                         ),
-                        child: const Text('Record Again'),
+                        child: Text(context.l10n.recordAgain),
                       ),
                     ),
                     Gap(AppSpacing.sm),
@@ -178,7 +185,7 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                           RecordingCompletionAction.generate,
                         ),
                         icon: const Icon(Icons.auto_awesome_rounded),
-                        label: const Text('Generate'),
+                        label: Text(context.l10n.generate),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primaryColor,
                           foregroundColor: colors.backgroundColor,

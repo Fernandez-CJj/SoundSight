@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/models/recording_composition_draft.dart';
 import 'package:soundsight/screens/composition/screens/manual/composition_editor_screen.dart';
@@ -56,7 +57,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
           scrolledUnderElevation: 0,
           centerTitle: true,
           title: Text(
-            'New Composition',
+            context.l10n.newComposition,
             style: TextStyle(
               fontSize: AppTextSizes.sectionTitle,
               fontWeight: FontWeight.w600,
@@ -92,7 +93,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     ),
                     Gap(AppSpacing.md),
                     Text(
-                      'Create your piano piece',
+                      context.l10n.createYourPianoPiece,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: colors.primaryColor,
@@ -103,10 +104,8 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     Gap(AppSpacing.xs),
                     Text(
                       selectedMethod == _CompositionMethod.recording
-                          ? 'Choose a title, key, and meter. Tempo and measures '
-                                'will be detected from your performance.'
-                          : 'Choose the starting title, key, tempo, and meter. '
-                                'You can change them later in the composition workspace.',
+                          ? context.l10n.newCompositionRecordingDescription
+                          : context.l10n.newCompositionManualDescription,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
@@ -125,16 +124,16 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     border: Border.all(color: colors.borderColor),
                   ),
                   child: SegmentedButton<_CompositionMethod>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: _CompositionMethod.manual,
-                        icon: Icon(Icons.edit_note_rounded),
-                        label: Text('Manual'),
+                        icon: const Icon(Icons.edit_note_rounded),
+                        label: Text(context.l10n.manual),
                       ),
                       ButtonSegment(
                         value: _CompositionMethod.recording,
-                        icon: Icon(Icons.videocam_rounded),
-                        label: Text('Recording'),
+                        icon: const Icon(Icons.videocam_rounded),
+                        label: Text(context.l10n.recording),
                       ),
                     ],
                     selected: {selectedMethod},
@@ -164,7 +163,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Composition Title',
+                      context.l10n.compositionTitle,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -185,18 +184,18 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                       ),
                       decoration: buildInputDecoration(
                         colors: colors,
-                        hintText: 'Example: My First Song',
+                        hintText: context.l10n.compositionTitleHint,
                         prefixIcon: Icons.music_note_rounded,
                       ),
                       validator: (value) {
                         final title = value?.trim() ?? '';
 
                         if (title.isEmpty) {
-                          return 'Enter a composition title.';
+                          return context.l10n.compositionTitleRequired;
                         }
 
                         if (title.length > 80) {
-                          return 'The title must be 80 characters or fewer.';
+                          return context.l10n.compositionTitleTooLong;
                         }
 
                         return null;
@@ -210,7 +209,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tempo',
+                        context.l10n.tempo,
                         style: TextStyle(
                           color: colors.primaryColor,
                           fontSize: AppTextSizes.label,
@@ -219,7 +218,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                       ),
                       Gap(AppSpacing.xs),
                       Text(
-                        'A lower BPM sounds slower. A higher BPM sounds faster.',
+                        context.l10n.tempoDescription,
                         style: TextStyle(
                           color: colors.secondaryTextColor,
                           fontSize: AppTextSizes.caption,
@@ -241,7 +240,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                         ),
                         decoration: buildInputDecoration(
                           colors: colors,
-                          hintText: '40 to 200',
+                          hintText: context.l10n.tempoRangeHint,
                           prefixIcon: Icons.speed_rounded,
                           suffixText: 'BPM',
                         ),
@@ -252,11 +251,11 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                           final tempo = int.tryParse(value ?? '');
 
                           if (tempo == null) {
-                            return 'Enter a valid tempo.';
+                            return context.l10n.validTempoRequired;
                           }
 
                           if (tempo < 40 || tempo > 200) {
-                            return 'Tempo must be between 40 and 200 BPM.';
+                            return context.l10n.tempoRangeError;
                           }
 
                           return null;
@@ -282,7 +281,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                         Gap(AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            'Tempo and measure count will be detected from how you play.',
+                            context.l10n.detectedTempoDescription,
                             style: TextStyle(
                               color: colors.secondaryTextColor,
                               fontSize: AppTextSizes.caption,
@@ -306,7 +305,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Composition Settings',
+                        context.l10n.compositionSettings,
                         style: TextStyle(
                           color: colors.primaryColor,
                           fontSize: AppTextSizes.label,
@@ -315,7 +314,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                       ),
                       Gap(AppSpacing.xs),
                       Text(
-                        'Set the musical structure for this piece.',
+                        context.l10n.compositionSettingsDescription,
                         style: TextStyle(
                           color: colors.secondaryTextColor,
                           fontSize: AppTextSizes.caption,
@@ -323,7 +322,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                       ),
                       Gap(AppSpacing.md),
                       Text(
-                        'Key Signature',
+                        context.l10n.keySignature,
                         style: TextStyle(
                           color: colors.primaryColor,
                           fontSize: AppTextSizes.label,
@@ -345,7 +344,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                         ),
                         decoration: buildInputDecoration(
                           colors: colors,
-                          hintText: 'Key Signature',
+                          hintText: context.l10n.keySignature,
                           prefixIcon: Icons.music_note_rounded,
                         ),
                         items: keySignatures.map((option) {
@@ -366,7 +365,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                       ),
                       Gap(AppSpacing.md),
                       Text(
-                        'Time Signature',
+                        context.l10n.timeSignature,
                         style: TextStyle(
                           color: colors.primaryColor,
                           fontSize: AppTextSizes.label,
@@ -388,7 +387,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                         ),
                         decoration: buildInputDecoration(
                           colors: colors,
-                          hintText: 'Time Signature',
+                          hintText: context.l10n.timeSignature,
                           prefixIcon: Icons.grid_view_rounded,
                         ),
                         items: timeSignatures.map((option) {
@@ -442,10 +441,10 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                     : Icon(Icons.edit_note_rounded),
                 label: Text(
                   isOpeningEditor
-                      ? 'Opening...'
+                      ? context.l10n.opening
                       : selectedMethod == _CompositionMethod.recording
-                      ? 'Open Recorder'
-                      : 'Start Composing',
+                      ? context.l10n.openRecorder
+                      : context.l10n.startComposing,
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -522,7 +521,7 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      showMessage('Sign in before creating a composition.');
+      showMessage(context.l10n.signInBeforeCreatingComposition);
       return;
     }
 

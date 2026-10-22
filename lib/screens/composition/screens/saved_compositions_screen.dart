@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/widgets/published_composition_card.dart';
@@ -62,9 +63,9 @@ class _SavedCompositionsScreenState
         foregroundColor: colors.primaryColor,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        title: const Text(
-          'Saved Sheets',
-          style: TextStyle(
+        title: Text(
+          context.l10n.drawerSavedSheets,
+          style: const TextStyle(
             fontSize: AppTextSizes.sectionTitle,
             fontWeight: FontWeight.w600,
           ),
@@ -83,8 +84,8 @@ class _SavedCompositionsScreenState
           ? buildMessage(
               colors,
               icon: Icons.login_rounded,
-              title: 'Sign in to view saved sheets.',
-              message: 'Your saved composition versions will appear here.',
+              title: context.l10n.signInForSavedSheets,
+              message: context.l10n.savedSheetsSignedOutDescription,
             )
           : StreamBuilder<List<PublishedComposition>>(
               stream: socialService.getSavedCompositions(userId!),
@@ -101,8 +102,8 @@ class _SavedCompositionsScreenState
                   return buildMessage(
                     colors,
                     icon: Icons.cloud_off_outlined,
-                    title: 'Saved sheets could not be loaded.',
-                    message: 'Check your connection and try again.',
+                    title: context.l10n.savedSheetsLoadFailed,
+                    message: context.l10n.checkConnectionTryAgain,
                   );
                 }
 
@@ -112,8 +113,8 @@ class _SavedCompositionsScreenState
                   return buildMessage(
                     colors,
                     icon: Icons.bookmark_border_rounded,
-                    title: 'No saved sheets yet',
-                    message: 'Save a published version to find it here.',
+                    title: context.l10n.noSavedSheets,
+                    message: context.l10n.noSavedSheetsDescription,
                   );
                 }
 
@@ -243,13 +244,20 @@ class _SavedCompositionsScreenState
     final resultMessage = await playbackController.togglePlayback(
       composition,
       onPlaybackStarted: () {
-        showMessage('Playing "${composition.title}".');
+        showMessage(context.l10n.communityPlaying(composition.title));
       },
     );
 
     if (!mounted || resultMessage == null) return;
 
-    showMessage(resultMessage);
+    final localizedMessage = switch (resultMessage) {
+      'Playback stopped.' => context.l10n.communityPlaybackStopped,
+      'This version has no playback data. Republish it first.' =>
+        context.l10n.communityNoPlaybackData,
+      _ => context.l10n.communityPlaybackFailed,
+    };
+
+    showMessage(localizedMessage);
   }
 
   void updatePlaybackState() {

@@ -1,9 +1,16 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
+import 'package:soundsight/theme/app_theme_colors.dart';
 
+import '../midi/models/midi_note_event.dart';
 import '../midi/services/midi_input_service.dart';
 import 'services/piano_keyboard_detector.dart';
 import 'models/piano_detection_result.dart';
@@ -23,18 +30,54 @@ import 'services/black_key_position_deriver.dart';
 import 'models/piano_key_region.dart';
 import 'services/piano_key_region_deriver.dart';
 import 'models/black_key_derivation_result.dart';
+import 'models/middle_c_guide_result.dart';
 import 'models/normalized_piano_calibration.dart';
 import 'services/piano_calibration_normalizer.dart';
 import 'services/piano_calibration_firestore_service.dart';
+import 'services/middle_c_guide_service.dart';
 import 'widgets/calibration_name_dialog.dart';
 import 'models/restored_piano_calibration.dart';
 import 'models/saved_piano_calibration.dart';
 import 'services/piano_calibration_restorer.dart';
 import '../players/ar/models/ar_score_timeline.dart';
+import '../players/ar/models/ar_wait_note_occurrence.dart';
 import '../players/ar/services/ar_practice_performance_tracker.dart';
 import '../players/ar/utils/midi_note_utils.dart';
 import '../players/ar/widgets/ar_falling_notes_overlay.dart';
 import '../players/ar/number_notation_video_screen.dart';
+import '../players/sight_reading/practice_result_models.dart';
+import '../players/sight_reading/practice_result_service.dart';
+import '../practice_result/practice_result_detail_screen.dart';
+
+enum _MiddleCGuidePhase {
+  inactive,
+  waitingForKey,
+  waitingForRelease,
+  readyToTap,
+}
+
+enum _MidiUnavailableAction { retry, manual }
+
+class _ArWaitHeldNoteState {
+  _ArWaitHeldNoteState({
+    required this.occurrence,
+    required this.pressedAt,
+    required this.noteDuration,
+  });
+
+  final ArWaitNoteOccurrence occurrence;
+  Duration pressedAt;
+  final Duration noteDuration;
+  bool heldTooLong = false;
+
+  int get midiNote {
+    return occurrence.midiNote;
+  }
+
+  int get groupIndex {
+    return occurrence.groupIndex;
+  }
+}
 
 /// Camera-based piano calibration and AR practice screen.
 ///
@@ -44,15 +87,22 @@ import '../players/ar/number_notation_video_screen.dart';
 class PianoCalibrationScreen extends StatefulWidget {
   const PianoCalibrationScreen({
     super.key,
+    required this.colors,
     this.savedCalibration,
     this.scoreTimeline,
+    this.scoreDocumentPath = '',
   });
+
+  final AppThemeColors colors;
 
   /// Existing mapping to restore instead of running initial detection.
   final SavedPianoCalibration? savedCalibration;
 
   /// Timed notes rendered after the user chooses to use a saved mapping.
   final ArScoreTimeline? scoreTimeline;
+
+  /// Score source saved with completed AR Performance attempts.
+  final String scoreDocumentPath;
 
   @override
   /// Creates the camera, calibration workflow, MIDI, and playback state.
@@ -71,7 +121,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   bool isPianoDetected = false;
   PianoDetectionGuidance detectionGuidance =
       PianoDetectionGuidance.pointCameraAtKeyboard;
-  String detectionDetails = 'Candidates: 0 | Pattern: not found';
+  String detectionDetails = 'Looking for piano keys';
   DateTime? lastCameraImageTime;
   KeyboardAreaCorners? keyboardAreaCorners;
   final Duration cameraImageInterval = const Duration(milliseconds: 225);
@@ -136,31 +186,66 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   AnimationController? fallingNotesAnimationController;
 
   final MidiInputService midiInputService = MidiInputService();
+  final MiddleCGuideService middleCGuideService = const MiddleCGuideService();
   StreamSubscription<Set<int>>? activeMidiNotesSubscription;
   StreamSubscription<int>? midiNoteOnSubscription;
+  StreamSubscription<MidiNoteEvent>? midiNoteEventSubscription;
+  StreamSubscription<bool>? midiConnectionSubscription;
   Set<int> activeMidiNotes = <int>{};
   String midiConnectionStatus = 'Not connected';
   bool isConnectingMidi = false;
   bool isMidiConnected = false;
+  _MiddleCGuidePhase _middleCGuidePhase = _MiddleCGuidePhase.inactive;
+  MiddleCGuideResult? _middleCGuideResult;
+  bool _middleCGuideRequested = false;
   bool hasPracticePlaybackStarted = false;
   bool isPracticePlaybackPaused = false;
   bool isPracticePlaybackComplete = false;
+  bool isPracticeControlsSheetOpen = false;
+  bool isMidiDisconnectDialogShowing = false;
+  bool practiceInterruptedByMidiDisconnect = false;
+  int practiceAttemptVersion = 0;
   bool performanceModeEnabled = true;
   final ArPracticePerformanceTracker practicePerformanceTracker =
-      ArPracticePerformanceTracker();
+      ArPracticePerformanceTracker(evaluateNoteDurations: true);
+  final PracticeResultService practiceResultService = PracticeResultService();
+  Timer? practiceFeedbackTimer;
+  Timer? waitModeHoldTimer;
   int waitModeTargetGroupIndex = 0;
   bool isWaitingForCorrectNotes = false;
+  bool waitModeSegmentInProgress = false;
+  bool waitModeRetryAfterRelease = false;
   bool isCompletionDialogShowing = false;
   final Set<int> waitModePressedNotes = <int>{};
-  final Map<int, DateTime> waitModeNotePressedAt = <int, DateTime>{};
+  final Stopwatch waitModeDurationClock = Stopwatch();
+  Duration? waitModeSegmentStartedAt;
+  Duration waitModeSegmentDuration = Duration.zero;
+  int? waitModeSegmentOriginGroupIndex;
+  int? waitModePendingRewindGroupIndex;
+  int waitModeTimelinePreviewAdvanceMicroseconds = 0;
+  Duration? waitModeHeldDurationPausedAt;
+  final Set<ArWaitNoteOccurrence> waitModeDurationPausedOccurrences =
+      <ArWaitNoteOccurrence>{};
+  final Map<int, Duration> waitModeNotePressedAt = <int, Duration>{};
+  final Map<ArWaitNoteOccurrence, _ArWaitHeldNoteState> waitModeHeldNotes =
+      <ArWaitNoteOccurrence, _ArWaitHeldNoteState>{};
+  final Map<ArWaitNoteOccurrence, double> waitModeHoldProgressByOccurrence =
+      <ArWaitNoteOccurrence, double>{};
+  final Set<ArWaitNoteOccurrence> waitModeHiddenCompletedNoteOccurrences =
+      <ArWaitNoteOccurrence>{};
+  final Set<int> waitModePassedGroupIndexes = <int>{};
 
   final Duration fallingNoteApproachDuration = const Duration(seconds: 4);
+  final Duration waitModeOverholdTolerance = const Duration(milliseconds: 300);
+  static const double waitModeMinimumHoldRatio = 0.9;
 
   @override
   /// Starts MIDI listeners, locks landscape orientation, and opens the camera.
   void initState() {
     super.initState();
     listenToMidiInput();
+    practicePerformanceTracker.applySkillLevel('beginner');
+    unawaited(loadArPerformanceDifficulty());
     SavedPianoCalibration? initialSavedCalibration = widget.savedCalibration;
 
     if (initialSavedCalibration != null) {
@@ -168,7 +253,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       savedCalibrationId = initialSavedCalibration.documentId;
       savedCalibrationName = initialSavedCalibration.name;
       isRestoringSavedCalibration = true;
-      detectionDetails = 'Loading saved key mapping...';
+      detectionDetails = 'Loading your piano setup...';
     }
 
     SystemChrome.setPreferredOrientations([
@@ -176,6 +261,14 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       DeviceOrientation.landscapeRight,
     ]);
     initializeCamera();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        askForMiddleCHelpBeforeCalibration(
+          forSavedAlignment: initialSavedCalibration != null,
+        );
+      }
+    });
   }
 
   @override
@@ -189,23 +282,26 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           if (!isPracticeMode) buildDetectionStatus(),
           if (!isPracticeMode) buildCalibrationControls(),
           if (isPracticeMode) buildPracticeControls(),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.arrow_back),
-                  color: Colors.white,
-                  style: IconButton.styleFrom(backgroundColor: Colors.black54),
-                  tooltip: 'Back',
+          if (!isPracticeMode)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.arrow_back),
+                    color: Colors.white,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black54,
+                    ),
+                    tooltip: context.l10n.back,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -213,8 +309,8 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
   /// Builds the top status card for detection, restoration, and mapping review.
   Widget buildDetectionStatus() {
-    String statusText = 'Searching for piano...';
-    String guidanceText = 'Point the camera at the piano keyboard';
+    String statusText = context.l10n.searchingForPiano;
+    String guidanceText = context.l10n.pointCameraAtKeyboard;
     IconData statusIcon = Icons.search;
     Color statusColor = Colors.black54;
 
@@ -222,81 +318,149 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       case PianoDetectionGuidance.pointCameraAtKeyboard:
         break;
       case PianoDetectionGuidance.moveFartherBack:
-        statusText = 'Move farther back';
-        guidanceText = 'Show at least two complete octaves';
+        statusText = context.l10n.moveFartherBack;
+        guidanceText = context.l10n.makeMorePianoKeysVisible;
         statusIcon = Icons.zoom_out_map;
         statusColor = Colors.orange.shade800;
         break;
       case PianoDetectionGuidance.keepKeyboardClear:
-        statusText = 'Keep the keyboard clear';
-        guidanceText = 'Move hands or objects away during calibration';
+        statusText = context.l10n.keepKeyboardClear;
+        guidanceText = context.l10n.moveObjectsOutOfView;
         statusIcon = Icons.visibility;
         statusColor = Colors.amber.shade800;
         break;
       case PianoDetectionGuidance.holdPhoneSteady:
-        statusText = 'Hold the phone steady';
-        guidanceText = 'Keep the keyboard still while detection confirms';
+        statusText = context.l10n.holdPhoneSteady;
+        guidanceText = context.l10n.keepCameraStill;
         statusIcon = Icons.center_focus_strong;
         statusColor = Colors.blueGrey.shade700;
         break;
       case PianoDetectionGuidance.pianoDetected:
-        statusText = 'Piano detected';
-        guidanceText = 'The visible keyboard area is ready';
+        statusText = context.l10n.pianoDetected;
+        guidanceText = context.l10n.visibleKeyboardReady;
         statusIcon = Icons.check_circle;
         statusColor = Colors.green.shade700;
         break;
     }
 
     if (calibrationStage == PianoCalibrationStage.adjustingKeyboardArea) {
-      statusText = 'Adjust keyboard area';
-      guidanceText = 'Drag the white corners, then confirm the area';
+      statusText = context.l10n.checkVisibleKeys;
+      guidanceText = context.l10n.dragCornersAroundKeys;
       statusIcon = Icons.open_with;
       statusColor = Colors.teal.shade700;
     }
 
     if (calibrationStage == PianoCalibrationStage.selectingReferenceKey) {
       if (referenceKeyPosition == null) {
-        statusText = 'Select a reference key';
-        guidanceText = 'Tap Middle C (C4) on the real keyboard';
-        statusIcon = Icons.music_note;
-        statusColor = Colors.indigo.shade700;
-      } else if (referenceKeyMarkers.length > 1) {
-        List<PianoKeyMarker> visibleWhiteKeyMarkers = [];
-        int visibleBlackKeyCount = 0;
+        if (_middleCGuidePhase == _MiddleCGuidePhase.inactive) {
+          statusText = context.l10n.selectMiddleC;
+          guidanceText = context.l10n.tapMiddleCInCamera;
+          statusIcon = Icons.music_note;
+          statusColor = Colors.indigo.shade700;
+        } else if (!isMidiConnected) {
+          statusText = isConnectingMidi
+              ? context.l10n.connectingToPiano
+              : context.l10n.pianoConnectionNeeded;
+          guidanceText = isConnectingMidi
+              ? context.l10n.searchingAvailableKeyboard
+              : context.l10n.reconnectOrUseManualGuide(midiConnectionStatus);
+          statusIcon = isConnectingMidi ? Icons.usb : Icons.usb_off;
+          statusColor = Colors.orange.shade800;
+        } else if (_middleCGuidePhase == _MiddleCGuidePhase.waitingForRelease) {
+          statusText = context.l10n.middleCFound;
+          guidanceText = context.l10n.releaseMiddleCToContinue;
+          statusIcon = Icons.check_circle;
+          statusColor = Colors.green.shade700;
+        } else if (_middleCGuidePhase == _MiddleCGuidePhase.readyToTap) {
+          statusText = context.l10n.middleCFound;
+          guidanceText = context.l10n.tapSameKeyInCamera;
+          statusIcon = Icons.touch_app;
+          statusColor = Colors.green.shade700;
+        } else {
+          MiddleCGuideResult? result = _middleCGuideResult;
+          statusText = context.l10n.findMiddleC;
+          statusIcon = Icons.piano;
+          statusColor = Colors.indigo.shade700;
 
-        for (PianoKeyMarker marker in pianoKeyMarkers) {
-          if (marker.isBlackKey) {
-            visibleBlackKeyCount++;
+          if (result == null) {
+            guidanceText = context.l10n.pressWhiteKeyNearCenter;
+          } else if (result.type == MiddleCGuideResultType.blackKey) {
+            guidanceText = context.l10n.blackKeyPressed;
+          } else if (result.type == MiddleCGuideResultType.moveLeft ||
+              result.type == MiddleCGuideResultType.moveRight) {
+            String direction = result.type == MiddleCGuideResultType.moveLeft
+                ? context.l10n.left
+                : context.l10n.right;
+            guidanceText = context.l10n.moveWhiteKeys(
+              result.whiteKeyDistance,
+              direction,
+            );
           } else {
-            visibleWhiteKeyMarkers.add(marker);
+            guidanceText = context.l10n.pressWhiteKeyNearCenter;
           }
         }
-
-        String firstNote = visibleWhiteKeyMarkers.first.noteName;
-        String lastNote = visibleWhiteKeyMarkers.last.noteName;
-
-        statusText = 'Piano keys ready';
-        guidanceText =
-            '${visibleWhiteKeyMarkers.length} white keys mapped from '
-            '$firstNote through $lastNote'
-            '\n$visibleBlackKeyCount black keys mapped';
-
-        if (whiteKeyAlignmentDetails != null) {
-          guidanceText = '$guidanceText\n$whiteKeyAlignmentDetails';
-        }
-
-        if (pianoKeyRegions.isNotEmpty) {
-          guidanceText =
-              '$guidanceText\n${pianoKeyRegions.length} key outlines generated';
-        }
+      } else if (referenceKeyMarkers.length > 1) {
+        statusText = context.l10n.pianoKeysReady;
+        guidanceText = context.l10n.checkKeyLabels;
 
         statusIcon = Icons.check_circle;
         statusColor = Colors.indigo.shade700;
       } else {
-        statusText = 'C4 selected';
-        guidanceText = 'No other C positions fit inside the keyboard area';
+        statusText = context.l10n.middleCSelected;
+        guidanceText = context.l10n.moveBackForMoreKeys;
         statusIcon = Icons.warning_amber;
         statusColor = Colors.orange.shade800;
+      }
+    }
+
+    if (calibrationStage == PianoCalibrationStage.aligningSavedCalibration) {
+      statusIcon = Icons.center_focus_strong;
+      statusColor = Colors.black54;
+
+      if (_middleCGuidePhase != _MiddleCGuidePhase.inactive &&
+          !isMidiConnected) {
+        statusText = isConnectingMidi
+            ? context.l10n.connectingToDigitalPiano
+            : context.l10n.digitalPianoNotConnected;
+        guidanceText = isConnectingMidi
+            ? context.l10n.searchingAvailableKeyboard
+            : context.l10n.connectPianoOrUseManualGuide;
+        statusIcon = isConnectingMidi ? Icons.usb : Icons.usb_off;
+        statusColor = Colors.orange.shade800;
+      } else if (_middleCGuidePhase == _MiddleCGuidePhase.waitingForRelease) {
+        statusText = context.l10n.middleCFound;
+        guidanceText = context.l10n.releaseMiddleCThenAlign;
+        statusIcon = Icons.check_circle;
+        statusColor = Colors.green.shade700;
+      } else if (_middleCGuidePhase == _MiddleCGuidePhase.readyToTap) {
+        statusText = context.l10n.useMiddleCAsGuide;
+        guidanceText = context.l10n.alignSavedC4Shape;
+        statusIcon = Icons.center_focus_strong;
+        statusColor = Colors.green.shade700;
+      } else if (_middleCGuidePhase == _MiddleCGuidePhase.waitingForKey) {
+        MiddleCGuideResult? result = _middleCGuideResult;
+        statusText = context.l10n.findMiddleC;
+        statusIcon = Icons.piano;
+
+        if (result == null) {
+          guidanceText = context.l10n.pressWhiteKeyNearCenter;
+        } else if (result.type == MiddleCGuideResultType.blackKey) {
+          guidanceText = context.l10n.blackKeyPressed;
+        } else if (result.type == MiddleCGuideResultType.moveLeft ||
+            result.type == MiddleCGuideResultType.moveRight) {
+          String direction = result.type == MiddleCGuideResultType.moveLeft
+              ? context.l10n.left
+              : context.l10n.right;
+          guidanceText = context.l10n.moveWhiteKeys(
+            result.whiteKeyDistance,
+            direction,
+          );
+        } else {
+          guidanceText = context.l10n.pressWhiteKeyNearCenter;
+        }
+      } else {
+        statusText = context.l10n.alignPianoSetup;
+        guidanceText = context.l10n.matchSavedShapes;
       }
     }
 
@@ -304,42 +468,38 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       NormalizedPianoCalibration? currentCalibration = normalizedCalibration;
 
       statusText = loadedFromSavedCalibration
-          ? 'Calibration loaded'
-          : 'Calibration saved';
+          ? context.l10n.pianoSetupLoaded
+          : context.l10n.pianoSetupSaved;
       statusIcon = Icons.cloud_done;
       statusColor = Colors.green.shade700;
 
       if (currentCalibration == null) {
-        guidanceText = 'The normalized calibration is unavailable';
+        guidanceText = context.l10n.pianoSetupPreparationFailed;
       } else {
-        String calibrationName = savedCalibrationName ?? 'Calibration';
-
-        String actionText = loadedFromSavedCalibration ? 'restored' : 'saved';
-
-        guidanceText =
-            '"$calibrationName" $actionText with '
-            '${currentCalibration.pianoKeys.length} piano keys';
+        String calibrationName =
+            savedCalibrationName ?? context.l10n.pianoSetupDefaultName;
+        guidanceText = context.l10n.pianoSetupReady(calibrationName);
       }
     }
 
     if (isSavingCalibration) {
-      statusText = 'Saving calibration...';
-      guidanceText = 'Keep this screen open while SoundSight saves the mapping';
+      statusText = context.l10n.savingPianoSetup;
+      guidanceText = context.l10n.keepOpenWhileSavingSetup;
       statusIcon = Icons.cloud_upload;
       statusColor = Colors.blue.shade700;
     }
 
     if (calibrationSaveError != null &&
         calibrationStage == PianoCalibrationStage.selectingReferenceKey) {
-      statusText = 'Calibration not saved';
+      statusText = context.l10n.pianoSetupNotSaved;
       guidanceText = calibrationSaveError!;
       statusIcon = Icons.cloud_off;
       statusColor = Colors.red.shade700;
     }
 
     if (isRestoringSavedCalibration) {
-      statusText = 'Loading calibration...';
-      guidanceText = 'Restoring the saved keyboard mapping';
+      statusText = context.l10n.loadingPianoSetup;
+      guidanceText = context.l10n.preparingSavedPianoKeys;
       statusIcon = Icons.cloud_download;
       statusColor = Colors.blue.shade700;
     }
@@ -348,8 +508,9 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       child: Align(
         alignment: Alignment.topCenter,
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.fromLTRB(64, 8, 64, 8),
           child: Container(
+            width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: statusColor,
@@ -359,17 +520,22 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
                     Icon(statusIcon, color: Colors.white, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      statusText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        statusText,
+                        textAlign: TextAlign.center,
+                        softWrap: true,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 28),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -377,12 +543,6 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                   guidanceText,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  detectionDetails,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -427,29 +587,40 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       }
     }
 
+    if (calibrationStage == PianoCalibrationStage.aligningSavedCalibration) {
+      highlightedMarkerNames.add('C4');
+    }
+
     if (currentKeyboardAreaCorners != null) {
       KeyboardAreaCorners detectedCorners = currentKeyboardAreaCorners;
+      bool isSavedAlignment =
+          calibrationStage == PianoCalibrationStage.aligningSavedCalibration;
 
-      keyboardOverlay = KeyboardAreaOverlay(
-        corners: detectedCorners,
-        pianoKeyMarkers: pianoKeyMarkers,
-        pianoKeyRegions: pianoKeyRegions,
-        showKeyboardArea:
-            calibrationStage != PianoCalibrationStage.mappingConfirmed,
-        showKeyOutlines: !isPracticeMode,
-        showHitLine:
-            isPracticeMode &&
-            calibrationStage == PianoCalibrationStage.mappingConfirmed,
-        showMarkerCircles: !isPracticeMode,
-        centerLabelsOnMarkers: isPracticeMode,
-        highlightedMarkerNames: highlightedMarkerNames,
-        adjustmentEnabled:
-            calibrationStage == PianoCalibrationStage.adjustingKeyboardArea,
-        referenceSelectionEnabled:
-            calibrationStage == PianoCalibrationStage.selectingReferenceKey &&
-            !isSavingCalibration,
-        onCornersChanged: updateKeyboardAreaCorners,
-        onReferenceSelected: selectReferenceKey,
+      keyboardOverlay = Opacity(
+        opacity: isSavedAlignment ? 0.62 : 1,
+        child: KeyboardAreaOverlay(
+          corners: detectedCorners,
+          pianoKeyMarkers: pianoKeyMarkers,
+          pianoKeyRegions: pianoKeyRegions,
+          showKeyboardArea:
+              calibrationStage != PianoCalibrationStage.mappingConfirmed,
+          showKeyOutlines: !isPracticeMode,
+          showHitLine:
+              isPracticeMode &&
+              calibrationStage == PianoCalibrationStage.mappingConfirmed,
+          showMarkerCircles: !isPracticeMode,
+          centerLabelsOnMarkers: isPracticeMode,
+          highlightedMarkerNames: highlightedMarkerNames,
+          adjustmentEnabled:
+              calibrationStage == PianoCalibrationStage.adjustingKeyboardArea,
+          referenceSelectionEnabled:
+              calibrationStage == PianoCalibrationStage.selectingReferenceKey &&
+              !isSavingCalibration &&
+              (_middleCGuidePhase == _MiddleCGuidePhase.inactive ||
+                  _middleCGuidePhase == _MiddleCGuidePhase.readyToTap),
+          onCornersChanged: updateKeyboardAreaCorners,
+          onReferenceSelected: handleReferenceTap,
+        ),
       );
     }
 
@@ -476,6 +647,29 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
               approachDuration: fallingNoteApproachDuration,
               noteResultsByStartMicroseconds:
                   practicePerformanceTracker.noteResultsByStartMicroseconds,
+              waitModePreviewOriginStartMicroseconds:
+                  !performanceModeEnabled &&
+                      waitModeSegmentInProgress &&
+                      waitModeSegmentOriginGroupIndex != null
+                  ? practicePerformanceTracker
+                        .noteGroups[waitModeSegmentOriginGroupIndex!]
+                        .startTime
+                        .inMicroseconds
+                  : null,
+              waitModeHoldProgressByOccurrence:
+                  Map<ArWaitNoteOccurrence, double>.unmodifiable(
+                    waitModeHoldProgressByOccurrence,
+                  ),
+              waitModeTimelinePreviewAdvanceMicroseconds:
+                  waitModeTimelinePreviewAdvanceMicroseconds,
+              hiddenGroupStartMicroseconds: performanceModeEnabled
+                  ? practicePerformanceTracker.finalizedGroupStartMicroseconds
+                  : const <int>{},
+              hiddenWaitModeNoteOccurrences: performanceModeEnabled
+                  ? const <ArWaitNoteOccurrence>{}
+                  : Set<ArWaitNoteOccurrence>.unmodifiable(
+                      waitModeHiddenCompletedNoteOccurrences,
+                    ),
             ),
           ?keyboardOverlay,
         ],
@@ -483,53 +677,79 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     );
   }
 
-  /// Builds MIDI/start controls and the compact in-playback control row.
-  ///
-  /// Immediate correctness feedback is placed below the control row so it does
-  /// not overlap the Wait/Performance toggle on narrow landscape screens.
+  /// Mirrors Synthesia's setup and active-practice app bar states.
   Widget buildPracticeControls() {
     AnimationController? currentAnimationController =
         fallingNotesAnimationController;
 
-    bool canStart =
-        isMidiConnected &&
-        currentAnimationController != null &&
-        !hasPracticePlaybackStarted;
-
     return Stack(
       children: [
+        Align(
+          alignment: Alignment.topCenter,
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: widget.colors.backgroundColor.withValues(alpha: 0.5),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: widget.colors.borderColor.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: currentAnimationController == null
+                      ? buildPracticeAppBar()
+                      : AnimatedBuilder(
+                          animation: currentAnimationController,
+                          builder: (BuildContext context, Widget? child) {
+                            return buildPracticeAppBar();
+                          },
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (hasPracticePlaybackStarted && !isPracticePlaybackComplete)
+          buildPracticeFeedbackOverlay(),
         if (!hasPracticePlaybackStarted)
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
               child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                padding: const EdgeInsets.only(top: 76),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 220,
+                    maxWidth: 320,
+                    minHeight: 46,
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.78),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!isMidiConnected &&
-                          midiConnectionStatus != 'Not connected') ...[
-                        Text(
-                          midiConnectionStatus,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      if (!isMidiConnected)
-                        OutlinedButton.icon(
-                          onPressed: isConnectingMidi ? null : connectToMidi,
+                  child: isMidiConnected
+                      ? FilledButton.icon(
+                          onPressed: currentAnimationController == null
+                              ? null
+                              : choosePracticeDisplayMode,
+                          style: practicePrimaryButtonStyle(),
+                          icon: const Icon(Icons.play_arrow_rounded),
+                          label: Text(
+                            performanceModeEnabled
+                                ? context.l10n.synthesiaStartPerformance
+                                : context.l10n.synthesiaStartWaitMode,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        )
+                      : OutlinedButton.icon(
+                          onPressed: isConnectingMidi
+                              ? null
+                              : () {
+                                  unawaited(connectToMidi());
+                                },
+                          style: practiceSecondaryButtonStyle(),
                           icon: isConnectingMidi
                               ? const SizedBox.square(
                                   dimension: 16,
@@ -537,98 +757,757 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Icon(Icons.usb),
+                              : const Icon(Icons.usb_rounded),
                           label: Text(
-                            isConnectingMidi ? 'Connecting...' : 'Connect MIDI',
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white70),
-                            minimumSize: const Size(150, 42),
-                          ),
-                        )
-                      else
-                        FilledButton.icon(
-                          onPressed: canStart
-                              ? choosePracticeDisplayMode
-                              : null,
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text('Start'),
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size(120, 42),
+                            isConnectingMidi
+                                ? context.l10n.connecting
+                                : context.l10n.arPracticeConnectMidiPiano,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
-                    ],
-                  ),
                 ),
               ),
             ),
           ),
-        if (hasPracticePlaybackStarted &&
-            practicePerformanceTracker.feedbackText != 'Ready')
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 68),
-                child: buildPracticeFeedback(),
+      ],
+    );
+  }
+
+  Widget buildPracticeAppBar() {
+    AppThemeColors colors = widget.colors;
+    int totalGroups = practicePerformanceTracker.totalGroupCount;
+    int completedGroups = practicePerformanceTracker.evaluatedGroupCount;
+    double progress = totalGroups > 0
+        ? (completedGroups / totalGroups).clamp(0.0, 1.0).toDouble()
+        : 0;
+    int percentage = (progress * 100).round();
+    double screenWidth = MediaQuery.sizeOf(context).width;
+    bool showTitle = screenWidth >= 700;
+    bool showProgress = screenWidth >= 620;
+    bool isRunning = hasPracticePlaybackStarted && !isPracticePlaybackComplete;
+    var feedback = practiceFeedbackAppearance();
+
+    if (isRunning) {
+      return Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: context.l10n.back,
+                color: colors.primaryColor,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.arrow_back_rounded),
+              ),
+            ),
+            FractionallySizedBox(
+              widthFactor: 0.52,
+              child: buildPracticeBarProgress(
+                colors: colors,
+                completedGroups: completedGroups,
+                totalGroups: totalGroups,
+                progress: progress,
+                percentage: percentage,
+                centerLabel: true,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: buildPracticeControlsButton(compact: screenWidth < 760),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: context.l10n.back,
+            color: colors.primaryColor,
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+          if (showTitle) ...[
+            const SizedBox(width: AppSpacing.xs),
+            SizedBox(
+              width: 132,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.arPractice,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: colors.primaryColor,
+                      fontSize: AppTextSizes.body,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      widget.scoreTimeline?.pieceTitle ??
+                          context.l10n.arPracticePianoPractice,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(width: AppSpacing.sm),
+          SizedBox(
+            height: 38,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.backgroundColor,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment<bool>(
+                    value: false,
+                    label: Text(context.l10n.synthesiaWait),
+                  ),
+                  ButtonSegment<bool>(
+                    value: true,
+                    label: Text(context.l10n.synthesiaPerformance),
+                  ),
+                ],
+                selected: <bool>{performanceModeEnabled},
+                showSelectedIcon: false,
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const WidgetStatePropertyAll(
+                    TextStyle(
+                      fontSize: AppTextSizes.caption,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  foregroundColor: WidgetStateProperty.resolveWith((states) {
+                    return states.contains(WidgetState.selected)
+                        ? colors.backgroundColor
+                        : colors.primaryColor;
+                  }),
+                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                    return states.contains(WidgetState.selected)
+                        ? colors.primaryColor
+                        : Colors.transparent;
+                  }),
+                  side: WidgetStatePropertyAll(
+                    BorderSide(color: colors.borderColor),
+                  ),
+                ),
+                onSelectionChanged: hasPracticePlaybackStarted
+                    ? null
+                    : (Set<bool> selection) {
+                        bool selectedPerformance = selection.first;
+
+                        if (selectedPerformance != performanceModeEnabled) {
+                          unawaited(togglePracticePlaybackMode());
+                        }
+                      },
               ),
             ),
           ),
-        SafeArea(
-          child: Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      unawaited(togglePracticePlaybackMode());
-                    },
-                    icon: Icon(
-                      performanceModeEnabled
-                          ? Icons.timer
-                          : Icons.hourglass_empty,
-                    ),
-                    tooltip: performanceModeEnabled
-                        ? 'Switch to Wait Mode'
-                        : 'Switch to Performance Mode',
-                    style: practiceIconButtonStyle(),
-                  ),
-                  const SizedBox(width: 8),
-                  buildPracticeProgressIndicator(currentAnimationController),
-                  if (hasPracticePlaybackStarted &&
-                      !isPracticePlaybackComplete) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: togglePracticePlaybackPause,
-                      icon: Icon(
-                        isPracticePlaybackPaused
-                            ? Icons.play_arrow
-                            : Icons.pause,
-                      ),
-                      tooltip: isPracticePlaybackPaused ? 'Resume' : 'Pause',
-                      style: practiceIconButtonStyle(),
-                    ),
-                  ],
-                  if (hasPracticePlaybackStarted) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: restartPracticePlayback,
-                      icon: const Icon(Icons.replay),
-                      tooltip: 'Restart',
-                      style: practiceIconButtonStyle(),
-                    ),
-                  ],
-                ],
+          const SizedBox(width: AppSpacing.sm),
+          if (showProgress)
+            Expanded(
+              child: buildPracticeBarProgress(
+                colors: colors,
+                completedGroups: completedGroups,
+                totalGroups: totalGroups,
+                progress: progress,
+                percentage: percentage,
+              ),
+            )
+          else
+            const Spacer(),
+          const SizedBox(width: AppSpacing.sm),
+          Tooltip(
+            message: feedback.text,
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: feedback.color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                feedback.icon,
+                color: feedback.color,
+                size: AppIconSizes.sm,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          buildPracticeControlsButton(compact: screenWidth < 760),
+        ],
+      ),
+    );
+  }
+
+  Widget buildPracticeControlsButton({required bool compact}) {
+    AppThemeColors colors = widget.colors;
+
+    if (compact) {
+      return Tooltip(
+        message: context.l10n.synthesiaControls,
+        child: IconButton.outlined(
+          onPressed: () {
+            unawaited(showPracticeControlsSheet());
+          },
+          color: colors.primaryColor,
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.tune_rounded, size: 18),
+        ),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: () {
+        unawaited(showPracticeControlsSheet());
+      },
+      style: practiceSecondaryButtonStyle().copyWith(
+        visualDensity: VisualDensity.compact,
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        ),
+      ),
+      icon: const Icon(Icons.tune_rounded, size: 18),
+      label: Text(context.l10n.synthesiaControls),
+    );
+  }
+
+  Widget buildPracticeBarProgress({
+    required AppThemeColors colors,
+    required int completedGroups,
+    required int totalGroups,
+    required double progress,
+    required int percentage,
+    bool centerLabel = false,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Align(
+          alignment: centerLabel
+              ? Alignment.center
+              : Alignment.centerLeft,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: centerLabel
+                ? Alignment.center
+                : Alignment.centerLeft,
+            child: Text(
+              '$completedGroups / $totalGroups · $percentage%',
+              maxLines: 1,
+              textAlign: centerLabel ? TextAlign.center : TextAlign.start,
+              style: TextStyle(
+                color: colors.primaryColor,
+                fontSize: AppTextSizes.caption,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
         ),
+        const SizedBox(height: AppSpacing.xs),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 5,
+            backgroundColor: colors.borderColor,
+            valueColor: AlwaysStoppedAnimation<Color>(colors.primaryColor),
+          ),
+        ),
       ],
     );
+  }
+
+  Widget buildPracticeFeedbackOverlay() {
+    var feedback = practiceFeedbackAppearance();
+    String playedNotes = activeMidiNotes.isEmpty
+        ? context.l10n.synthesiaNone
+        : formatMidiNoteNames(activeMidiNotes);
+
+    return Positioned(
+      top: MediaQuery.paddingOf(context).top + 52 + AppSpacing.sm,
+      left: AppSpacing.sm,
+      right: AppSpacing.sm,
+      child: Center(
+        child: IgnorePointer(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 560),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: feedback.color.withValues(alpha: 0.35),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(feedback.icon, color: feedback.color, size: 18),
+                const SizedBox(width: AppSpacing.xs),
+                Flexible(
+                  child: Text(
+                    context.l10n.synthesiaPlayedNotes(
+                      feedback.text,
+                      playedNotes,
+                    ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: AppTextSizes.caption,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  ({String text, IconData icon, Color color}) practiceFeedbackAppearance() {
+    AppThemeColors colors = widget.colors;
+
+    if (isPracticePlaybackComplete) {
+      return (
+        text: context.l10n.synthesiaCompleted,
+        icon: Icons.check_circle_rounded,
+        color: Colors.green.shade600,
+      );
+    }
+
+    if (!hasPracticePlaybackStarted) {
+      return (
+        text: isMidiConnected
+            ? context.l10n.synthesiaReady
+            : localizedArConnectionStatus(midiConnectionStatus),
+        icon: isMidiConnected
+            ? Icons.radio_button_checked_rounded
+            : Icons.usb_off_rounded,
+        color: isMidiConnected
+            ? colors.secondaryTextColor
+            : Colors.amber.shade700,
+      );
+    }
+
+    if (practicePerformanceTracker.feedbackKind !=
+        ArPracticeFeedbackKind.neutral) {
+      return switch (practicePerformanceTracker.feedbackKind) {
+        ArPracticeFeedbackKind.correct => (
+          text: localizedArFeedback(
+            practicePerformanceTracker.feedbackText,
+          ),
+          icon: Icons.check_circle_outline_rounded,
+          color: Colors.green.shade600,
+        ),
+        ArPracticeFeedbackKind.warning => (
+          text: localizedArFeedback(
+            practicePerformanceTracker.feedbackText,
+          ),
+          icon: Icons.schedule_rounded,
+          color: Colors.amber.shade700,
+        ),
+        ArPracticeFeedbackKind.incorrect => (
+          text: localizedArFeedback(
+            practicePerformanceTracker.feedbackText,
+          ),
+          icon: Icons.error_outline_rounded,
+          color: Colors.red.shade600,
+        ),
+        ArPracticeFeedbackKind.neutral => (
+          text: context.l10n.synthesiaFollowFallingNotes,
+          icon: Icons.music_note_rounded,
+          color: colors.secondaryTextColor,
+        ),
+      };
+    }
+
+    if (isWaitingForCorrectNotes) {
+      return (
+        text: context.l10n.synthesiaPlayHighlightedNoteOrChord,
+        icon: Icons.piano_rounded,
+        color: colors.primaryColor,
+      );
+    }
+
+    return (
+      text: context.l10n.synthesiaFollowFallingNotes,
+      icon: Icons.music_note_rounded,
+      color: colors.secondaryTextColor,
+    );
+  }
+
+  String localizedArFeedback(String feedback) {
+    return switch (feedback) {
+      'Ready' => context.l10n.synthesiaReady,
+      'No notes available' => context.l10n.synthesiaNoNotesAvailable,
+      'Too early' => context.l10n.synthesiaTooEarly,
+      'Too late' => context.l10n.synthesiaTooLate,
+      'Wrong note' => context.l10n.synthesiaWrongNote,
+      'Complete the chord' => context.l10n.synthesiaCompleteChord,
+      'Chord notes were not together' =>
+        context.l10n.synthesiaChordNotesNotTogether,
+      'Correct notes — keep holding' =>
+        context.l10n.sightReadingCorrectNotesKeepHolding,
+      'Correct after mistake' => context.l10n.synthesiaCorrectAfterMistake,
+      'Correct' => context.l10n.synthesiaCorrect,
+      'Released too soon' => context.l10n.synthesiaReleasedTooSoon,
+      'Duration complete' => context.l10n.synthesiaDurationComplete,
+      'Timing missed' => context.l10n.synthesiaTimingMissed,
+      'Wrong' => context.l10n.synthesiaWrong,
+      'Missed' => context.l10n.synthesiaMissed,
+      _ => feedback,
+    };
+  }
+
+  String localizedArConnectionStatus(String status) {
+    return switch (status) {
+      'Not connected' => context.l10n.sightReadingNotConnected,
+      'Searching' => context.l10n.searching,
+      'Connecting' => context.l10n.connecting,
+      'Connection failed' => context.l10n.connectionFailed,
+      _ => status,
+    };
+  }
+
+  ButtonStyle practicePrimaryButtonStyle() {
+    AppThemeColors colors = widget.colors;
+
+    return FilledButton.styleFrom(
+      backgroundColor: colors.primaryColor,
+      foregroundColor: colors.backgroundColor,
+      disabledBackgroundColor: colors.borderColor,
+      disabledForegroundColor: colors.secondaryTextColor,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+    );
+  }
+
+  ButtonStyle practiceSecondaryButtonStyle() {
+    AppThemeColors colors = widget.colors;
+
+    return OutlinedButton.styleFrom(
+      foregroundColor: colors.primaryColor,
+      disabledForegroundColor: colors.secondaryTextColor,
+      side: BorderSide(color: colors.borderColor),
+      backgroundColor: colors.backgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+    );
+  }
+
+  Future<void> showPracticeControlsSheet() async {
+    if (!mounted || isPracticeControlsSheetOpen) {
+      return;
+    }
+
+    isPracticeControlsSheetOpen = true;
+    AppThemeColors colors = widget.colors;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: 0.35),
+        enableDrag: false,
+        isScrollControlled: true,
+        builder: (BuildContext sheetContext) {
+          return StatefulBuilder(
+            builder: (BuildContext sheetContext, StateSetter refreshControls) {
+              bool attemptIsRunning =
+                  hasPracticePlaybackStarted && !isPracticePlaybackComplete;
+              bool canStart =
+                  !attemptIsRunning &&
+                  !isPracticePlaybackComplete &&
+                  isMidiConnected &&
+                  fallingNotesAnimationController != null;
+              bool canStop =
+                  attemptIsRunning &&
+                  isMidiConnected &&
+                  fallingNotesAnimationController != null;
+              var feedback = practiceFeedbackAppearance();
+
+              Future<void> connectFromControls() async {
+                Future<bool> connection = connectToMidi(
+                  showSuccessDialog: false,
+                );
+                refreshControls(() {});
+                await connection;
+
+                if (sheetContext.mounted) {
+                  refreshControls(() {});
+                }
+              }
+
+              return SafeArea(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+                  ),
+                  child: Container(
+                    margin: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceColor,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      border: Border.all(color: colors.borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: feedback.color.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                feedback.icon,
+                                color: feedback.color,
+                                size: AppIconSizes.sm,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    feedback.text,
+                                    style: TextStyle(
+                                      color: colors.primaryColor,
+                                      fontSize: AppTextSizes.label,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Text(
+                                    performanceModeEnabled
+                                        ? context.l10n
+                                              .sightReadingPerformanceMode
+                                        : context.l10n.sightReadingWaitMode,
+                                    style: TextStyle(
+                                      color: colors.secondaryTextColor,
+                                      fontSize: AppTextSizes.caption,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              constraints: const BoxConstraints(maxWidth: 190),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.backgroundColor,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xl,
+                                ),
+                                border: Border.all(color: colors.borderColor),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isMidiConnected
+                                        ? Icons.usb_rounded
+                                        : Icons.usb_off_rounded,
+                                    color: colors.primaryColor,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Flexible(
+                                    child: Text(
+                                      isMidiConnected
+                                          ? localizedArConnectionStatus(
+                                              midiConnectionStatus,
+                                            )
+                                          : context.l10n.synthesiaMidiOffline,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: colors.primaryColor,
+                                        fontSize: AppTextSizes.caption,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            IconButton(
+                              tooltip: context.l10n.synthesiaCloseControls,
+                              onPressed: () {
+                                Navigator.of(sheetContext).pop();
+                              },
+                              color: colors.primaryColor,
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                          ],
+                        ),
+                        if (attemptIsRunning) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.backgroundColor,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(color: colors.borderColor),
+                            ),
+                            child: Text(
+                              context.l10n.arPracticeStopWarning,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: colors.secondaryTextColor,
+                                fontSize: AppTextSizes.caption,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.md),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: isConnectingMidi || isMidiConnected
+                                    ? null
+                                    : () {
+                                        unawaited(connectFromControls());
+                                      },
+                                style: practiceSecondaryButtonStyle(),
+                                icon: isConnectingMidi
+                                    ? const SizedBox.square(
+                                        dimension: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Icon(
+                                        isMidiConnected
+                                            ? Icons.usb_rounded
+                                            : Icons.usb_off_rounded,
+                                      ),
+                                label: Text(
+                                  isConnectingMidi
+                                      ? context.l10n.connecting
+                                      : isMidiConnected
+                                      ? context.l10n.synthesiaConnected
+                                      : context.l10n.synthesiaConnectMidi,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: attemptIsRunning
+                                  ? OutlinedButton.icon(
+                                      onPressed: canStop
+                                          ? () {
+                                              Navigator.of(sheetContext).pop();
+                                              preparePracticeRetry();
+                                            }
+                                          : null,
+                                      style: practiceSecondaryButtonStyle(),
+                                      icon: const Icon(Icons.stop_rounded),
+                                      label: Text(context.l10n.stop),
+                                    )
+                                  : FilledButton.icon(
+                                      onPressed: canStart
+                                          ? () {
+                                              Navigator.of(sheetContext).pop();
+                                              unawaited(
+                                                choosePracticeDisplayMode(),
+                                              );
+                                            }
+                                          : null,
+                                      style: practicePrimaryButtonStyle(),
+                                      icon: const Icon(
+                                        Icons.play_arrow_rounded,
+                                      ),
+                                      label: Text(
+                                        performanceModeEnabled
+                                            ? context.l10n
+                                                  .synthesiaStartPerformance
+                                            : context.l10n
+                                                  .synthesiaStartWaitMode,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      isPracticeControlsSheetOpen = false;
+    }
   }
 
   /// Lets the user choose the visual notation shown during AR practice.
@@ -636,27 +1515,41 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     String? selectedMode = await showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) {
+        AppThemeColors colors = widget.colors;
+
         return AlertDialog(
-          icon: const Icon(Icons.visibility_outlined, size: 40),
-          title: const Text('Choose notation'),
-          content: const Text(
-            'Select how you want the music to appear during practice.',
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          icon: buildCalibrationDialogIcon(Icons.visibility_outlined),
+          title: Text(
+            context.l10n.arPracticeChooseNotation,
             textAlign: TextAlign.center,
+            style: calibrationDialogTitleStyle(),
+          ),
+          content: Text(
+            context.l10n.arPracticeChooseNotationDescription,
+            textAlign: TextAlign.center,
+            style: calibrationDialogBodyStyle(),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
           ),
           actions: [
-            OutlinedButton.icon(
-              onPressed: () {
+            buildCalibrationDialogActions(
+              secondaryLabel: context.l10n.arPracticeNotes,
+              onSecondary: () {
                 Navigator.of(dialogContext).pop('notes');
               },
-              icon: const Icon(Icons.music_note),
-              label: const Text('Notes'),
-            ),
-            FilledButton.icon(
-              onPressed: () {
+              primaryLabel: context.l10n.arPracticeNumberNotation,
+              onPrimary: () {
                 Navigator.of(dialogContext).pop('numbers');
               },
-              icon: const Icon(Icons.numbers),
-              label: const Text('Number Notation'),
             ),
           ],
         );
@@ -678,158 +1571,40 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     }
   }
 
-  /// Builds the color-coded message for the most recent evaluated input.
-  Widget buildPracticeFeedback() {
-    Color feedbackColor;
-    IconData feedbackIcon;
+  /// Hides successful-note feedback after it has been visible briefly.
+  void schedulePracticeFeedbackDismissal() {
+    practiceFeedbackTimer?.cancel();
 
-    switch (practicePerformanceTracker.feedbackKind) {
-      case ArPracticeFeedbackKind.correct:
-        feedbackColor = Colors.green;
-        feedbackIcon = Icons.check;
-        break;
-      case ArPracticeFeedbackKind.warning:
-        feedbackColor = Colors.orange;
-        feedbackIcon = Icons.priority_high;
-        break;
-      case ArPracticeFeedbackKind.incorrect:
-        feedbackColor = Colors.red;
-        feedbackIcon = Icons.close;
-        break;
-      case ArPracticeFeedbackKind.neutral:
-        feedbackColor = Colors.blueGrey;
-        feedbackIcon = Icons.music_note;
-        break;
+    if (practicePerformanceTracker.feedbackKind !=
+            ArPracticeFeedbackKind.correct ||
+        practicePerformanceTracker.feedbackText.contains('keep holding')) {
+      return;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: feedbackColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(feedbackIcon, color: feedbackColor, size: 18),
-          const SizedBox(width: 6),
-          Text(
-            practicePerformanceTracker.feedbackText,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    practiceFeedbackTimer = Timer(const Duration(milliseconds: 850), () {
+      if (!mounted ||
+          practicePerformanceTracker.feedbackKind !=
+              ArPracticeFeedbackKind.correct) {
+        return;
+      }
 
-  /// Returns the shared translucent style used by practice icon buttons.
-  ButtonStyle practiceIconButtonStyle() {
-    return IconButton.styleFrom(
-      foregroundColor: Colors.white,
-      backgroundColor: Colors.black.withValues(alpha: 0.72),
-      side: const BorderSide(color: Colors.white38),
-    );
-  }
-
-  /// Builds an animated percentage bar from evaluated score groups.
-  Widget buildPracticeProgressIndicator(AnimationController? controller) {
-    Widget buildProgressBar(double progress) {
-      double safeProgress = progress.clamp(0.0, 1.0).toDouble();
-      int percentage = (safeProgress * 100).round();
-
-      return SizedBox(
-        width: 180,
-        height: 32,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ColoredBox(color: Colors.black.withValues(alpha: 0.72)),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FractionallySizedBox(
-                  widthFactor: safeProgress,
-                  heightFactor: 1,
-                  child: const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF42A5F5), Color(0xFF66BB6A)],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Center(
-                child: Text(
-                  '$percentage%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 2)],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (controller == null) {
-      return buildProgressBar(0);
-    }
-
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (BuildContext context, Widget? child) {
-        return buildProgressBar(calculatePracticeProgress());
-      },
-    );
-  }
-
-  /// Returns completed note groups as a normalized `0` to `1` fraction.
-  double calculatePracticeProgress() {
-    if (!hasPracticePlaybackStarted) {
-      return 0;
-    }
-
-    if (practicePerformanceTracker.totalGroupCount == 0) {
-      return 0;
-    }
-
-    return practicePerformanceTracker.evaluatedGroupCount /
-        practicePerformanceTracker.totalGroupCount;
+      setState(() {
+        practicePerformanceTracker.clearImmediateFeedback();
+      });
+    });
   }
 
   /// Formats technical candidate/group/stability details for calibration review.
   String buildDetectionDetails(PianoDetectionResult detectionResult) {
-    if (detectionResult.groupSizes.isEmpty) {
-      bool hasPartialOctaves =
-          detectionResult.guidance == PianoDetectionGuidance.moveFartherBack ||
-          detectionResult.guidance == PianoDetectionGuidance.keepKeyboardClear;
-
-      if (hasPartialOctaves) {
-        return 'Candidates: ${detectionResult.candidateCount}'
-            ' | Complete octaves: ${detectionResult.completeOctaveCount}/2';
-      }
-
-      return 'Candidates: ${detectionResult.candidateCount}'
-          ' | Pattern: not found';
+    if (detectionResult.isStable) {
+      return 'Piano keys found';
     }
 
-    String groupText = detectionResult.groupSizes.join('-');
+    if (detectionResult.groupSizes.isNotEmpty) {
+      return 'Hold the phone steady';
+    }
 
-    return 'Octaves: ${detectionResult.completeOctaveCount}'
-        ' | Candidates: ${detectionResult.candidateCount}'
-        ' | Groups: $groupText'
-        ' | Stable: ${detectionResult.matchingFrameCount}'
-        '/${detectionResult.requiredMatchingFrames}';
+    return 'Looking for piano keys';
   }
 
   /// Throttles and processes live frames until a stable keyboard is detected.
@@ -950,7 +1725,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           whiteKeyAlignmentDetails = null;
           calibrationStage = PianoCalibrationStage.detectingKeyboard;
           detectionGuidance = PianoDetectionGuidance.pointCameraAtKeyboard;
-          detectionDetails = 'Processing error';
+          detectionDetails = 'Could not see the piano keys clearly';
         });
       }
     } finally {
@@ -997,6 +1772,8 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         return;
       }
 
+      pianoKeyboardDetector.reset();
+
       setState(() {
         keyboardAreaCorners = restoredCalibration.keyboardAreaCorners;
         pianoKeyMarkers = restoredCalibration.pianoKeyMarkers;
@@ -1010,14 +1787,14 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
         detectedBlackKeyGroups = [];
         calibrationFrame = null;
-        whiteKeyAlignmentDetails = 'Loaded from Firebase';
+        whiteKeyAlignmentDetails = 'Saved piano setup loaded';
 
         isPianoDetected = true;
         loadedFromSavedCalibration = true;
         detectionGuidance = PianoDetectionGuidance.pianoDetected;
-        detectionDetails =
-            '${pianoKeyMarkers.length} keys restored from Firebase';
-        calibrationStage = PianoCalibrationStage.mappingConfirmed;
+        detectionDetails = 'Saved piano setup loaded';
+        lastCameraImageTime = null;
+        calibrationStage = PianoCalibrationStage.aligningSavedCalibration;
       });
     } catch (error) {
       debugPrint('Calibration restoration failed: $error');
@@ -1029,7 +1806,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       setState(() {
         normalizedCalibration = null;
         loadedFromSavedCalibration = false;
-        detectionDetails = 'Saved calibration could not be restored';
+        detectionDetails = 'Could not load the saved piano setup';
         calibrationStage = PianoCalibrationStage.detectingKeyboard;
       });
     }
@@ -1056,7 +1833,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       if (rearCamera == null) {
         if (mounted) {
           setState(() {
-            cameraError = 'No rear camera is available on this device.';
+            cameraError = context.l10n.noRearCameraAvailable;
           });
         }
 
@@ -1087,12 +1864,12 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       setState(() {
         cameraController = newCameraController;
       });
-    } on CameraException catch (error) {
+    } on CameraException catch (_) {
       await newCameraController?.dispose();
 
       if (mounted) {
         setState(() {
-          cameraError = error.description ?? 'The camera could not be opened.';
+          cameraError = context.l10n.calibrationCameraOpenFailed;
         });
       }
     }
@@ -1100,6 +1877,102 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
   /// Builds stage-specific actions for area adjustment, mapping, and completion.
   Widget buildCalibrationControls() {
+    if (calibrationStage == PianoCalibrationStage.aligningSavedCalibration) {
+      return SafeArea(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: detectKeyboardAgain,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(
+                    context.l10n.recalibrate,
+                    textAlign: TextAlign.center,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.black54,
+                    side: const BorderSide(color: Colors.white70),
+                  ),
+                ),
+                if (_middleCGuidePhase == _MiddleCGuidePhase.inactive)
+                  FilledButton.icon(
+                    onPressed: startMiddleCGuide,
+                    icon: const Icon(Icons.usb),
+                    label: Text(
+                      context.l10n.useMidiGuide,
+                      textAlign: TextAlign.center,
+                    ),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.indigo.shade700,
+                    ),
+                  ),
+                if (_middleCGuidePhase != _MiddleCGuidePhase.inactive &&
+                    !isMidiConnected)
+                  FilledButton.icon(
+                    onPressed: isConnectingMidi
+                        ? null
+                        : retryMiddleCGuideConnection,
+                    icon: isConnectingMidi
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.usb),
+                    label: Text(
+                      isConnectingMidi
+                          ? context.l10n.connecting
+                          : context.l10n.retry,
+                      textAlign: TextAlign.center,
+                    ),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.indigo.shade700,
+                    ),
+                  ),
+                if (_middleCGuidePhase != _MiddleCGuidePhase.inactive)
+                  OutlinedButton.icon(
+                    onPressed: useManualC4Guide,
+                    icon: const Icon(Icons.piano),
+                    label: Text(
+                      context.l10n.useManualGuide,
+                      textAlign: TextAlign.center,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.black54,
+                      side: const BorderSide(color: Colors.white70),
+                    ),
+                  ),
+                FilledButton.icon(
+                  onPressed: useAlignedSavedCalibration,
+                  icon: const Icon(Icons.check),
+                  label: Text(
+                    context.l10n.continueAction,
+                    textAlign: TextAlign.center,
+                  ),
+                  style: FilledButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.green.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (calibrationStage == PianoCalibrationStage.selectingReferenceKey) {
       bool mappingIsReady =
           referenceKeyPosition != null && pianoKeyRegions.isNotEmpty;
@@ -1109,37 +1982,99 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 OutlinedButton.icon(
                   onPressed: isSavingCalibration
                       ? null
                       : adjustKeyboardAreaAgain,
                   icon: const Icon(Icons.open_with),
-                  label: const Text('Adjust area'),
+                  label: Text(
+                    context.l10n.adjustVisibleKeys,
+                    textAlign: TextAlign.center,
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.black54,
                     side: const BorderSide(color: Colors.white70),
                   ),
                 ),
-                if (mappingIsReady) ...[
-                  const SizedBox(width: 12),
+                if (!mappingIsReady &&
+                    _middleCGuidePhase == _MiddleCGuidePhase.inactive)
+                  FilledButton.icon(
+                    onPressed: isSavingCalibration ? null : startMiddleCGuide,
+                    icon: const Icon(Icons.usb),
+                    label: Text(
+                      context.l10n.useMidiGuide,
+                      textAlign: TextAlign.center,
+                    ),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.indigo.shade700,
+                    ),
+                  ),
+                if (!mappingIsReady &&
+                    _middleCGuidePhase != _MiddleCGuidePhase.inactive &&
+                    !isMidiConnected)
+                  FilledButton.icon(
+                    onPressed: isConnectingMidi
+                        ? null
+                        : retryMiddleCGuideConnection,
+                    icon: isConnectingMidi
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.usb),
+                    label: Text(
+                      isConnectingMidi
+                          ? context.l10n.connecting
+                          : context.l10n.retry,
+                      textAlign: TextAlign.center,
+                    ),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.indigo.shade700,
+                    ),
+                  ),
+                if (!mappingIsReady &&
+                    _middleCGuidePhase != _MiddleCGuidePhase.inactive)
+                  OutlinedButton.icon(
+                    onPressed: isSavingCalibration ? null : useManualC4Guide,
+                    icon: const Icon(Icons.piano),
+                    label: Text(
+                      context.l10n.useManualGuide,
+                      textAlign: TextAlign.center,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.black54,
+                      side: const BorderSide(color: Colors.white70),
+                    ),
+                  ),
+                if (mappingIsReady)
                   FilledButton.icon(
                     onPressed: isSavingCalibration ? null : confirmMapping,
                     icon: Icon(
                       isSavingCalibration ? Icons.cloud_upload : Icons.check,
                     ),
                     label: Text(
-                      isSavingCalibration ? 'Saving...' : 'Confirm mapping',
+                      isSavingCalibration
+                          ? context.l10n.saving
+                          : context.l10n.savePianoSetup,
+                      textAlign: TextAlign.center,
                     ),
                     style: FilledButton.styleFrom(
                       foregroundColor: Colors.white,
                       backgroundColor: Colors.green.shade700,
                     ),
                   ),
-                ],
               ],
             ),
           ),
@@ -1153,16 +2088,23 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 OutlinedButton.icon(
                   onPressed: isSavingCalibration ? null : editConfirmedMapping,
                   icon: Icon(
-                    loadedFromSavedCalibration ? Icons.refresh : Icons.edit,
+                    widget.savedCalibration != null
+                        ? Icons.refresh
+                        : Icons.edit,
                   ),
                   label: Text(
-                    loadedFromSavedCalibration ? 'Recalibrate' : 'Edit mapping',
+                    widget.savedCalibration != null
+                        ? context.l10n.setUpAgain
+                        : context.l10n.makeChanges,
+                    textAlign: TextAlign.center,
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
@@ -1170,11 +2112,15 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                     side: const BorderSide(color: Colors.white70),
                   ),
                 ),
-                const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: finishCalibration,
                   icon: const Icon(Icons.check),
-                  label: Text(loadedFromSavedCalibration ? 'Use' : 'Done'),
+                  label: Text(
+                    loadedFromSavedCalibration
+                        ? context.l10n.useAction
+                        : context.l10n.done,
+                    textAlign: TextAlign.center,
+                  ),
                   style: FilledButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.green.shade700,
@@ -1196,24 +2142,31 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         alignment: Alignment.bottomCenter,
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               OutlinedButton.icon(
                 onPressed: detectKeyboardAgain,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Detect again'),
+                label: Text(
+                  context.l10n.tryAgain,
+                  textAlign: TextAlign.center,
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.black54,
                   side: const BorderSide(color: Colors.white70),
                 ),
               ),
-              const SizedBox(width: 12),
               FilledButton.icon(
                 onPressed: confirmKeyboardArea,
                 icon: const Icon(Icons.check),
-                label: const Text('Confirm area'),
+                label: Text(
+                  context.l10n.keysAreVisible,
+                  textAlign: TextAlign.center,
+                ),
                 style: FilledButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.green.shade700,
@@ -1245,6 +2198,12 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     }
 
     setState(() {
+      if (_middleCGuideRequested) {
+        _middleCGuidePhase = _MiddleCGuidePhase.waitingForKey;
+        _middleCGuideResult = null;
+      } else {
+        resetMiddleCGuide();
+      }
       referenceKeyPosition = null;
       referenceKeyMarkers = [];
       pianoKeyMarkers = [];
@@ -1262,6 +2221,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     }
 
     setState(() {
+      resetMiddleCGuide();
       referenceKeyPosition = null;
       referenceKeyMarkers = [];
       pianoKeyMarkers = [];
@@ -1339,8 +2299,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       setState(() {
         normalizedCalibration = null;
         isSavingCalibration = false;
-        calibrationSaveError =
-            'Could not save the calibration. Check your connection and try again.';
+        calibrationSaveError = context.l10n.pianoSetupSaveFailed;
       });
     }
   }
@@ -1351,34 +2310,503 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        return CalibrationNameDialog(initialName: savedCalibrationName);
+        return CalibrationNameDialog(
+          colors: widget.colors,
+          initialName: savedCalibrationName,
+        );
       },
     );
   }
 
-  /// Subscribes to held-note and note-on MIDI streams for AR evaluation.
-  ///
-  /// Performance Mode evaluates each attack against elapsed score time. Wait
-  /// Mode also watches the complete held-note set so chords can be confirmed.
+  /// Builds the icon treatment shared by calibration and practice dialogs.
+  Widget buildCalibrationDialogIcon(IconData icon) {
+    AppThemeColors colors = widget.colors;
+
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        color: colors.backgroundColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: colors.borderColor),
+      ),
+      child: Icon(icon, color: colors.primaryColor, size: AppIconSizes.lg),
+    );
+  }
+
+  TextStyle calibrationDialogTitleStyle() {
+    return TextStyle(
+      color: widget.colors.primaryColor,
+      fontSize: AppTextSizes.sectionTitle,
+      fontWeight: FontWeight.w700,
+    );
+  }
+
+  TextStyle calibrationDialogBodyStyle() {
+    return TextStyle(
+      color: widget.colors.secondaryTextColor,
+      fontSize: AppTextSizes.body,
+      height: 1.4,
+    );
+  }
+
+  Widget buildCalibrationDialogActions({
+    required String secondaryLabel,
+    required VoidCallback? onSecondary,
+    required String primaryLabel,
+    required VoidCallback? onPrimary,
+  }) {
+    AppThemeColors colors = widget.colors;
+
+    return Row(
+      children: [
+        Expanded(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: OutlinedButton(
+              onPressed: onSecondary,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.primaryColor,
+                side: BorderSide(color: colors.borderColor),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+              child: Text(secondaryLabel, textAlign: TextAlign.center),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: ElevatedButton(
+              onPressed: onPrimary,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primaryColor,
+                foregroundColor: colors.backgroundColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+              child: Text(
+                primaryLabel,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildCalibrationDialogPrimaryAction({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    AppThemeColors colors = widget.colors;
+
+    return SizedBox(
+      width: double.infinity,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colors.primaryColor,
+            foregroundColor: colors.backgroundColor,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Offers MIDI assistance before the user positions the phone and keyboard.
+  Future<void> askForMiddleCHelpBeforeCalibration({
+    bool forSavedAlignment = false,
+  }) async {
+    AppThemeColors colors = widget.colors;
+
+    bool? wantsHelp = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          scrollable: true,
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          icon: buildCalibrationDialogIcon(Icons.help_outline_rounded),
+          title: Text(
+            context.l10n.needHelpFindingMiddleC,
+            textAlign: TextAlign.center,
+            style: calibrationDialogTitleStyle(),
+          ),
+          content: SizedBox(
+            width: 440,
+            child: Text(
+              forSavedAlignment
+                  ? context.l10n.middleCHelpSavedAlignment
+                  : context.l10n.middleCHelpNewCalibration,
+              textAlign: TextAlign.center,
+              style: calibrationDialogBodyStyle(),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          actions: [
+            buildCalibrationDialogActions(
+              secondaryLabel: forSavedAlignment
+                  ? context.l10n.manualGuide
+                  : context.l10n.iKnowMiddleC,
+              onSecondary: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              primaryLabel: context.l10n.connectPiano,
+              onPrimary: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (wantsHelp != true) {
+      if (forSavedAlignment) {
+        await useManualC4Guide(
+          beforeCalibration: true,
+          forSavedAlignment: true,
+        );
+      }
+      return;
+    }
+
+    await startMiddleCGuide(
+      preparingBeforeCalibration: true,
+      preparingSavedAlignment: forSavedAlignment,
+    );
+  }
+
+  /// Starts MIDI Middle C guidance from either calibration workflow.
+  Future<void> startMiddleCGuide({
+    bool preparingBeforeCalibration = false,
+    bool preparingSavedAlignment = false,
+  }) async {
+    if (!mounted) {
+      return;
+    }
+
+    bool isSavedAlignment =
+        preparingSavedAlignment ||
+        calibrationStage == PianoCalibrationStage.aligningSavedCalibration;
+
+    setState(() {
+      _middleCGuideRequested = true;
+      _middleCGuidePhase = _MiddleCGuidePhase.waitingForKey;
+      _middleCGuideResult = null;
+    });
+
+    if (isMidiConnected) {
+      return;
+    }
+
+    await connectForMiddleCGuide(
+      preparingBeforeCalibration: preparingBeforeCalibration,
+      preparingSavedAlignment: isSavedAlignment,
+    );
+  }
+
+  /// Reconnects MIDI while retaining the active Middle C helper.
+  Future<void> retryMiddleCGuideConnection() async {
+    if (_middleCGuidePhase == _MiddleCGuidePhase.inactive) {
+      return;
+    }
+
+    setState(() {
+      _middleCGuidePhase = _MiddleCGuidePhase.waitingForKey;
+      _middleCGuideResult = null;
+    });
+
+    await connectForMiddleCGuide(
+      preparingSavedAlignment:
+          calibrationStage == PianoCalibrationStage.aligningSavedCalibration,
+    );
+  }
+
+  /// Connects without the practice-mode success dialog, then offers fallback.
+  Future<void> connectForMiddleCGuide({
+    bool preparingBeforeCalibration = false,
+    bool preparingSavedAlignment = false,
+  }) async {
+    bool connected = await connectToMidi(
+      showSuccessDialog: preparingBeforeCalibration,
+      preparingForCalibration: preparingBeforeCalibration,
+    );
+
+    if (connected || !mounted) {
+      return;
+    }
+
+    _MidiUnavailableAction? action = await showDialog<_MidiUnavailableAction>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        AppThemeColors colors = widget.colors;
+
+        return AlertDialog(
+          scrollable: true,
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          icon: buildCalibrationDialogIcon(Icons.usb_off_rounded),
+          title: Text(
+            context.l10n.digitalPianoNotFound,
+            textAlign: TextAlign.center,
+            style: calibrationDialogTitleStyle(),
+          ),
+          content: SizedBox(
+            width: 440,
+            child: Text(
+              context.l10n.digitalPianoNotFoundDescription,
+              textAlign: TextAlign.center,
+              style: calibrationDialogBodyStyle(),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          actions: [
+            buildCalibrationDialogActions(
+              secondaryLabel: context.l10n.manualGuide,
+              onSecondary: () {
+                Navigator.of(dialogContext).pop(_MidiUnavailableAction.manual);
+              },
+              primaryLabel: context.l10n.retry,
+              onPrimary: () {
+                Navigator.of(dialogContext).pop(_MidiUnavailableAction.retry);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (action == _MidiUnavailableAction.retry) {
+      if (preparingBeforeCalibration) {
+        await connectForMiddleCGuide(
+          preparingBeforeCalibration: true,
+          preparingSavedAlignment: preparingSavedAlignment,
+        );
+      } else {
+        await retryMiddleCGuideConnection();
+      }
+    } else if (action == _MidiUnavailableAction.manual) {
+      await useManualC4Guide(
+        beforeCalibration: preparingBeforeCalibration,
+        forSavedAlignment: preparingSavedAlignment,
+      );
+    }
+  }
+
+  /// Restores direct camera tapping and explains the visual C-key pattern.
+  Future<void> useManualC4Guide({
+    bool beforeCalibration = false,
+    bool forSavedAlignment = false,
+  }) async {
+    if (!mounted) {
+      return;
+    }
+
+    setState(resetMiddleCGuide);
+
+    bool? useMidiGuide = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        AppThemeColors colors = widget.colors;
+
+        return AlertDialog(
+          scrollable: true,
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          icon: buildCalibrationDialogIcon(Icons.piano_rounded),
+          title: Text(
+            context.l10n.findMiddleCManually,
+            textAlign: TextAlign.center,
+            style: calibrationDialogTitleStyle(),
+          ),
+          content: SizedBox(
+            width: 440,
+            child: Text(
+              context.l10n.findMiddleCManuallyDescription(
+                forSavedAlignment
+                    ? context.l10n.manualGuideSavedAlignment
+                    : beforeCalibration
+                    ? context.l10n.manualGuideBeforeCalibration
+                    : context.l10n.manualGuideTapKey,
+              ),
+              textAlign: TextAlign.center,
+              style: calibrationDialogBodyStyle(),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          actions: [
+            buildCalibrationDialogActions(
+              secondaryLabel: context.l10n.useMidiGuide,
+              onSecondary: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              primaryLabel: context.l10n.gotIt,
+              onPrimary: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (useMidiGuide == true && mounted) {
+      await startMiddleCGuide(
+        preparingBeforeCalibration: beforeCalibration,
+        preparingSavedAlignment: forSavedAlignment,
+      );
+    }
+  }
+
+  /// Updates the on-screen direction for the latest MIDI key press.
+  void handleMiddleCGuideNoteOn(int midiNote) {
+    MiddleCGuideResult result = middleCGuideService.evaluate(midiNote);
+
+    setState(() {
+      _middleCGuideResult = result;
+
+      if (result.type == MiddleCGuideResultType.found) {
+        _middleCGuidePhase = _MiddleCGuidePhase.waitingForRelease;
+      } else {
+        _middleCGuidePhase = _MiddleCGuidePhase.waitingForKey;
+      }
+    });
+  }
+
+  /// Clears transient guidance without closing the shared MIDI connection.
+  void resetMiddleCGuide() {
+    _middleCGuideRequested = false;
+    _middleCGuidePhase = _MiddleCGuidePhase.inactive;
+    _middleCGuideResult = null;
+  }
+
+  /// Uses the signed-in player's level for AR Performance timing leniency.
+  Future<void> loadArPerformanceDifficulty() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      practicePerformanceTracker.applySkillLevel('beginner');
+      return;
+    }
+
+    try {
+      final userDocument = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final skillLevel =
+          userDocument.data()?['skillLevel'] as String? ?? 'beginner';
+
+      practicePerformanceTracker.applySkillLevel(skillLevel);
+    } catch (_) {
+      practicePerformanceTracker.applySkillLevel('beginner');
+    }
+  }
+
+  /// Subscribes to MIDI notes and connection changes for guidance and practice.
   void listenToMidiInput() {
     activeMidiNotesSubscription = midiInputService.activeNotesStream.listen((
       Set<int> notes,
     ) {
-      if (!mounted || !isPracticeMode) {
+      if (!mounted) {
         return;
       }
 
       setState(() {
         activeMidiNotes = Set<int>.from(notes);
+
+        if (_middleCGuidePhase == _MiddleCGuidePhase.waitingForRelease &&
+            !notes.contains(MiddleCGuideService.middleCMidiNote)) {
+          _middleCGuidePhase = _MiddleCGuidePhase.readyToTap;
+        }
       });
 
-      tryCompleteWaitModeTarget(notes);
+      if (isPracticeMode) {
+        if (!performanceModeEnabled && waitModeRetryAfterRelease) {
+          maybeFinishWaitModeRewind(notes);
+          return;
+        }
+
+        tryCompleteWaitModeTarget(notes);
+      }
     });
 
     midiNoteOnSubscription = midiInputService.noteOnStream.listen((
       int midiNote,
     ) {
-      if (!mounted || !isPracticeMode) {
+      if (!mounted) {
+        return;
+      }
+
+      bool isSelectingNewReference =
+          calibrationStage == PianoCalibrationStage.selectingReferenceKey &&
+          referenceKeyPosition == null;
+      bool isVerifyingSavedReference =
+          widget.savedCalibration != null &&
+          (isRestoringSavedCalibration ||
+              calibrationStage ==
+                  PianoCalibrationStage.aligningSavedCalibration);
+
+      if ((isSelectingNewReference || isVerifyingSavedReference) &&
+          _middleCGuidePhase != _MiddleCGuidePhase.inactive) {
+        handleMiddleCGuideNoteOn(midiNote);
+        return;
+      }
+
+      if (!isPracticeMode) {
         return;
       }
 
@@ -1397,19 +2825,42 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
         if (feedbackChanged) {
           setState(() {});
+          schedulePracticeFeedbackDismissal();
         }
 
         return;
       }
 
+      if (!isWaitingForCorrectNotes) {
+        if (waitModeRetryAfterRelease) {
+          return;
+        }
+
+        bool isAlreadyHeldPitch = waitModeHeldNotes.values.any(
+          (_ArWaitHeldNoteState heldNote) => heldNote.midiNote == midiNote,
+        );
+        if (isAlreadyHeldPitch) {
+          return;
+        }
+
+        if (waitModeHeldNotes.isNotEmpty || waitModeSegmentInProgress) {
+          handleUnexpectedWaitModeNoteDuringHold(midiNote);
+        }
+        return;
+      }
+
       if (isWaitingForCorrectNotes) {
+        if (waitModeRetryAfterRelease) {
+          return;
+        }
+
         bool feedbackChanged = practicePerformanceTracker.recordWaitModeNoteOn(
           waitModeTargetGroupIndex,
           midiNote,
         );
 
         waitModePressedNotes.add(midiNote);
-        waitModeNotePressedAt[midiNote] = DateTime.now();
+        waitModeNotePressedAt[midiNote] = waitModeDurationClock.elapsed;
 
         if (feedbackChanged) {
           setState(() {});
@@ -1418,88 +2869,429 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         tryCompleteWaitModeTarget(activeMidiNotes);
       }
     });
+
+    midiNoteEventSubscription = midiInputService.noteEventStream.listen((
+      MidiNoteEvent event,
+    ) {
+      if (!mounted || event.type != MidiNoteEventType.noteOff) {
+        return;
+      }
+
+      if (!isPracticeMode ||
+          !hasPracticePlaybackStarted ||
+          isPracticePlaybackComplete) {
+        return;
+      }
+
+      if (performanceModeEnabled) {
+        bool feedbackChanged = practicePerformanceTracker
+            .recordPerformanceNoteOff(
+              event.noteNumber,
+              currentPracticeScoreElapsedMilliseconds(),
+            );
+
+        if (feedbackChanged) {
+          setState(() {});
+          schedulePracticeFeedbackDismissal();
+        }
+
+        return;
+      }
+
+      handleWaitModeNoteOff(event.noteNumber);
+    });
+
+    midiConnectionSubscription = midiInputService.connectionStream.listen((
+      bool connected,
+    ) {
+      if (!mounted) {
+        return;
+      }
+
+      bool shouldInterruptPractice =
+          !connected &&
+          isPracticeMode &&
+          hasPracticePlaybackStarted &&
+          !isPracticePlaybackComplete &&
+          !practiceInterruptedByMidiDisconnect;
+
+      if (shouldInterruptPractice) {
+        fallingNotesAnimationController?.stop();
+        waitModeDurationClock.stop();
+
+        if (!performanceModeEnabled) {
+          resetInterruptedWaitModeHold();
+        }
+      }
+
+      setState(() {
+        isMidiConnected = connected;
+
+        if (!connected) {
+          isConnectingMidi = false;
+          midiConnectionStatus = context.l10n.digitalPianoDisconnected;
+          activeMidiNotes = <int>{};
+
+          if (_middleCGuidePhase != _MiddleCGuidePhase.inactive) {
+            _middleCGuidePhase = _MiddleCGuidePhase.waitingForKey;
+            _middleCGuideResult = null;
+          }
+
+          if (shouldInterruptPractice) {
+            isPracticePlaybackPaused = true;
+            practiceInterruptedByMidiDisconnect = true;
+          }
+        }
+      });
+
+      if (shouldInterruptPractice) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            unawaited(showMidiDisconnectedDialog());
+          }
+        });
+      }
+    });
+  }
+
+  void handleUnexpectedWaitModeNoteDuringHold(int midiNote) {
+    int? rewindGroupIndex;
+
+    for (_ArWaitHeldNoteState heldNote in waitModeHeldNotes.values) {
+      int groupIndex = heldNote.groupIndex;
+      if (rewindGroupIndex == null || groupIndex < rewindGroupIndex) {
+        rewindGroupIndex = groupIndex;
+      }
+    }
+
+    rewindGroupIndex ??= waitModeSegmentOriginGroupIndex;
+    if (rewindGroupIndex == null ||
+        rewindGroupIndex < 0 ||
+        rewindGroupIndex >= practicePerformanceTracker.noteGroups.length) {
+      return;
+    }
+
+    practicePerformanceTracker.recordWaitModeNoteOn(
+      rewindGroupIndex,
+      midiNote,
+    );
+    beginWaitModeRewind(
+      rewindGroupIndex,
+      context.l10n.synthesiaReleaseMistakenNotes,
+      notesStillHeld: <int>{...activeMidiNotes, midiNote},
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void resetInterruptedWaitModeHold() {
+    waitModeHoldTimer?.cancel();
+    waitModeHoldTimer = null;
+    waitModePressedNotes.clear();
+    waitModeNotePressedAt.clear();
+
+    if (waitModeHeldNotes.isNotEmpty) {
+      int earliestUnresolvedGroup = waitModeHeldNotes.values
+          .map((_ArWaitHeldNoteState note) => note.groupIndex)
+          .reduce((int first, int second) => first < second ? first : second);
+      waitModePendingRewindGroupIndex = earliestUnresolvedGroup;
+      waitModeRetryAfterRelease = true;
+    }
+  }
+
+  Future<void> showMidiDisconnectedDialog() async {
+    if (!mounted ||
+        isMidiDisconnectDialogShowing ||
+        !practiceInterruptedByMidiDisconnect) {
+      return;
+    }
+
+    if (isPracticeControlsSheetOpen) {
+      Navigator.of(context).pop();
+      await Future<void>.delayed(Duration.zero);
+
+      if (!mounted) {
+        return;
+      }
+    }
+
+    isMidiDisconnectDialogShowing = true;
+    AppThemeColors colors = widget.colors;
+    bool reconnecting = false;
+    String? reconnectError;
+
+    bool? shouldResume;
+
+    try {
+      shouldResume = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return StatefulBuilder(
+            builder: (BuildContext dialogContext, StateSetter refreshDialog) {
+              return PopScope(
+                canPop: false,
+                child: AlertDialog(
+                  backgroundColor: colors.surfaceColor,
+                  surfaceTintColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  icon: buildCalibrationDialogIcon(Icons.usb_off_rounded),
+                  title: Text(
+                    context.l10n.digitalPianoDisconnected,
+                    textAlign: TextAlign.center,
+                    style: calibrationDialogTitleStyle(),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.l10n.arPracticeDisconnectedDescription,
+                        textAlign: TextAlign.center,
+                        style: calibrationDialogBodyStyle(),
+                      ),
+                      if (reconnectError != null) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          reconnectError!,
+                          textAlign: TextAlign.center,
+                          style: calibrationDialogBodyStyle().copyWith(
+                            color: Colors.red.shade600,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  actionsPadding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    0,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                  ),
+                  actions: [
+                    buildCalibrationDialogActions(
+                      secondaryLabel: context.l10n.arPracticeEndAttempt,
+                      onSecondary: reconnecting
+                          ? null
+                          : () {
+                              Navigator.of(dialogContext).pop(false);
+                            },
+                      primaryLabel: reconnecting
+                          ? context.l10n.arPracticeReconnecting
+                          : context.l10n.arPracticeReconnect,
+                      onPrimary: reconnecting
+                          ? null
+                          : () async {
+                              refreshDialog(() {
+                                reconnecting = true;
+                                reconnectError = null;
+                              });
+
+                              bool connected =
+                                  isMidiConnected ||
+                                  await connectToMidi(showSuccessDialog: false);
+
+                              if (!dialogContext.mounted) {
+                                return;
+                              }
+
+                              if (connected) {
+                                Navigator.of(dialogContext).pop(true);
+                                return;
+                              }
+
+                              refreshDialog(() {
+                                reconnecting = false;
+                                reconnectError =
+                                    context.l10n.arPracticeReconnectFailed;
+                              });
+                            },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      isMidiDisconnectDialogShowing = false;
+    }
+
+    if (!mounted || !practiceInterruptedByMidiDisconnect) {
+      return;
+    }
+
+    if (shouldResume == true && isMidiConnected) {
+      resumePracticeAfterMidiReconnect();
+    } else {
+      endInterruptedPracticeAttempt();
+    }
+  }
+
+  void resumePracticeAfterMidiReconnect() {
+    if (!practiceInterruptedByMidiDisconnect ||
+        !hasPracticePlaybackStarted ||
+        isPracticePlaybackComplete) {
+      return;
+    }
+
+    practiceInterruptedByMidiDisconnect = false;
+
+    if (!performanceModeEnabled) {
+      waitModeDurationClock.start();
+    }
+
+    setState(() {
+      isPracticePlaybackPaused = false;
+      activeMidiNotes = <int>{};
+    });
+
+    if (!performanceModeEnabled && waitModePendingRewindGroupIndex != null) {
+      performWaitModeRewind(
+        feedbackMessage:
+            context.l10n.arPracticeConnectionRestoredTryAgain,
+      );
+      return;
+    }
+
+    if (!performanceModeEnabled &&
+        (waitModeSegmentInProgress || waitModeHeldNotes.isNotEmpty)) {
+      ensureWaitModeHoldTimer();
+    } else if (!isWaitingForCorrectNotes) {
+      fallingNotesAnimationController?.forward();
+    }
+  }
+
+  void endInterruptedPracticeAttempt() {
+    practiceInterruptedByMidiDisconnect = false;
+    preparePracticeRetry();
   }
 
   /// Discovers and connects the first available MIDI device.
   ///
   /// UI state is updated for searching/failure, and a success dialog confirms
   /// the connected device without leaving a large status card during playback.
-  Future<void> connectToMidi() async {
+  Future<bool> connectToMidi({
+    bool showSuccessDialog = true,
+    bool preparingForCalibration = false,
+  }) async {
     if (isConnectingMidi) {
-      return;
+      return false;
     }
 
     setState(() {
       isConnectingMidi = true;
-      midiConnectionStatus = 'Searching...';
+      midiConnectionStatus = context.l10n.searching;
     });
 
     try {
       final devices = await midiInputService.getDevices();
 
       if (!mounted) {
-        return;
+        return false;
       }
 
       if (devices.isEmpty) {
         setState(() {
           isConnectingMidi = false;
           isMidiConnected = false;
-          midiConnectionStatus = 'No device detected';
+          midiConnectionStatus = context.l10n.noDigitalPianoFound;
         });
 
-        return;
+        return false;
       }
 
       final device = devices.first;
 
       setState(() {
-        midiConnectionStatus = 'Connecting...';
+        midiConnectionStatus = context.l10n.connecting;
       });
 
       await midiInputService.connectToDevice(device);
 
       if (!mounted) {
-        return;
+        return false;
       }
 
       setState(() {
         isConnectingMidi = false;
         isMidiConnected = true;
-        midiConnectionStatus = 'Connected: ${device.name}';
+        midiConnectionStatus = context.l10n.connectedDevice(device.name);
         activeMidiNotes = <int>{};
       });
 
-      await showDialog<void>(
-        context: context,
-        builder: (BuildContext dialogContext) {
-          return AlertDialog(
-            icon: const Icon(Icons.check_circle, color: Colors.green, size: 40),
-            title: const Text('MIDI connected'),
-            content: Text('${device.name} is ready to use.'),
-            actions: [
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                },
-                child: const Text('Continue'),
+      if (showSuccessDialog) {
+        await showDialog<void>(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            AppThemeColors colors = widget.colors;
+
+            return AlertDialog(
+              scrollable: true,
+              backgroundColor: colors.surfaceColor,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
-            ],
-          );
-        },
-      );
+              icon: buildCalibrationDialogIcon(
+                Icons.check_circle_outline_rounded,
+              ),
+              title: Text(
+                context.l10n.digitalPianoConnected,
+                textAlign: TextAlign.center,
+                style: calibrationDialogTitleStyle(),
+              ),
+              content: SizedBox(
+                width: 440,
+                child: Text(
+                  preparingForCalibration
+                      ? context.l10n.digitalPianoReadyForCalibration(
+                          device.name,
+                        )
+                      : context.l10n.digitalPianoReady(device.name),
+                  textAlign: TextAlign.center,
+                  style: calibrationDialogBodyStyle(),
+                ),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              actions: [
+                buildCalibrationDialogPrimaryAction(
+                  label: context.l10n.continueAction,
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+
+      return true;
     } catch (error) {
       debugPrint('AR MIDI connection failed: $error');
 
       if (!mounted) {
-        return;
+        return false;
       }
 
       setState(() {
         isConnectingMidi = false;
         isMidiConnected = false;
-        midiConnectionStatus = 'Connection failed';
+        midiConnectionStatus = context.l10n.connectionFailed;
       });
+
+      return false;
     }
   }
 
@@ -1513,6 +3305,11 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     resetWaitModeProgress();
     practicePerformanceTracker.resetAttempt();
+    practiceAttemptVersion++;
+
+    if (!performanceModeEnabled) {
+      waitModeDurationClock.start();
+    }
 
     setState(() {
       hasPracticePlaybackStarted = true;
@@ -1551,11 +3348,18 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     }
 
     if (isPracticePlaybackPaused) {
+      if (!performanceModeEnabled) {
+        waitModeDurationClock.start();
+      }
+
       setState(() {
         isPracticePlaybackPaused = false;
       });
 
-      if (!isWaitingForCorrectNotes) {
+      if (!performanceModeEnabled &&
+          (waitModeSegmentInProgress || waitModeHeldNotes.isNotEmpty)) {
+        ensureWaitModeHoldTimer();
+      } else if (!isWaitingForCorrectNotes) {
         controller.forward();
       }
 
@@ -1564,29 +3368,37 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     controller.stop();
 
+    if (!performanceModeEnabled) {
+      waitModeDurationClock.stop();
+    }
+
     setState(() {
       isPracticePlaybackPaused = true;
     });
   }
 
-  /// Clears evaluation/wait state and restarts the current score from the top.
-  void restartPracticePlayback() {
+  /// Resets a completed attempt to the ready screen without starting it again.
+  void preparePracticeRetry() {
     AnimationController? controller = fallingNotesAnimationController;
 
-    if (controller == null || !isMidiConnected) {
+    if (controller == null) {
       return;
     }
 
+    controller.stop();
     resetWaitModeProgress();
     practicePerformanceTracker.resetAttempt();
+    practiceAttemptVersion++;
 
     setState(() {
-      hasPracticePlaybackStarted = true;
+      isCompletionDialogShowing = false;
+      activeMidiNotes = <int>{};
+      hasPracticePlaybackStarted = false;
       isPracticePlaybackPaused = false;
       isPracticePlaybackComplete = false;
     });
 
-    controller.forward(from: 0);
+    controller.value = 0;
   }
 
   /// Explains and confirms switching between timed and wait-for-correct modes.
@@ -1599,36 +3411,51 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) {
+        AppThemeColors colors = widget.colors;
+
         return AlertDialog(
-          icon: Icon(switchingToWaitMode ? Icons.hourglass_empty : Icons.timer),
-          title: Text(
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          icon: buildCalibrationDialogIcon(
             switchingToWaitMode
-                ? 'Switch to Wait Mode?'
-                : 'Switch to Performance Mode?',
+                ? Icons.hourglass_empty_rounded
+                : Icons.timer_outlined,
+          ),
+          title: Text(
+            context.l10n.arPracticeSwitchToModeQuestion(
+              switchingToWaitMode
+                  ? context.l10n.sightReadingWaitMode
+                  : context.l10n.sightReadingPerformanceMode,
+            ),
+            textAlign: TextAlign.center,
+            style: calibrationDialogTitleStyle(),
           ),
           content: Text(
             switchingToWaitMode
-                ? 'In Wait Mode, each falling note pauses at the hit line '
-                      'until you play the correct key or chord. There is no '
-                      'timing pressure.\n\nSwitching modes will reset the current '
-                      'attempt.'
-                : 'In Performance Mode, the falling notes continue moving '
-                      'with the score timeline. Your notes are evaluated as '
-                      'early, correct, late, or missed.\n\nSwitching modes will '
-                      'reset the current attempt.',
+                ? context.l10n.arPracticeWaitModeDescription
+                : context.l10n.arPracticePerformanceModeDescription,
+            textAlign: TextAlign.center,
+            style: calibrationDialogBodyStyle(),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
           ),
           actions: [
-            TextButton(
-              onPressed: () {
+            buildCalibrationDialogActions(
+              secondaryLabel: context.l10n.cancel,
+              onSecondary: () {
                 Navigator.of(dialogContext).pop(false);
               },
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
+              primaryLabel: context.l10n.arPracticeSwitchMode,
+              onPrimary: () {
                 Navigator.of(dialogContext).pop(true);
               },
-              child: const Text('Switch mode'),
             ),
           ],
         );
@@ -1649,6 +3476,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     resetWaitModeProgress();
     practicePerformanceTracker.resetAttempt();
+    practiceAttemptVersion++;
 
     setState(() {
       performanceModeEnabled = !performanceModeEnabled;
@@ -1679,6 +3507,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
       if (stateChanged && mounted) {
         setState(() {});
+        schedulePracticeFeedbackDismissal();
       }
 
       return;
@@ -1708,9 +3537,13 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return;
     }
 
+    pauseWaitModeHeldDurations(waitModeDurationClock.elapsed);
     isWaitingForCorrectNotes = true;
     waitModePressedNotes.clear();
     waitModeNotePressedAt.clear();
+    practiceFeedbackTimer?.cancel();
+    practiceFeedbackTimer = null;
+    practicePerformanceTracker.clearImmediateFeedback();
     controller.stop();
     controller.value = targetMicroseconds / animationDuration.inMicroseconds;
 
@@ -1728,6 +3561,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     if (performanceModeEnabled ||
         !hasPracticePlaybackStarted ||
         !isWaitingForCorrectNotes ||
+        waitModeRetryAfterRelease ||
         waitModeTargetGroupIndex >=
             practicePerformanceTracker.noteGroups.length) {
       return;
@@ -1736,16 +3570,26 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     ArPracticeNoteGroup targetGroup =
         practicePerformanceTracker.noteGroups[waitModeTargetGroupIndex];
     Set<int> expectedNotes = targetGroup.midiNotes;
+    Set<int> carriedNotes = waitModeHeldNotes.values
+        .where(
+          (_ArWaitHeldNoteState heldNote) =>
+              heldNote.groupIndex < waitModeTargetGroupIndex,
+        )
+        .map((_ArWaitHeldNoteState heldNote) => heldNote.midiNote)
+        .toSet();
+    Set<int> allowedNotes = <int>{...expectedNotes, ...carriedNotes};
 
-    // Notes that started in an earlier group may still be held because their
-    // score duration overlaps this group. They must not block the newly
-    // required notes from completing the current Wait Mode step.
     bool heldNotesMatch = notes.containsAll(expectedNotes);
     bool expectedNotesWerePressed = expectedNotes.every(
       waitModePressedNotes.contains,
     );
+    bool hasUnexpectedActiveNote = notes.any(
+      (int midiNote) => !allowedNotes.contains(midiNote),
+    );
 
-    if (!heldNotesMatch || !expectedNotesWerePressed) {
+    if (!heldNotesMatch ||
+        !expectedNotesWerePressed ||
+        hasUnexpectedActiveNote) {
       return;
     }
 
@@ -1761,20 +3605,525 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return;
     }
 
-    practicePerformanceTracker.completeWaitModeGroup(waitModeTargetGroupIndex);
+    acceptWaitModeTarget(targetGroup, waitModeTargetGroupIndex);
+  }
 
-    waitModeTargetGroupIndex++;
+  /// Accepts one onset while keeping all earlier sustained notes active.
+  void acceptWaitModeTarget(ArPracticeNoteGroup targetGroup, int groupIndex) {
+    Duration now = waitModeDurationClock.elapsed;
+    resumeWaitModeHeldDurations(now);
+
+    for (int midiNote in targetGroup.midiNotes) {
+      Duration noteDuration = targetGroup.durationFor(midiNote);
+      ArWaitNoteOccurrence occurrence = ArWaitNoteOccurrence(
+        groupIndex: groupIndex,
+        groupStartMicroseconds: targetGroup.startTime.inMicroseconds,
+        midiNote: midiNote,
+      );
+
+      waitModeHeldNotes[occurrence] = _ArWaitHeldNoteState(
+        occurrence: occurrence,
+        pressedAt: now,
+        noteDuration: noteDuration,
+      );
+      waitModeHoldProgressByOccurrence[occurrence] = 0;
+    }
+
+    waitModePassedGroupIndexes.add(groupIndex);
+    waitModeTargetGroupIndex = groupIndex + 1;
     isWaitingForCorrectNotes = false;
+    waitModeRetryAfterRelease = false;
     waitModePressedNotes.clear();
     waitModeNotePressedAt.clear();
+    waitModeTimelinePreviewAdvanceMicroseconds = 0;
+    practiceFeedbackTimer?.cancel();
+    practicePerformanceTracker.showDurationFeedback(
+      context.l10n.sightReadingCorrectNotesKeepHolding,
+    );
+
+    if (waitModeTargetGroupIndex <
+        practicePerformanceTracker.noteGroups.length) {
+      ArPracticeNoteGroup nextGroup =
+          practicePerformanceTracker.noteGroups[waitModeTargetGroupIndex];
+      waitModeSegmentOriginGroupIndex = groupIndex;
+      waitModeSegmentStartedAt = now;
+      waitModeSegmentDuration = nextGroup.startTime - targetGroup.startTime;
+      waitModeSegmentInProgress = true;
+    } else {
+      waitModeSegmentOriginGroupIndex = null;
+      waitModeSegmentStartedAt = null;
+      waitModeSegmentDuration = Duration.zero;
+      waitModeSegmentInProgress = false;
+    }
+
+    ensureWaitModeHoldTimer();
 
     if (mounted) {
       setState(() {});
     }
+  }
 
-    if (!isPracticePlaybackPaused) {
-      fallingNotesAnimationController?.forward();
+  /// Refreshes hold/release guidance and detects keys held past their deadline.
+  void ensureWaitModeHoldTimer() {
+    waitModeHoldTimer ??= Timer.periodic(
+      const Duration(milliseconds: 50),
+      (_) => updateWaitModeHoldProgress(),
+    );
+  }
+
+  void updateWaitModeHoldProgress() {
+    if (!mounted ||
+        performanceModeEnabled ||
+        isPracticePlaybackPaused ||
+        waitModeRetryAfterRelease ||
+        (!waitModeSegmentInProgress && waitModeHeldNotes.isEmpty)) {
+      return;
     }
+
+    Duration now = waitModeDurationClock.elapsed;
+    List<_ArWaitHeldNoteState> dueForRelease = [];
+
+    for (_ArWaitHeldNoteState heldNote in waitModeHeldNotes.values) {
+      if (!activeMidiNotes.contains(heldNote.midiNote)) {
+        continue;
+      }
+
+      Duration durationNow = _waitModeDurationEvaluationTime(heldNote, now);
+      Duration heldDuration = durationNow - heldNote.pressedAt;
+      int noteDurationMicroseconds = heldNote.noteDuration.inMicroseconds;
+      double holdProgress = noteDurationMicroseconds <= 0
+          ? 1
+          : (heldDuration.inMicroseconds / noteDurationMicroseconds)
+                .clamp(0.0, 1.0)
+                .toDouble();
+      waitModeHoldProgressByOccurrence[heldNote.occurrence] = holdProgress;
+
+      if (heldDuration >= requiredWaitModeHoldDuration(heldNote)) {
+        dueForRelease.add(heldNote);
+      }
+
+      if (heldDuration > heldNote.noteDuration + waitModeOverholdTolerance) {
+        if (!heldNote.heldTooLong) {
+          heldNote.heldTooLong = true;
+          practicePerformanceTracker.recordWaitModeDurationMistake(
+            heldNote.groupIndex,
+            context.l10n.sightReadingNoteHeldTooLong(
+              MidiNoteUtils.nameForMidiNote(heldNote.midiNote),
+            ),
+          );
+        }
+
+        beginWaitModeRewind(
+          heldNote.groupIndex,
+          context.l10n.sightReadingReleaseHeldTooLong(
+            MidiNoteUtils.nameForMidiNote(heldNote.midiNote),
+          ),
+        );
+
+        if (mounted) {
+          setState(() {});
+        }
+
+        return;
+      }
+    }
+
+    Duration? segmentStartedAt = waitModeSegmentStartedAt;
+
+    if (waitModeSegmentInProgress && segmentStartedAt != null) {
+      Duration segmentElapsed = now - segmentStartedAt;
+      int maximumAdvanceMicroseconds = waitModeSegmentDuration.inMicroseconds;
+      waitModeTimelinePreviewAdvanceMicroseconds = segmentElapsed.inMicroseconds
+          .clamp(0, maximumAdvanceMicroseconds)
+          .toInt();
+
+      if (segmentElapsed >= waitModeSegmentDuration) {
+        completeWaitModeSegment(
+          durationPauseAt: segmentStartedAt + waitModeSegmentDuration,
+        );
+      }
+    }
+
+    if (dueForRelease.isNotEmpty) {
+      practicePerformanceTracker.showDurationFeedback(
+        context.l10n.sightReadingReleaseNotes(
+          formatMidiNoteNames(dueForRelease.map((note) => note.midiNote)),
+        ),
+      );
+    } else if (isWaitingForCorrectNotes && waitModeHeldNotes.isNotEmpty) {
+      String heldNames = formatMidiNoteNames(
+        waitModeHeldNotes.values
+            .where(
+              (_ArWaitHeldNoteState note) =>
+                  activeMidiNotes.contains(note.midiNote),
+            )
+            .map((_ArWaitHeldNoteState note) => note.midiNote),
+      );
+      String expectedNames =
+          waitModeTargetGroupIndex <
+              practicePerformanceTracker.noteGroups.length
+          ? formatMidiNoteNames(
+              practicePerformanceTracker
+                  .noteGroups[waitModeTargetGroupIndex]
+                  .midiNotes,
+            )
+          : '';
+
+      practicePerformanceTracker.showDurationFeedback(
+        heldNames.isEmpty
+            ? context.l10n.synthesiaPlayNotes(expectedNames)
+            : context.l10n.sightReadingHoldWhilePlaying(
+                heldNames,
+                expectedNames,
+              ),
+      );
+    } else if (waitModeSegmentInProgress) {
+      practicePerformanceTracker.showDurationFeedback(
+        waitModeHeldNotes.isEmpty
+            ? context.l10n.synthesiaGetReadyNextNote
+            : context.l10n.sightReadingCorrectNotesKeepHolding,
+      );
+    }
+
+    if (!waitModeSegmentInProgress && waitModeHeldNotes.isEmpty) {
+      waitModeHoldTimer?.cancel();
+      waitModeHoldTimer = null;
+    }
+
+    setState(() {});
+  }
+
+  /// Commits the temporary visual movement and waits for the next onset.
+  void completeWaitModeSegment({required Duration durationPauseAt}) {
+    pauseWaitModeHeldDurations(durationPauseAt);
+    waitModeSegmentInProgress = false;
+    waitModeSegmentStartedAt = null;
+    waitModeSegmentDuration = Duration.zero;
+    waitModeSegmentOriginGroupIndex = null;
+    waitModeTimelinePreviewAdvanceMicroseconds = 0;
+
+    if (waitModeTargetGroupIndex >=
+        practicePerformanceTracker.noteGroups.length) {
+      return;
+    }
+
+    AnimationController? controller = fallingNotesAnimationController;
+    Duration? animationDuration = controller?.duration;
+
+    if (controller != null &&
+        animationDuration != null &&
+        animationDuration.inMicroseconds > 0) {
+      ArPracticeNoteGroup targetGroup =
+          practicePerformanceTracker.noteGroups[waitModeTargetGroupIndex];
+      int targetMicroseconds =
+          fallingNoteApproachDuration.inMicroseconds +
+          targetGroup.startTime.inMicroseconds;
+      controller.value = targetMicroseconds / animationDuration.inMicroseconds;
+    }
+
+    isWaitingForCorrectNotes = true;
+    waitModePressedNotes.clear();
+    waitModeNotePressedAt.clear();
+  }
+
+  /// Handles a Wait Mode key release and advances only after valid durations.
+  void handleWaitModeNoteOff(int midiNote) {
+    _ArWaitHeldNoteState? heldNote;
+
+    for (_ArWaitHeldNoteState candidate in waitModeHeldNotes.values) {
+      if (candidate.midiNote == midiNote) {
+        heldNote = candidate;
+        break;
+      }
+    }
+
+    if (heldNote == null) {
+      waitModeNotePressedAt.remove(midiNote);
+      return;
+    }
+
+    if (waitModeRetryAfterRelease) {
+      return;
+    }
+
+    Duration heldDuration =
+        _waitModeDurationEvaluationTime(
+          heldNote,
+          waitModeDurationClock.elapsed,
+        ) -
+        heldNote.pressedAt;
+
+    if (heldDuration >
+        heldNote.noteDuration + waitModeOverholdTolerance) {
+      heldNote.heldTooLong = true;
+      practicePerformanceTracker.recordWaitModeDurationMistake(
+        heldNote.groupIndex,
+        context.l10n.sightReadingNoteHeldTooLong(
+          MidiNoteUtils.nameForMidiNote(heldNote.midiNote),
+        ),
+      );
+      beginWaitModeRewind(
+        heldNote.groupIndex,
+        context.l10n.sightReadingReleaseHeldTooLong(
+          MidiNoteUtils.nameForMidiNote(heldNote.midiNote),
+        ),
+      );
+
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+
+    if (!isWaitModeFallingNoteConsumed(heldNote)) {
+      practicePerformanceTracker.recordWaitModeDurationMistake(
+        heldNote.groupIndex,
+        context.l10n.sightReadingNoteReleasedTooSoon(
+          MidiNoteUtils.nameForMidiNote(midiNote),
+        ),
+      );
+      beginWaitModeRewind(
+        heldNote.groupIndex,
+        context.l10n.synthesiaReleasedTooSoonTryAgain,
+      );
+
+      if (mounted) {
+        setState(() {});
+      }
+
+      return;
+    }
+
+    waitModeHoldProgressByOccurrence[heldNote.occurrence] = 1;
+    waitModeHiddenCompletedNoteOccurrences.add(heldNote.occurrence);
+    waitModeHeldNotes.remove(heldNote.occurrence);
+    waitModeNotePressedAt.remove(midiNote);
+    finalizeReleasedWaitModeGroup(heldNote.groupIndex);
+    maybeCompleteWaitModePractice();
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void finalizeReleasedWaitModeGroup(int groupIndex) {
+    bool hasOutstandingNote = waitModeHeldNotes.values.any(
+      (_ArWaitHeldNoteState heldNote) => heldNote.groupIndex == groupIndex,
+    );
+
+    if (hasOutstandingNote ||
+        !waitModePassedGroupIndexes.contains(groupIndex)) {
+      return;
+    }
+
+    practicePerformanceTracker.completeWaitModeGroup(groupIndex);
+    schedulePracticeFeedbackDismissal();
+  }
+
+  /// Uses the falling-note body as the release guide for one held pitch.
+  bool isWaitModeFallingNoteConsumed(_ArWaitHeldNoteState heldNote) {
+    Duration heldDuration =
+        _waitModeDurationEvaluationTime(
+          heldNote,
+          waitModeDurationClock.elapsed,
+        ) -
+        heldNote.pressedAt;
+    const Duration releaseGrace = Duration(milliseconds: 40);
+
+    return heldDuration + releaseGrace >=
+        requiredWaitModeHoldDuration(heldNote);
+  }
+
+  Duration requiredWaitModeHoldDuration(_ArWaitHeldNoteState heldNote) {
+    return Duration(
+      microseconds:
+          (heldNote.noteDuration.inMicroseconds * waitModeMinimumHoldRatio)
+              .round(),
+    );
+  }
+
+  void pauseWaitModeHeldDurations(Duration pauseAt) {
+    if (waitModeHeldDurationPausedAt != null) {
+      return;
+    }
+
+    waitModeHeldDurationPausedAt = pauseAt;
+    waitModeDurationPausedOccurrences.clear();
+
+    for (_ArWaitHeldNoteState heldNote in waitModeHeldNotes.values) {
+      Duration heldDuration = pauseAt - heldNote.pressedAt;
+      if (heldDuration < heldNote.noteDuration) {
+        waitModeDurationPausedOccurrences.add(heldNote.occurrence);
+      }
+    }
+  }
+
+  Duration _waitModeDurationEvaluationTime(
+    _ArWaitHeldNoteState heldNote,
+    Duration now,
+  ) {
+    Duration? pausedAt = waitModeHeldDurationPausedAt;
+    if (pausedAt != null &&
+        waitModeDurationPausedOccurrences.contains(heldNote.occurrence)) {
+      return pausedAt;
+    }
+
+    Duration? segmentStartedAt = waitModeSegmentStartedAt;
+    if (waitModeSegmentInProgress && segmentStartedAt != null) {
+      Duration segmentEnd = segmentStartedAt + waitModeSegmentDuration;
+      if (now > segmentEnd) {
+        return segmentEnd;
+      }
+    }
+
+    return now;
+  }
+
+  void resumeWaitModeHeldDurations(Duration now) {
+    Duration? pausedAt = waitModeHeldDurationPausedAt;
+    if (pausedAt == null) {
+      return;
+    }
+
+    Duration excludedWait = now - pausedAt;
+    if (excludedWait > Duration.zero) {
+      for (_ArWaitHeldNoteState heldNote in waitModeHeldNotes.values) {
+        if (waitModeDurationPausedOccurrences.contains(heldNote.occurrence)) {
+          heldNote.pressedAt += excludedWait;
+        }
+      }
+    }
+
+    waitModeHeldDurationPausedAt = null;
+    waitModeDurationPausedOccurrences.clear();
+  }
+
+  void maybeCompleteWaitModePractice() {
+    if (performanceModeEnabled ||
+        waitModeRetryAfterRelease ||
+        waitModeSegmentInProgress ||
+        waitModeTargetGroupIndex <
+            practicePerformanceTracker.noteGroups.length ||
+        waitModeHeldNotes.isNotEmpty ||
+        isPracticePlaybackComplete) {
+      return;
+    }
+
+    waitModeHoldTimer?.cancel();
+    waitModeHoldTimer = null;
+    waitModeDurationClock.stop();
+    completePracticePlayback(finalizePerformanceGroups: false);
+    fallingNotesAnimationController?.value = 1;
+  }
+
+  void beginWaitModeRewind(
+    int groupIndex,
+    String feedbackMessage, {
+    Set<int>? notesStillHeld,
+  }) {
+    int rewindGroupIndex = groupIndex;
+
+    for (_ArWaitHeldNoteState heldNote in waitModeHeldNotes.values) {
+      if (heldNote.groupIndex < rewindGroupIndex) {
+        rewindGroupIndex = heldNote.groupIndex;
+      }
+    }
+
+    int? pendingRewind = waitModePendingRewindGroupIndex;
+    waitModePendingRewindGroupIndex = pendingRewind == null
+        ? rewindGroupIndex
+        : (pendingRewind < rewindGroupIndex ? pendingRewind : rewindGroupIndex);
+    waitModeRetryAfterRelease = true;
+    waitModeSegmentInProgress = false;
+    waitModeSegmentStartedAt = null;
+    waitModeSegmentDuration = Duration.zero;
+    waitModeSegmentOriginGroupIndex = null;
+    waitModeTimelinePreviewAdvanceMicroseconds = 0;
+    waitModeHeldDurationPausedAt = null;
+    waitModeDurationPausedOccurrences.clear();
+    isWaitingForCorrectNotes = false;
+    fallingNotesAnimationController?.stop();
+    waitModeHoldTimer?.cancel();
+    waitModeHoldTimer = null;
+    practicePerformanceTracker.showDurationFeedback(
+      feedbackMessage,
+      isError: true,
+    );
+
+    maybeFinishWaitModeRewind(notesStillHeld ?? activeMidiNotes);
+  }
+
+  void maybeFinishWaitModeRewind(Set<int> notes) {
+    if (!waitModeRetryAfterRelease || notes.isNotEmpty) {
+      return;
+    }
+
+    performWaitModeRewind(
+      feedbackMessage: context.l10n.arPracticeTryAgainFullLength,
+    );
+  }
+
+  void performWaitModeRewind({required String feedbackMessage}) {
+    int? rewindGroupIndex = waitModePendingRewindGroupIndex;
+
+    if (rewindGroupIndex == null ||
+        rewindGroupIndex < 0 ||
+        rewindGroupIndex >= practicePerformanceTracker.noteGroups.length) {
+      return;
+    }
+
+    waitModeHoldTimer?.cancel();
+    waitModeHoldTimer = null;
+    practicePerformanceTracker.rewindWaitModeFromGroup(rewindGroupIndex);
+    waitModePassedGroupIndexes.removeWhere(
+      (int groupIndex) => groupIndex >= rewindGroupIndex,
+    );
+    waitModeHiddenCompletedNoteOccurrences.removeWhere(
+      (ArWaitNoteOccurrence occurrence) =>
+          occurrence.groupIndex >= rewindGroupIndex,
+    );
+    waitModeHeldNotes.clear();
+    waitModeHoldProgressByOccurrence.clear();
+    waitModePressedNotes.clear();
+    waitModeNotePressedAt.clear();
+    waitModeTargetGroupIndex = rewindGroupIndex;
+    waitModeRetryAfterRelease = false;
+    waitModePendingRewindGroupIndex = null;
+    waitModeSegmentInProgress = false;
+    waitModeSegmentStartedAt = null;
+    waitModeSegmentDuration = Duration.zero;
+    waitModeSegmentOriginGroupIndex = null;
+    waitModeTimelinePreviewAdvanceMicroseconds = 0;
+    pauseWaitModeHeldDurations(waitModeDurationClock.elapsed);
+    isWaitingForCorrectNotes = true;
+
+    AnimationController? controller = fallingNotesAnimationController;
+    Duration? animationDuration = controller?.duration;
+
+    if (controller != null &&
+        animationDuration != null &&
+        animationDuration.inMicroseconds > 0) {
+      ArPracticeNoteGroup targetGroup =
+          practicePerformanceTracker.noteGroups[rewindGroupIndex];
+      int targetMicroseconds =
+          fallingNoteApproachDuration.inMicroseconds +
+          targetGroup.startTime.inMicroseconds;
+      controller.value = targetMicroseconds / animationDuration.inMicroseconds;
+    }
+
+    practicePerformanceTracker.showDurationFeedback(
+      feedbackMessage,
+      isError: true,
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String formatMidiNoteNames(Iterable<int> midiNotes) {
+    List<int> sortedNotes = midiNotes.toSet().toList()..sort();
+    return sortedNotes.map(MidiNoteUtils.nameForMidiNote).join(' + ');
   }
 
   /// Ensures the attacks of a multi-note chord occur within 200 milliseconds.
@@ -1783,9 +4132,9 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return true;
     }
 
-    List<DateTime> pressTimes = expectedNotes
+    List<Duration> pressTimes = expectedNotes
         .map((int note) => waitModeNotePressedAt[note])
-        .whereType<DateTime>()
+        .whereType<Duration>()
         .toList();
 
     if (pressTimes.length != expectedNotes.length) {
@@ -1794,16 +4143,35 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     pressTimes.sort();
 
-    return pressTimes.last.difference(pressTimes.first) <=
+    return (pressTimes.last - pressTimes.first) <=
         const Duration(milliseconds: 200);
   }
 
   /// Clears the current Wait Mode gate, held attacks, and chord timestamps.
   void resetWaitModeProgress() {
+    practiceFeedbackTimer?.cancel();
+    practiceFeedbackTimer = null;
+    waitModeHoldTimer?.cancel();
+    waitModeHoldTimer = null;
+    waitModeDurationClock.stop();
+    waitModeDurationClock.reset();
     waitModeTargetGroupIndex = 0;
     isWaitingForCorrectNotes = false;
+    waitModeSegmentInProgress = false;
+    waitModeRetryAfterRelease = false;
+    waitModeSegmentStartedAt = null;
+    waitModeSegmentDuration = Duration.zero;
+    waitModeSegmentOriginGroupIndex = null;
+    waitModePendingRewindGroupIndex = null;
+    waitModeTimelinePreviewAdvanceMicroseconds = 0;
+    waitModeHeldDurationPausedAt = null;
+    waitModeDurationPausedOccurrences.clear();
+    waitModeHeldNotes.clear();
     waitModePressedNotes.clear();
     waitModeNotePressedAt.clear();
+    waitModeHoldProgressByOccurrence.clear();
+    waitModeHiddenCompletedNoteOccurrences.clear();
+    waitModePassedGroupIndexes.clear();
   }
 
   /// Finalizes remaining score groups and schedules completion UI at playback end.
@@ -1812,7 +4180,20 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return;
     }
 
-    if (performanceModeEnabled) {
+    if (!performanceModeEnabled && isWaitingForCorrectNotes) {
+      return;
+    }
+
+    completePracticePlayback(finalizePerformanceGroups: performanceModeEnabled);
+  }
+
+  /// Completes one attempt and opens its result dialog exactly once.
+  void completePracticePlayback({required bool finalizePerformanceGroups}) {
+    if (!mounted || isPracticePlaybackComplete) {
+      return;
+    }
+
+    if (finalizePerformanceGroups) {
       practicePerformanceTracker.finalizeRemainingPerformanceGroups();
     }
 
@@ -1821,14 +4202,18 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       isPracticePlaybackComplete = true;
     });
 
+    int completedAttemptVersion = practiceAttemptVersion;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (mounted &&
+          practiceAttemptVersion == completedAttemptVersion &&
+          isPracticePlaybackComplete) {
         showPracticeCompletionDialog();
       }
     });
   }
 
-  /// Shows scrollable, local-only attempt statistics with retry and done actions.
+  /// Shows the shared player-result layout and saves timed AR performances.
   ///
   /// The guard prevents duplicate dialogs when multiple animation notifications
   /// are delivered near completion.
@@ -1838,58 +4223,795 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     }
 
     isCompletionDialogShowing = true;
+    AppThemeColors colors = widget.colors;
+    int totalGroups = practicePerformanceTracker.totalGroupCount;
+    int totalMistakes = practicePerformanceTracker.mistakeCount;
+    bool isPerfect = totalMistakes == 0;
+    Color accentColor = isPerfect
+        ? Colors.green.shade600
+        : Colors.amber.shade700;
+    IconData icon = isPerfect
+        ? Icons.check_circle
+        : Icons.warning_amber_rounded;
+    String title = isPerfect
+        ? context.l10n.synthesiaPerfect
+        : context.l10n.synthesiaExerciseCompleted;
+    String message = isPerfect
+        ? context.l10n.synthesiaCompletedWithoutMistakes
+        : context.l10n.synthesiaCompletedWithMistakes(totalMistakes);
+    String scoreText = performanceModeEnabled
+        ? '${practicePerformanceTracker.correctGroupCount}/$totalGroups'
+        : '${practicePerformanceTracker.evaluatedGroupCount}/$totalGroups';
+    List<({String label, String value})> resultStats = performanceModeEnabled
+        ? <({String label, String value})>[
+            (
+              label: context.l10n.synthesiaCorrectOnTime,
+              value:
+                  '${practicePerformanceTracker.correctGroupCount}/$totalGroups',
+            ),
+            (
+              label: context.l10n.synthesiaWrongNotes,
+              value: '${practicePerformanceTracker.wrongGroupCount}',
+            ),
+            (
+              label: context.l10n.synthesiaNotPlayed,
+              value: '${practicePerformanceTracker.missedGroupCount}',
+            ),
+            (
+              label: context.l10n.synthesiaPlayedOnTime,
+              value: '${practicePerformanceTracker.accuracyPercentage}%',
+            ),
+            (
+              label: context.l10n.synthesiaMusicLength,
+              value: formatPracticeDuration(
+                widget.scoreTimeline?.totalDuration ?? Duration.zero,
+              ),
+            ),
+          ]
+        : <({String label, String value})>[
+            (
+              label: context.l10n.synthesiaCompleted,
+              value:
+                  '${practicePerformanceTracker.evaluatedGroupCount}/$totalGroups',
+            ),
+            (
+              label: context.l10n.synthesiaFirstTry,
+              value: '${practicePerformanceTracker.correctGroupCount}',
+            ),
+            (
+              label: context.l10n.synthesiaMistakes,
+              value: '$totalMistakes',
+            ),
+            (
+              label: context.l10n.synthesiaTime,
+              value: context.l10n.synthesiaNoLimit,
+            ),
+          ];
+    final SightReadingPerformanceReport? performanceReport =
+        performanceModeEnabled ? buildArPerformanceReport() : null;
+    Future<String>? activeResultSaveFuture = performanceReport == null
+        ? null
+        : practiceResultService.savePerformanceResult(performanceReport);
 
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          icon: const Icon(Icons.emoji_events, size: 42),
-          title: const Text('Practice complete'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  performanceModeEnabled ? 'Performance Mode' : 'Wait Mode',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) => Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            backgroundColor: colors.surfaceColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              side: BorderSide(color: colors.borderColor),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            icon,
+                            color: accentColor,
+                            size: AppIconSizes.lg,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  color: colors.primaryColor,
+                                  fontSize: AppTextSizes.sectionTitle,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              Text(
+                                message,
+                                style: TextStyle(
+                                  color: colors.secondaryTextColor,
+                                  fontSize: AppTextSizes.caption,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Column(
+                          children: [
+                            Text(
+                              context.l10n.synthesiaScoreLabel,
+                              style: TextStyle(
+                                color: colors.secondaryTextColor,
+                                fontSize: AppTextSizes.caption,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            Text(
+                              scoreText,
+                              style: TextStyle(
+                                color: accentColor,
+                                fontSize: AppTextSizes.display,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: resultStats
+                          .map(
+                            (stat) => buildPracticeResultStatTile(
+                              colors: colors,
+                              label: stat.label,
+                              value: stat.value,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    if (performanceReport != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      buildArPerformanceInsights(
+                        colors: colors,
+                        report: performanceReport,
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.md),
+                    if (activeResultSaveFuture != null)
+                      buildPracticeResultSaveStatus(
+                        colors: colors,
+                        saveFuture: activeResultSaveFuture,
+                        onRetry: performanceReport == null
+                            ? null
+                            : () {
+                                setDialogState(() {
+                                  activeResultSaveFuture = practiceResultService
+                                      .savePerformanceResult(performanceReport);
+                                });
+                              },
+                        onViewResult: performanceReport == null
+                            ? null
+                            : (String resultId) {
+                                Navigator.of(dialogContext).pop();
+                                unawaited(
+                                  openPracticeResultFromAr(
+                                    result: performanceReport.summary.copyWith(
+                                      id: resultId,
+                                      completedAt: DateTime.now(),
+                                    ),
+                                  ),
+                                );
+                              },
+                      )
+                    else
+                      buildWaitModeResultNotice(colors),
+                    const SizedBox(height: AppSpacing.md),
+                    SizedBox(
+                      width: 460,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                preparePracticeRetry();
+                              },
+                              style: practiceResultSecondaryButtonStyle(colors),
+                              icon: const Icon(Icons.replay_rounded),
+                              label: Text(context.l10n.retry),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: FilledButton.icon(
+                              style: practiceResultPrimaryButtonStyle(colors),
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                Navigator.of(context).pop();
+                              },
+                              icon: const Icon(Icons.check_rounded),
+                              label: Text(context.l10n.done),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Accuracy: '
-                  '${practicePerformanceTracker.accuracyPercentage}%',
-                ),
-                Text(
-                  'Correct: ${practicePerformanceTracker.correctGroupCount}',
-                ),
-                Text('Wrong: ${practicePerformanceTracker.wrongGroupCount}'),
-                Text('Missed: ${practicePerformanceTracker.missedGroupCount}'),
-                Text('Mistakes: ${practicePerformanceTracker.mistakeCount}'),
-              ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                restartPracticePlayback();
-              },
-              child: const Text('Retry'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                Navigator.of(context).pop();
-              },
-              child: const Text('Done'),
-            ),
-          ],
         );
       },
     );
 
     isCompletionDialogShowing = false;
+  }
+
+  Widget buildPracticeResultStatTile({
+    required AppThemeColors colors,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      width: 126,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colors.backgroundColor,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.borderColor),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.primaryColor,
+              fontSize: AppTextSizes.body,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.secondaryTextColor,
+              fontSize: AppTextSizes.caption,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildArPerformanceInsights({
+    required AppThemeColors colors,
+    required SightReadingPerformanceReport report,
+  }) {
+    List<String> attentionItems = buildArAttentionItems(report);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: buildArInsightPanel(
+            colors: colors,
+            icon: Icons.troubleshoot_rounded,
+            title: context.l10n.synthesiaWhatToWorkOn,
+            items: attentionItems,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: buildArInsightPanel(
+            colors: colors,
+            icon: Icons.lightbulb_outline_rounded,
+            title: context.l10n.synthesiaHowToImprove,
+            items: report.suggestions,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildArInsightPanel({
+    required AppThemeColors colors,
+    required IconData icon,
+    required String title,
+    required List<String> items,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: colors.backgroundColor,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: colors.primaryColor, size: AppIconSizes.sm),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: colors.primaryColor,
+                    fontSize: AppTextSizes.label,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ...items.take(3).map((String item) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Text(
+                '• $item',
+                style: TextStyle(
+                  color: colors.secondaryTextColor,
+                  fontSize: AppTextSizes.caption,
+                  height: 1.25,
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  List<String> buildArAttentionItems(SightReadingPerformanceReport report) {
+    if (report.errorEvents.isEmpty) {
+      return <String>[context.l10n.synthesiaNoRepeatedProblems];
+    }
+
+    List<String> items = <String>[];
+    List<NotePerformanceBreakdown> difficultNotes =
+        report.summary.noteBreakdown
+            .where((item) => item.errorCount > 0)
+            .toList()
+          ..sort(
+            (first, second) => second.errorCount.compareTo(first.errorCount),
+          );
+
+    if (difficultNotes.isNotEmpty) {
+      NotePerformanceBreakdown note = difficultNotes.first;
+      items.add(
+        context.l10n.synthesiaTroubleWithNoteTimes(
+          MidiNoteUtils.nameForMidiNote(note.midiNote),
+          note.errorCount,
+        ),
+      );
+    }
+
+    Map<PerformanceIssueType, int> issueCounts = <PerformanceIssueType, int>{};
+
+    for (PracticeResultErrorEvent event in report.errorEvents) {
+      for (PerformanceIssueType issueType in event.issueTypes) {
+        issueCounts.update(issueType, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+
+    if ((issueCounts[PerformanceIssueType.releasedEarly] ?? 0) > 0) {
+      items.add(
+        context.l10n.synthesiaGroupsReleasedEarly(
+          issueCounts[PerformanceIssueType.releasedEarly]!,
+        ),
+      );
+    }
+
+    items.add(
+      context.l10n.synthesiaCorrectGroupsNeedReview(
+        report.summary.correctCount,
+        report.errorEvents.length,
+      ),
+    );
+    return items.take(3).toList(growable: false);
+  }
+
+  Future<void> openPracticeResultFromAr({
+    required PracticeResultSummary result,
+  }) async {
+    await SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+
+    if (!mounted) {
+      return;
+    }
+
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              PracticeResultDetailScreen(result: result, colors: widget.colors),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        await SystemChrome.setPreferredOrientations(const [
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+
+        if (mounted) {
+          preparePracticeRetry();
+        }
+      }
+    }
+  }
+
+  String formatPracticeDuration(Duration duration) {
+    int totalSeconds = duration.inSeconds;
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Widget buildPracticeResultSaveStatus({
+    required AppThemeColors colors,
+    required Future<String>? saveFuture,
+    required VoidCallback? onRetry,
+    required ValueChanged<String>? onViewResult,
+  }) {
+    return FutureBuilder<String>(
+      future: saveFuture,
+      builder: (context, snapshot) {
+        bool isSaving = snapshot.connectionState == ConnectionState.waiting;
+        bool isSaved = snapshot.hasData;
+        Color statusColor = isSaved
+            ? Colors.green.shade700
+            : snapshot.hasError
+            ? Colors.red.shade700
+            : colors.secondaryTextColor;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (isSaving)
+                SizedBox(
+                  width: AppIconSizes.sm,
+                  height: AppIconSizes.sm,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: statusColor,
+                  ),
+                )
+              else
+                Icon(
+                  isSaved
+                      ? Icons.cloud_done_outlined
+                      : Icons.cloud_off_outlined,
+                  color: statusColor,
+                  size: AppIconSizes.sm,
+                ),
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(
+                child: Text(
+                  isSaving
+                      ? context.l10n.arPracticeSavingResult
+                      : isSaved
+                      ? context.l10n.arPracticeResultSaved
+                      : context.l10n.arPracticeResultNotSaved,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: AppTextSizes.label,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (snapshot.hasError && onRetry != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                TextButton(
+                  onPressed: onRetry,
+                  child: Text(context.l10n.synthesiaRetrySave),
+                ),
+              ],
+              if (snapshot.hasData && onViewResult != null)
+                TextButton.icon(
+                  onPressed: () => onViewResult(snapshot.data!),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primaryColor,
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: Text(context.l10n.synthesiaViewFullResult),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildWaitModeResultNotice(AppThemeColors colors) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colors.secondaryTextColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.school_outlined,
+            color: colors.secondaryTextColor,
+            size: AppIconSizes.sm,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              context.l10n.synthesiaWaitModeNotSaved,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.secondaryTextColor,
+                fontSize: AppTextSizes.label,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  SightReadingPerformanceReport buildArPerformanceReport() {
+    Map<int, int> noteTotals = <int, int>{};
+    Map<int, int> noteErrors = <int, int>{};
+    Map<int, int> noteMisses = <int, int>{};
+    Map<int, int> wrongPlayedCounts = <int, int>{};
+    List<PracticeResultErrorEvent> errorEvents =
+        practicePerformanceTracker.performanceErrorEvents;
+
+    for (ArPracticeNoteGroup group in practicePerformanceTracker.noteGroups) {
+      for (int midiNote in group.midiNotes) {
+        noteTotals.update(midiNote, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+
+    for (PracticeResultErrorEvent event in errorEvents) {
+      bool wasMissed = event.issueTypes.contains(PerformanceIssueType.missed);
+
+      for (int midiNote in event.expectedMidiNotes) {
+        noteErrors.update(midiNote, (value) => value + 1, ifAbsent: () => 1);
+
+        if (wasMissed) {
+          noteMisses.update(midiNote, (value) => value + 1, ifAbsent: () => 1);
+        }
+      }
+
+      Set<int> expectedNotes = event.expectedMidiNotes.toSet();
+
+      for (int midiNote in event.playedMidiNotes) {
+        if (!expectedNotes.contains(midiNote)) {
+          wrongPlayedCounts.update(
+            midiNote,
+            (value) => value + 1,
+            ifAbsent: () => 1,
+          );
+        }
+      }
+    }
+
+    Set<int> allNotes = <int>{...noteTotals.keys, ...wrongPlayedCounts.keys};
+    List<NotePerformanceBreakdown> noteBreakdown =
+        allNotes.map((midiNote) {
+          return NotePerformanceBreakdown(
+            midiNote: midiNote,
+            totalCount: noteTotals[midiNote] ?? 0,
+            errorCount: noteErrors[midiNote] ?? 0,
+            missedCount: noteMisses[midiNote] ?? 0,
+            wrongPlayedCount: wrongPlayedCounts[midiNote] ?? 0,
+          );
+        }).toList()..sort((first, second) {
+          int errorComparison = second.errorCount.compareTo(first.errorCount);
+          return errorComparison != 0
+              ? errorComparison
+              : second.wrongPlayedCount.compareTo(first.wrongPlayedCount);
+        });
+
+    List<String> suggestions = buildArPerformanceSuggestions(
+      noteBreakdown: noteBreakdown,
+      errorEvents: errorEvents,
+    );
+    ArScoreTimeline? timeline = widget.scoreTimeline;
+    int targetDurationMs = timeline?.totalDuration.inMilliseconds ?? 0;
+    int elapsedDurationMs = currentPracticeScoreElapsedMilliseconds()
+        .clamp(0, targetDurationMs)
+        .toInt();
+    String cleanDocumentPath = widget.scoreDocumentPath.trim();
+    bool isComposition =
+        cleanDocumentPath.startsWith('compositionPosts/') ||
+        cleanDocumentPath.contains('/compositions/');
+    PracticeResultSummary summary = PracticeResultSummary(
+      practiceType: PracticeResultType.arPerformance,
+      ownerId: '',
+      scoreDocumentPath: cleanDocumentPath,
+      source: isComposition ? 'composition' : 'musicSheet',
+      pieceTitle: timeline?.pieceTitle ?? context.l10n.synthesiaUntitledScore,
+      completedAt: null,
+      targetDurationMs: targetDurationMs,
+      elapsedDurationMs: elapsedDurationMs,
+      correctCount: practicePerformanceTracker.correctGroupCount,
+      wrongCount: practicePerformanceTracker.wrongGroupCount,
+      missedCount: practicePerformanceTracker.missedGroupCount,
+      totalCount: practicePerformanceTracker.totalGroupCount,
+      timingAccuracyPercentage: practicePerformanceTracker.accuracyPercentage,
+      noteBreakdown: noteBreakdown,
+      clefBreakdown: const <ClefPerformanceBreakdown>[],
+      suggestions: suggestions,
+      errorEventCount: errorEvents.length,
+    );
+
+    return SightReadingPerformanceReport(
+      summary: summary,
+      errorEvents: errorEvents,
+      suggestions: suggestions,
+    );
+  }
+
+  List<String> buildArPerformanceSuggestions({
+    required List<NotePerformanceBreakdown> noteBreakdown,
+    required List<PracticeResultErrorEvent> errorEvents,
+  }) {
+    if (errorEvents.isEmpty) {
+      return <String>[
+        context.l10n.synthesiaSuggestionPerfect,
+      ];
+    }
+
+    Map<PerformanceIssueType, int> issueCounts = <PerformanceIssueType, int>{};
+
+    for (PracticeResultErrorEvent event in errorEvents) {
+      for (PerformanceIssueType issueType in event.issueTypes) {
+        issueCounts.update(issueType, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+
+    List<String> suggestions = <String>[];
+    int totalGroups = practicePerformanceTracker.totalGroupCount;
+
+    if (errorEvents.length <=
+        (totalGroups * 0.10).ceil().clamp(1, totalGroups)) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionAlmostPerfect,
+      );
+    }
+
+    List<NotePerformanceBreakdown> difficultNotes =
+        noteBreakdown.where((item) => item.errorCount > 0).toList()..sort(
+          (first, second) => second.errorCount.compareTo(first.errorCount),
+        );
+
+    if (difficultNotes.isNotEmpty && suggestions.length < 3) {
+      NotePerformanceBreakdown note = difficultNotes.first;
+      suggestions.add(
+        context.l10n.synthesiaSuggestionDifficultNote(
+          MidiNoteUtils.nameForMidiNote(note.midiNote),
+        ),
+      );
+    }
+
+    int releasedEarly = issueCounts[PerformanceIssueType.releasedEarly] ?? 0;
+    int missed = issueCounts[PerformanceIssueType.missed] ?? 0;
+    int early = issueCounts[PerformanceIssueType.early] ?? 0;
+    int late = issueCounts[PerformanceIssueType.late] ?? 0;
+    int chordTiming = issueCounts[PerformanceIssueType.chordTiming] ?? 0;
+    int wrongNotes = issueCounts[PerformanceIssueType.wrongNote] ?? 0;
+
+    if (releasedEarly > 0 && suggestions.length < 3) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionReleasedTooSoon,
+      );
+    }
+
+    if (missed > 0 && suggestions.length < 3) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionMissedNotes,
+      );
+    }
+
+    if (late > early && suggestions.length < 3) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionPlayedLate,
+      );
+    } else if (early > late && suggestions.length < 3) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionPlayedEarly,
+      );
+    }
+
+    if (chordTiming > 0 && suggestions.length < 3) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionChordTiming,
+      );
+    }
+
+    if (wrongNotes > 0 && suggestions.length < 3) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionWrongNotes,
+      );
+    }
+
+    if (suggestions.isEmpty) {
+      suggestions.add(
+        context.l10n.synthesiaSuggestionGeneralPractice,
+      );
+    }
+
+    return suggestions.take(3).toList(growable: false);
+  }
+
+  ButtonStyle practiceResultPrimaryButtonStyle(AppThemeColors colors) {
+    return FilledButton.styleFrom(
+      backgroundColor: colors.primaryColor,
+      foregroundColor: colors.backgroundColor,
+      disabledBackgroundColor: colors.borderColor,
+      disabledForegroundColor: colors.secondaryTextColor,
+    );
+  }
+
+  ButtonStyle practiceResultSecondaryButtonStyle(AppThemeColors colors) {
+    return OutlinedButton.styleFrom(
+      foregroundColor: colors.primaryColor,
+      disabledForegroundColor: colors.secondaryTextColor.withValues(
+        alpha: 0.55,
+      ),
+      side: BorderSide(color: colors.borderColor),
+    );
   }
 
   /// Reopens a new mapping for editing or fully redetects a loaded calibration.
@@ -1898,12 +5020,13 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return;
     }
 
-    if (loadedFromSavedCalibration) {
+    if (widget.savedCalibration != null) {
       detectKeyboardAgain();
       return;
     }
 
     setState(() {
+      resetMiddleCGuide();
       normalizedCalibration = null;
       calibrationSaveError = null;
       calibrationStage = PianoCalibrationStage.selectingReferenceKey;
@@ -1919,12 +5042,12 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return;
     }
 
-    if (loadedFromSavedCalibration) {
+    if (widget.scoreTimeline != null) {
       ArScoreTimeline? timeline = widget.scoreTimeline;
 
       if (timeline == null || timeline.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('The reference score is not ready.')),
+          SnackBar(content: Text(context.l10n.songStillLoading)),
         );
 
         return;
@@ -2031,7 +5154,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         '–${MidiNoteUtils.nameForMidiNote(sortedRequiredNotes.last)}';
 
     String calibrationRange = sortedCalibratedNotes.isEmpty
-        ? 'no playable keys'
+        ? context.l10n.noPlayableKeys
         : '${MidiNoteUtils.nameForMidiNote(sortedCalibratedNotes.first)}'
               '–${MidiNoteUtils.nameForMidiNote(sortedCalibratedNotes.last)}';
 
@@ -2045,28 +5168,54 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     if (missingMidiNotes.length > maximumListedMissingNotes) {
       int remainingCount = missingMidiNotes.length - maximumListedMissingNotes;
 
-      missingNoteNames = '$missingNoteNames, and $remainingCount more';
+      missingNoteNames = context.l10n.remainingNotes(
+        missingNoteNames,
+        remainingCount,
+      );
     }
 
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
+        AppThemeColors colors = widget.colors;
+
         return AlertDialog(
-          icon: const Icon(Icons.piano),
-          title: const Text('Keyboard range too small'),
-          content: Text(
-            'This score requires $requiredRange, but this calibration covers '
-            '$calibrationRange.\n\n'
-            'Missing keys: $missingNoteNames\n\n'
-            'Move the camera farther back and recalibrate, or select a '
-            'calibration that covers the complete score.',
+          scrollable: true,
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          icon: buildCalibrationDialogIcon(Icons.piano_rounded),
+          title: Text(
+            context.l10n.morePianoKeysNeeded,
+            textAlign: TextAlign.center,
+            style: calibrationDialogTitleStyle(),
+          ),
+          content: SizedBox(
+            width: 440,
+            child: Text(
+              context.l10n.morePianoKeysDescription(
+                requiredRange,
+                calibrationRange,
+                missingNoteNames,
+              ),
+              textAlign: TextAlign.center,
+              style: calibrationDialogBodyStyle(),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
           ),
           actions: [
-            FilledButton(
+            buildCalibrationDialogPrimaryAction(
+              label: context.l10n.reviewPianoSetup,
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Review calibration'),
             ),
           ],
         );
@@ -2078,10 +5227,13 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
   /// Resets detection, geometry, practice, and scoring state for recalibration.
   void detectKeyboardAgain() {
+    bool shouldOfferMiddleCHelp = widget.savedCalibration != null;
+
     pianoKeyboardDetector.reset();
     fallingNotesAnimationController?.dispose();
     fallingNotesAnimationController = null;
     setState(() {
+      resetMiddleCGuide();
       referenceKeyMarkers = [];
       pianoKeyMarkers = [];
       pianoKeyRegions = [];
@@ -2103,10 +5255,51 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       referenceKeyPosition = null;
       isPianoDetected = false;
       detectionGuidance = PianoDetectionGuidance.pointCameraAtKeyboard;
-      detectionDetails = 'Candidates: 0 | Pattern: not found';
+      detectionDetails = 'Looking for piano keys';
       lastCameraImageTime = null;
       calibrationStage = PianoCalibrationStage.detectingKeyboard;
     });
+
+    if (shouldOfferMiddleCHelp) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          askForMiddleCHelpBeforeCalibration();
+        }
+      });
+    }
+  }
+
+  /// Uses a camera tap to select Middle C for a new calibration.
+  void handleReferenceTap(Offset sourcePosition) {
+    selectReferenceKey(sourcePosition);
+  }
+
+  /// Opens AR practice after the user finishes positioning the camera.
+  Future<void> useAlignedSavedCalibration() async {
+    if (calibrationStage != PianoCalibrationStage.aligningSavedCalibration) {
+      return;
+    }
+
+    ArScoreTimeline? timeline = widget.scoreTimeline;
+
+    if (timeline == null || timeline.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.songStillLoading)),
+      );
+      return;
+    }
+
+    bool calibrationCoversScore = await validateScoreRange(timeline);
+
+    if (!calibrationCoversScore || !mounted) {
+      return;
+    }
+
+    setState(() {
+      calibrationStage = PianoCalibrationStage.mappingConfirmed;
+    });
+
+    await finishCalibration();
   }
 
   /// Treats the user's tap as C4 and derives every visible key and outline.
@@ -2114,7 +5307,9 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   /// White positions begin with geometric interpolation, optionally use detected
   /// seams, and then black markers/outlines are attached to the labeled octaves.
   void selectReferenceKey(Offset sourcePosition) {
-    if (calibrationStage != PianoCalibrationStage.selectingReferenceKey) {
+    if (calibrationStage != PianoCalibrationStage.selectingReferenceKey ||
+        (_middleCGuidePhase != _MiddleCGuidePhase.inactive &&
+            _middleCGuidePhase != _MiddleCGuidePhase.readyToTap)) {
       return;
     }
 
@@ -2180,6 +5375,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     );
 
     setState(() {
+      resetMiddleCGuide();
       referenceKeyPosition = sourcePosition;
       referenceKeyMarkers = derivedMarkers;
       pianoKeyMarkers = List<PianoKeyMarker>.unmodifiable(allPianoKeys);
@@ -2191,6 +5387,9 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   @override
   /// Releases animation, MIDI, orientation, and camera resources.
   void dispose() {
+    practiceFeedbackTimer?.cancel();
+    waitModeHoldTimer?.cancel();
+    waitModeDurationClock.stop();
     fallingNotesAnimationController?.dispose();
     unawaited(disposeMidiInput());
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -2199,10 +5398,12 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     super.dispose();
   }
 
-  /// Cancels both MIDI subscriptions before disposing the platform service.
+  /// Cancels all MIDI subscriptions before disposing the platform service.
   Future<void> disposeMidiInput() async {
     await activeMidiNotesSubscription?.cancel();
     await midiNoteOnSubscription?.cancel();
+    await midiNoteEventSubscription?.cancel();
+    await midiConnectionSubscription?.cancel();
     await midiInputService.dispose();
   }
 }

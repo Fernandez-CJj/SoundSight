@@ -75,7 +75,3 @@ class CompositionRequest(BaseModel):
         default_factory=list
     )
     performanceDurationUs: int | None = Field(default=None, gt=0)
-
-
-class UnpublishRequest(BaseModel):
-    ownerId: str

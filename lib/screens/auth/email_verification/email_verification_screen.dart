@@ -387,6 +387,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
               'email': refreshedUser.email,
               'role': 'piano_player',
               'theme': 'light',
+              'languageCode': 'en',
               'skillLevel': null,
               'preferredNotation': null,
               'accountStatus': 'active',

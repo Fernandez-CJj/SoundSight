@@ -44,7 +44,7 @@ Starts recognition for an existing music sheet. The request body contains `owner
 
 The complete recognition process is documented in `omr/OMR_REFERENCE.md`.
 
-### `POST /compositions`
+### `POST /compositions/{compositionId}/publish`
 
 Builds and publishes a composition. The request body contains the composition details and notes.
 
@@ -56,7 +56,7 @@ Generates the private composition's MusicXML, PDF, MIDI, and MP3. The request re
 
 Manual compositions write MIDI directly from their exact measure-and-beat data. New performance recordings write MIDI directly from captured microsecond Note On/Note Off data. MuseScore renders each composition's MP3 from its resulting MIDI so playback and Sight Reading use the same timeline.
 
-### `DELETE /compositions/{compositionId}`
+### `DELETE /compositions/{compositionId}/publish`
 
 Unpublishes a composition. The request body contains `ownerId`.
 
@@ -64,7 +64,7 @@ Unpublishes a composition. The request body contains `ownerId`.
 
 ### Composition publishing
 
-1. The Flutter app sends a saved composition to `POST /compositions`.
+1. The Flutter app sends an authenticated request to `POST /compositions/{compositionId}/publish`.
 2. The backend reads the owner's public profile from Firebase.
 3. music21 creates a two-staff piano score.
 4. A MusicXML file is written to a temporary system folder.

@@ -4,24 +4,21 @@
 
 The `composition` folder converts a saved SoundSight composition into a published piano score.
 
-It creates MusicXML and PDF files, uploads the PDF, stores a public post and version history, and removes published data when the owner unpublishes.
+It copies current private PDF, MusicXML, MIDI, and MP3 files into immutable public versions, stores a public post and version history, and removes published data when the owner unpublishes.
 
 ## Complete publishing flow
 
 1. In the composition details screen, the user selects Publish Composition.
 2. The client refuses to continue when the composition has no notes.
 3. The user confirms the publish dialog.
-4. The Flutter client sends the composition to `POST /compositions` with a two-minute timeout.
-5. FastAPI converts the JSON body into a `CompositionRequest`.
-6. The backend reads `users/{ownerId}` for the public username and profile image.
+4. The Flutter client sends `POST /compositions/{compositionId}/publish` with a Firebase ID token.
+5. FastAPI verifies the token, verified email, ownership, and current generated files.
+6. The backend loads the authoritative composition and profile from Firestore.
 7. If usable profile values are unavailable, it uses `SoundSight Musician` and an empty image URL.
-8. music21 builds a grand-staff piano score with treble and bass staves.
-9. The backend calculates the next published version.
-10. It writes a local MusicXML file.
-11. MuseScore converts the MusicXML file to PDF.
-12. The PDF is uploaded to Firebase Storage.
+8. The backend calculates the next published version.
+9. It copies the private PDF, MusicXML, MIDI, and MP3 into public version paths.
 13. Firestore receives the current post and the new immutable version document in one batch.
-14. The backend returns the post ID and score statistics.
+14. The backend returns the post ID, version, and public file paths.
 15. The Flutter app shows a success message.
 
 ## Score construction
@@ -57,7 +54,7 @@ Generated MusicXML and PDF files are written to a unique temporary system folder
 
 If the composition ID is empty, the MusicXML file is named `composition.musicxml`.
 
-These local files are removed when publishing finishes, whether it succeeds or fails. The published PDF remains in Firebase Storage.
+Publishing does not create temporary score files. It copies the current private generated objects into immutable public version paths.
 
 ## Private composition file generation
 
@@ -96,13 +93,13 @@ Private generation uses `POST /compositions/{compositionId}/generate`. The clien
 
 ### Firebase Storage
 
-Each published PDF is uploaded to:
+Each published version contains:
 
-- `published_compositions/{ownerId}/{compositionId}/version_{versionNumber}.pdf`.
+- `published_compositions/{ownerId}/{compositionId}/version_{versionNumber}.{pdf,musicxml,mid,mp3}`.
 
 Private generated PDF, MusicXML, MIDI, and MP3 uploads include a Firebase Storage download token. This allows Firebase download URLs and the Firebase Console download action to access the generated objects. Regeneration replaces each private object and assigns it a new token.
 
-Older version PDFs remain available until the composition is unpublished.
+Older version files remain available until the composition is unpublished.
 
 ### Current Firestore post
 
@@ -124,7 +121,11 @@ Every publish replaces that document with these fields:
 - `beatUnit`;
 - `measureCount`;
 - `noteCount`;
+- `publishedFilesVersion`;
 - `pdfStoragePath`;
+- `musicXmlStoragePath`;
+- `midiStoragePath`;
+- `mp3StoragePath`;
 - `publishedAt`.
 
 `publishedAt` uses a server timestamp. `noteCount` is the number of submitted note records.
@@ -190,11 +191,11 @@ The key-building code expects the key text to contain a name and mode separated 
 
 Signed-in Flutter clients can read `compositionPosts` and version documents, but Firestore Rules deny direct client creation, update, and deletion of those documents.
 
-Signed-in clients can read published PDFs. Storage Rules deny direct client writes and deletes under `published_compositions`.
+Verified clients can read published composition files. Storage Rules deny direct client writes and deletes under `published_compositions`.
 
 The backend uses Firebase Admin, so it bypasses those rules.
 
-The publish HTTP route does not verify a Firebase authentication token or independently confirm that `ownerId` belongs to the caller. It trusts the request body. The backend also does not compare the composition against the private `users/{ownerId}/compositions/{compositionId}` document.
+Publish and unpublish verify a Firebase ID token, require a verified email, and use the authenticated UID to load or validate the owned composition.
 
 ## Returned statistics
 
@@ -213,11 +214,11 @@ These response statistics are not all saved in Firestore. The post only stores t
 
 ## Unpublishing flow
 
-1. The Flutter client sends `DELETE /compositions/{compositionId}` with `ownerId` and a one-minute timeout.
+1. The Flutter client sends `DELETE /compositions/{compositionId}/publish` with a Firebase ID token and a one-minute timeout.
 2. The backend reads `compositionPosts/{compositionId}`.
 3. A missing post returns `404`.
 4. An owner mismatch returns `403`.
-5. All versioned PDFs under the composition's Storage folder are deleted.
+5. All versioned PDF, MusicXML, MIDI, and MP3 files under the composition's public Storage folder are deleted.
 6. A legacy PDF at `published_compositions/{ownerId}/{compositionId}.pdf` is also deleted if present.
 7. Every version's likes and comments are deleted.
 8. Every version document is deleted.

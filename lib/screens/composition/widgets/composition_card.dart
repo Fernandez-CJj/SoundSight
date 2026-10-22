@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -22,7 +23,7 @@ class CompositionCard extends StatelessWidget {
   final bool isGeneratingFiles;
   final VoidCallback onOpen;
   final VoidCallback onRetryGeneration;
-  final VoidCallback onDelete;
+  final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -47,221 +48,212 @@ class CompositionCard extends StatelessWidget {
               ? const Color(0xFF8AB4F8)
               : const Color(0xFF245E9C));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: filesNeedAttention
-              ? generationColor
-              : colors.borderColor,
+    return Dismissible(
+      key: ValueKey(composition.id),
+      direction: isDeleting
+          ? DismissDirection.none
+          : DismissDirection.startToEnd,
+      confirmDismiss: (_) async {
+        await onDelete();
+        return false;
+      },
+      background: Container(
+        padding: EdgeInsets.only(left: AppSpacing.lg),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: const Color(0xFFDC2626),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: Colors.white,
+          size: 26,
         ),
       ),
-      child: Column(
-        children: [
-          ListTile(
-            onTap: isDeleting ? null : onOpen,
-            contentPadding: EdgeInsets.all(AppSpacing.md),
-            leading: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: creationMethodColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: creationMethodColor.withValues(alpha: 0.35),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceColor,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: filesNeedAttention
+                ? generationColor
+                : colors.borderColor,
+          ),
+        ),
+        child: Column(
+          children: [
+            ListTile(
+              onTap: isDeleting ? null : onOpen,
+              contentPadding: EdgeInsets.all(AppSpacing.md),
+              leading: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: creationMethodColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: creationMethodColor.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Icon(
+                  isRecording
+                      ? Icons.mic_rounded
+                      : Icons.edit_note_rounded,
+                  color: creationMethodColor,
+                  size: AppIconSizes.lg,
                 ),
               ),
-              child: Icon(
-                isRecording
-                    ? Icons.mic_rounded
-                    : Icons.edit_note_rounded,
-                color: creationMethodColor,
-                size: AppIconSizes.lg,
+              title: Text(
+                composition.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colors.primaryColor,
+                  fontSize: AppTextSizes.body,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            title: Text(
-              composition.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: colors.primaryColor,
-                fontSize: AppTextSizes.body,
-                fontWeight: FontWeight.w700,
+              subtitle: Padding(
+                padding: EdgeInsets.only(top: AppSpacing.xs),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildCreationMethodBadge(
+                      context: context,
+                      isRecording: isRecording,
+                      color: creationMethodColor,
+                    ),
+                    Gap(AppSpacing.xs),
+                    Text(
+                      '${composition.tempo} BPM - '
+                      '${composition.keySignature}',
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                      ),
+                    ),
+                    Gap(2),
+                    Text(
+                      formatEditedDate(context, editedDate),
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            subtitle: Padding(
-              padding: EdgeInsets.only(top: AppSpacing.xs),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  buildCreationMethodBadge(
-                    isRecording: isRecording,
-                    color: creationMethodColor,
-                  ),
-                  Gap(AppSpacing.xs),
-                  Text(
-                    '${composition.tempo} BPM - '
-                    '${composition.keySignature}',
-                    style: TextStyle(
-                      color: colors.secondaryTextColor,
-                      fontSize: AppTextSizes.caption,
-                    ),
-                  ),
-                  Gap(2),
-                  Text(
-                    formatEditedDate(editedDate),
-                    style: TextStyle(
-                      color: colors.secondaryTextColor,
-                      fontSize: AppTextSizes.caption,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            trailing: isDeleting
-                ? SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: colors.primaryColor,
-                    ),
-                  )
-                : PopupMenuButton<String>(
-                    color: colors.surfaceColor,
-                    icon: Icon(
-                      Icons.more_vert_rounded,
-                      color: colors.secondaryTextColor,
-                    ),
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        onDelete();
-                      }
-                    },
-                    itemBuilder: (_) {
-                      return [
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.delete_outline_rounded,
-                                color: colors.primaryColor,
-                                size: AppIconSizes.sm,
-                              ),
-                              Gap(AppSpacing.sm),
-                              Text(
-                                'Delete',
-                                style: TextStyle(color: colors.primaryColor),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ];
-                    },
-                  ),
-          ),
-          if (filesNeedAttention) ...[
-            Divider(height: 1, color: colors.borderColor),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(AppSpacing.md),
-              color: generationColor.withValues(alpha: 0.08),
-              child: Row(
-                children: [
-                  if (generationIsRunning)
-                    SizedBox(
+              trailing: isDeleting
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        color: generationColor,
+                        strokeWidth: 2.5,
+                        color: colors.primaryColor,
                       ),
                     )
-                  else
-                    Icon(
-                      filesAreOutOfDate
-                          ? Icons.update_rounded
-                          : Icons.warning_amber_rounded,
-                      color: generationColor,
-                      size: AppIconSizes.md,
+                  : null,
+            ),
+            if (filesNeedAttention) ...[
+              Divider(height: 1, color: colors.borderColor),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(AppSpacing.md),
+                color: generationColor.withValues(alpha: 0.08),
+                child: Row(
+                  children: [
+                    if (generationIsRunning)
+                      SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: generationColor,
+                        ),
+                      )
+                    else
+                      Icon(
+                        filesAreOutOfDate
+                            ? Icons.update_rounded
+                            : Icons.warning_amber_rounded,
+                        color: generationColor,
+                        size: AppIconSizes.md,
+                      ),
+                    Gap(AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            generationIsRunning
+                                ? context.l10n.preparingMusicFiles
+                                : filesAreOutOfDate
+                                ? context.l10n.musicFilesNeedUpdating
+                                : context.l10n.musicFilesNotReady,
+                            style: TextStyle(
+                              color: colors.primaryColor,
+                              fontSize: AppTextSizes.label,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Gap(2),
+                          Text(
+                            filesAreOutOfDate
+                                ? context.l10n.musicFilesOutOfDateDescription
+                                : context.l10n.musicFilesNotReadyDescription,
+                            style: TextStyle(
+                              color: colors.secondaryTextColor,
+                              fontSize: AppTextSizes.caption,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  Gap(AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          generationIsRunning
-                              ? 'Preparing your music files'
-                              : filesAreOutOfDate
-                              ? 'Music files need updating'
-                              : 'Music files are not ready',
-                          style: TextStyle(
-                            color: colors.primaryColor,
-                            fontSize: AppTextSizes.label,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Gap(2),
-                        Text(
-                          filesAreOutOfDate
-                              ? 'Your changes are saved, but the available '
-                                    'files contain an older version.'
-                              : 'Your sheet music and playback files are not '
-                                    'ready yet.',
-                          style: TextStyle(
-                            color: colors.secondaryTextColor,
-                            fontSize: AppTextSizes.caption,
-                          ),
-                        ),
-                      ],
+                    if (!generationIsRunning) ...[
+                      Gap(AppSpacing.sm),
+                      TextButton(
+                        onPressed: isDeleting ? null : onRetryGeneration,
+                        child: Text(context.l10n.retry),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            Divider(height: 1, color: colors.borderColor),
+            Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: isDeleting ? null : onOpen,
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                    size: AppIconSizes.sm,
+                  ),
+                  label: Text(context.l10n.view),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primaryColor,
+                    foregroundColor: colors.backgroundColor,
+                    disabledBackgroundColor: colors.borderColor,
+                    disabledForegroundColor: colors.secondaryTextColor,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                   ),
-                  if (!generationIsRunning) ...[
-                    Gap(AppSpacing.sm),
-                    TextButton(
-                      onPressed: isDeleting ? null : onRetryGeneration,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ],
-          Divider(height: 1, color: colors.borderColor),
-          Padding(
-            padding: EdgeInsets.all(AppSpacing.md),
-            child: SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton.icon(
-                onPressed: isDeleting ? null : onOpen,
-                icon: const Icon(
-                  Icons.visibility_outlined,
-                  size: AppIconSizes.sm,
-                ),
-                label: const Text('View'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primaryColor,
-                  foregroundColor: colors.backgroundColor,
-                  disabledBackgroundColor: colors.borderColor,
-                  disabledForegroundColor: colors.secondaryTextColor,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget buildCreationMethodBadge({
+    required BuildContext context,
     required bool isRecording,
     required Color color,
   }) {
@@ -282,7 +274,7 @@ class CompositionCard extends StatelessWidget {
           ),
           Gap(4),
           Text(
-            isRecording ? 'Recording' : 'Manual',
+            isRecording ? context.l10n.recording : context.l10n.manual,
             style: TextStyle(
               color: color,
               fontSize: AppTextSizes.caption,
@@ -294,27 +286,14 @@ class CompositionCard extends StatelessWidget {
     );
   }
 
-  String formatEditedDate(DateTime? date) {
+  String formatEditedDate(BuildContext context, DateTime? date) {
     if (date == null) {
-      return 'Not saved yet';
+      return context.l10n.notSavedYet;
     }
 
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    return 'Last edited ${months[date.month - 1]} '
-        '${date.day}, ${date.year}';
+    final localizedDate = MaterialLocalizations.of(context).formatMediumDate(
+      date,
+    );
+    return context.l10n.lastEdited(localizedDate);
   }
 }

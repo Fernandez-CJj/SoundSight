@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class NoteDurationSelector extends StatelessWidget {
@@ -34,27 +35,27 @@ class NoteDurationSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allOptions = beatUnit == 8
-        ? const [
-            _DurationOption('Whole', 8, Icons.circle_outlined),
-            _DurationOption('Dotted Half', 6, Icons.more_horiz_rounded),
-            _DurationOption('Half', 4, Icons.music_note_outlined),
-            _DurationOption('Dotted Quarter', 3, Icons.more_horiz_rounded),
-            _DurationOption('Quarter', 2, Icons.music_note_rounded),
-            _DurationOption('Dotted Eighth', 1.5, Icons.more_horiz_rounded),
-            _DurationOption('Eighth', 1, Icons.queue_music_rounded),
-            _DurationOption('Triplet', 2 / 3, Icons.looks_3_outlined),
-            _DurationOption('Sixteenth', 0.5, Icons.double_arrow_rounded),
+        ? [
+            _DurationOption(context.l10n.wholeNote, 8, Icons.circle_outlined),
+            _DurationOption(context.l10n.dottedHalfNote, 6, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.halfNote, 4, Icons.music_note_outlined),
+            _DurationOption(context.l10n.dottedQuarterNote, 3, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.quarterNote, 2, Icons.music_note_rounded),
+            _DurationOption(context.l10n.dottedEighthNote, 1.5, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.eighthNote, 1, Icons.queue_music_rounded),
+            _DurationOption(context.l10n.triplet, 2 / 3, Icons.looks_3_outlined),
+            _DurationOption(context.l10n.sixteenthNote, 0.5, Icons.double_arrow_rounded),
           ]
-        : const [
-            _DurationOption('Whole', 4, Icons.circle_outlined),
-            _DurationOption('Dotted Half', 3, Icons.more_horiz_rounded),
-            _DurationOption('Half', 2, Icons.music_note_outlined),
-            _DurationOption('Dotted Quarter', 1.5, Icons.more_horiz_rounded),
-            _DurationOption('Quarter', 1, Icons.music_note_rounded),
-            _DurationOption('Dotted Eighth', 0.75, Icons.more_horiz_rounded),
-            _DurationOption('Triplet', 2 / 3, Icons.looks_3_outlined),
-            _DurationOption('Eighth', 0.5, Icons.queue_music_rounded),
-            _DurationOption('Sixteenth', 0.25, Icons.double_arrow_rounded),
+        : [
+            _DurationOption(context.l10n.wholeNote, 4, Icons.circle_outlined),
+            _DurationOption(context.l10n.dottedHalfNote, 3, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.halfNote, 2, Icons.music_note_outlined),
+            _DurationOption(context.l10n.dottedQuarterNote, 1.5, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.quarterNote, 1, Icons.music_note_rounded),
+            _DurationOption(context.l10n.dottedEighthNote, 0.75, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.triplet, 2 / 3, Icons.looks_3_outlined),
+            _DurationOption(context.l10n.eighthNote, 0.5, Icons.queue_music_rounded),
+            _DurationOption(context.l10n.sixteenthNote, 0.25, Icons.double_arrow_rounded),
           ];
 
     final options = allOptions.where((option) {
@@ -67,7 +68,7 @@ class NoteDurationSelector extends StatelessWidget {
     );
 
     return Tooltip(
-      message: helperText ?? 'Choose the length before tapping a piano key.',
+      message: helperText ?? context.l10n.chooseLengthBeforePiano,
       child: Material(
         color: colors.surfaceColor,
         shape: RoundedRectangleBorder(
@@ -112,7 +113,7 @@ class NoteDurationSelector extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Duration',
+                            context.l10n.duration,
                             style: TextStyle(
                               color: colors.secondaryTextColor,
                               fontSize: AppTextSizes.caption,
@@ -122,7 +123,7 @@ class NoteDurationSelector extends StatelessWidget {
                           const Gap(2),
                           Text(
                             automaticSelected
-                                ? 'Automatic'
+                                ? context.l10n.automatic
                                 : selectedOption.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -208,7 +209,7 @@ class NoteDurationSelector extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Choose Note Duration',
+                      context.l10n.chooseNoteDuration,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.body,
@@ -217,8 +218,8 @@ class NoteDurationSelector extends StatelessWidget {
                     ),
                     Text(
                       showAutomatic
-                          ? 'Choose a fixed length or let your key hold set it.'
-                          : 'Choose how long the next note will be.',
+                          ? context.l10n.chooseFixedOrKeyHold
+                          : context.l10n.chooseNextNoteLength,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -229,7 +230,7 @@ class NoteDurationSelector extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Close',
+                tooltip: context.l10n.close,
                 onPressed: () => Navigator.of(dialogContext).pop(),
                 icon: Icon(
                   Icons.close_rounded,
@@ -261,8 +262,8 @@ class NoteDurationSelector extends StatelessWidget {
                   return _DurationDialogOption(
                     colors: colors,
                     icon: Icons.auto_mode_rounded,
-                    title: 'Automatic',
-                    subtitle: 'Use key hold time',
+                    title: context.l10n.automatic,
+                    subtitle: context.l10n.useKeyHoldTime,
                     selected: automaticSelected,
                     enabled: onAutomaticSelected != null,
                     onTap: () {
@@ -278,7 +279,7 @@ class NoteDurationSelector extends StatelessWidget {
                   colors: colors,
                   icon: option.icon,
                   title: option.name,
-                  subtitle: option.beatLabel,
+                  subtitle: option.beatLabel(context),
                   selected:
                       !automaticSelected &&
                       _sameDuration(selectedDuration, option.beats),
@@ -393,12 +394,14 @@ class _DurationOption {
   final double beats;
   final IconData icon;
 
-  String get beatLabel {
-    if (beats == 1) return '1 beat';
+  String beatLabel(BuildContext context) {
+    if (beats == 1) return '1 ${context.l10n.beat}';
     if (beats == 2 || beats == 3 || beats == 4 || beats == 6 || beats == 8) {
-      return '${beats.toInt()} beats';
+      return '${beats.toInt()} ${context.l10n.beats}';
     }
-    if ((beats - (2 / 3)).abs() < 0.001) return '2/3 beat';
-    return '${beats.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '')} beats';
+    if ((beats - (2 / 3)).abs() < 0.001) {
+      return '2/3 ${context.l10n.beat}';
+    }
+    return '${beats.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '')} ${context.l10n.beats}';
   }
 }

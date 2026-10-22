@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionPerformanceControls extends StatelessWidget {
@@ -51,7 +52,7 @@ class CompositionPerformanceControls extends StatelessWidget {
           isMetronomeEnabled;
 
       return Tooltip(
-        message: 'Performance settings',
+        message: context.l10n.performanceSettings,
         child: Material(
           color: colors.surfaceColor,
           shape: RoundedRectangleBorder(
@@ -287,7 +288,7 @@ class _PerformancePanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Performance',
+                      context.l10n.performance,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -295,7 +296,7 @@ class _PerformancePanel extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Adjust playback and how new notes sound.',
+                      context.l10n.performanceDescription,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -306,7 +307,7 @@ class _PerformancePanel extends StatelessWidget {
               ),
               if (showCloseButton)
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: context.l10n.close,
                   onPressed: onClose,
                   visualDensity: VisualDensity.compact,
                   icon: Icon(
@@ -320,7 +321,7 @@ class _PerformancePanel extends StatelessWidget {
           _PerformanceSlider(
             colors: colors,
             icon: Icons.volume_up_rounded,
-            label: 'Volume',
+            label: context.l10n.volume,
             value: volume,
             enabled: enabled,
             onChanged: onVolumeChanged,
@@ -329,7 +330,7 @@ class _PerformancePanel extends StatelessWidget {
             _PerformanceSlider(
               colors: colors,
               icon: Icons.bolt_rounded,
-              label: 'Note velocity',
+              label: context.l10n.noteVelocity,
               value: velocity,
               enabled: enabled,
               onChanged: onVelocityChanged,
@@ -351,7 +352,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.play_circle_outline_rounded,
-                      label: 'From cursor',
+                      label: context.l10n.fromCursor,
                       value: playFromCursor,
                       enabled: enabled && !isLoopEnabled,
                       onChanged: onPlayFromCursorChanged,
@@ -362,7 +363,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.repeat_rounded,
-                      label: 'Loop measure',
+                      label: context.l10n.loopMeasure,
                       value: isLoopEnabled,
                       enabled: enabled,
                       onChanged: onLoopChanged,
@@ -373,7 +374,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.piano_rounded,
-                      label: 'Sustain',
+                      label: context.l10n.sustain,
                       value: isSustainEnabled,
                       enabled: enabled,
                       onChanged: onSustainChanged,
@@ -384,7 +385,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.timer_outlined,
-                      label: 'Metronome',
+                      label: context.l10n.metronome,
                       value: isMetronomeEnabled,
                       enabled: enabled,
                       onChanged: onMetronomeChanged,

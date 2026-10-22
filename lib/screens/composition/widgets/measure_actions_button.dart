@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 enum MeasureAction {
@@ -39,7 +40,7 @@ class MeasureActionsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<MeasureAction>(
-      tooltip: 'Measure actions',
+      tooltip: context.l10n.measureActions,
       enabled: enabled,
       color: colors.surfaceColor,
       onSelected: onSelected,
@@ -48,28 +49,28 @@ class MeasureActionsButton extends StatelessWidget {
           buildItem(
             action: MeasureAction.addAfter,
             icon: Icons.add_rounded,
-            label: 'Add measure after',
+            label: context.l10n.addMeasureAfter,
           ),
           buildItem(
             action: MeasureAction.insertBefore,
             icon: Icons.vertical_align_top_rounded,
-            label: 'Insert measure before',
+            label: context.l10n.insertMeasureBefore,
           ),
           buildItem(
             action: MeasureAction.duplicate,
             icon: Icons.copy_rounded,
-            label: 'Duplicate measure',
+            label: context.l10n.duplicateMeasure,
           ),
           buildItem(
             action: MeasureAction.moveLeft,
             icon: Icons.arrow_back_rounded,
-            label: 'Move measure left',
+            label: context.l10n.moveMeasureLeft,
             enabled: canMoveLeft,
           ),
           buildItem(
             action: MeasureAction.moveRight,
             icon: Icons.arrow_forward_rounded,
-            label: 'Move measure right',
+            label: context.l10n.moveMeasureRight,
             enabled: canMoveRight,
           ),
           const PopupMenuDivider(),
@@ -77,7 +78,7 @@ class MeasureActionsButton extends StatelessWidget {
             buildItem(
               action: MeasureAction.clear,
               icon: Icons.cleaning_services_outlined,
-              label: 'Clear measure',
+              label: context.l10n.clearMeasure,
               enabled: canClear,
               destructive: true,
             )
@@ -85,7 +86,7 @@ class MeasureActionsButton extends StatelessWidget {
             buildItem(
               action: MeasureAction.delete,
               icon: Icons.delete_outline_rounded,
-              label: 'Delete measure',
+              label: context.l10n.deleteMeasure,
               enabled: canDelete,
               destructive: true,
             ),
@@ -115,7 +116,7 @@ class MeasureActionsButton extends StatelessWidget {
               if (!compact) ...[
                 const SizedBox(width: AppSpacing.xs),
                 Text(
-                  'Measure',
+                  context.l10n.measure,
                   style: TextStyle(
                     color: colors.primaryColor,
                     fontSize: AppTextSizes.caption,

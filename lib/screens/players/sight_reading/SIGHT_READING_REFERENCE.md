@@ -78,7 +78,7 @@ In Wait Mode:
 4. The held-note set may include earlier notes whose MIDI durations continue through the current position; unrelated notes count as mistakes.
 5. Chord notes must be attacked within 200 milliseconds.
 6. After the pitches match, the cursor moves toward the next position using the MIDI interval between the two Note On events.
-7. Each key must remain held for at least 80% of its MIDI duration and must produce a Note Off before its release deadline.
+7. Each key must remain held for at least 60% of its MIDI duration and must produce a Note Off before its release deadline.
 8. A valid sustained note may remain held while later notes are entered.
 9. Releasing early returns to the note's starting position; holding too long blocks progress until release.
 10. Five consecutive failed attempts reveal a text hint containing the expected note names.
@@ -98,7 +98,7 @@ Performance Mode is the default.
 6. The score cursor slides toward each next playable position according to the MIDI event times.
 7. Later Note On messages are compared with the closest current event.
 8. Note Off messages are compared with each MIDI note's expected duration. A
-   key must remain held for at least 80% of that duration; releasing it sooner
+   key must remain held for at least 60% of that duration; releasing it sooner
    records a `Released too soon` mistake.
 9. Tied notes use their combined MIDI duration and require one continuous key
    hold rather than another attack at the continuation.
@@ -265,7 +265,7 @@ The displayed target duration uses the complete MIDI timeline through its final 
 - Every expected note must have a new Note On during the current step.
 - Chord attacks must be within 200 milliseconds.
 - Note Off events are checked against each expected note's MIDI duration.
-- The earliest valid release is 80% of the note duration.
+- The earliest valid release is 60% of the note duration.
 - The latest valid release is the complete duration plus the current skill-level timing tolerance.
 - Notes in a chord may have different durations; each note is checked independently.
 - An early release returns the cursor to the note's originating position for another attempt.

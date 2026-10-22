@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class DeleteCompositionDialog extends StatelessWidget {
@@ -36,7 +37,7 @@ class DeleteCompositionDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        'Delete composition?',
+        context.l10n.deleteCompositionQuestion,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -45,8 +46,7 @@ class DeleteCompositionDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        'Are you sure you want to delete "$compositionTitle"? '
-        'This action cannot be undone.',
+        context.l10n.deleteCompositionConfirmation(compositionTitle),
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.secondaryTextColor,
@@ -77,7 +77,7 @@ class DeleteCompositionDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
-                  child: Text('Cancel'),
+                  child: Text(context.l10n.cancel),
                 ),
               ),
             ),
@@ -90,15 +90,15 @@ class DeleteCompositionDialog extends StatelessWidget {
                     Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primaryColor,
-                    foregroundColor: colors.backgroundColor,
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                   child: Text(
-                    'Delete',
+                    context.l10n.delete,
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
