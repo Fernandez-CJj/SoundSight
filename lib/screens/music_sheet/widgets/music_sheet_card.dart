@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class MusicSheetCard extends StatelessWidget {
   const MusicSheetCard({
     super.key,
     required this.colors,
+    required this.dismissKey,
     required this.title,
     required this.type,
     required this.pageCount,
@@ -18,6 +20,7 @@ class MusicSheetCard extends StatelessWidget {
   });
 
   final AppThemeColors colors;
+  final String dismissKey;
   final String title;
   final String type;
   final int pageCount;
@@ -25,27 +28,48 @@ class MusicSheetCard extends StatelessWidget {
   final bool isDeleting;
   final VoidCallback onView;
   final VoidCallback onRename;
-  final VoidCallback onDelete;
+  final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
     final isPdf = type == 'pdf';
     final typeColor = isPdf ? const Color(0xFFDC2626) : const Color(0xFF3B82F6);
-    final pageLabel = pageCount == 1 ? 'page' : 'pages';
 
-    return Material(
-      color: colors.surfaceColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: colors.borderColor),
+    return Dismissible(
+      key: ValueKey(dismissKey),
+      direction: isDeleting
+          ? DismissDirection.none
+          : DismissDirection.startToEnd,
+      confirmDismiss: (_) async {
+        await onDelete();
+        return false;
+      },
+      background: Container(
+        padding: EdgeInsets.only(left: AppSpacing.lg),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: const Color(0xFFDC2626),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: Colors.white,
+          size: 26,
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isDeleting ? null : onView,
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
+      child: Material(
+        color: colors.surfaceColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: colors.borderColor),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isDeleting ? null : onView,
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
               Container(
                 width: 52,
                 height: 52,
@@ -79,7 +103,8 @@ class MusicSheetCard extends StatelessWidget {
                     ),
                     Gap(AppSpacing.xs),
                     Text(
-                      '$pageCount $pageLabel - ${isPdf ? 'PDF' : 'Images'}',
+                      '${context.l10n.pageCount(pageCount)} - '
+                      '${isPdf ? context.l10n.pdf : context.l10n.images}',
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -118,8 +143,6 @@ class MusicSheetCard extends StatelessWidget {
                   onSelected: (value) {
                     if (value == 'rename') {
                       onRename();
-                    } else if (value == 'delete') {
-                      onDelete();
                     }
                   },
                   itemBuilder: (_) => [
@@ -134,32 +157,16 @@ class MusicSheetCard extends StatelessWidget {
                           ),
                           Gap(AppSpacing.sm),
                           Text(
-                            'Rename',
+                            context.l10n.rename,
                             style: TextStyle(color: colors.primaryColor),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.delete_outline_rounded,
-                            color: const Color(0xFFDC2626),
-                            size: 20,
-                          ),
-                          Gap(AppSpacing.sm),
-                          Text(
-                            'Delete',
-                            style: TextStyle(color: const Color(0xFFDC2626)),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -1,12 +1,17 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/app_locale_controller.dart';
+import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
+import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
+import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
 import 'package:soundsight/screens/auth/email_verification/email_verification_dialogs.dart';
 import 'package:soundsight/screens/auth/login/login_screen.dart';
 import 'package:soundsight/screens/auth/register/register_screen.dart';
+import 'package:soundsight/screens/auth/services/registration_profile_service.dart';
+import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 
 import '../../../constants/constant.dart';
 import '../../../theme/app_colors.dart';
@@ -14,41 +19,73 @@ import '../../../theme/app_colors.dart';
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
     super.key,
-    required this.username,
-    required this.password,
+    this.username,
+    this.password,
+    this.auth,
+    this.profileService,
+    this.assessmentService,
   });
 
-  final String username;
-  final String password;
+  final String? username;
+  final String? password;
+  final FirebaseAuth? auth;
+  final RegistrationProfileService? profileService;
+  final AssessmentAttemptService? assessmentService;
 
   @override
   State<EmailVerificationScreen> createState() =>
       _EmailVerificationScreenState();
 }
 
-class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
+class _EmailVerificationScreenState extends State<EmailVerificationScreen>
+    with WidgetsBindingObserver {
+  late final FirebaseAuth auth;
+  late final RegistrationProfileService profileService;
+  late final AssessmentAttemptService assessmentService;
   Timer? resendCooldownTimer;
+  Timer? verificationMonitorTimer;
   int resendSecondsRemaining = 30;
   bool isSendingVerification = false;
   bool isCheckingVerification = false;
+  bool isAutomaticVerificationCheckRunning = false;
   bool isCancellingRegistration = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    auth = widget.auth ?? FirebaseAuth.instance;
+    profileService = widget.profileService ?? RegistrationProfileService();
+    assessmentService =
+        widget.assessmentService ?? AssessmentAttemptService(auth: auth);
     beginResendCountdown();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        startVerificationMonitoring();
+      }
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     resendCooldownTimer?.cancel();
+    verificationMonitorTimer?.cancel();
     super.dispose();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      startVerificationMonitoring();
+    } else {
+      verificationMonitorTimer?.cancel();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final email =
-        FirebaseAuth.instance.currentUser?.email ?? 'your email address';
+    final email = auth.currentUser?.email ?? 'your email address';
 
     return PopScope(
       canPop: false,
@@ -179,7 +216,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                                 Flexible(
                                   child: Text(
                                     email,
-                                    textAlign: TextAlign.center,
+                                    textAlign: TextAlign.left,
                                     style: const TextStyle(
                                       fontSize: AppTextSizes.label,
                                       fontWeight: FontWeight.w600,
@@ -193,7 +230,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                           const Gap(AppSpacing.md),
                           const Text(
                             'Open the email and tap the verification link. '
-                            'Then return to SoundSight and check your status.',
+                            'Then return to SoundSight. We will continue '
+                            'automatically when your email is verified.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: AppTextSizes.label,
@@ -213,7 +251,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                               Gap(AppSpacing.xs),
                               Flexible(
                                 child: Text(
-                                  'Check your Spam folder if it does not arrive.',
+                                  'Check your Spam or Junk folder if it does not arrive.',
                                   style: TextStyle(
                                     fontSize: AppTextSizes.caption,
                                     color: AppColors.lightSecondaryText,
@@ -223,47 +261,43 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                             ],
                           ),
                           const Gap(AppSpacing.lg),
-                          SizedBox(
+                          Container(
                             width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton.icon(
-                              onPressed:
-                                  isCheckingVerification ||
-                                      isSendingVerification ||
-                                      isCancellingRegistration
-                                  ? null
-                                  : checkEmailVerification,
-                              icon: isCheckingVerification
-                                  ? const SizedBox(
-                                      width: AppIconSizes.sm,
-                                      height: AppIconSizes.sm,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.lightSurface,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.verified_outlined,
-                                      size: AppIconSizes.md,
-                                    ),
-                              label: Text(
-                                isCheckingVerification
-                                    ? 'Checking Verification...'
-                                    : 'Check Verification',
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.md,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.lightBackground,
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              border: Border.all(
+                                color: AppColors.lightInputBorder,
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.lightPrimary,
-                                foregroundColor: AppColors.lightSurface,
-                                disabledBackgroundColor:
-                                    AppColors.lightSecondaryText,
-                                disabledForegroundColor: AppColors.lightSurface,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: AppIconSizes.sm,
+                                  height: AppIconSizes.sm,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.lightPrimary,
                                   ),
                                 ),
-                              ),
+                                Gap(AppSpacing.sm),
+                                Flexible(
+                                  child: Text(
+                                    'Waiting for email verification...',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: AppTextSizes.label,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.lightPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const Gap(AppSpacing.sm),
@@ -275,6 +309,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                                   resendSecondsRemaining > 0 ||
                                       isSendingVerification ||
                                       isCheckingVerification ||
+                                      isAutomaticVerificationCheckRunning ||
                                       isCancellingRegistration
                                   ? null
                                   : resendVerificationEmail,
@@ -316,6 +351,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                           TextButton(
                             onPressed:
                                 isCheckingVerification ||
+                                    isAutomaticVerificationCheckRunning ||
                                     isSendingVerification ||
                                     isCancellingRegistration
                                 ? null
@@ -344,14 +380,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     );
   }
 
-  Future<void> checkEmailVerification() async {
+  Future<void> checkEmailVerification({bool automatic = false}) async {
     if (isCheckingVerification ||
+        isAutomaticVerificationCheckRunning ||
         isSendingVerification ||
         isCancellingRegistration) {
       return;
     }
 
-    final user = FirebaseAuth.instance.currentUser;
+    final user = auth.currentUser;
 
     if (user == null) {
       if (!mounted) return;
@@ -363,52 +400,65 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       return;
     }
 
-    setState(() {
-      isCheckingVerification = true;
-    });
+    if (mounted) {
+      setState(() {
+        if (automatic) {
+          isAutomaticVerificationCheckRunning = true;
+        } else {
+          isCheckingVerification = true;
+        }
+      });
+    }
 
     try {
       await user.reload();
 
-      final refreshedUser = FirebaseAuth.instance.currentUser;
+      final refreshedUser = auth.currentUser;
 
       if (!mounted) return;
 
       if (refreshedUser?.emailVerified == true) {
-        await refreshedUser!.getIdTokenResult(true);
+        await profileService.ensureProfile(
+          refreshedUser!,
+          fallbackUsername: widget.username,
+        );
 
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(refreshedUser.uid)
-            .set({
-              'uid': refreshedUser.uid,
-              'username': widget.username,
-              'profileImageUrl': null,
-              'email': refreshedUser.email,
-              'role': 'piano_player',
-              'theme': 'light',
-              'skillLevel': null,
-              'preferredNotation': null,
-              'accountStatus': 'active',
-              'createdAt': FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+        final profile = await profileService.loadProfile(refreshedUser);
+
+        if (mounted) {
+          AppLocaleScope.of(
+            context,
+          ).applyLanguageCode(profile.data()?['languageCode']);
+        }
+
+        final attempt = await assessmentService.loadCurrentAttempt();
 
         if (!mounted) return;
 
-        await showVerificationCompleteDialog(context);
+        final assessmentStatus = attempt?.effectiveStatus;
+        final isDarkMode = profile.data()?['theme'] == 'dark';
+        final shouldOpenHome =
+            assessmentStatus == AssessmentAttemptStatus.completed ||
+            assessmentStatus == AssessmentAttemptStatus.expired;
 
-        if (!mounted) return;
-
-        await FirebaseAuth.instance.signOut();
-
-        if (!mounted) return;
+        verificationMonitorTimer?.cancel();
 
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(
+            builder: (_) {
+              if (shouldOpenHome) {
+                return HomeScreen(isDarkMode: isDarkMode);
+              }
+
+              return AssessmentEntryScreen(
+                initialAttempt: attempt,
+                isDarkMode: isDarkMode,
+              );
+            },
+          ),
           (route) => false,
         );
-      } else {
+      } else if (!automatic) {
         showVerificationMessage(
           context,
           'Your email is not verified yet. Open the newest verification email, '
@@ -418,6 +468,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       }
     } on FirebaseException catch (e) {
       if (!mounted) return;
+
+      if (automatic) {
+        return;
+      }
 
       String message;
 
@@ -448,23 +502,42 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         isError: true,
         icon: Icons.error_outline,
       );
+    } catch (_) {
+      if (!mounted) return;
+
+      if (automatic) {
+        return;
+      }
+
+      showVerificationMessage(
+        context,
+        "Your email is verified, but we couldn't finish loading your account. "
+        'Please try again.',
+        isError: true,
+        icon: Icons.error_outline,
+      );
     } finally {
       if (mounted) {
         setState(() {
-          isCheckingVerification = false;
+          if (automatic) {
+            isAutomaticVerificationCheckRunning = false;
+          } else {
+            isCheckingVerification = false;
+          }
         });
       }
     }
   }
 
   Future<void> resendVerificationEmail() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = auth.currentUser;
 
     if (user == null) return;
 
     if (resendSecondsRemaining > 0 ||
         isSendingVerification ||
         isCheckingVerification ||
+        isAutomaticVerificationCheckRunning ||
         isCancellingRegistration) {
       return;
     }
@@ -480,7 +553,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
       showVerificationMessage(
         context,
-        'A new verification email has been sent.',
+        'A new verification email has been sent. Check your Spam or Junk '
+        'folder if it does not arrive.',
         icon: Icons.mark_email_read_outlined,
       );
 
@@ -558,9 +632,20 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     });
   }
 
+  void startVerificationMonitoring() {
+    verificationMonitorTimer?.cancel();
+
+    unawaited(checkEmailVerification(automatic: true));
+    verificationMonitorTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => unawaited(checkEmailVerification(automatic: true)),
+    );
+  }
+
   Future<void> handleBack() async {
     if (isCancellingRegistration ||
         isCheckingVerification ||
+        isAutomaticVerificationCheckRunning ||
         isSendingVerification) {
       return;
     }
@@ -568,17 +653,20 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     setState(() {
       isCancellingRegistration = true;
     });
+    verificationMonitorTimer?.cancel();
 
-    final user = FirebaseAuth.instance.currentUser;
+    final user = auth.currentUser;
 
     try {
       if (user != null) {
         final email = user.email;
 
-        if (email != null) {
+        final password = widget.password;
+
+        if (email != null && password != null && password.isNotEmpty) {
           final credential = EmailAuthProvider.credential(
             email: email,
-            password: widget.password,
+            password: password,
           );
 
           await user.reauthenticateWithCredential(credential);
@@ -588,6 +676,28 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
+
+      if (e.code == 'requires-recent-login') {
+        await auth.signOut();
+
+        if (!mounted) return;
+
+        await showCancellationRequiresLoginDialog(context);
+
+        if (!mounted) return;
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => LoginScreen(
+              auth: auth,
+              profileService: profileService,
+              assessmentService: assessmentService,
+            ),
+          ),
+          (route) => false,
+        );
+        return;
+      }
 
       String message;
 
@@ -613,6 +723,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       setState(() {
         isCancellingRegistration = false;
       });
+      startVerificationMonitoring();
       return;
     }
 

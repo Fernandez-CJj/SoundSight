@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
+import 'package:soundsight/screens/assessment/widgets/assessment_theme.dart';
 
 /// Displays the rules and requirements before the assessment sections begin.
 class AssessmentIntroductionScreen extends StatefulWidget {
@@ -10,6 +12,7 @@ class AssessmentIntroductionScreen extends StatefulWidget {
     super.key,
     required this.attempt,
     required this.onContinue,
+    this.isDarkMode = false,
   });
 
   /// The current assessment returned after a Firestore server-time check.
@@ -17,6 +20,8 @@ class AssessmentIntroductionScreen extends StatefulWidget {
 
   /// Opens the next assessment section.
   final VoidCallback onContinue;
+
+  final bool isDarkMode;
 
   @override
   State<AssessmentIntroductionScreen> createState() {
@@ -104,99 +109,102 @@ class _AssessmentIntroductionScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Assessment')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ListView(
-                  children: [
-                    const Text(
-                      'Before you begin',
-                      style: TextStyle(
+    return AssessmentTheme(
+      isDarkMode: widget.isDarkMode,
+      builder: (themedContext) {
+        return Scaffold(
+          appBar: AppBar(title: Text(themedContext.l10n.assessment)),
+          body: AssessmentPageBody(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: ListView(
+                      children: [
+                    Text(
+                      themedContext.l10n.assessmentBeforeYouBegin,
+                      style: const TextStyle(
                         fontSize: AppTextSizes.screenTitle,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Please read the following information carefully.',
-                      style: TextStyle(
+                    Text(
+                      themedContext.l10n.assessmentReadCarefully,
+                      style: const TextStyle(
                         fontSize: AppTextSizes.body,
                         height: 1.4,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    _buildRemainingTime(),
+                    _buildRemainingTime(themedContext),
                     const SizedBox(height: AppSpacing.lg),
                     const Divider(),
                     const SizedBox(height: AppSpacing.md),
-                    const Text(
-                      'Important information',
-                      style: TextStyle(
+                    Text(
+                      themedContext.l10n.assessmentImportantInformation,
+                      style: const TextStyle(
                         fontSize: AppTextSizes.sectionTitle,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _InstructionItem(
-                      text:
-                          'Your SoundSight Level measures your combined '
-                          'sheet-reading and piano-playing ability.',
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentLevelExplanation,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _InstructionItem(
-                      text:
-                          'You only receive one assessment attempt. An '
-                          'expired attempt cannot be restarted.',
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentTimingExplanation,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _InstructionItem(
-                      text:
-                          'The assessment must be completed within 72 hours '
-                          'after it starts.',
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentPassingExplanation,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _InstructionItem(
-                      text:
-                          'If the assessment expires before completion, your '
-                          'SoundSight Level will be set to Beginner.',
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentChordExplanation,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _InstructionItem(
-                      text:
-                          'You may leave between sections and continue later '
-                          'while the assessment is still active.',
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentOneAttempt,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _InstructionItem(
-                      text:
-                          'Prepare your MIDI keyboard, internet connection, '
-                          'and a quiet place before continuing.',
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentDeadlineExplanation,
                     ),
-                  ],
-                ),
+                    const SizedBox(height: AppSpacing.md),
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentExpirationExplanation,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentLeaveExplanation,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _InstructionItem(
+                      text: themedContext.l10n.assessmentPreparationExplanation,
+                    ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildActionButton(),
+                ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              _buildActionButton(),
-            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   /// Displays the remaining duration with minimal visual styling.
-  Widget _buildRemainingTime() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildRemainingTime(BuildContext themedContext) {
+    final colorScheme = Theme.of(themedContext).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
+        color: colorScheme.surface,
         border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
@@ -204,7 +212,9 @@ class _AssessmentIntroductionScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _canContinue ? 'Time remaining' : 'Assessment expired',
+            _canContinue
+                ? context.l10n.assessmentTimeRemaining
+                : context.l10n.assessmentExpiredTitle,
             style: const TextStyle(
               fontSize: AppTextSizes.label,
               fontWeight: FontWeight.w600,
@@ -214,7 +224,7 @@ class _AssessmentIntroductionScreenState
           Text(
             _canContinue
                 ? _formatDuration(_displayedRemainingTime)
-                : 'No time remaining',
+                : context.l10n.assessmentNoTimeRemaining,
             style: TextStyle(
               color: _canContinue ? colorScheme.onSurface : colorScheme.error,
               fontSize: AppTextSizes.sectionTitle,
@@ -228,15 +238,20 @@ class _AssessmentIntroductionScreenState
 
   /// Continues when active or returns when the attempt has expired.
   Widget _buildActionButton() {
-    return SizedBox(
-      height: 52,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 52),
       child: ElevatedButton(
         onPressed: _canContinue
             ? widget.onContinue
             : () {
                 Navigator.of(context).pop();
               },
-        child: Text(_canContinue ? 'Continue Assessment' : 'Return'),
+        child: Text(
+          _canContinue
+              ? context.l10n.assessmentContinue
+              : context.l10n.returnAction,
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
@@ -249,7 +264,7 @@ class _AssessmentIntroductionScreenState
     final seconds = duration.inSeconds.remainder(60);
 
     if (days > 0) {
-      return '${days}d ${hours}h ${minutes}m';
+      return context.l10n.assessmentDurationDays(days, hours, minutes);
     }
 
     final paddedHours = hours.toString().padLeft(2, '0');

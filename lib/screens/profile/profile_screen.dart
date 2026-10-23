@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
 import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
@@ -66,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         foregroundColor: colors.primaryColor,
         centerTitle: true,
         title: Text(
-          'Profile',
+          context.l10n.profile,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: AppTextSizes.sectionTitle,
@@ -74,6 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: context.l10n.editProfileTooltip,
             onPressed: () => showEditProfileSheet(colors),
             icon: Icon(Icons.edit, size: 30),
           ),
@@ -193,6 +195,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute<void>(
         builder: (_) => AssessmentEntryScreen(
           initialAttempt: assessmentAttempt,
+          isDarkMode: isDarkMode,
+          returnToPreviousScreenOnDone: true,
         ),
       ),
     );
@@ -206,52 +210,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Chooses the Profile action that matches the saved assessment state.
   String get assessmentActionLabel {
     if (assessmentLoadFailed) {
-      return 'Retry Assessment Status';
+      return context.l10n.retryAssessmentStatus;
     }
 
     if (isAssessmentLoading) {
-      return 'Loading Assessment';
+      return context.l10n.loadingAssessment;
     }
 
     final status = assessmentAttempt?.effectiveStatus;
 
     if (status == null) {
-      return 'Start Assessment';
+      return context.l10n.startAssessment;
     }
 
     switch (status) {
       case AssessmentAttemptStatus.inProgress:
-        return 'Resume Assessment';
+        return context.l10n.resumeAssessment;
       case AssessmentAttemptStatus.completed:
-        return 'View Assessment Results';
+        return context.l10n.viewAssessmentResults;
       case AssessmentAttemptStatus.expired:
-        return 'Assessment Expired';
+        return context.l10n.assessmentExpired;
     }
   }
 
   /// Explains whether the assessment is available, active, or permanent.
   String get assessmentDescription {
     if (assessmentLoadFailed) {
-      return 'Unable to load the assessment. Tap to try again.';
+      return context.l10n.assessmentLoadFailedDescription;
     }
 
     if (isAssessmentLoading) {
-      return 'Checking your current assessment status.';
+      return context.l10n.assessmentLoadingDescription;
     }
 
     final status = assessmentAttempt?.effectiveStatus;
 
     if (status == null) {
-      return 'Start whenever you are ready. The timer has not begun.';
+      return context.l10n.assessmentNotStartedDescription;
     }
 
     switch (status) {
       case AssessmentAttemptStatus.inProgress:
-        return 'Continue before the active 72-hour deadline.';
+        return context.l10n.assessmentInProgressDescription;
       case AssessmentAttemptStatus.completed:
-        return 'Review your permanent level and section scores.';
+        return context.l10n.assessmentCompletedDescription;
       case AssessmentAttemptStatus.expired:
-        return 'Beginner was assigned permanently. No retry is available.';
+        return context.l10n.assessmentExpiredDescription;
     }
   }
 

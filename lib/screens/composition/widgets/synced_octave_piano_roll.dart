@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition_note.dart';
 import 'package:soundsight/screens/composition/models/piano_note.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -18,6 +19,7 @@ class SyncedOctavePianoRoll extends StatefulWidget {
     required this.selectedOctave,
     required this.onNoteSelected,
     required this.onOctaveChanged,
+    this.onSelectionCleared,
     this.selectedNoteId,
     this.selectedNoteIds = const {},
     this.insertionBeat,
@@ -35,6 +37,7 @@ class SyncedOctavePianoRoll extends StatefulWidget {
   final int selectedOctave;
   final ValueChanged<String> onNoteSelected;
   final ValueChanged<int> onOctaveChanged;
+  final VoidCallback? onSelectionCleared;
   final String? selectedNoteId;
   final Set<String> selectedNoteIds;
   final double? insertionBeat;
@@ -125,7 +128,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Previous octave',
+            tooltip: context.l10n.previousOctave,
             onPressed: widget.enabled && safeOctave > 0
                 ? () {
                     changeOctave(safeOctave - 1);
@@ -140,7 +143,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Octave $safeOctave',
+                  context.l10n.octaveNumber(safeOctave),
                   maxLines: 1,
                   style: TextStyle(
                     color: widget.colors.primaryColor,
@@ -160,7 +163,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
             ),
           ),
           IconButton(
-            tooltip: 'Next octave',
+            tooltip: context.l10n.nextOctave,
             onPressed: widget.enabled && safeOctave < 8
                 ? () {
                     changeOctave(safeOctave + 1);
@@ -175,7 +178,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
               colors: widget.colors,
               icon: Icons.keyboard_arrow_down_rounded,
               count: below.length,
-              tooltip: '${below.length} notes below this octave',
+              tooltip: context.l10n.notesBelowOctave(below.length),
               onTap: widget.enabled
                   ? () {
                       final nearestNote = below.reduce((first, second) {
@@ -193,7 +196,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
               colors: widget.colors,
               icon: Icons.keyboard_arrow_up_rounded,
               count: above.length,
-              tooltip: '${above.length} notes above this octave',
+              tooltip: context.l10n.notesAboveOctave(above.length),
               onTap: widget.enabled
                   ? () {
                       final nearestNote = above.reduce((first, second) {
@@ -207,7 +210,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
                   : null,
             ),
           IconButton(
-            tooltip: 'View all notes',
+            tooltip: context.l10n.viewAllNotes,
             onPressed: showAllNotes,
             visualDensity: VisualDensity.compact,
             iconSize: 19,
@@ -228,16 +231,19 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
         final rowHeight = constraints.maxHeight / rowCount;
         final beatWidth = constraints.maxWidth / safeBeatsPerMeasure;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: widget.colors.backgroundColor,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: widget.colors.borderColor),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.enabled ? widget.onSelectionCleared : null,
+          child: Container(
+            decoration: BoxDecoration(
+              color: widget.colors.backgroundColor,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: widget.colors.borderColor),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
               for (var row = 0; row < rowCount; row++)
                 buildPitchRow(row: row, rowHeight: rowHeight),
               for (var row = 1; row < rowCount; row++)
@@ -283,8 +289,8 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
                         ),
                         child: Text(
                           currentMeasureNotes.isEmpty
-                              ? 'Tap a piano key to add a note'
-                              : 'No notes in this octave',
+                              ? context.l10n.tapPianoKeyToAdd
+                              : context.l10n.noNotesInOctave,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: widget.colors.secondaryTextColor,
@@ -297,7 +303,8 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
                     ),
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -375,6 +382,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
         .toDouble();
 
     final selected = isSelected(note);
+    const selectionColor = Color(0xFFDC2626);
     final label =
         '${note.pitch}${note.octave}'
         '${note.tieToNext ? ' →' : ''}';
@@ -412,13 +420,15 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
             message: label,
             child: Material(
               color: selected
-                  ? widget.colors.primaryColor
+                  ? selectionColor.withValues(alpha: 0.14)
                   : widget.colors.primaryColor.withValues(alpha: 0.16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
                 side: BorderSide(
-                  color: widget.colors.primaryColor,
-                  width: selected ? 1.5 : 1,
+                  color: selected
+                      ? selectionColor
+                      : widget.colors.primaryColor,
+                  width: selected ? 2.5 : 1,
                 ),
               ),
               clipBehavior: Clip.antiAlias,
@@ -444,7 +454,7 @@ class _SyncedOctavePianoRollState extends State<SyncedOctavePianoRoll> {
                         maxLines: 1,
                         style: TextStyle(
                           color: selected
-                              ? widget.colors.backgroundColor
+                              ? selectionColor
                               : widget.colors.primaryColor,
                           fontSize: widget.compact ? 10 : AppTextSizes.caption,
                           fontWeight: FontWeight.w700,
@@ -618,7 +628,10 @@ class _AllNotesDialog extends StatelessWidget {
         children: [
           Icon(Icons.library_music_outlined, color: colors.primaryColor),
           const Gap(AppSpacing.sm),
-          Text('All Notes', style: TextStyle(color: colors.primaryColor)),
+          Text(
+            context.l10n.allNotes,
+            style: TextStyle(color: colors.primaryColor),
+          ),
         ],
       ),
       content: SizedBox(
@@ -631,7 +644,7 @@ class _AllNotesDialog extends StatelessWidget {
         child: measuresWithNotes.isEmpty
             ? Center(
                 child: Text(
-                  'No notes have been added yet.',
+                  context.l10n.noNotesAdded,
                   style: TextStyle(color: colors.secondaryTextColor),
                 ),
               )
@@ -647,7 +660,7 @@ class _AllNotesDialog extends StatelessWidget {
                     return note.measureIndex == measureIndex;
                   }).toList();
 
-                  return buildMeasure(measureIndex, measureNotes);
+                  return buildMeasure(context, measureIndex, measureNotes);
                 },
               ),
       ),
@@ -656,13 +669,17 @@ class _AllNotesDialog extends StatelessWidget {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: const Text('Close'),
+          child: Text(context.l10n.close),
         ),
       ],
     );
   }
 
-  Widget buildMeasure(int measureIndex, List<CompositionNote> measureNotes) {
+  Widget buildMeasure(
+    BuildContext context,
+    int measureIndex,
+    List<CompositionNote> measureNotes,
+  ) {
     final groupedNotes = <double, List<CompositionNote>>{};
 
     for (final note in measureNotes) {
@@ -682,7 +699,7 @@ class _AllNotesDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Measure ${measureIndex + 1}',
+            context.l10n.measureNumber(measureIndex + 1),
             style: TextStyle(
               color: colors.primaryColor,
               fontSize: AppTextSizes.label,
@@ -695,7 +712,7 @@ class _AllNotesDialog extends StatelessWidget {
             runSpacing: AppSpacing.xs,
             children: [
               for (final beat in beats)
-                buildBeatGroup(beat, groupedNotes[beat]!),
+                buildBeatGroup(context, beat, groupedNotes[beat]!),
             ],
           ),
         ],
@@ -703,7 +720,11 @@ class _AllNotesDialog extends StatelessWidget {
     );
   }
 
-  Widget buildBeatGroup(double beat, List<CompositionNote> beatNotes) {
+  Widget buildBeatGroup(
+    BuildContext context,
+    double beat,
+    List<CompositionNote> beatNotes,
+  ) {
     beatNotes.sort((first, second) {
       return first.midiNumber.compareTo(second.midiNumber);
     });
@@ -725,7 +746,7 @@ class _AllNotesDialog extends StatelessWidget {
         border: Border.all(color: colors.borderColor),
       ),
       child: Text(
-        'Beat ${formatBeat(beat + 1)}: $labels',
+        context.l10n.beatWithNotes(formatBeat(beat + 1), labels),
         style: TextStyle(
           color: colors.primaryColor,
           fontSize: AppTextSizes.caption,

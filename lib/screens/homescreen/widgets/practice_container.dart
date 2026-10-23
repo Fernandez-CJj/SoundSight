@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/practice/practice_screen.dart';
 
 class PracticeContainer extends StatelessWidget {
@@ -41,7 +42,7 @@ class PracticeContainer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Start Practice',
+                context.l10n.startPractice,
                 style: TextStyle(
                   color: practiceTextColor,
                   fontSize: 18,
@@ -52,7 +53,7 @@ class PracticeContainer extends StatelessWidget {
               SizedBox(
                 width: 145,
                 child: Text(
-                  'Build your musical skills,\nimprove accuracy, and\nelevate your performance.',
+                  context.l10n.practiceBannerDescription,
                   style: TextStyle(
                     color: practiceTextColor,
                     fontSize: 10,
@@ -63,18 +64,32 @@ class PracticeContainer extends StatelessWidget {
               ),
               Gap(AppSpacing.sm),
               SizedBox(
-                width: 128,
-                height: 38,
-                child: ElevatedButton.icon(
+                width: 165,
+                height: 42,
+                child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(
                       context,
                     ).push(MaterialPageRoute(builder: (_) => PracticeScreen()));
                   },
-                  icon: Icon(Icons.center_focus_weak, size: 17),
-                  label: Text(
-                    'Start Practice',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.center_focus_weak, size: 17),
+                      const Gap(6),
+                      Flexible(
+                        child: Text(
+                          context.l10n.startPractice,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: practiceButtonColor,

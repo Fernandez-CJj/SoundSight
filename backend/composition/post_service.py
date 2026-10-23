@@ -28,9 +28,10 @@ def getNextPublishedVersion(compositionId):
 
 def saveCompositionPost(
     composition,
-    pdfStoragePath,
+    publishedStoragePaths,
     publicProfile,
     versionNumber,
+    sourceUpdatedAt,
 ):
     if composition.id == "":
         raise ValueError(
@@ -50,6 +51,7 @@ def saveCompositionPost(
         ),
         "currentVersion": versionNumber,
         "title": composition.title,
+        "creationMethod": composition.creationMethod,
         "tempo": composition.tempo,
         "key": composition.key,
         "beatsPerMeasure": (
@@ -57,8 +59,19 @@ def saveCompositionPost(
         ),
         "beatUnit": composition.beatUnit,
         "measureCount": composition.measureCount,
-        "noteCount": len(composition.notes),
-        "pdfStoragePath": pdfStoragePath,
+        "noteCount": (
+            len(composition.performanceNotes)
+            if composition.recordingSchemaVersion == 1
+            else len(composition.notes)
+        ),
+        "publishedFilesVersion": 1,
+        "pdfStoragePath": publishedStoragePaths["pdfStoragePath"],
+        "musicXmlStoragePath": (
+            publishedStoragePaths["musicXmlStoragePath"]
+        ),
+        "midiStoragePath": publishedStoragePaths["midiStoragePath"],
+        "mp3StoragePath": publishedStoragePaths["mp3StoragePath"],
+        "sourceUpdatedAt": sourceUpdatedAt,
         "publishedAt": (
             firestore.SERVER_TIMESTAMP
         ),
@@ -89,6 +102,21 @@ def saveCompositionPost(
         })
 
     versionData["notes"] = notesData
+
+    if composition.recordingSchemaVersion == 1:
+        versionData["recordingSchemaVersion"] = 1
+        versionData["performanceDurationUs"] = (
+            composition.performanceDurationUs
+        )
+        versionData["performanceNotes"] = [
+            {
+                "midiNumber": performanceNote.midiNumber,
+                "velocity": performanceNote.velocity,
+                "startTimeUs": performanceNote.startTimeUs,
+                "durationUs": performanceNote.durationUs,
+            }
+            for performanceNote in composition.performanceNotes
+        ]
 
     versionReference = postReference.collection(
         "versions"

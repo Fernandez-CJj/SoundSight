@@ -44,13 +44,19 @@ Starts recognition for an existing music sheet. The request body contains `owner
 
 The complete recognition process is documented in `omr/OMR_REFERENCE.md`.
 
-### `POST /compositions`
+### `POST /compositions/{compositionId}/publish`
 
 Builds and publishes a composition. The request body contains the composition details and notes.
 
 The complete publishing process is documented in `composition/COMPOSITION_REFERENCE.md`.
 
-### `DELETE /compositions/{compositionId}`
+### `POST /compositions/{compositionId}/generate`
+
+Generates the private composition's MusicXML, PDF, MIDI, and MP3. The request requires a verified Firebase ID token in the bearer authorization header. The backend reads the authoritative composition from `users/{authenticatedUserId}/compositions/{compositionId}` and verifies its stored owner ID.
+
+Manual compositions write MIDI directly from their exact measure-and-beat data. New performance recordings write MIDI directly from captured microsecond Note On/Note Off data. MuseScore renders each composition's MP3 from its resulting MIDI so playback and Sight Reading use the same timeline.
+
+### `DELETE /compositions/{compositionId}/publish`
 
 Unpublishes a composition. The request body contains `ownerId`.
 
@@ -58,7 +64,7 @@ Unpublishes a composition. The request body contains `ownerId`.
 
 ### Composition publishing
 
-1. The Flutter app sends a saved composition to `POST /compositions`.
+1. The Flutter app sends an authenticated request to `POST /compositions/{compositionId}/publish`.
 2. The backend reads the owner's public profile from Firebase.
 3. music21 creates a two-staff piano score.
 4. A MusicXML file is written to a temporary system folder.
@@ -74,10 +80,10 @@ Unpublishes a composition. The request body contains `ownerId`.
 3. The sheet status becomes `processing`.
 4. Uploaded files are downloaded to a temporary job folder.
 5. Image pages are combined into one PDF when necessary.
-6. Audiveris converts the PDF into MusicXML.
-7. music21 confirms that the result is readable and contains notes.
-8. MuseScore creates an MP3 preview.
-9. The MusicXML and MP3 are uploaded to Firebase Storage.
+6. Audiveris converts the PDF into compressed MusicXML, which the backend extracts.
+7. music21 confirms that the extracted plain MusicXML is readable and contains notes.
+8. MuseScore creates a recognized PDF, MIDI file, and MP3 preview from the extracted score.
+9. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
 10. The sheet document becomes `completed` and stores the results.
 11. Temporary job files are deleted.
 
@@ -87,7 +93,7 @@ The backend temporarily holds Python objects for requests, scores, validation re
 
 OMR input and output files use a unique temporary system folder for each attempt. The folder is removed after recognition finishes.
 
-Composition MusicXML and PDF files use a temporary system folder and are removed after publishing finishes, including on failure.
+Composition MusicXML, PDF, MIDI, and MP3 files use a temporary system folder and are removed after generation or publishing finishes, including on failure.
 
 ## Information saved permanently
 
@@ -95,7 +101,7 @@ The backend writes to:
 
 - Firestore `compositionPosts/{compositionId}`;
 - Firestore `compositionPosts/{compositionId}/versions/{versionNumber}`;
-- Firestore `musicSheets/{sheetId}`;
+- Firestore `users/{ownerId}/musicSheets/{sheetId}`;
 - Firebase Storage `published_compositions/{ownerId}/{compositionId}/...`;
 - Firebase Storage `musicSheets/{ownerId}/{sheetId}/...`.
 
@@ -116,9 +122,10 @@ This means the deployed Firebase Rules protect direct requests from the Flutter 
 Current backend checks include:
 
 - confirming ownership before OMR recognition;
-- confirming ownership before unpublishing.
+- confirming ownership before unpublishing; and
+- verifying a Firebase ID token, verified email, and private-composition ownership before file generation.
 
-The HTTP routes do not currently verify a Firebase authentication token. They receive `ownerId` from the request body. Composition publishing does not independently prove that the caller owns that user ID or composition ID.
+The publishing, unpublishing, and OMR routes still receive `ownerId` from their request bodies and do not currently verify a Firebase token. Private composition file generation is authenticated separately and does not trust musical data from the request.
 
 ## Failure and retry behavior
 

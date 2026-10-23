@@ -13,8 +13,12 @@ import '../models/assessment_questionnaire.dart';
 /// Once that document expires, it stays expired and the user cannot create or
 /// restart another attempt from the phone application.
 class AssessmentAttemptService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  AssessmentAttemptService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
   /// The document name is fixed so each user can have only one assessment.
   static const String _currentDocumentId = 'current';
@@ -47,7 +51,9 @@ class AssessmentAttemptService {
     } else {
       // Finalized attempts are permanent and no longer need a time refresh.
       if (_isFinalizedDocument(document)) {
-        return _attemptFromDocument(document);
+        final attempt = _attemptFromDocument(document);
+        await _reconcileCompletedSkillLevel(attempt);
+        return attempt;
       }
 
       // Recover safely if the app closed between the two initialization writes.
@@ -77,7 +83,9 @@ class AssessmentAttemptService {
     // Completion and expiration are permanent, so their documents stay
     // unchanged whenever the app loads them again.
     if (_isFinalizedDocument(document)) {
-      return _attemptFromDocument(document);
+      final attempt = _attemptFromDocument(document);
+      await _reconcileCompletedSkillLevel(attempt);
+      return attempt;
     }
 
     document = await _ensureExpirationTime(document);
@@ -151,7 +159,8 @@ class AssessmentAttemptService {
     }
 
     // An expired or completed assessment cannot accept new answers.
-    if (currentAttempt.effectiveStatus != AssessmentAttemptStatus.inProgress) {
+    if (currentAttempt.effectiveStatus !=
+        AssessmentAttemptStatus.inProgress) {
       throw StateError('This assessment can no longer be changed.');
     }
 
@@ -221,19 +230,21 @@ class AssessmentAttemptService {
     }
 
     final attemptReference = _currentAttemptReference(userId);
-    // Save the permanent assessment result before the review screen opens.
-    // The profile level is applied only when the user presses Done there.
-    await attemptReference.update({
-      'questionnaireAnswers': validatedAnswers,
-      'placementMethod':
-          AssessmentPlacementMethod.selfReportedBeginner.name,
-      'finalSkillLevel': AssessmentSkillLevel.beginner.name,
-      'status': AssessmentAttemptStatus.completed.name,
-      'currentSection': AssessmentSection.results.name,
-      'completedAt': FieldValue.serverTimestamp(),
-      'serverCheckedAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    await _commitCompletedAssessment(
+      attemptReference: attemptReference,
+      userId: userId,
+      finalSkillLevel: AssessmentSkillLevel.beginner,
+      attemptUpdates: {
+        'questionnaireAnswers': validatedAnswers,
+        'placementMethod': AssessmentPlacementMethod.selfReportedBeginner.name,
+        'finalSkillLevel': AssessmentSkillLevel.beginner.name,
+        'status': AssessmentAttemptStatus.completed.name,
+        'currentSection': AssessmentSection.results.name,
+        'completedAt': FieldValue.serverTimestamp(),
+        'serverCheckedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+    );
 
     final updatedDocument = await attemptReference.get(
       const GetOptions(source: Source.server),
@@ -262,8 +273,7 @@ class AssessmentAttemptService {
       throw StateError('No assessment attempt exists.');
     }
 
-    if (currentAttempt.effectiveStatus !=
-        AssessmentAttemptStatus.inProgress) {
+    if (currentAttempt.effectiveStatus != AssessmentAttemptStatus.inProgress) {
       throw StateError('This assessment can no longer be changed.');
     }
 
@@ -355,35 +365,36 @@ class AssessmentAttemptService {
       serializedResults[entry.key] = entry.value.toMap();
     }
 
-    // Complete the assessment first so a USB disconnect or app restart cannot
-    // force the user to repeat the piano section.
-    await attemptReference.update({
-      'pianoTaskResults': serializedResults,
-      'pianoExecutionScore': {
-        'beginnerCorrectGroups': score.beginnerCorrectGroups,
-        'beginnerTotalGroups': score.beginnerTotalGroups,
-        'intermediateCorrectGroups': score.intermediateCorrectGroups,
-        'intermediateTotalGroups': score.intermediateTotalGroups,
-        'advancedCorrectGroups': score.advancedCorrectGroups,
-        'advancedTotalGroups': score.advancedTotalGroups,
-        'totalCorrectGroups': score.totalCorrectGroups,
-        'totalGroups': score.totalGroups,
-        'wrongGroups': score.wrongGroups,
-        'missedGroups': score.missedGroups,
-        'timingMistakes': score.timingMistakes,
+    await _commitCompletedAssessment(
+      attemptReference: attemptReference,
+      userId: userId,
+      finalSkillLevel: finalLevel,
+      attemptUpdates: {
+        'pianoTaskResults': serializedResults,
+        'pianoExecutionScore': {
+          'beginnerCorrectGroups': score.beginnerCorrectGroups,
+          'beginnerTotalGroups': score.beginnerTotalGroups,
+          'intermediateCorrectGroups': score.intermediateCorrectGroups,
+          'intermediateTotalGroups': score.intermediateTotalGroups,
+          'advancedCorrectGroups': score.advancedCorrectGroups,
+          'advancedTotalGroups': score.advancedTotalGroups,
+          'totalCorrectGroups': score.totalCorrectGroups,
+          'totalGroups': score.totalGroups,
+          'wrongGroups': score.wrongGroups,
+          'missedGroups': score.missedGroups,
+          'timingMistakes': score.timingMistakes,
+        },
+        'notationReadingLevel': notationLevel.name,
+        'pianoExecutionLevel': pianoLevel.name,
+        'finalSkillLevel': finalLevel.name,
+        'placementMethod': AssessmentPlacementMethod.fullAssessment.name,
+        'status': AssessmentAttemptStatus.completed.name,
+        'currentSection': AssessmentSection.results.name,
+        'completedAt': FieldValue.serverTimestamp(),
+        'serverCheckedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       },
-      'notationReadingLevel': notationLevel.name,
-      'pianoExecutionLevel': pianoLevel.name,
-      'finalSkillLevel': finalLevel.name,
-      'placementMethod': AssessmentPlacementMethod.fullAssessment.name,
-      'status': AssessmentAttemptStatus.completed.name,
-      'currentSection': AssessmentSection.results.name,
-      'completedAt': FieldValue.serverTimestamp(),
-
-      // Firestore generates these timestamps instead of trusting the phone.
-      'serverCheckedAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    );
 
     final updatedDocument = await attemptReference.get(
       const GetOptions(source: Source.server),
@@ -417,12 +428,66 @@ class AssessmentAttemptService {
       throw StateError('The assessment result is not ready to be applied.');
     }
 
-    // Firestore Rules verify that this value exactly matches the permanent
-    // finalSkillLevel stored in the completed assessment document.
-    await _firestore.collection('users').doc(userId).set({
+    await _applySkillLevelIfNeeded(userId: userId, finalLevel: finalLevel);
+  }
+
+  /// Saves the final assessment and profile placement as one atomic operation.
+  Future<void> _commitCompletedAssessment({
+    required DocumentReference<Map<String, dynamic>> attemptReference,
+    required String userId,
+    required AssessmentSkillLevel finalSkillLevel,
+    required Map<String, dynamic> attemptUpdates,
+  }) async {
+    final userReference = _firestore.collection('users').doc(userId);
+    final batch = _firestore.batch();
+
+    batch.update(attemptReference, attemptUpdates);
+    batch.update(userReference, {
+      'skillLevel': finalSkillLevel.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+  }
+
+  /// Repairs profiles created by older clients that saved completion first.
+  Future<void> _reconcileCompletedSkillLevel(AssessmentAttempt attempt) async {
+    final finalLevel = attempt.finalSkillLevel;
+
+    if (attempt.status != AssessmentAttemptStatus.completed ||
+        attempt.currentSection != AssessmentSection.results ||
+        finalLevel == null) {
+      return;
+    }
+
+    await _applySkillLevelIfNeeded(
+      userId: attempt.userId,
+      finalLevel: finalLevel,
+    );
+  }
+
+  Future<void> _applySkillLevelIfNeeded({
+    required String userId,
+    required AssessmentSkillLevel finalLevel,
+  }) async {
+    final userReference = _firestore.collection('users').doc(userId);
+    final userDocument = await userReference.get(
+      const GetOptions(source: Source.server),
+    );
+
+    if (!userDocument.exists) {
+      throw StateError('The user profile does not exist.');
+    }
+
+    if (userDocument.data()?['skillLevel'] == finalLevel.name) {
+      return;
+    }
+
+    // Firestore Rules verify that this matches the permanent assessment.
+    await userReference.update({
       'skillLevel': finalLevel.name,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    });
   }
 
   /// Creates the fixed `current` document for a first-time user.

@@ -1,6 +1,10 @@
 from core.musescore_service import exportMp3
+from core.musescore_service import exportMidi
+from core.musescore_service import exportPdf
 from omr.audiveris_service import convertToMusicXml
 from omr.music_sheet_service import getMusicSheet
+from omr.music_xml_extractor import extractMusicXml
+from omr.music_xml_piano_normalizer import normalizeMusicXmlForPiano
 from omr.music_xml_validator import validateMusicXml
 from omr.omr_source_service import createOmrJobFolders
 from omr.omr_source_service import deleteOmrJobFolder
@@ -25,7 +29,8 @@ def convertMusicSheet(
 
     try:
         setOmrProcessing(
-            sheetId
+            sheetId,
+            ownerId,
         )
 
         jobFolders = createOmrJobFolders()
@@ -53,13 +58,30 @@ def convertMusicSheet(
             inputFolder,
         )
 
-        musicXmlPath = convertToMusicXml(
+        compressedMusicXmlPath = convertToMusicXml(
             audiverisInputPath,
             outputFolder,
         )
 
+        musicXmlPath = extractMusicXml(
+            compressedMusicXmlPath
+        )
+
+        musicXmlPath = normalizeMusicXmlForPiano(
+            musicXmlPath
+        )
+
         validationResult = validateMusicXml(
             musicXmlPath
+        )
+
+        pdfPath = exportPdf(
+            musicXmlPath
+        )
+
+        midiPath = exportMidi(
+            musicXmlPath,
+            outputFolder,
         )
 
         mp3Path = exportMp3(
@@ -69,6 +91,8 @@ def convertMusicSheet(
 
         storagePaths = uploadOmrFiles(
             musicXmlPath,
+            midiPath,
+            pdfPath,
             mp3Path,
             ownerId,
             sheetId,
@@ -76,6 +100,7 @@ def convertMusicSheet(
 
         setOmrCompleted(
             sheetId,
+            ownerId,
             storagePaths,
             validationResult,
         )
@@ -101,6 +126,16 @@ def convertMusicSheet(
                     "musicXmlStoragePath"
                 ]
             ),
+            "midiStoragePath": (
+                storagePaths[
+                    "midiStoragePath"
+                ]
+            ),
+            "recognizedPdfStoragePath": (
+                storagePaths[
+                    "recognizedPdfStoragePath"
+                ]
+            ),
             "previewAudioStoragePath": (
                 storagePaths[
                     "previewAudioStoragePath"
@@ -110,6 +145,7 @@ def convertMusicSheet(
     except Exception as error:
         setOmrFailed(
             sheetId,
+            ownerId,
             error,
         )
 

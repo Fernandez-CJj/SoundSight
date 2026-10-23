@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CaptureTipsContainer extends StatelessWidget {
@@ -43,7 +44,7 @@ class CaptureTipsContainer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Capture tips',
+                      context.l10n.captureTips,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -52,7 +53,7 @@ class CaptureTipsContainer extends StatelessWidget {
                     ),
                     Gap(2),
                     Text(
-                      'Get a clearer and more accurate result',
+                      context.l10n.captureTipsDescription,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -69,19 +70,19 @@ class CaptureTipsContainer extends StatelessWidget {
           _CaptureTip(
             colors: colors,
             icon: Icons.wb_sunny_outlined,
-            text: 'Use good, even lighting.',
+            text: context.l10n.captureTipLighting,
           ),
           Gap(AppSpacing.md),
           _CaptureTip(
             colors: colors,
             icon: Icons.table_bar_outlined,
-            text: 'Place the sheet music flat on a surface.',
+            text: context.l10n.captureTipFlat,
           ),
           Gap(AppSpacing.md),
           _CaptureTip(
             colors: colors,
             icon: Icons.center_focus_strong_outlined,
-            text: 'Keep the entire page visible, straight, and clear.',
+            text: context.l10n.captureTipVisible,
           ),
         ],
       ),

@@ -33,11 +33,11 @@ All composition data screens require a signed-in Firebase user. A signed-out use
 ### Creating a composition
 
 1. The user taps **New Composition**.
-2. The user enters a title and tempo.
-3. The user chooses a key signature and time signature.
-4. The app creates a new `Composition` object in memory with one empty measure.
-5. The editor opens in landscape orientation.
-6. Nothing has been saved to Firestore yet.
+2. The user chooses **Manual** or **Recording**.
+3. Both methods request a title, key signature, and time signature.
+4. Manual composition also requests tempo and opens the editor.
+5. Recording composition detects tempo and measure count from the captured MIDI performance.
+6. Nothing is saved until the editor saves or the recorder confirms generation.
 
 The default values are:
 
@@ -46,6 +46,18 @@ The default values are:
 - time signature: `4/4`;
 - measure count: `1`; and
 - no notes.
+
+### Performance recording
+
+New recorded compositions store `recordingSchemaVersion: 1`, `performanceNotes`, and `performanceDurationUs`. Each performance note keeps its MIDI number, velocity, microsecond start time, and microsecond held duration. The first Note On becomes time zero and the final matched Note Off becomes the ending, so idle time around the performance is removed.
+
+The backend creates readable MusicXML/PDF notation from those notes and writes an exact MIDI directly from their captured timing. The score uses balanced 16th-note resolution and a tempo chosen to favor ordinary quarter, eighth, and dotted values. The MP3 is rendered from that MIDI, trimmed to the final matched Note Off, and finished with a 5 ms fade, so the Listen preview and Sight Reading timing follow the same performance without recording-stop silence or an added reverb tail. The detected tempo only controls notation layout and does not move the captured Note On or Note Off times.
+
+Tempo is detected between 40 and 200 BPM for readable notation, with an 80 BPM fallback for sparse performances. Detection never moves the captured note times. Measure count is calculated from the detected tempo, selected meter, and trimmed duration.
+
+The silent camera video is temporary review media. It can be played in the completion dialog and is deleted after success, Record Again, finishing a failed generation, or leaving the recorder. It is never uploaded.
+
+The recorder warns at 240 notes and at 90 percent of its duration limit. It stops accepting Note On events at 256 notes, waits for held keys to be released, and then stops. Empty performances cannot be generated.
 
 ### Editing music
 
@@ -58,9 +70,13 @@ The editor lets the user:
 - change a selected note's pitch, duration, velocity, or position;
 - add notes at the current cursor position;
 - enable Chord Mode to place several notes at the same starting beat;
+- enable Layer Notes to enter an independent line while another note keeps
+  sounding;
 - insert a rest by moving the cursor forward without creating a note;
 - move the cursor backward or forward;
 - add, insert, duplicate, move, or delete measures;
+- clear the notes from the remaining measure when a composition has only one
+  measure, while keeping that blank measure available for new input;
 - copy and paste notes;
 - select all notes;
 - tie a note to the immediately following note of the same pitch;
@@ -69,6 +85,21 @@ The editor lets the user:
 - change the title, tempo, key, or time signature through settings;
 - show or hide the full-song overview; and
 - play the composition before saving it.
+
+Layer Notes can start from a selected note or the current cursor. Each new
+virtual-piano note advances the layer cursor by that note's duration. With a
+MIDI piano connected, the played key or chord supplies the duration and the
+layer cursor advances by that captured step. Different pitches may overlap,
+but the same piano key cannot overlap itself. Chord Mode and Layer Notes are
+mutually exclusive.
+
+The duration selector remains visible while a MIDI piano is connected. Its
+default Automatic option converts the longest held key in a MIDI step to the
+nearest supported written duration. Choosing a fixed duration instead ignores
+the held time and assigns that duration to every note in the entered MIDI
+chord. Note Off events are still used to determine when the complete chord has
+been released. The fixed choice remains active until the user chooses another
+duration or returns to Automatic, and it is not stored with the composition.
 
 Changing the time signature can move or resize note timing. The change is rejected if the converted notes cannot fit correctly or would overlap the same piano key.
 
@@ -102,7 +133,7 @@ From **My Compositions**, the user can:
 
 The details screen shows its musical settings, note and measure counts, estimated duration, dates, playback controls, and actions.
 
-Deleting a private composition deletes only `/compositions/{compositionId}`. It does not automatically remove an already published post. Publishing and unpublishing are separate actions.
+Deleting a private composition removes its PDF, MusicXML, MIDI, and MP3 files from `composition_files/{ownerId}/{compositionId}` before deleting `/users/{ownerId}/compositions/{compositionId}`. It does not automatically remove an already published post or its public version files. Publishing and unpublishing are separate actions.
 
 ### Publishing
 
@@ -110,14 +141,11 @@ Publishing is available from the private composition's details screen.
 
 1. The composition must contain at least one note.
 2. The user confirms the publish dialog.
-3. The Flutter app sends the composition to `POST /compositions` on the Python backend.
+3. The Flutter app sends the composition ID and Firebase authorization to `POST /compositions/{compositionId}/publish` on the Python backend.
 4. The backend reads the user's public username and profile image.
-5. The backend converts the notes into a two-staff piano score.
-6. Notes with MIDI values `60` and above go to the treble staff. Notes up to `59` go to the bass staff.
-7. Gaps between notes are written as rests.
-8. The backend creates MusicXML and exports it as a PDF.
-9. The PDF is uploaded to Firebase Storage.
-10. The backend creates or updates the public post and creates a numbered version document.
+5. The backend verifies that the private PDF, MusicXML, MIDI, and MP3 are current.
+6. It copies those exact files into immutable public version paths.
+7. The backend creates or updates the public post and creates a numbered version document.
 
 The current backend address in the app is `http://127.0.0.1:8000`. Publishing has a two-minute request timeout.
 
@@ -130,9 +158,9 @@ When the same composition is published again:
 - the backend reads the public post's `currentVersion`;
 - it adds `1` to get the new version number;
 - the top-level post is updated to describe the newest version; and
-- a new version document and PDF are created.
+- a new version document and public PDF, MusicXML, MIDI, and MP3 are created.
 
-Older version documents and PDFs remain available until the composition is unpublished.
+Older version documents and files remain available until the composition is unpublished.
 
 Likes, comments, and saved bookmarks belong to a specific version, not to every version of the composition.
 
@@ -154,7 +182,7 @@ The viewer has two different play controls:
 - The app-bar play button plays or stops the published composition audio.
 - The large **Play** button opens a choice between Sight Reading and Synthesia.
 
-In the current code, choosing **Sight Reading** only closes the choice dialog. It does not open another screen. Choosing **Synthesia** opens `SynthesiaScreen`, but the selected published composition is not passed to that screen.
+Choosing **Sight Reading** opens the selected immutable published version. Choosing **Synthesia** opens `SynthesiaScreen`, but the selected published composition is not passed to that screen.
 
 ### Comments
 
@@ -176,7 +204,7 @@ Saved Sheets are ordered by the time they were saved. The app reads each saved v
 
 Only the owner is shown the unpublish action in the app.
 
-After confirmation, the app sends `DELETE /compositions/{compositionId}` with the owner ID to the backend. The request has a one-minute timeout.
+After confirmation, the app sends authenticated `DELETE /compositions/{compositionId}/publish` to the backend. The request has a one-minute timeout.
 
 The backend removes:
 
@@ -187,7 +215,7 @@ The backend removes:
 - every Saved Sheets bookmark that points to the post; and
 - the top-level public post.
 
-Unpublishing does not delete the private composition in `/compositions/{compositionId}`.
+Unpublishing does not delete the private composition in `/users/{ownerId}/compositions/{compositionId}`.
 
 ## 3. Temporary local information
 
@@ -252,18 +280,18 @@ Public data is saved only after the backend successfully generates and uploads t
 
 | Information | Path |
 | --- | --- |
-| Private editable composition | `/compositions/{compositionId}` |
+| Private editable composition | `/users/{ownerId}/compositions/{compositionId}` |
 | Public post describing the newest version | `/compositionPosts/{compositionId}` |
 | One immutable published version | `/compositionPosts/{compositionId}/versions/{versionNumber}` |
 | One user's like on a version | `/compositionPosts/{compositionId}/versions/{versionNumber}/likes/{userId}` |
 | Comment on a version | `/compositionPosts/{compositionId}/versions/{versionNumber}/comments/{commentId}` |
 | Saved-version bookmark | `/savedCompositionPosts/{userId}_{compositionId}_{versionNumber}` |
-| Published PDF | `published_compositions/{ownerId}/{compositionId}/version_{versionNumber}.pdf` |
+| Published files | `published_compositions/{ownerId}/{compositionId}/version_{versionNumber}.{pdf,musicxml,mid,mp3}` |
 | User theme and public profile source | `/users/{userId}` |
-| Publish endpoint | `POST /compositions` |
-| Unpublish endpoint | `DELETE /compositions/{compositionId}` |
+| Publish endpoint | `POST /compositions/{compositionId}/publish` |
+| Unpublish endpoint | `DELETE /compositions/{compositionId}/publish` |
 
-The backend writes generated MusicXML and PDF files to a temporary system folder during publishing. It removes that folder after the request. The mobile app reads the published PDF from Firebase Storage.
+The backend copies current private generated files into immutable public version paths. The private files remain owner-only and are not modified by publishing.
 
 ## 6. Created and updated fields
 
@@ -293,6 +321,14 @@ Each item inside `notes` contains:
 - `durationBeats`;
 - `velocity`; and
 - `tieToNext`.
+
+New recording documents instead use an empty legacy `notes` list and add:
+
+- `recordingSchemaVersion: 1`;
+- `performanceDurationUs`; and
+- `performanceNotes`, containing `midiNumber`, `velocity`, `startTimeUs`, and `durationUs`.
+
+Older recording documents without the schema version continue using their legacy `notes` data.
 
 A later save updates all musical fields and `updatedAt`. It does not change `ownerId` or `createdAt`.
 
@@ -433,15 +469,13 @@ Firestore Rules require authentication and enforce that:
 - bookmarks cannot be updated; and
 - users can list and delete only their own bookmarks.
 
-### Published PDF files
+### Published composition files
 
-Firebase Storage Rules allow authenticated users to read published PDFs. Direct client creation, update, and deletion are denied. The backend performs those actions with Admin access.
+Firebase Storage Rules allow verified users to read published PDF, MusicXML, MIDI, and MP3 files. Direct client creation, update, and deletion are denied. The backend performs those actions with Admin access.
 
 ### Current backend authorization boundary
 
-The Flutter publish and unpublish requests do not send a Firebase ID token, and the current backend endpoints do not authenticate a Firebase user.
-
-For unpublishing, the backend only checks whether the `ownerId` supplied in the request matches the `ownerId` stored in the public post. Because Admin SDK operations bypass Firestore and Storage Rules, this owner-ID comparison is the backend's current check. It is not the same as proving that the caller is the signed-in owner.
+Flutter sends a Firebase ID token for publishing and unpublishing. The backend requires a verified account, uses the authenticated UID to load the private composition, and confirms ownership before performing Admin SDK operations.
 
 ## 9. How musical results are calculated
 
@@ -503,7 +537,7 @@ If no public post exists, `currentVersion` starts at `0`, so the first published
 There is no feature-wide Skip action.
 
 - Inserting a rest skips forward by the selected duration without storing a note.
-- Choosing Sight Reading in the published viewer currently performs no follow-up action.
+- Published Sight Reading opens the selected immutable version document.
 
 ### Resume
 
@@ -544,13 +578,13 @@ The private document disappears from My Compositions. Any separately published p
 
 ### After unpublishing
 
-The public post, all versions, version-specific social data, Saved Sheets references, and published PDFs are removed. The private editable composition remains.
+The public post, all versions, version-specific social data, Saved Sheets references, and published files are removed. The private editable composition remains.
 
 ## 12. Simple example
 
 Suppose Ana creates **Morning Theme** in `4/4`, adds four quarter notes, and taps Save.
 
-1. Firestore creates `/compositions/abc123` with the musical fields, four note maps, `createdAt`, and `updatedAt`.
+1. Firestore creates `/users/anaUid/compositions/abc123` with the musical fields, four note maps, `createdAt`, and `updatedAt`.
 2. Ana can close the app and later reopen this private composition because it was saved permanently.
 3. Ana publishes it. The backend creates version `1`, uploads `version_1.pdf`, and writes:
    - `/compositionPosts/abc123`; and
@@ -558,4 +592,4 @@ Suppose Ana creates **Morning Theme** in `4/4`, adds four quarter notes, and tap
 4. Ben likes and saves version `1`. His like is stored under version `1`, and his Saved Sheets bookmark also records version `1`.
 5. Ana edits the private composition and publishes again. The public post now points to version `2`, while version `1` still exists.
 6. Ben's saved item still opens version `1`, because bookmarks keep the exact saved version number.
-7. If Ana unpublishes the composition, both public versions, their PDFs, likes, comments, and bookmarks are deleted. Ana's private `/compositions/abc123` document remains editable.
+7. If Ana unpublishes the composition, both public versions, their PDFs, likes, comments, and bookmarks are deleted. Ana's private `/users/anaUid/compositions/abc123` document remains editable.

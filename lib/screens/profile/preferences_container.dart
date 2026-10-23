@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../constants/constant.dart';
@@ -22,7 +23,7 @@ class PreferencesContainer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Preferences',
+          context.l10n.preferences,
           style: TextStyle(
             color: colors.primaryColor,
             fontSize: AppTextSizes.label,
@@ -48,7 +49,7 @@ class PreferencesContainer extends StatelessWidget {
               color: colors.primaryColor,
             ),
             title: Text(
-              'Dark Mode',
+              context.l10n.darkMode,
               style: TextStyle(
                 color: colors.primaryColor,
                 fontSize: AppTextSizes.label,
@@ -56,7 +57,7 @@ class PreferencesContainer extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              'App appearance',
+              context.l10n.appAppearance,
               style: TextStyle(
                 color: colors.secondaryTextColor,
                 fontSize: AppTextSizes.caption,

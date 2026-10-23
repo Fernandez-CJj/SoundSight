@@ -1,23 +1,25 @@
-import os
-import tempfile
-
 from fastapi import FastAPI
+from fastapi import Depends
 from fastapi import HTTPException
 
-from composition.composition_models import CompositionRequest
-from composition.composition_models import UnpublishRequest
-from composition.file_exporter import saveMusicXml
 from composition.post_service import getNextPublishedVersion
 from composition.post_service import saveCompositionPost
 from composition.public_profile_service import getPublicProfile
-from composition.score_builder import create_basic_score
-from composition.storage_service import uploadPdf
+from composition.storage_service import copyPublishedCompositionFiles
+from composition.storage_service import deleteStoragePaths
 from composition.unpublish_service import unpublishComposition
-from core.musescore_service import exportPdf
+from core.auth_service import requireVerifiedFirebaseUser
 from omr.audiveris_service import isAudiverisInstalled
 from omr.music_sheet_models import OmrConversionRequest
 from omr.omr_conversion_service import convertMusicSheet
-
+from composition.generation_service import generateCompositionFiles
+from composition.private_composition_service import (
+    generatedFilesAreCurrent,
+    getOwnedCompositionReference,
+    loadOwnedComposition,
+    saveGeneratedFilePaths,
+    saveGenerationStatus,
+)
 
 app = FastAPI(
     title="SoundSight API",
@@ -85,116 +87,97 @@ def recognize_music_sheet(
         ) from error
 
 
-@app.post("/compositions")
-def receive_composition(
-    composition: CompositionRequest,
+@app.post("/compositions/{compositionId}/publish")
+def publish_composition(
+    compositionId: str,
+    authenticatedUserId: str = Depends(
+        requireVerifiedFirebaseUser
+    ),
 ):
-    publicProfile = getPublicProfile(
-        composition.ownerId
-    )
+    publishedStoragePaths = None
 
-    score = create_basic_score(
-        composition,
-        publicProfile["username"],
-    )
+    try:
+        compositionReference = getOwnedCompositionReference(
+            compositionId,
+            authenticatedUserId,
+        )
+        compositionData = (
+            compositionReference.get().to_dict() or {}
+        )
 
-    versionNumber = getNextPublishedVersion(
-        composition.id
-    )
-
-    scoreNoteCount = 0
-    chordCount = 0
-    restCount = 0
-    tiedNoteCount = 0
-
-    for musicalObject in score.recurse().notesAndRests:
-        if musicalObject.isChord:
-            chordCount = chordCount + 1
-
-            scoreNoteCount = (
-                scoreNoteCount
-                + len(musicalObject.pitches)
+        if not generatedFilesAreCurrent(compositionData):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Prepare the sheet music and playback "
+                    "files before publishing."
+                ),
             )
 
-            for chordNote in musicalObject.notes:
-                if chordNote.tie is not None:
-                    tiedNoteCount = (
-                        tiedNoteCount + 1
-                    )
-
-        elif musicalObject.isNote:
-            scoreNoteCount = scoreNoteCount + 1
-
-            if musicalObject.tie is not None:
-                tiedNoteCount = (
-                    tiedNoteCount + 1
-                )
-
-        elif musicalObject.isRest:
-            restCount = restCount + 1
-
-    with tempfile.TemporaryDirectory(
-        prefix="soundsight-composition-"
-    ) as outputFolder:
-        musicXmlPath = saveMusicXml(
-            score,
-            composition.id,
-            outputFolder,
+        composition = loadOwnedComposition(
+            compositionId,
+            authenticatedUserId,
         )
-
-        pdfPath = exportPdf(
-            musicXmlPath
-        )
-
-        pdfStoragePath = uploadPdf(
-            pdfPath,
-            composition.ownerId,
-            composition.id,
+        publicProfile = getPublicProfile(authenticatedUserId)
+        versionNumber = getNextPublishedVersion(compositionId)
+        publishedStoragePaths = copyPublishedCompositionFiles(
+            compositionData,
+            authenticatedUserId,
+            compositionId,
             versionNumber,
         )
-
         postId = saveCompositionPost(
             composition,
-            pdfStoragePath,
+            publishedStoragePaths,
             publicProfile,
             versionNumber,
+            compositionData.get("updatedAt"),
         )
-
         return {
             "message": "Composition published successfully.",
             "postId": postId,
-            "compositionId": composition.id,
-            "title": score.metadata.title,
+            "compositionId": compositionId,
+            "title": composition.title,
             "authorName": publicProfile["username"],
             "versionNumber": versionNumber,
-            "receivedNoteCount": len(composition.notes),
-            "scoreNoteCount": scoreNoteCount,
-            "chordCount": chordCount,
-            "restCount": restCount,
-            "tiedNoteCount": tiedNoteCount,
-            "partCount": len(score.parts),
-            "musicXmlCreated": os.path.exists(
-                musicXmlPath
-            ),
-            "pdfCreated": os.path.exists(
-                pdfPath
-            ),
-            "pdfFileName": os.path.basename(
-                pdfPath
-            ),
-            "pdfStoragePath": pdfStoragePath,
+            **publishedStoragePaths,
         }
+    except HTTPException:
+        if publishedStoragePaths is not None:
+            deleteStoragePaths(publishedStoragePaths.values())
+        raise
+    except FileNotFoundError as error:
+        if publishedStoragePaths is not None:
+            deleteStoragePaths(publishedStoragePaths.values())
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except PermissionError as error:
+        if publishedStoragePaths is not None:
+            deleteStoragePaths(publishedStoragePaths.values())
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    except ValueError as error:
+        if publishedStoragePaths is not None:
+            deleteStoragePaths(publishedStoragePaths.values())
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:
+        if publishedStoragePaths is not None:
+            deleteStoragePaths(publishedStoragePaths.values())
+        raise HTTPException(
+            status_code=500,
+            detail="The composition could not be published.",
+        ) from error
 
 
-@app.delete("/compositions/{compositionId}")
+@app.delete("/compositions/{compositionId}/publish")
 def unpublish_composition(
     compositionId: str,
-    request: UnpublishRequest,
+    authenticatedUserId: str = Depends(
+        requireVerifiedFirebaseUser
+    ),
 ):
     try:
         wasDeleted = unpublishComposition(
             compositionId,
-            request.ownerId,
+            authenticatedUserId,
         )
     except PermissionError as error:
         raise HTTPException(
@@ -215,4 +198,115 @@ def unpublish_composition(
             "Composition unpublished successfully."
         ),
         "compositionId": compositionId,
+    }
+
+@app.post("/compositions/{compositionId}/generate")
+def generatePrivateCompositionFiles(
+    compositionId: str,
+    authenticatedUserId: str = Depends(
+        requireVerifiedFirebaseUser
+    ),
+):
+    try:
+        composition = loadOwnedComposition(
+            compositionId,
+            authenticatedUserId,
+        )
+    except FileNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except PermissionError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        ) from error
+
+    saveGenerationStatus(
+        composition.id,
+        authenticatedUserId,
+        "generating",
+    )
+
+    try:
+        publicProfile = getPublicProfile(
+            composition.ownerId
+        )
+
+        storagePaths = generateCompositionFiles(
+            composition,
+            publicProfile["username"],
+        )
+
+        saveGeneratedFilePaths(
+            composition.id,
+            authenticatedUserId,
+            storagePaths,
+            composition,
+        )
+    except PermissionError as error:
+        saveGenerationStatus(
+            composition.id,
+            authenticatedUserId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except ValueError as error:
+        saveGenerationStatus(
+            composition.id,
+            authenticatedUserId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        ) from error
+    except (FileNotFoundError, RuntimeError) as error:
+        saveGenerationStatus(
+            composition.id,
+            authenticatedUserId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        ) from error
+    except Exception as error:
+        saveGenerationStatus(
+            composition.id,
+            authenticatedUserId,
+            "failed",
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "The composition files could not be generated."
+            ),
+        ) from error
+    return {
+        "message": (
+            "Composition files generated successfully."
+        ),
+        "compositionId": composition.id,
+        "pdfStoragePath": (
+            storagePaths["pdfStoragePath"]
+        ),
+        "musicXmlStoragePath": (
+            storagePaths["musicXmlStoragePath"]
+        ),
+        "midiStoragePath": (
+            storagePaths["midiStoragePath"]
+        ),
+        "mp3StoragePath": (
+            storagePaths["mp3StoragePath"]
+        ),
     }

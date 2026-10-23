@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../constants/constant.dart';
@@ -20,7 +21,7 @@ class AccountContainer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Account',
+          context.l10n.account,
           style: TextStyle(
             color: colors.primaryColor,
             fontSize: AppTextSizes.label,
@@ -42,7 +43,7 @@ class AccountContainer extends StatelessWidget {
                   color: colors.primaryColor,
                 ),
                 title: Text(
-                  'Edit Profile',
+                  context.l10n.editProfile,
                   style: TextStyle(
                     color: colors.primaryColor,
                     fontSize: AppTextSizes.label,

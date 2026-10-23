@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/profile/edit_profile_actions.dart';
 import 'package:soundsight/screens/profile/edit_profile_avatar.dart';
 import 'package:soundsight/screens/profile/edit_profile_dialogs.dart';
@@ -74,7 +75,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               Gap(AppSpacing.lg),
               EditProfileField(
                 colors: widget.colors,
-                label: 'Username',
+                label: context.l10n.username,
                 initialValue: widget.username,
                 prefixIcon: Icons.person_outline_rounded,
                 onChanged: (value) => editedUsername = value,
@@ -82,11 +83,11 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               Gap(AppSpacing.md),
               EditProfileField(
                 colors: widget.colors,
-                label: 'Email',
+                label: context.l10n.email,
                 initialValue: widget.email,
                 prefixIcon: Icons.email_outlined,
                 suffixIcon: Icons.lock_outline_rounded,
-                helperText: 'Email cannot be changed',
+                helperText: context.l10n.emailCannotBeChanged,
                 keyboardType: TextInputType.emailAddress,
                 readOnly: true,
               ),
@@ -108,7 +109,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
 
     if (newUsername.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Username cannot be empty.')),
+        SnackBar(content: Text(context.l10n.usernameRequired)),
       );
       return;
     }
@@ -162,7 +163,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Unable to save profile changes. Please try again.',
+            context.l10n.profileSaveFailed,
           ),
         ),
       );
@@ -200,8 +201,8 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile picture must be smaller than 5 MB.'),
+        SnackBar(
+          content: Text(context.l10n.profilePictureSizeLimit),
         ),
       );
       return;

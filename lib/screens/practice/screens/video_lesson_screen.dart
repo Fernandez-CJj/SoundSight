@@ -27,6 +27,19 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
   late final Future<void> videoInitialization;
   bool controlsVisible = true;
 
+  void seekBy(Duration amount) {
+    var newPosition = videoController.value.position + amount;
+    final videoDuration = videoController.value.duration;
+
+    if (newPosition < Duration.zero) {
+      newPosition = Duration.zero;
+    } else if (newPosition > videoDuration) {
+      newPosition = videoDuration;
+    }
+
+    videoController.seekTo(newPosition);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -85,13 +98,37 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                       ),
                     ),
                     Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          setState(() {
-                            controlsVisible = !controlsVisible;
-                          });
-                        },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                setState(() {
+                                  controlsVisible = !controlsVisible;
+                                });
+                              },
+                              onDoubleTap: () {
+                                seekBy(const Duration(seconds: -5));
+                              },
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                setState(() {
+                                  controlsVisible = !controlsVisible;
+                                });
+                              },
+                              onDoubleTap: () {
+                                seekBy(const Duration(seconds: 5));
+                              },
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     if (controlsVisible)
@@ -234,6 +271,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
               ),
             ),
           ),
+<<<<<<< HEAD
           // Show lesson resources together at the upper-right of the video.
           if (controlsVisible &&
               (widget.onStartQuiz != null || widget.onViewPdf != null))
@@ -257,6 +295,61 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                             await videoController.pause();
                             widget.onViewPdf?.call();
                           },
+=======
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              left: false,
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, right: 24),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black54,
+                        blurRadius: 14,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      await SystemChrome.setPreferredOrientations([
+                        DeviceOrientation.portraitUp,
+                      ]);
+                      if (!context.mounted) return;
+
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const Level1Screen()),
+                      );
+                      if (!context.mounted) return;
+
+                      SystemChrome.setPreferredOrientations([
+                        DeviceOrientation.landscapeLeft,
+                        DeviceOrientation.landscapeRight,
+                      ]);
+                    },
+                    icon: const Icon(Icons.quiz_outlined, size: 20),
+                    label: const Text(
+                      'Start Quiz',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(
+                          color: colorScheme.onPrimary.withValues(alpha: 0.3),
+>>>>>>> b1fdf03620384fc72b0adf8f839c1ac7c112d170
                         ),
                         if (widget.onStartQuiz != null)
                           const SizedBox(width: 8),

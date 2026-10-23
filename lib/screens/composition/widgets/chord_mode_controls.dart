@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class ChordModeControls extends StatelessWidget {
@@ -54,7 +55,7 @@ class ChordModeControls extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Chord Mode',
+                    context.l10n.chordMode,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -65,8 +66,8 @@ class ChordModeControls extends StatelessWidget {
                   ),
                   Text(
                     isBuildingChord
-                        ? '$chordNoteCount notes'
-                        : 'Allow stacking',
+                        ? context.l10n.chordNoteCount(chordNoteCount)
+                        : context.l10n.allowStacking,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -134,7 +135,7 @@ class ChordModeControls extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Chord Mode',
+                      context.l10n.chordMode,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -143,7 +144,7 @@ class ChordModeControls extends StatelessWidget {
                     ),
                     const Gap(2),
                     Text(
-                      'Allow multiple notes to start on the same beat.',
+                      context.l10n.chordModeDescription,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -165,7 +166,7 @@ class ChordModeControls extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '$chordNoteCount ${chordNoteCount == 1 ? 'note' : 'notes'} combined',
+                    context.l10n.chordNotesCombined(chordNoteCount),
                     style: TextStyle(
                       color: colors.primaryColor,
                       fontSize: AppTextSizes.caption,
@@ -218,7 +219,7 @@ class _FinishButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          compact ? 'Done' : 'Finish Chord',
+          compact ? context.l10n.done : context.l10n.finishChord,
           style: TextStyle(
             fontSize: AppTextSizes.caption,
             fontWeight: FontWeight.w700,

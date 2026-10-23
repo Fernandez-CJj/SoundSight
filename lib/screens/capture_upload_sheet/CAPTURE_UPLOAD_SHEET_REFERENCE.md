@@ -5,8 +5,10 @@
 This feature lets a signed-in user add sheet music in either of two ways:
 
 - upload one PDF from the device;
-- upload up to 20 image files; or
 - capture up to 20 photos using the phone camera.
+
+The two methods are mutually exclusive. A PDF cannot be combined with captured
+images, and image files cannot be uploaded from device storage.
 
 The selected files can be previewed and removed before they are saved. Saving
 uploads the files to Firebase Storage and creates a sheet record in Firestore.
@@ -27,9 +29,9 @@ choosing an action.
 
 1. The user opens the **Add Sheet** screen.
 2. The app loads the signed-in user's theme from Firestore when possible.
-3. The user chooses **Upload** or **Capture**.
-4. The app checks the selected file type, size, page count, duplicate status,
-   and remaining image slots.
+3. The user chooses **Upload PDF** or **Capture Pages**.
+4. The app checks the selected file type, size, page count, and remaining image
+   slots.
 5. Accepted files appear in the **Selected files** list.
 6. The user can tap a file to preview it.
 7. The user can swipe right on one file and confirm its removal.
@@ -40,7 +42,8 @@ choosing an action.
 12. After a valid title is submitted, uploading begins.
 13. The bottom button displays progress based on uploaded bytes.
 14. Every file is uploaded to Firebase Storage.
-15. After all files upload, a new Firestore `musicSheets` document is created.
+15. After all files upload, a new Firestore document is created in the signed-in
+    user's `musicSheets` subcollection.
 16. On success, the local selection is cleared and a success dialog appears.
 17. On failure, the selected files remain available and a failure dialog lets
     the user return to the selection.
@@ -53,7 +56,7 @@ music-sheet library. The user remains on the Add Sheet screen after closing it.
 The following information exists only while this screen remains open:
 
 - `isDarkMode`: the colors currently used by the screen.
-- `selectedSheets`: the selected PDF, uploaded images, or captured images.
+- `selectedSheets`: the selected PDF or captured images.
 - `selectedPdfPageCount`: the number of pages found in the selected PDF.
 - `isPickingFiles`: whether the device file picker is open or being processed.
 - `isSavingSheet`: whether Firebase saving is in progress.
@@ -98,7 +101,7 @@ document.
 ### Music-sheet document
 
 ```text
-musicSheets/{sheetId}
+users/{ownerId}/musicSheets/{sheetId}
 ```
 
 `sheetId` is an automatically generated Firestore document ID.
@@ -122,7 +125,8 @@ Image page numbers follow the order of `selectedSheets` and start at 1.
 
 ## Firestore Fields Created
 
-Saving creates one new `musicSheets/{sheetId}` document with these fields:
+Saving creates one new `users/{ownerId}/musicSheets/{sheetId}` document with
+these fields:
 
 | Field | Stored value |
 | --- | --- |
@@ -160,9 +164,8 @@ Each uploaded object receives a content type and these custom metadata fields:
 - `originalName`: original file name.
 
 Supported stored extensions are `pdf`, `png`, `jpg`, `jpeg`, `heic`, and
-`webp`. An unknown extension falls back to a `.jpg` Storage name and JPEG
-content type. The visible file picker itself only allows JPG, JPEG, PNG, and
-PDF files.
+`webp`. An unknown captured-image extension falls back to a `.jpg` Storage name
+and JPEG content type. The visible file picker only allows PDF files.
 
 ## Client-Side Validation
 
@@ -173,22 +176,20 @@ request.
 
 - The user can select one PDF or up to 20 images.
 - PDFs and images cannot be mixed.
-- A selected PDF must be removed before images can be added.
-- Selected images must be removed before a PDF can be chosen.
+- Upload PDF accepts exactly one PDF and does not accept image files.
+- Captured images must all be removed before a PDF can be chosen.
+- A selected PDF must be removed before another PDF can be selected or images
+  can be captured.
+- Locked actions remain tappable and explain the restriction in a Snackbar.
 - File picking and capturing are blocked while saving.
 - Saving is blocked while file picking is still active.
 
 ### Image rules
 
-- The file picker accepts JPG, JPEG, and PNG images.
-- Each uploaded or captured image must be 5 MB or smaller.
-- Images beyond the remaining 20 slots are skipped.
-- Uploaded images with the same file name and byte size as an existing
-  selection are treated as duplicates and skipped.
+- Images can only be added using the device camera.
+- Each captured image must be 5 MB or smaller.
+- Capture remains available until the 20-image limit is reached.
 - Captured photos use image quality `90` before their bytes are checked.
-
-If only some uploaded images are invalid, valid images can still be added. A
-message reports oversized, duplicate, or excess files that were skipped.
 
 ### PDF rules
 
@@ -202,9 +203,7 @@ message reports oversized, duplicate, or excess files that were skipped.
 
 - The title is required after trimming spaces from its beginning and end.
 - The title can contain at most 80 characters.
-- The first file name, without its final extension, becomes the initial title.
-- The initial title is shortened to 80 characters when necessary.
-- `Untitled Sheet` is used when the derived initial title is empty.
+- The title field starts empty so the user can enter a new title immediately.
 
 ### Final service validation
 
@@ -220,12 +219,13 @@ selection checks are bypassed accidentally.
 
 ## Firestore Rules Validation
 
-Firestore Rules protect `musicSheets/{sheetId}` as follows:
+Firestore Rules protect `users/{ownerId}/musicSheets/{sheetId}` as follows:
 
 ### Create
 
 - The request must come from a signed-in Firebase user.
-- `ownerId` must equal that user's UID.
+- The user ID in the document path and `ownerId` field must both equal that
+  user's UID.
 - `title` must be a string containing 1 to 80 characters.
 - `type` must be a string and must work with one of the allowed structures.
 - `pageCount` must be an integer from 1 to 20.
@@ -239,10 +239,16 @@ The current Firestore validation does not inspect every field inside each
 validate the two timestamp fields. Those values are still created by the
 client's save service.
 
-### Read and delete
+### Read
 
-Only a signed-in user whose UID matches the stored `ownerId` may read or delete
-the document.
+Only a signed-in user whose UID matches `ownerId` in the document path may read
+or list the document. Using the path for this check allows the app to query the
+user's complete `musicSheets` subcollection.
+
+### Delete
+
+Only a signed-in user whose UID matches both the path owner and stored
+`ownerId` may delete the document.
 
 ### Update
 
@@ -356,7 +362,7 @@ another operation.
 
 ## Simple Save Example
 
-Suppose the user selects three images in this order:
+Suppose the user captures three images in this order:
 
 ```text
 page-one.jpg

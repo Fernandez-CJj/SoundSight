@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/constant.dart';
+import '../../../localization/localization_extension.dart';
+import '../assessment_localization.dart';
 import '../models/assessment_notation_question.dart';
 import '../widgets/assessment_notation_view.dart';
+import '../widgets/assessment_theme.dart';
 
 /// Called after the user answers every notation-reading question.
 typedef NotationReadingSubmitCallback = Future<void> Function(
@@ -15,6 +18,7 @@ class AssessmentNotationReadingScreen extends StatefulWidget {
     super.key,
     required this.onSubmit,
     this.initialAnswers = const {},
+    this.isDarkMode = false,
   });
 
   /// Saves the completed answer map and advances the assessment.
@@ -22,6 +26,8 @@ class AssessmentNotationReadingScreen extends StatefulWidget {
 
   /// Restores valid answers if the user resumes this section.
   final Map<String, String> initialAnswers;
+
+  final bool isDarkMode;
 
   @override
   State<AssessmentNotationReadingScreen> createState() {
@@ -124,14 +130,16 @@ class _AssessmentNotationReadingScreenState
     if (firstMissingIndex != -1) {
       setState(() {
         _currentQuestionIndex = firstMissingIndex;
-        _submissionError = 'Answer every question before submitting.';
+        _submissionError = context.l10n.assessmentAnswerEveryNotationQuestion;
       });
 
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
         ..showSnackBar(
-          const SnackBar(
-            content: Text('Please answer every notation question.'),
+          SnackBar(
+            content: Text(
+              context.l10n.assessmentPleaseAnswerEveryNotationQuestion,
+            ),
           ),
         );
 
@@ -153,8 +161,7 @@ class _AssessmentNotationReadingScreenState
       }
 
       setState(() {
-        _submissionError =
-            'Unable to save your notation answers. Please try again.';
+        _submissionError = context.l10n.assessmentSaveNotationFailed;
       });
     } finally {
       if (mounted) {
@@ -172,18 +179,23 @@ class _AssessmentNotationReadingScreenState
     final isLastQuestion =
         _currentQuestionIndex == assessmentNotationQuestions.length - 1;
 
-    return PopScope(
-      canPop: !_isSubmitting,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Notation Reading'),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+    return AssessmentTheme(
+      isDarkMode: widget.isDarkMode,
+      builder: (themedContext) {
+        return PopScope(
+          canPop: !_isSubmitting,
+          child: Scaffold(
+            appBar: AppBar(
+              title: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(themedContext.l10n.assessmentNotationReading),
+              ),
+            ),
+            body: AssessmentPageBody(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 _buildProgress(),
                 const SizedBox(height: AppSpacing.lg),
                 Expanded(
@@ -192,7 +204,10 @@ class _AssessmentNotationReadingScreenState
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          question.prompt,
+                          localizedNotationPrompt(
+                            themedContext.l10n,
+                            question,
+                          ),
                           style: const TextStyle(
                             fontSize: AppTextSizes.sectionTitle,
                             fontWeight: FontWeight.w700,
@@ -200,7 +215,19 @@ class _AssessmentNotationReadingScreenState
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        AssessmentNotationView(question: question),
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: Theme.of(themedContext).colorScheme.surface,
+                            border: Border.all(
+                              color: Theme.of(
+                                themedContext,
+                              ).colorScheme.outlineVariant,
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          child: AssessmentNotationView(question: question),
+                        ),
                         const SizedBox(height: AppSpacing.md),
                         RadioGroup<String>(
                           groupValue: selectedOptionId,
@@ -210,7 +237,12 @@ class _AssessmentNotationReadingScreenState
                               return RadioListTile<String>(
                                 value: option.id,
                                 enabled: !_isSubmitting,
-                                title: Text(option.label),
+                                title: Text(
+                                  localizedNotationOption(
+                                    themedContext.l10n,
+                                    option,
+                                  ),
+                                ),
                                 contentPadding: EdgeInsets.zero,
                               );
                             }).toList(),
@@ -221,7 +253,9 @@ class _AssessmentNotationReadingScreenState
                           Text(
                             _submissionError!,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
+                              color: Theme.of(
+                                themedContext,
+                              ).colorScheme.error,
                               fontSize: AppTextSizes.body,
                             ),
                           ),
@@ -239,7 +273,10 @@ class _AssessmentNotationReadingScreenState
                             _currentQuestionIndex == 0 || _isSubmitting
                             ? null
                             : _showPreviousQuestion,
-                        child: const Text('Previous'),
+                        child: Text(
+                          themedContext.l10n.previous,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -251,23 +288,32 @@ class _AssessmentNotationReadingScreenState
                             ? _submitAnswers
                             : _showNextQuestion,
                         child: _isSubmitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: AppIconSizes.md,
                                 height: AppIconSizes.md,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
+                                  color: Theme.of(
+                                    themedContext,
+                                  ).colorScheme.onPrimary,
                                 ),
                               )
-                            : Text(isLastQuestion ? 'Submit' : 'Next'),
+                            : Text(
+                                isLastQuestion
+                                    ? themedContext.l10n.submit
+                                    : themedContext.l10n.next,
+                                textAlign: TextAlign.center,
+                              ),
                       ),
                     ),
                   ],
                 ),
-              ],
+                  ],
+                ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -282,16 +328,25 @@ class _AssessmentNotationReadingScreenState
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Question $questionNumber of $questionCount',
-              style: const TextStyle(
-                fontSize: AppTextSizes.label,
-                fontWeight: FontWeight.w600,
+            Expanded(
+              child: Text(
+                context.l10n.assessmentQuestionProgress(
+                  questionNumber,
+                  questionCount,
+                ),
+                style: const TextStyle(
+                  fontSize: AppTextSizes.label,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            Text(
-              '${_answers.length} answered',
-              style: const TextStyle(fontSize: AppTextSizes.label),
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                context.l10n.assessmentAnsweredCount(_answers.length),
+                textAlign: TextAlign.end,
+                style: const TextStyle(fontSize: AppTextSizes.label),
+              ),
             ),
           ],
         ),

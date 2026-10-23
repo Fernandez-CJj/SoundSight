@@ -163,4 +163,74 @@ class PianoCalibrationFirestoreService {
 
     return calibrationDocument.id;
   }
+
+  /// Permanently deletes one calibration owned by the signed-in user.
+  Future<void> deleteCalibration({required String documentId}) async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      throw StateError(
+        'The user must be signed in before deleting a calibration.',
+      );
+    }
+
+    String cleanedDocumentId = documentId.trim();
+
+    if (cleanedDocumentId.isEmpty) {
+      throw ArgumentError('The calibration document ID cannot be empty.');
+    }
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('pianoCalibrations')
+        .doc(cleanedDocumentId)
+        .delete();
+  }
+
+  /// Permanently deletes every calibration owned by the signed-in user.
+  ///
+  /// Documents are removed in bounded batches so the operation also works for
+  /// accounts with more calibrations than one Firestore batch can contain.
+  Future<void> deleteAllCalibrations() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      throw StateError(
+        'The user must be signed in before deleting calibrations.',
+      );
+    }
+
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    CollectionReference<Map<String, dynamic>> calibrationCollection =
+        firestore
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('pianoCalibrations');
+
+    const int deletionBatchSize = 450;
+
+    while (true) {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await calibrationCollection
+          .limit(deletionBatchSize)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return;
+      }
+
+      WriteBatch batch = firestore.batch();
+
+      for (QueryDocumentSnapshot<Map<String, dynamic>> document
+          in snapshot.docs) {
+        batch.delete(document.reference);
+      }
+
+      await batch.commit();
+
+      if (snapshot.docs.length < deletionBatchSize) {
+        return;
+      }
+    }
+  }
 }

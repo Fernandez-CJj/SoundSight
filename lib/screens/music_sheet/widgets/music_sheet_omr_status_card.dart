@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class MusicSheetOmrStatusCard extends StatelessWidget {
@@ -26,6 +27,7 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
     final isProcessing = status == 'processing' || isConverting;
     final isCompleted = status == 'completed';
     final isFailed = status == 'failed';
+    final l10n = context.l10n;
     final accentColor = isCompleted
         ? const Color(0xFF16A34A)
         : isFailed
@@ -37,19 +39,19 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
         ? Icons.refresh_rounded
         : Icons.document_scanner_outlined;
     final title = isCompleted
-        ? 'Translation ready'
+        ? l10n.translationReady
         : isFailed
-        ? 'Translation failed'
+        ? l10n.translationFailed
         : isProcessing
-        ? 'Translating music sheet'
-        : 'Translate music sheet';
+        ? l10n.translatingMusicSheet
+        : l10n.translate;
     final subtitle = isCompleted
-        ? '$noteCount notes • $partCount ${partCount == 1 ? 'part' : 'parts'}'
+        ? l10n.translationSummary(noteCount, partCount)
         : isFailed
-        ? 'The sheet could not be translated. You can try again.'
+        ? l10n.translationFailedDescription
         : isProcessing
-        ? 'Audiveris is recognizing the notes.'
-        : 'Create MusicXML and an audio preview.';
+        ? l10n.translationProcessingDescription
+        : l10n.translationStartDescription;
 
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
@@ -75,11 +77,7 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
                       strokeWidth: 2.5,
                     ),
                   )
-                : Icon(
-                    icon,
-                    color: accentColor,
-                    size: AppIconSizes.md,
-                  ),
+                : Icon(icon, color: accentColor, size: AppIconSizes.md),
           ),
           Gap(AppSpacing.sm),
           Expanded(
@@ -131,10 +129,10 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
                 ),
                 child: Text(
                   isCompleted
-                      ? 'Reconvert'
+                      ? l10n.reconvert
                       : isFailed
-                      ? 'Retry'
-                      : 'Translate',
+                      ? l10n.retry
+                      : l10n.translate,
                 ),
               ),
             ),

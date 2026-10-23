@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/services/published_composition_social_service.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -36,8 +37,7 @@ class PublishedCompositionCard extends StatefulWidget {
       _PublishedCompositionCardState();
 }
 
-class _PublishedCompositionCardState
-    extends State<PublishedCompositionCard> {
+class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
   final PublishedCompositionSocialService socialService =
       PublishedCompositionSocialService();
 
@@ -107,7 +107,7 @@ class _PublishedCompositionCardState
                     ),
                     const Gap(2),
                     Text(
-                      'By ${composition.authorName}',
+                      context.l10n.publishedBy(composition.authorName),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -136,7 +136,7 @@ class _PublishedCompositionCardState
             children: [
               buildInformationChip(
                 icon: Icons.history_rounded,
-                text: 'Version ${composition.currentVersion}',
+                text: context.l10n.versionLabel(composition.currentVersion),
               ),
               buildInformationChip(
                 icon: Icons.music_note_rounded,
@@ -148,11 +148,13 @@ class _PublishedCompositionCardState
               ),
               buildInformationChip(
                 icon: Icons.grid_view_rounded,
-                text: '${composition.measureCount} measures',
+                text: context.l10n.compositionMeasureCount(
+                  composition.measureCount,
+                ),
               ),
               buildInformationChip(
                 icon: Icons.notes_rounded,
-                text: '${composition.noteCount} notes',
+                text: context.l10n.compositionNoteCount(composition.noteCount),
               ),
             ],
           ),
@@ -231,7 +233,7 @@ class _PublishedCompositionCardState
                 icon: isSaved
                     ? Icons.bookmark_rounded
                     : Icons.bookmark_border_rounded,
-                label: isSaved ? 'Saved' : 'Save',
+                label: isSaved ? context.l10n.saved : context.l10n.save,
                 selected: isSaved,
                 loading: isUpdatingSave,
                 onTap: () {
@@ -269,22 +271,14 @@ class _PublishedCompositionCardState
                 ),
               )
             : Icon(icon, size: AppIconSizes.sm),
-        label: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         style: OutlinedButton.styleFrom(
           foregroundColor: selected
               ? colors.backgroundColor
               : colors.primaryColor,
-          backgroundColor: selected
-              ? colors.primaryColor
-              : colors.surfaceColor,
+          backgroundColor: selected ? colors.primaryColor : colors.surfaceColor,
           side: BorderSide(color: colors.borderColor),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xs,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
@@ -298,19 +292,9 @@ class _PublishedCompositionCardState
       children: [
         Row(
           children: [
-            Expanded(
-              child: SizedBox(
-                height: 46,
-                child: buildPlayButton(),
-              ),
-            ),
+            Expanded(child: SizedBox(height: 46, child: buildPlayButton())),
             const Gap(AppSpacing.sm),
-            Expanded(
-              child: SizedBox(
-                height: 46,
-                child: buildViewButton(),
-              ),
-            ),
+            Expanded(child: SizedBox(height: 46, child: buildViewButton())),
           ],
         ),
         if (widget.canUnpublish) ...[
@@ -342,17 +326,14 @@ class _PublishedCompositionCardState
                         color: dangerColor,
                       ),
                     )
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.public_off_rounded,
-                          size: AppIconSizes.sm,
-                        ),
+                        Icon(Icons.public_off_rounded, size: AppIconSizes.sm),
                         Gap(AppSpacing.xs),
                         Text(
-                          'Unpublish',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                          context.l10n.unpublish,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -380,13 +361,11 @@ class _PublishedCompositionCardState
               ),
             )
           : Icon(
-              widget.isPlaying
-                  ? Icons.stop_rounded
-                  : Icons.play_arrow_rounded,
+              widget.isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
               size: AppIconSizes.sm,
             ),
       label: Text(
-        widget.isPlaying ? 'Stop' : 'Play',
+        widget.isPlaying ? context.l10n.stop : context.l10n.play,
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       style: OutlinedButton.styleFrom(
@@ -402,13 +381,10 @@ class _PublishedCompositionCardState
   Widget buildViewButton() {
     return ElevatedButton.icon(
       onPressed: widget.isUnpublishing ? null : widget.onOpen,
-      icon: const Icon(
-        Icons.picture_as_pdf_outlined,
-        size: AppIconSizes.sm,
-      ),
-      label: const Text(
-        'View Sheet',
-        style: TextStyle(fontWeight: FontWeight.w700),
+      icon: const Icon(Icons.picture_as_pdf_outlined, size: AppIconSizes.sm),
+      label: Text(
+        context.l10n.viewSheet,
+        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: widget.colors.primaryColor,
@@ -421,10 +397,7 @@ class _PublishedCompositionCardState
     );
   }
 
-  Widget buildInformationChip({
-    required IconData icon,
-    required String text,
-  }) {
+  Widget buildInformationChip({required IconData icon, required String text}) {
     final colors = widget.colors;
 
     return Container(
@@ -440,11 +413,7 @@ class _PublishedCompositionCardState
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: colors.secondaryTextColor,
-            size: AppIconSizes.sm,
-          ),
+          Icon(icon, color: colors.secondaryTextColor, size: AppIconSizes.sm),
           const Gap(AppSpacing.xs),
           Text(
             text,
@@ -472,7 +441,7 @@ class _PublishedCompositionCardState
         widget.composition.currentVersion,
       );
     } catch (_) {
-      showMessage('The like could not be updated.');
+      showMessage(context.l10n.likeUpdateFailed);
     } finally {
       if (mounted) {
         setState(() {
@@ -495,7 +464,7 @@ class _PublishedCompositionCardState
         widget.composition.currentVersion,
       );
     } catch (_) {
-      showMessage('The saved composition could not be updated.');
+      showMessage(context.l10n.savedCompositionUpdateFailed);
     } finally {
       if (mounted) {
         setState(() {
@@ -507,7 +476,7 @@ class _PublishedCompositionCardState
 
   Future<void> confirmToggleSave(bool isSaved) async {
     final colors = widget.colors;
-    final actionText = isSaved ? 'Remove' : 'Save';
+    final actionText = isSaved ? context.l10n.remove : context.l10n.save;
 
     final shouldContinue = await showDialog<bool>(
       context: context,
@@ -539,7 +508,9 @@ class _PublishedCompositionCardState
               const Gap(AppSpacing.sm),
               Expanded(
                 child: Text(
-                  isSaved ? 'Remove saved sheet?' : 'Save this sheet?',
+                  isSaved
+                      ? context.l10n.removeSavedSheetQuestion
+                      : context.l10n.saveSheetQuestion,
                   style: TextStyle(
                     color: colors.primaryColor,
                     fontSize: AppTextSizes.sectionTitle,
@@ -551,11 +522,14 @@ class _PublishedCompositionCardState
           ),
           content: Text(
             isSaved
-                ? 'Remove "${widget.composition.title}" version '
-                    '${widget.composition.currentVersion} from Saved Sheets?'
-                : 'Save "${widget.composition.title}" version '
-                    '${widget.composition.currentVersion} so you can find it '
-                    'later in Saved Sheets?',
+                ? context.l10n.removeSavedSheetDescription(
+                    widget.composition.title,
+                    widget.composition.currentVersion,
+                  )
+                : context.l10n.saveSheetDescription(
+                    widget.composition.title,
+                    widget.composition.currentVersion,
+                  ),
             style: TextStyle(
               color: colors.secondaryTextColor,
               fontSize: AppTextSizes.body,
@@ -585,7 +559,7 @@ class _PublishedCompositionCardState
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(context.l10n.cancel),
                     ),
                   ),
                 ),
@@ -638,25 +612,12 @@ class _PublishedCompositionCardState
 
   String formatPublishedDate(DateTime? date) {
     if (date == null) {
-      return 'Recently published';
+      return context.l10n.recentlyPublished;
     }
 
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    return 'Published ${months[date.month - 1]} '
-        '${date.day}, ${date.year}';
+    final formattedDate = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(date);
+    return context.l10n.publishedOn(formattedDate);
   }
 }

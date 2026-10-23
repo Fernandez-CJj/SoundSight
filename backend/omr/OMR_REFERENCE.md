@@ -4,29 +4,33 @@
 
 The `omr` folder recognizes notes from a music sheet that the user previously uploaded.
 
-Audiveris performs optical music recognition and exports MusicXML. music21 validates the result, and MuseScore creates an MP3 preview.
+Audiveris performs optical music recognition and exports compressed MusicXML.
+The backend extracts the score as plain MusicXML and uses that extracted score
+for validation and every generated file. MuseScore creates a recognized PDF,
+MIDI file, and MP3 preview.
 
 ## Complete user flow
 
 1. The user uploads either one PDF or one or more image pages to the music-sheet library.
-2. The Flutter app creates `musicSheets/{sheetId}` and uploads the source files to Firebase Storage.
+2. The Flutter app creates `users/{ownerId}/musicSheets/{sheetId}` and uploads the source files to Firebase Storage.
 3. The user opens the saved sheet and chooses Recognize or Recognize Again.
 4. A confirmation dialog appears.
 5. After confirmation, the screen sets its local `isConverting` value and shows a loading dialog that cannot be dismissed.
 6. The Flutter client sends `POST /music-sheets/{sheetId}/recognize` with `ownerId` and a 15-minute timeout.
-7. The backend loads `musicSheets/{sheetId}`.
+7. The backend loads `users/{ownerId}/musicSheets/{sheetId}`.
 8. It verifies that the document exists, its `ownerId` matches the request, and it contains at least one file.
 9. The Firestore status becomes `processing`.
 10. A fresh local job folder is created for the sheet.
 11. Source files are downloaded from Firebase Storage.
 12. Image pages are sorted and combined into one RGB PDF at 300 DPI. An uploaded PDF is used directly.
-13. Audiveris processes the PDF and exports an `.mxl` MusicXML file.
-14. music21 verifies that the MusicXML is readable and contains at least one note.
-15. MuseScore converts the MusicXML into an MP3 preview.
-16. The MusicXML and MP3 are uploaded to Firebase Storage.
-17. The Firestore sheet becomes `completed` and receives its result fields.
-18. The temporary job folder is deleted.
-19. The Flutter screen receives the response and displays a success dialog.
+13. Audiveris processes the PDF and exports a temporary compressed `.mxl` file.
+14. The backend extracts the archive's declared root score as plain `.musicxml`.
+15. music21 verifies that the extracted MusicXML is readable and contains at least one note.
+16. MuseScore converts the extracted MusicXML into a recognized PDF, MIDI file, and MP3 preview.
+17. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
+18. The Firestore sheet becomes `completed` and receives its result fields.
+19. The temporary job folder, including the `.mxl`, is deleted.
+20. The Flutter screen receives the response and displays a success dialog.
 
 ## Temporary local information
 
@@ -37,7 +41,8 @@ The viewer temporarily stores:
 - `isConverting`, which prevents another request from the same screen while one is active;
 - the returned conversion result or error;
 - loading-dialog state;
-- futures used to load the displayed source sheet.
+- futures used to load the original sheet and recognized PDF;
+- the current Recognized or Original viewer selection.
 
 These values are not permanent Firebase fields.
 
@@ -45,13 +50,16 @@ These values are not permanent Firebase fields.
 
 The backend temporarily stores the sheet data, downloaded paths, validation result, and output paths during the request.
 
-Each attempt uses a unique temporary system folder with `input` and `output` subfolders. The attempt folder is deleted in the final cleanup after success or failure.
+Each attempt uses a unique temporary system folder with `input` and `output`
+subfolders. The Audiveris `.mxl` and extracted `.musicxml` are both temporary
+local files. The attempt folder is deleted in the final cleanup after success
+or failure.
 
 ## Original sheet information
 
 Before recognition, the Flutter upload feature permanently creates:
 
-- Firestore `musicSheets/{sheetId}`;
+- Firestore `users/{ownerId}/musicSheets/{sheetId}`;
 - Storage `musicSheets/{ownerId}/{sheetId}/sheet.pdf` for a PDF;
 - Storage `musicSheets/{ownerId}/{sheetId}/page_01.ext`, `page_02.ext`, and so on for images.
 
@@ -69,7 +77,7 @@ Each `files` item contains its original name, Storage path, byte size, content t
 
 ## Recognition status fields
 
-Recognition updates the existing `musicSheets/{sheetId}` document.
+Recognition updates the existing `users/{ownerId}/musicSheets/{sheetId}` document.
 
 ### When processing begins
 
@@ -91,6 +99,8 @@ The backend sets or updates:
 - `omrError: null`;
 - `omrProcessedAt` to a server timestamp;
 - `musicXmlStoragePath`;
+- `midiStoragePath`;
+- `recognizedPdfStoragePath`;
 - `previewAudioStoragePath`;
 - `omrPartCount`;
 - `omrNoteCount`.
@@ -114,10 +124,13 @@ Failure does not clear older successful result paths, counts, or `omrProcessedAt
 
 Successful recognition creates or replaces:
 
-- `musicSheets/{ownerId}/{sheetId}/recognized.mxl`;
+- `musicSheets/{ownerId}/{sheetId}/recognized.musicxml`;
+- `musicSheets/{ownerId}/{sheetId}/recognized.mid`;
+- `musicSheets/{ownerId}/{sheetId}/recognized.pdf`;
 - `musicSheets/{ownerId}/{sheetId}/preview.mp3`.
 
-If the MusicXML upload succeeds but the MP3 upload fails, the upload service attempts to delete the MusicXML it uploaded during that attempt.
+If any generated-file upload fails, the upload service attempts to delete every
+generated file it already uploaded during that attempt.
 
 ## Client-side validation
 
@@ -139,22 +152,26 @@ The request body must contain a string `ownerId`.
 
 The backend requires:
 
-- an existing `musicSheets/{sheetId}` document;
+- an existing `users/{ownerId}/musicSheets/{sheetId}` document;
 - a matching owner ID;
 - at least one entry in `files`;
 - every referenced Storage file to exist;
 - JPG, JPEG, or PNG extensions for image-based recognition;
 - an Audiveris installation at the configured paths;
 - Audiveris to produce an `.mxl` file;
-- music21 to read that file;
+- the `.mxl` archive to contain a readable container declaration and a
+  non-empty root score that can be written as plain `.musicxml`;
+- music21 to read the extracted plain MusicXML file;
 - at least one recognized note;
-- MuseScore to create a non-empty MP3.
+- MuseScore to create a non-empty PDF, MIDI file, and MP3.
 
 There is a current mismatch: the upload client accepts HEIC and WebP images, but the backend OMR downloader accepts only JPG, JPEG, and PNG images. HEIC or WebP sheets can be saved in the library but recognition rejects them as unsupported images.
 
 ## Note and part calculation
 
-music21 reads the recognized score.
+The backend calculates note and part counts from the extracted MusicXML without
+removing or merging any score parts or staves. Sight Reading handles its own
+display-only cleanup without changing the permanently stored MusicXML.
 
 - A normal note adds one to `omrNoteCount`.
 - Every pitch inside a chord adds one to `omrNoteCount`.
@@ -172,11 +189,15 @@ Audiveris has a 30-minute backend timeout. The Flutter HTTP client has a shorter
 
 ## Firestore and Storage Rules
 
-For direct Flutter access, Firestore Rules require the signed-in user to own `musicSheets/{sheetId}` for creation, reading, updating, or deletion. The document must keep a valid title, type, page count, and files list.
+For direct Flutter access, Firestore Rules require the signed-in user to match
+the user path of `users/{ownerId}/musicSheets/{sheetId}` for reads and queries.
+Creation, updates, and deletion also validate the stored `ownerId` where
+applicable. The document must keep a valid title, type, page count, and files
+list.
 
 Storage Rules allow only the owner to read source and generated files under the sheet's Storage folder.
 
-Direct client uploads are restricted to the expected original image names and sizes or `sheet.pdf`. The client rules do not allow direct `.mxl` or MP3 writes.
+Direct client uploads are restricted to the expected original image names and sizes or `sheet.pdf`. The client rules do not allow direct generated MusicXML, MIDI, PDF, or MP3 writes.
 
 The backend uses Firebase Admin and therefore bypasses Firestore Rules and Storage Rules. It performs its own ownership check before starting recognition.
 
@@ -200,7 +221,10 @@ If the backend process stops while a sheet is marked `processing`, the current c
 
 ## What happens after completion
 
-The viewer listens to `musicSheets/{sheetId}` in real time. After completion, it displays the recognized part and note counts.
+The viewer listens to `users/{ownerId}/musicSheets/{sheetId}` in real time.
+After completion, it displays the recognized part and note counts and defaults
+to the recognized PDF. The user can switch between the recognized PDF and the
+original uploaded PDF or images.
 
 When `previewAudioStoragePath` is present and the sheet is not processing, the viewer displays an audio preview player.
 
@@ -210,7 +234,10 @@ The API response also returns the sheet ID, title, completed status, counts, and
 
 For sheet `sheet123` owned by `userA`, a successful attempt stores:
 
-- `musicSheets/userA/sheet123/recognized.mxl`;
+- `musicSheets/userA/sheet123/recognized.musicxml`;
+- `musicSheets/userA/sheet123/recognized.mid`;
+- `musicSheets/userA/sheet123/recognized.pdf`;
 - `musicSheets/userA/sheet123/preview.mp3`.
 
-The document `musicSheets/sheet123` is updated to `completed` with the two paths and recognized note and part counts.
+The document `users/userA/musicSheets/sheet123` is updated to `completed` with
+the four generated-file paths and recognized note and part counts.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class UnsavedCompositionDialog extends StatelessWidget {
@@ -13,12 +14,12 @@ class UnsavedCompositionDialog extends StatelessWidget {
       backgroundColor: colors.surfaceColor,
       icon: Icon(Icons.warning_amber_rounded, color: colors.primaryColor),
       title: Text(
-        'Discard unsaved changes?',
+        context.l10n.discardUnsavedChanges,
         textAlign: TextAlign.center,
         style: TextStyle(color: colors.primaryColor),
       ),
       content: Text(
-        'Your changes will be lost if you leave without saving.',
+        context.l10n.discardUnsavedChangesDescription,
         textAlign: TextAlign.center,
         style: TextStyle(color: colors.secondaryTextColor),
       ),
@@ -33,7 +34,7 @@ class UnsavedCompositionDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
-          child: const Text('Keep Editing'),
+          child: Text(context.l10n.keepEditing),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
@@ -44,7 +45,7 @@ class UnsavedCompositionDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
-          child: const Text('Discard'),
+          child: Text(context.l10n.discard),
         ),
       ],
     );

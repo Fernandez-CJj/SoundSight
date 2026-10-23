@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -85,7 +86,7 @@ class _CompositionSettingsDialogState
     return AlertDialog(
       backgroundColor: colors.surfaceColor,
       title: Text(
-        'Composition Settings',
+        context.l10n.compositionSettings,
         style: TextStyle(color: colors.primaryColor),
       ),
       content: SizedBox(
@@ -101,10 +102,12 @@ class _CompositionSettingsDialogState
                   maxLength: 80,
                   textCapitalization: TextCapitalization.words,
                   style: TextStyle(color: colors.primaryColor),
-                  decoration: buildDecoration('Title'),
+                  decoration: buildDecoration(context.l10n.compositionTitle),
                   validator: (value) {
                     final title = value?.trim() ?? '';
-                    if (title.isEmpty) return 'Enter a title.';
+                    if (title.isEmpty) {
+                      return context.l10n.compositionTitleRequired;
+                    }
                     return null;
                   },
                 ),
@@ -114,11 +117,11 @@ class _CompositionSettingsDialogState
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   style: TextStyle(color: colors.primaryColor),
-                  decoration: buildDecoration('Tempo (40-200 BPM)'),
+                  decoration: buildDecoration(context.l10n.tempo),
                   validator: (value) {
                     final tempo = int.tryParse(value ?? '');
                     if (tempo == null || tempo < 40 || tempo > 200) {
-                      return 'Tempo must be from 40 to 200 BPM.';
+                      return context.l10n.tempoRangeError;
                     }
                     return null;
                   },
@@ -129,7 +132,7 @@ class _CompositionSettingsDialogState
                   isExpanded: true,
                   dropdownColor: colors.surfaceColor,
                   style: TextStyle(color: colors.primaryColor),
-                  decoration: buildDecoration('Key'),
+                  decoration: buildDecoration(context.l10n.keySignature),
                   items: compositionKeySignatures.map((key) {
                     return DropdownMenuItem(value: key, child: Text(key));
                   }).toList(),
@@ -143,7 +146,7 @@ class _CompositionSettingsDialogState
                   isExpanded: true,
                   dropdownColor: colors.surfaceColor,
                   style: TextStyle(color: colors.primaryColor),
-                  decoration: buildDecoration('Time Signature'),
+                  decoration: buildDecoration(context.l10n.timeSignature),
                   items: compositionTimeSignatures.map((timeSignature) {
                     return DropdownMenuItem(
                       value: timeSignature,
@@ -165,7 +168,7 @@ class _CompositionSettingsDialogState
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Cancel',
+            context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
           ),
         ),
@@ -175,7 +178,7 @@ class _CompositionSettingsDialogState
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
           ),
-          child: const Text('Apply'),
+          child: Text(context.l10n.apply),
         ),
       ],
     );

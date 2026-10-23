@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CaptureUploadHeader extends StatelessWidget {
@@ -9,6 +10,8 @@ class CaptureUploadHeader extends StatelessWidget {
     required this.colors,
     required this.isPickingFiles,
     required this.isSavingSheet,
+    required this.isUploadLocked,
+    required this.isCaptureLocked,
     required this.onUpload,
     required this.onCapture,
   });
@@ -16,6 +19,8 @@ class CaptureUploadHeader extends StatelessWidget {
   final AppThemeColors colors;
   final bool isPickingFiles;
   final bool isSavingSheet;
+  final bool isUploadLocked;
+  final bool isCaptureLocked;
   final VoidCallback onUpload;
   final VoidCallback onCapture;
 
@@ -25,7 +30,7 @@ class CaptureUploadHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Add your sheet music',
+          context.l10n.addYourSheetMusic,
           style: TextStyle(
             color: colors.primaryColor,
             fontSize: AppTextSizes.screenTitle,
@@ -34,7 +39,7 @@ class CaptureUploadHeader extends StatelessWidget {
         ),
         Gap(AppSpacing.xs),
         Text(
-          'Upload an existing file or capture a clear photo of a printed sheet.',
+          context.l10n.addSheetDescription,
           style: TextStyle(
             color: colors.secondaryTextColor,
             fontSize: AppTextSizes.label,
@@ -43,10 +48,7 @@ class CaptureUploadHeader extends StatelessWidget {
         ),
         Gap(AppSpacing.md),
         Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: 6,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
           decoration: BoxDecoration(
             color: colors.surfaceColor,
             borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -65,7 +67,7 @@ class CaptureUploadHeader extends StatelessWidget {
                   Gap(AppSpacing.xs),
                   Expanded(
                     child: Text(
-                      'Up to 20 images or 1 PDF',
+                      context.l10n.chooseOneMethod,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -79,7 +81,7 @@ class CaptureUploadHeader extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(left: AppSpacing.lg),
                 child: Text(
-                  'Images: 5 MB each  -  PDF: 20 MB, 20 pages',
+                  context.l10n.sheetMethodLimits,
                   style: TextStyle(
                     color: colors.secondaryTextColor,
                     fontSize: AppTextSizes.caption,
@@ -100,9 +102,12 @@ class CaptureUploadHeader extends StatelessWidget {
                   colors: colors,
                   color: const Color(0xFF3B82F6),
                   icon: Icons.upload_file_rounded,
-                  title: isPickingFiles ? 'Opening files...' : 'Upload',
-                  description: 'Choose files from your device.',
+                  title: isPickingFiles
+                      ? context.l10n.openingPdf
+                      : context.l10n.uploadPdf,
+                  description: context.l10n.uploadPdfDescription,
                   isLoading: isPickingFiles,
+                  isLocked: isUploadLocked,
                   onTap: isPickingFiles || isSavingSheet ? null : onUpload,
                 ),
               ),
@@ -112,9 +117,10 @@ class CaptureUploadHeader extends StatelessWidget {
                   colors: colors,
                   color: const Color(0xFFF59E0B),
                   icon: Icons.camera_alt_rounded,
-                  title: 'Capture',
-                  description: 'Take a photo with your camera.',
-                  onTap: isSavingSheet ? null : onCapture,
+                  title: context.l10n.capturePages,
+                  description: context.l10n.capturePagesDescription,
+                  isLocked: isCaptureLocked,
+                  onTap: isPickingFiles || isSavingSheet ? null : onCapture,
                 ),
               ),
             ],
@@ -134,6 +140,7 @@ class _SheetActionCard extends StatelessWidget {
     required this.description,
     required this.onTap,
     this.isLoading = false,
+    this.isLocked = false,
   });
 
   final AppThemeColors colors;
@@ -143,11 +150,16 @@ class _SheetActionCard extends StatelessWidget {
   final String description;
   final VoidCallback? onTap;
   final bool isLoading;
+  final bool isLocked;
 
   @override
   Widget build(BuildContext context) {
+    final actionColor = isLocked ? colors.secondaryTextColor : color;
+
     return Material(
-      color: colors.surfaceColor,
+      color: isLocked
+          ? colors.secondaryTextColor.withValues(alpha: 0.06)
+          : colors.surfaceColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(color: colors.borderColor),
@@ -167,7 +179,7 @@ class _SheetActionCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
+                      color: actionColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     alignment: Alignment.center,
@@ -177,13 +189,15 @@ class _SheetActionCard extends StatelessWidget {
                             height: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: color,
+                              color: actionColor,
                             ),
                           )
-                        : Icon(icon, color: color, size: 27),
+                        : Icon(icon, color: actionColor, size: 27),
                   ),
                   Icon(
-                    Icons.north_east_rounded,
+                    isLocked
+                        ? Icons.lock_outline_rounded
+                        : Icons.north_east_rounded,
                     color: colors.secondaryTextColor,
                     size: 18,
                   ),

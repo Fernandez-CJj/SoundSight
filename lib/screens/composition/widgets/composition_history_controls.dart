@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionHistoryControls extends StatelessWidget {
@@ -53,37 +54,37 @@ class CompositionHistoryControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = [
       _HistoryAction(
-        label: 'Undo',
+        label: context.l10n.undo,
         icon: Icons.undo_rounded,
         available: canUndo,
         onPressed: onUndo,
       ),
       _HistoryAction(
-        label: 'Redo',
+        label: context.l10n.redo,
         icon: Icons.redo_rounded,
         available: canRedo,
         onPressed: onRedo,
       ),
       _HistoryAction(
-        label: 'Copy',
+        label: context.l10n.copy,
         icon: Icons.content_copy_rounded,
         available: canCopy,
         onPressed: onCopy,
       ),
       _HistoryAction(
-        label: 'Paste',
+        label: context.l10n.paste,
         icon: Icons.content_paste_rounded,
         available: canPaste,
         onPressed: onPaste,
       ),
       _HistoryAction(
-        label: 'Select All',
+        label: context.l10n.selectAll,
         icon: Icons.select_all_rounded,
         available: canSelectAll,
         onPressed: onSelectAll,
       ),
       _HistoryAction(
-        label: isTieActive ? 'Remove Tie' : 'Tie to Next',
+        label: isTieActive ? context.l10n.removeTie : context.l10n.tieToNext,
         icon: isTieActive
             ? Icons.link_off_rounded
             : Icons.link_rounded,
@@ -91,14 +92,14 @@ class CompositionHistoryControls extends StatelessWidget {
         onPressed: onToggleTie,
       ),
       _HistoryAction(
-        label: 'Delete Selection',
+        label: context.l10n.deleteSelection,
         icon: Icons.delete_outline_rounded,
         available: canDeleteSelection,
         onPressed: onDeleteSelection,
         destructive: true,
       ),
       _HistoryAction(
-        label: 'Delete Whole Chord',
+        label: context.l10n.deleteWholeChord,
         icon: Icons.layers_clear_rounded,
         available: canDeleteChord,
         onPressed: onDeleteChord,
@@ -162,7 +163,7 @@ class CompositionHistoryControls extends StatelessWidget {
               ),
               const Gap(AppSpacing.xs),
               Text(
-                'History and editing',
+                context.l10n.historyAndEditing,
                 style: TextStyle(
                   color: colors.primaryColor,
                   fontSize: AppTextSizes.label,

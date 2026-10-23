@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -35,10 +37,18 @@ class CompositionNoteRequest(BaseModel):
     tieToNext: bool = False
 
 
+class RecordedPerformanceNoteRequest(BaseModel):
+    midiNumber: int = Field(ge=21, le=108)
+    velocity: int = Field(ge=1, le=127)
+    startTimeUs: int = Field(ge=0)
+    durationUs: int = Field(gt=0)
+
+
 class CompositionRequest(BaseModel):
     id: str = ""
     ownerId: str
     title: str
+    creationMethod: Literal["manual", "recording"] = "manual"
 
     tempo: int = Field(
         ge=40,
@@ -59,8 +69,9 @@ class CompositionRequest(BaseModel):
         le=128,
     )
 
-    notes: list[CompositionNoteRequest]
-
-
-class UnpublishRequest(BaseModel):
-    ownerId: str
+    notes: list[CompositionNoteRequest] = Field(default_factory=list)
+    recordingSchemaVersion: int | None = None
+    performanceNotes: list[RecordedPerformanceNoteRequest] = Field(
+        default_factory=list
+    )
+    performanceDurationUs: int | None = Field(default=None, gt=0)

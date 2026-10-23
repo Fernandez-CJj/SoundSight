@@ -43,6 +43,17 @@ service cloud.firestore {
                'beatUnit',
                'measureCount',
                'notes',
+               'creationMethod',
+               'recordingSchemaVersion',
+               'performanceNotes',
+               'performanceDurationUs',
+               'pdfStoragePath',
+               'musicXmlStoragePath',
+               'midiStoragePath',
+               'mp3StoragePath',
+               'generatedFilesVersion',
+               'generationStatus',
+               'filesGeneratedAt',
                'createdAt',
                'updatedAt'
              ])
@@ -76,6 +87,44 @@ service cloud.firestore {
              && data.measureCount <= 128
              && data.notes is list
              && data.notes.size() <= 256
+             && data.creationMethod in ['manual', 'recording']
+             && (!('recordingSchemaVersion' in data)
+                 || data.recordingSchemaVersion == 1)
+             && (!('performanceNotes' in data)
+                 || (data.performanceNotes is list
+                     && data.performanceNotes.size() > 0
+                     && data.performanceNotes.size() <= 256))
+             && (!('performanceDurationUs' in data)
+                 || (data.performanceDurationUs is int
+                     && data.performanceDurationUs > 0
+                     && data.performanceDurationUs <= 600000000))
+             && (
+               !('recordingSchemaVersion' in data)
+               || (data.creationMethod == 'recording'
+                   && data.recordingSchemaVersion == 1
+                   && data.performanceNotes is list
+                   && data.performanceNotes.size() > 0
+                   && data.performanceDurationUs is int)
+             )
+             && (!('pdfStoragePath' in data)
+                 || data.pdfStoragePath is string)
+             && (!('musicXmlStoragePath' in data)
+                 || data.musicXmlStoragePath is string)
+             && (!('midiStoragePath' in data)
+                 || data.midiStoragePath is string)
+             && (!('mp3StoragePath' in data)
+                 || data.mp3StoragePath is string)
+             && (!('generatedFilesVersion' in data)
+                 || data.generatedFilesVersion is int)
+             && (!('generationStatus' in data)
+                 || data.generationStatus in [
+                      'pending',
+                      'generating',
+                      'completed',
+                      'failed'
+                    ])
+             && (!('filesGeneratedAt' in data)
+                 || data.filesGeneratedAt is timestamp)
              && data.createdAt is timestamp
              && data.updatedAt is timestamp;
     }
@@ -84,6 +133,11 @@ service cloud.firestore {
       function ownsUser() {
         return isVerifiedUser()
                && request.auth.uid == userId;
+      }
+
+      function hasValidLanguageCode(data) {
+        return !data.keys().hasAny(['languageCode'])
+               || data.languageCode in ['en', 'fil'];
       }
 
       function validAssessmentSkillLevelUpdate() {
@@ -115,6 +169,7 @@ service cloud.firestore {
       }
 
       allow create: if ownsUser()
+                    && hasValidLanguageCode(request.resource.data)
                     && (
                       !request.resource.data.keys().hasAny(['skillLevel'])
                       || request.resource.data.skillLevel == null
@@ -125,6 +180,7 @@ service cloud.firestore {
       allow delete: if ownsUser();
 
       allow update: if ownsUser()
+                    && hasValidLanguageCode(request.resource.data)
                     && (
                       !request.resource.data.diff(resource.data)
                         .affectedKeys()
@@ -799,6 +855,136 @@ service cloud.firestore {
 
         allow update, delete: if false;
       }
+
+      match /practice_results/{resultId} {
+        function ownsPracticeResult() {
+          return isVerifiedUser()
+                 && request.auth.uid == userId;
+        }
+
+        function validPracticeResult(data) {
+          return data.keys().hasOnly([
+                   'schemaVersion',
+                   'practiceType',
+                   'ownerId',
+                   'scoreDocumentPath',
+                   'source',
+                   'pieceTitle',
+                   'mode',
+                   'completedAt',
+                   'targetDurationMs',
+                   'elapsedDurationMs',
+                   'correctCount',
+                   'wrongCount',
+                   'missedCount',
+                   'totalCount',
+                   'timingAccuracyPercentage',
+                   'noteBreakdown',
+                   'clefBreakdown',
+                   'suggestions',
+                   'errorEventCount',
+                   'storageStatus'
+                 ])
+                 && data.schemaVersion in [1, 2]
+                 && (data.schemaVersion == 1
+                     || data.practiceType in [
+                          'sightReading',
+                          'synthesia',
+                          'arPerformance'
+                        ])
+                 && data.ownerId == userId
+                 && data.scoreDocumentPath is string
+                 && data.source in ['composition', 'musicSheet', 'challenge']
+                 && data.pieceTitle is string
+                 && data.pieceTitle.size() > 0
+                 && data.pieceTitle.size() <= 200
+                 && data.mode == 'performance'
+                 && data.completedAt is timestamp
+                 && data.targetDurationMs is int
+                 && data.targetDurationMs >= 0
+                 && data.elapsedDurationMs is int
+                 && data.elapsedDurationMs >= 0
+                 && data.correctCount is int
+                 && data.correctCount >= 0
+                 && data.wrongCount is int
+                 && data.wrongCount >= 0
+                 && data.missedCount is int
+                 && data.missedCount >= 0
+                 && data.totalCount is int
+                 && data.totalCount > 0
+                 && data.correctCount
+                    + data.wrongCount
+                    + data.missedCount == data.totalCount
+                 && data.timingAccuracyPercentage is int
+                 && data.timingAccuracyPercentage >= 0
+                 && data.timingAccuracyPercentage <= 100
+                 && data.noteBreakdown is list
+                 && data.clefBreakdown is list
+                 && data.suggestions is list
+                 && data.suggestions.size() <= 3
+                 && data.errorEventCount is int
+                 && data.errorEventCount >= 0
+                 && data.storageStatus in ['saving', 'complete'];
+        }
+
+        allow read, delete: if ownsPracticeResult();
+
+        allow create: if ownsPracticeResult()
+                      && validPracticeResult(request.resource.data)
+                      && request.resource.data.completedAt == request.time
+                      && request.resource.data.storageStatus == 'saving';
+
+        allow update: if ownsPracticeResult()
+                      && validPracticeResult(request.resource.data)
+                      && request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly(['storageStatus'])
+                      && resource.data.storageStatus == 'saving'
+                      && request.resource.data.storageStatus == 'complete';
+
+        match /error_events/{eventId} {
+          function ownsPracticeErrorEvent() {
+            return isVerifiedUser()
+                   && request.auth.uid == userId;
+          }
+
+          allow read, delete: if ownsPracticeErrorEvent();
+
+          allow create: if ownsPracticeErrorEvent()
+                        && request.resource.data.keys().hasOnly([
+                             'positionIndex',
+                             'measureNumber',
+                             'scheduledTimeMs',
+                             'expectedMidiNotes',
+                             'playedMidiNotes',
+                             'clefs',
+                             'staffNumbers',
+                             'issueTypes',
+                             'timingOffsetMs',
+                             'eventuallyMatched'
+                           ])
+                        && request.resource.data.positionIndex is int
+                        && request.resource.data.positionIndex >= 0
+                        && (
+                          request.resource.data.measureNumber == null
+                          || request.resource.data.measureNumber is string
+                        )
+                        && request.resource.data.scheduledTimeMs is int
+                        && request.resource.data.scheduledTimeMs >= 0
+                        && request.resource.data.expectedMidiNotes is list
+                        && request.resource.data.playedMidiNotes is list
+                        && request.resource.data.clefs is list
+                        && request.resource.data.staffNumbers is list
+                        && request.resource.data.issueTypes is list
+                        && (
+                          request.resource.data.timingOffsetMs == null
+                          || request.resource.data.timingOffsetMs is int
+                        )
+                        && request.resource.data.eventuallyMatched is bool;
+
+          allow update: if false;
+        }
+      }
     }
 
     match /challenge_levels/{levelId} {
@@ -833,38 +1019,109 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
     }
 
-    match /musicSheets/{sheetId} {
+    match /users/{userId}/musicSheets/{sheetId} {
       allow create: if isVerifiedUser()
-                    && request.resource.data.ownerId == request.auth.uid
+                    && request.auth.uid == userId
+                    && request.resource.data.ownerId == userId
                     && validMusicSheet(request.resource.data);
 
-      allow read, delete: if isVerifiedUser()
-                          && resource.data.ownerId == request.auth.uid;
+      allow read: if isVerifiedUser()
+                  && request.auth.uid == userId;
+
+      allow delete: if isVerifiedUser()
+                    && request.auth.uid == userId
+                    && resource.data.ownerId == userId;
 
       allow update: if isVerifiedUser()
-                    && resource.data.ownerId == request.auth.uid
-                    && request.resource.data.ownerId
-                       == resource.data.ownerId
+                    && request.auth.uid == userId
+                    && resource.data.ownerId == userId
+                    && request.resource.data.ownerId == userId
                     && validMusicSheet(request.resource.data);
     }
 
-    match /compositions/{compositionId} {
+    match /users/{userId}/compositions/{compositionId} {
+      function isCompositionContentUpdate() {
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasOnly([
+                   'title',
+                   'key',
+                   'tempo',
+                   'beatsPerMeasure',
+                   'beatUnit',
+                   'measureCount',
+                   'notes',
+                   'creationMethod',
+                   'recordingSchemaVersion',
+                   'performanceNotes',
+                   'performanceDurationUs',
+                   'generationStatus',
+                   'updatedAt'
+                 ])
+               && request.resource.data.generationStatus == 'pending'
+               && request.resource.data.updatedAt == request.time;
+      }
+
+      function isGenerationRetry() {
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasOnly(['generationStatus'])
+               && request.resource.data.generationStatus == 'pending'
+               && request.resource.data.updatedAt == resource.data.updatedAt;
+      }
+
+      function isGenerationFailure() {
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasOnly(['generationStatus'])
+               && request.resource.data.generationStatus == 'failed'
+               && request.resource.data.updatedAt == resource.data.updatedAt;
+      }
+
       allow create: if isVerifiedUser()
+                    && request.auth.uid == userId
+                    && request.resource.data.ownerId == userId
                     && request.resource.data.ownerId == request.auth.uid
                     && request.resource.data.createdAt == request.time
                     && request.resource.data.updatedAt == request.time
+                    && request.resource.data.generationStatus == 'pending'
+                    && !request.resource.data.keys().hasAny([
+                         'pdfStoragePath',
+                         'musicXmlStoragePath',
+                         'midiStoragePath',
+                         'mp3StoragePath',
+                         'generatedFilesVersion',
+                         'filesGeneratedAt'
+                       ])
                     && validComposition(request.resource.data);
 
-      allow read, delete: if isVerifiedUser()
-                          && resource.data.ownerId == request.auth.uid;
+      allow read: if isVerifiedUser()
+                  && request.auth.uid == userId;
+
+      allow delete: if isVerifiedUser()
+                    && request.auth.uid == userId
+                    && resource.data.ownerId == userId
+                    && resource.data.ownerId == request.auth.uid;
 
       allow update: if isVerifiedUser()
+                    && request.auth.uid == userId
+                    && resource.data.ownerId == userId
                     && resource.data.ownerId == request.auth.uid
+                    && request.resource.data.ownerId == userId
                     && request.resource.data.ownerId
                        == resource.data.ownerId
                     && request.resource.data.createdAt
                        == resource.data.createdAt
-                    && request.resource.data.updatedAt == request.time
+                    && (
+                      !('creationMethod' in resource.data)
+                      || request.resource.data.creationMethod
+                         == resource.data.creationMethod
+                    )
+                    && (
+                      isCompositionContentUpdate()
+                      || isGenerationRetry()
+                      || isGenerationFailure()
+                    )
                     && validComposition(request.resource.data);
     }
 

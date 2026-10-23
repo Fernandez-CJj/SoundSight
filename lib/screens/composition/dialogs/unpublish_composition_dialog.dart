@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class UnpublishCompositionDialog extends StatelessWidget {
@@ -37,7 +38,7 @@ class UnpublishCompositionDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        'Unpublish composition?',
+        context.l10n.unpublishCompositionQuestion,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -46,8 +47,7 @@ class UnpublishCompositionDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        '"$compositionTitle" and all of its published versions '
-        'will be removed from the community feed.',
+        context.l10n.unpublishCompositionConfirmation(compositionTitle),
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.secondaryTextColor,
@@ -78,7 +78,7 @@ class UnpublishCompositionDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.cancel),
                 ),
               ),
             ),
@@ -98,9 +98,9 @@ class UnpublishCompositionDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
-                  child: const Text(
-                    'Unpublish',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  child: Text(
+                    context.l10n.unpublish,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -142,7 +142,7 @@ class UnpublishingCompositionDialog extends StatelessWidget {
               ),
               const Gap(AppSpacing.lg),
               Text(
-                'Unpublishing composition...',
+                context.l10n.unpublishingComposition,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.primaryColor,
@@ -152,8 +152,7 @@ class UnpublishingCompositionDialog extends StatelessWidget {
               ),
               const Gap(AppSpacing.xs),
               Text(
-                'Removing every published version and PDF. '
-                'Please wait.',
+                context.l10n.unpublishingCompositionDescription,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.secondaryTextColor,

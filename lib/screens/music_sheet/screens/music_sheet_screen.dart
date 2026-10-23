@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/music_sheet/dialogs/music_sheet_dialogs.dart';
 import 'package:soundsight/screens/music_sheet/services/music_sheet_delete_service.dart';
@@ -35,8 +36,9 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
 
     if (userId != null) {
       musicSheetsStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
           .collection('musicSheets')
-          .where('ownerId', isEqualTo: userId)
           .snapshots();
     }
 
@@ -58,7 +60,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         title: Text(
-          'Music Sheets',
+          context.l10n.musicSheets,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: AppTextSizes.sectionTitle,
@@ -66,7 +68,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Add sheet',
+            tooltip: context.l10n.addSheetTooltip,
             onPressed: () => openAddSheetScreen(),
             icon: Icon(Icons.add_rounded, size: 29),
           ),
@@ -133,7 +135,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Your library',
+                      context.l10n.yourLibrary,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.screenTitle,
@@ -142,7 +144,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                     ),
                     Gap(AppSpacing.xs),
                     Text(
-                      'Open and manage your uploaded music sheets.',
+                      context.l10n.libraryDescription,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.label,
@@ -175,12 +177,13 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
 
         final sheet = sheets[index - 1];
         final data = sheet.data();
-        final title = data['title'] as String? ?? 'Untitled Sheet';
+        final title = data['title'] as String? ?? context.l10n.untitledSheet;
         final type = data['type'] as String? ?? 'images';
         final pageCount = (data['pageCount'] as num?)?.toInt() ?? 0;
 
         return MusicSheetCard(
           colors: colors,
+          dismissKey: sheet.id,
           title: title,
           type: type,
           pageCount: pageCount,
@@ -216,7 +219,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
             ),
             Gap(AppSpacing.lg),
             Text(
-              'No music sheets yet',
+              context.l10n.noMusicSheets,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -226,7 +229,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
             ),
             Gap(AppSpacing.sm),
             Text(
-              'Upload images or a PDF to start building your music-sheet library.',
+              context.l10n.noMusicSheetsDescription,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -238,7 +241,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
             ElevatedButton.icon(
               onPressed: openAddSheetScreen,
               icon: Icon(Icons.add_rounded),
-              label: Text('Add Music Sheet'),
+              label: Text(context.l10n.addMusicSheet),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primaryColor,
                 foregroundColor: colors.backgroundColor,
@@ -272,7 +275,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
             ),
             Gap(AppSpacing.md),
             Text(
-              'Your music sheets could not be loaded.',
+              context.l10n.musicSheetsLoadError,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -282,7 +285,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
             ),
             Gap(AppSpacing.xs),
             Text(
-              'Check your connection and Firebase permissions.',
+              context.l10n.musicSheetsLoadErrorHelp,
               textAlign: TextAlign.center,
               style: TextStyle(color: colors.secondaryTextColor),
             ),
@@ -295,7 +298,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
   Widget buildSignedOutState(AppThemeColors colors) {
     return Center(
       child: Text(
-        'Sign in to view your music sheets.',
+        context.l10n.signInForMusicSheets,
         style: TextStyle(color: colors.secondaryTextColor),
       ),
     );
@@ -367,9 +370,9 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      showMessage('Music sheet renamed.');
+      showMessage(context.l10n.musicSheetRenamed);
     } catch (_) {
-      showMessage('The music sheet could not be renamed.');
+      showMessage(context.l10n.musicSheetRenameFailed);
     }
   }
 
@@ -380,9 +383,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     Map<String, dynamic> data,
   ) async {
     if (data['omrStatus'] == 'processing') {
-      showMessage(
-        'Wait for the music-sheet translation to finish before deleting it.',
-      );
+      showMessage(context.l10n.waitForTranslationBeforeDelete);
       return;
     }
 
@@ -402,9 +403,9 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
         sheetReference: sheet.reference,
         sheetData: data,
       );
-      showMessage('"$title" was deleted.');
+      showMessage(context.l10n.musicSheetDeleted(title));
     } catch (_) {
-      showMessage('The music sheet could not be deleted.');
+      showMessage(context.l10n.musicSheetDeleteFailed);
     } finally {
       if (mounted) {
         setState(() {
@@ -439,22 +440,11 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
   String formatDate(Timestamp? timestamp) {
     if (timestamp == null) return '';
 
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
     final date = timestamp.toDate();
-    return 'Added ${months[date.month - 1]} ${date.day}, ${date.year}';
+    final localizedDate = MaterialLocalizations.of(context).formatMediumDate(
+      date,
+    );
+    return context.l10n.addedDate(localizedDate);
   }
 
   void showMessage(String message) {

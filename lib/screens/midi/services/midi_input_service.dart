@@ -1,106 +1,137 @@
 import 'package:flutter_midi_command/flutter_midi_command.dart';
 import 'dart:async';
 import 'package:flutter_midi_command/flutter_midi_command_messages.dart';
+import 'package:soundsight/screens/midi/models/midi_note_event.dart';
 
 class MidiInputService {
-  final MidiCommand _midiCommand = MidiCommand();
+  final MidiCommand midiCommand = MidiCommand();
 
-  StreamSubscription<MidiDataReceivedEvent>? _midiSubscription;
-  StreamSubscription<MidiSetupChange>? _setupSubscription;
-  StreamSubscription<MidiConnectionState>? _connectionSubscription;
+  StreamSubscription<MidiDataReceivedEvent>? midiSubscription;
+  StreamSubscription<MidiSetupChange>? setupSubscription;
+  StreamSubscription<MidiConnectionState>? connectionSubscription;
 
-  MidiDevice? _connectedDevice;
-  bool _isDisposed = false;
+  MidiDevice? connectedMidiDevice;
+  bool isDisposed = false;
 
-  final Set<int> _activeMidiNotes = {};
+  final Set<int> activeMidiNoteNumbers = {};
 
-  final StreamController<Set<int>> _activeNotesController =
+  final StreamController<Set<int>> activeNotesController =
       StreamController<Set<int>>.broadcast();
 
-  final StreamController<int> _noteOnController =
+  final StreamController<int> noteOnController =
       StreamController<int>.broadcast();
 
-  final StreamController<bool> _connectionController =
+  final StreamController<bool> connectionController =
       StreamController<bool>.broadcast();
+
+  final StreamController<MidiNoteEvent> noteEventController =
+      StreamController<MidiNoteEvent>.broadcast();
 
   MidiInputService() {
     // USB appearance and removal are reported by the platform MIDI plugin.
-    _setupSubscription = _midiCommand.onMidiSetupChanged?.listen(
+    setupSubscription = midiCommand.onMidiSetupChanged?.listen(
       _handleMidiSetupChange,
     );
   }
 
-  Set<int> get activeMidiNotes => Set<int>.unmodifiable(_activeMidiNotes);
+  Set<int> get activeMidiNotes => Set<int>.unmodifiable(activeMidiNoteNumbers);
 
-  Stream<Set<int>> get activeNotesStream => _activeNotesController.stream;
+  Stream<Set<int>> get activeNotesStream => activeNotesController.stream;
 
-  Stream<int> get noteOnStream => _noteOnController.stream;
+  Stream<int> get noteOnStream => noteOnController.stream;
 
   /// Notifies screens when the currently used MIDI device connects or leaves.
-  Stream<bool> get connectionStream => _connectionController.stream;
+  Stream<bool> get connectionStream => connectionController.stream;
 
   /// The device currently owned by this screen-level service.
-  MidiDevice? get connectedDevice => _connectedDevice;
+  MidiDevice? get connectedDevice => connectedMidiDevice;
 
   /// Whether the current device still reports a usable connection.
-  bool get isConnected => _connectedDevice?.connected ?? false;
+  bool get isConnected => connectedMidiDevice?.connected ?? false;
+
+  Stream<MidiNoteEvent> get noteEventStream {
+    return noteEventController.stream;
+  }
 
   Future<List<MidiDevice>> getDevices() async {
-    return await _midiCommand.devices ?? [];
+    return await midiCommand.devices ?? [];
   }
 
   Future<void> connectToDevice(MidiDevice device) async {
-    if (_isDisposed) {
+    if (isDisposed) {
       throw StateError('This MIDI input service has already been disposed.');
     }
 
-    await _midiSubscription?.cancel();
-    await _connectionSubscription?.cancel();
+    await midiSubscription?.cancel();
+    await connectionSubscription?.cancel();
 
-    final previousDevice = _connectedDevice;
+    final previousDevice = connectedMidiDevice;
 
     // Close a previous route-owned connection before opening another one.
     if (previousDevice != null &&
         previousDevice.id != device.id &&
         previousDevice.connected) {
-      _midiCommand.disconnectDevice(previousDevice);
+      midiCommand.disconnectDevice(previousDevice);
     }
 
-    _connectedDevice = device;
+    connectedMidiDevice = device;
 
     // Subscribe before connecting so a fast connection or disconnection event
     // cannot occur between the native call and the Dart listener.
-    _connectionSubscription = device.onConnectionStateChanged.listen(
+    connectionSubscription = device.onConnectionStateChanged.listen(
       _handleConnectionState,
     );
 
     try {
-      await _midiCommand.connectToDevice(device);
+      await midiCommand.connectToDevice(device);
     } catch (_) {
-      await _connectionSubscription?.cancel();
-      _connectionSubscription = null;
-      _connectedDevice = null;
+      await connectionSubscription?.cancel();
+      connectionSubscription = null;
+      connectedMidiDevice = null;
       _emitConnection(false);
       rethrow;
     }
 
-    if (_isDisposed) {
+    if (isDisposed) {
       if (device.connected) {
-        _midiCommand.disconnectDevice(device);
+        midiCommand.disconnectDevice(device);
       }
 
       return;
     }
 
-    _midiSubscription = _midiCommand.onMidiDataReceived?.listen(
-      _handleMidiEvent,
-    );
+    midiSubscription = midiCommand.onMidiDataReceived?.listen(_handleMidiEvent);
 
     _emitConnection(true);
   }
 
+  Future<void> disconnect() async {
+    if (isDisposed) {
+      return;
+    }
+
+    final device = connectedMidiDevice;
+    connectedMidiDevice = null;
+
+    await midiSubscription?.cancel();
+    midiSubscription = null;
+    await connectionSubscription?.cancel();
+    connectionSubscription = null;
+
+    if (activeMidiNoteNumbers.isNotEmpty) {
+      activeMidiNoteNumbers.clear();
+      activeNotesController.add(const <int>{});
+    }
+
+    if (device != null && device.connected) {
+      midiCommand.disconnectDevice(device);
+    }
+
+    _emitConnection(false);
+  }
+
   void _handleMidiEvent(MidiDataReceivedEvent event) {
-    if (_isDisposed || event.device.id != _connectedDevice?.id) {
+    if (isDisposed || event.device.id != connectedMidiDevice?.id) {
       return;
     }
 
@@ -110,26 +141,47 @@ class MidiInputService {
 
     if (message is NoteOnMessage) {
       if (message.velocity > 0) {
-        notesChanged = _activeMidiNotes.add(message.note);
+        noteEventController.add(
+          MidiNoteEvent(
+            type: MidiNoteEventType.noteOn,
+            noteNumber: message.note,
+            velocity: message.velocity,
+          ),
+        );
+        notesChanged = activeMidiNoteNumbers.add(message.note);
 
-        _noteOnController.add(message.note);
+        noteOnController.add(message.note);
       } else {
-        notesChanged = _activeMidiNotes.remove(message.note);
+        noteEventController.add(
+          MidiNoteEvent(
+            type: MidiNoteEventType.noteOff,
+            noteNumber: message.note,
+            velocity: 0,
+          ),
+        );
+        notesChanged = activeMidiNoteNumbers.remove(message.note);
       }
     } else if (message is NoteOffMessage) {
-      notesChanged = _activeMidiNotes.remove(message.note);
+      noteEventController.add(
+        MidiNoteEvent(
+          type: MidiNoteEventType.noteOff,
+          noteNumber: message.note,
+          velocity: 0,
+        ),
+      );
+      notesChanged = activeMidiNoteNumbers.remove(message.note);
     }
 
     if (!notesChanged) {
       return;
     }
 
-    _activeNotesController.add(Set<int>.unmodifiable(_activeMidiNotes));
+    activeNotesController.add(Set<int>.unmodifiable(activeMidiNoteNumbers));
   }
 
   /// Reacts to the selected device's native connection state.
   void _handleConnectionState(MidiConnectionState state) {
-    if (_isDisposed) {
+    if (isDisposed) {
       return;
     }
 
@@ -150,7 +202,7 @@ class MidiInputService {
 
   /// Uses global setup changes as a fallback for physical USB removal.
   void _handleMidiSetupChange(MidiSetupChange change) {
-    if (_isDisposed || _connectedDevice == null) {
+    if (isDisposed || connectedMidiDevice == null) {
       return;
     }
 
@@ -162,9 +214,9 @@ class MidiInputService {
 
   /// Refreshes the device snapshot after Android reports a topology change.
   Future<void> _confirmConnectedDeviceStillExists() async {
-    final selectedDevice = _connectedDevice;
+    final selectedDevice = connectedMidiDevice;
 
-    if (selectedDevice == null || _isDisposed) {
+    if (selectedDevice == null || isDisposed) {
       return;
     }
 
@@ -174,7 +226,7 @@ class MidiInputService {
         (device) => device.id == selectedDevice.id,
       );
 
-      if (!deviceStillExists && !_isDisposed) {
+      if (!deviceStillExists && !isDisposed) {
         _handleDisconnectedDevice();
       }
     } catch (_) {
@@ -184,11 +236,11 @@ class MidiInputService {
 
   /// Clears stale held notes and tells every listener that MIDI was removed.
   void _handleDisconnectedDevice() {
-    _connectedDevice = null;
+    connectedMidiDevice = null;
 
-    if (_activeMidiNotes.isNotEmpty) {
-      _activeMidiNotes.clear();
-      _activeNotesController.add(const <int>{});
+    if (activeMidiNoteNumbers.isNotEmpty) {
+      activeMidiNoteNumbers.clear();
+      activeNotesController.add(const <int>{});
     }
 
     _emitConnection(false);
@@ -196,32 +248,32 @@ class MidiInputService {
 
   /// Avoids adding connection events after the service has been disposed.
   void _emitConnection(bool connected) {
-    if (!_isDisposed && !_connectionController.isClosed) {
-      _connectionController.add(connected);
+    if (!isDisposed && !connectionController.isClosed) {
+      connectionController.add(connected);
     }
   }
 
   Future<void> dispose() async {
-    if (_isDisposed) {
+    if (isDisposed) {
       return;
     }
 
-    _isDisposed = true;
+    final device = connectedMidiDevice;
+    connectedMidiDevice = null;
 
-    final device = _connectedDevice;
-    _connectedDevice = null;
+    isDisposed = true;
 
     // Disconnect while the cable is still present when a MIDI screen closes.
     // This prevents native ports from leaking into the next MIDI feature.
     if (device != null && device.connected) {
-      _midiCommand.disconnectDevice(device);
+      midiCommand.disconnectDevice(device);
     }
-
-    await _midiSubscription?.cancel();
-    await _connectionSubscription?.cancel();
-    await _setupSubscription?.cancel();
-    await _activeNotesController.close();
-    await _noteOnController.close();
-    await _connectionController.close();
+    await noteEventController.close();
+    await midiSubscription?.cancel();
+    await connectionSubscription?.cancel();
+    await setupSubscription?.cancel();
+    await activeNotesController.close();
+    await noteOnController.close();
+    await connectionController.close();
   }
 }

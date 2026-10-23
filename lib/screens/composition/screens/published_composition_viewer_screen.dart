@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
-import 'package:soundsight/screens/challenges/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/players/ar/ar_practice_screen.dart';
+import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
+import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/players/synthesia/models/synthesia_score_source.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class PublishedCompositionViewerScreen extends StatefulWidget {
@@ -87,8 +91,8 @@ class _PublishedCompositionViewerScreenState
               child: IconButton(
                 padding: EdgeInsets.zero,
                 tooltip: playbackController.isPlaying(widget.composition)
-                    ? 'Stop playback'
-                    : 'Play composition',
+                    ? context.l10n.stopPlaybackTooltip
+                    : context.l10n.playCompositionTooltip,
                 onPressed: playbackController.isBusy ? null : playComposition,
                 icon: playbackController.isBusy
                     ? SizedBox(
@@ -120,7 +124,7 @@ class _PublishedCompositionViewerScreenState
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
             icon: const Icon(Icons.play_arrow_rounded),
-            label: const Text('Play'),
+            label: Text(context.l10n.play),
           ),
         ),
       ),
@@ -143,7 +147,7 @@ class _PublishedCompositionViewerScreenState
         return AlertDialog(
           backgroundColor: widget.colors.surfaceColor,
           title: Text(
-            'Choose play mode',
+            context.l10n.choosePlayMode,
             style: TextStyle(color: widget.colors.primaryColor),
           ),
           content: Column(
@@ -155,7 +159,7 @@ class _PublishedCompositionViewerScreenState
                   color: widget.colors.primaryColor,
                 ),
                 title: Text(
-                  'Sight Reading',
+                  context.l10n.sightReading,
                   style: TextStyle(color: widget.colors.primaryColor),
                 ),
                 onTap: () => Navigator.of(dialogContext).pop('sightReading'),
@@ -166,10 +170,21 @@ class _PublishedCompositionViewerScreenState
                   color: widget.colors.primaryColor,
                 ),
                 title: Text(
-                  'Synthesia',
+                  context.l10n.synthesia,
                   style: TextStyle(color: widget.colors.primaryColor),
                 ),
                 onTap: () => Navigator.of(dialogContext).pop('synthesia'),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.view_in_ar_rounded,
+                  color: widget.colors.primaryColor,
+                ),
+                title: Text(
+                  context.l10n.arPractice,
+                  style: TextStyle(color: widget.colors.primaryColor),
+                ),
+                onTap: () => Navigator.of(dialogContext).pop('ar'),
               ),
             ],
           ),
@@ -177,10 +192,66 @@ class _PublishedCompositionViewerScreenState
       },
     );
 
-    if (selectedMode == 'synthesia' && mounted) {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const SynthesiaScreen()));
+    if (!mounted) {
+      return;
+    }
+
+    if (selectedMode == 'sightReading') {
+      if (!widget.composition.hasSightReadingFiles) {
+        showMessage(
+          context.l10n.publishedSightReadingUnavailable,
+        );
+        return;
+      }
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MusicSheetReadingScreen(
+            scoreDocumentPath:
+                'compositionPosts/${widget.composition.id}/versions/${widget.composition.currentVersion}',
+            source: SightReadingSource.composition,
+            colors: widget.colors,
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (selectedMode == 'synthesia') {
+      await playbackController.playbackService.stop();
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SynthesiaScreen(
+            colors: widget.colors,
+            source: SynthesiaPublishedCompositionSource(widget.composition),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (selectedMode == 'ar') {
+      if (widget.composition.publishedFilesVersion != 1 ||
+          widget.composition.midiStoragePath.trim().isEmpty) {
+        showMessage(
+          context.l10n.publishedArFileUnavailable,
+        );
+        return;
+      }
+
+      await playbackController.playbackService.stop();
+      if (!mounted) return;
+
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ArPracticeScreen(
+            colors: widget.colors,
+            scoreDocumentPath:
+                'compositionPosts/${widget.composition.id}/versions/${widget.composition.currentVersion}',
+          ),
+        ),
+      );
     }
   }
 
@@ -225,7 +296,7 @@ class _PublishedCompositionViewerScreenState
             ),
           ),
           Text(
-            'Version ${widget.composition.currentVersion}',
+            context.l10n.versionLabel(widget.composition.currentVersion),
             style: TextStyle(
               color: colors.secondaryTextColor,
               fontSize: AppTextSizes.caption,
@@ -310,7 +381,7 @@ class _PublishedCompositionViewerScreenState
             ),
             const Gap(AppSpacing.md),
             Text(
-              'The music sheet could not be loaded.',
+              context.l10n.publishedSheetLoadFailed,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -320,7 +391,7 @@ class _PublishedCompositionViewerScreenState
             ),
             const Gap(AppSpacing.xs),
             Text(
-              'Check your connection and Firebase Storage permissions.',
+              context.l10n.checkConnectionStoragePermissions,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -331,7 +402,7 @@ class _PublishedCompositionViewerScreenState
             OutlinedButton.icon(
               onPressed: retryLoading,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try Again'),
+              label: Text(context.l10n.tryAgain),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 side: BorderSide(color: colors.borderColor),
@@ -356,13 +427,20 @@ class _PublishedCompositionViewerScreenState
     final resultMessage = await playbackController.togglePlayback(
       widget.composition,
       onPlaybackStarted: () {
-        showMessage('Playing "${widget.composition.title}".');
+        showMessage(context.l10n.communityPlaying(widget.composition.title));
       },
     );
 
     if (!mounted || resultMessage == null) return;
 
-    showMessage(resultMessage);
+    final localizedMessage = switch (resultMessage) {
+      'Playback stopped.' => context.l10n.communityPlaybackStopped,
+      'This version has no playback data. Republish it first.' =>
+        context.l10n.communityNoPlaybackData,
+      _ => context.l10n.communityPlaybackFailed,
+    };
+
+    showMessage(localizedMessage);
   }
 
   void updatePlaybackState() {

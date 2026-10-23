@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionPerformanceControls extends StatelessWidget {
@@ -21,6 +22,7 @@ class CompositionPerformanceControls extends StatelessWidget {
     required this.onMetronomeChanged,
     this.enabled = true,
     this.compact = false,
+    this.showVelocity = true,
   });
 
   final AppThemeColors colors;
@@ -38,6 +40,7 @@ class CompositionPerformanceControls extends StatelessWidget {
   final ValueChanged<bool> onMetronomeChanged;
   final bool enabled;
   final bool compact;
+  final bool showVelocity;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +52,7 @@ class CompositionPerformanceControls extends StatelessWidget {
           isMetronomeEnabled;
 
       return Tooltip(
-        message: 'Performance settings',
+        message: context.l10n.performanceSettings,
         child: Material(
           color: colors.surfaceColor,
           shape: RoundedRectangleBorder(
@@ -105,6 +108,7 @@ class CompositionPerformanceControls extends StatelessWidget {
       isSustainEnabled: isSustainEnabled,
       isMetronomeEnabled: isMetronomeEnabled,
       enabled: enabled,
+      showVelocity: showVelocity,
       onVolumeChanged: onVolumeChanged,
       onVelocityChanged: onVelocityChanged,
       onPlayFromCursorChanged: onPlayFromCursorChanged,
@@ -146,6 +150,7 @@ class CompositionPerformanceControls extends StatelessWidget {
                   isSustainEnabled: currentSustain,
                   isMetronomeEnabled: currentMetronome,
                   enabled: enabled,
+                  showVelocity: showVelocity,
                   showCloseButton: true,
                   onClose: () {
                     Navigator.of(sheetContext).pop();
@@ -210,6 +215,7 @@ class _PerformancePanel extends StatelessWidget {
     required this.isSustainEnabled,
     required this.isMetronomeEnabled,
     required this.enabled,
+    required this.showVelocity,
     required this.onVolumeChanged,
     required this.onVelocityChanged,
     required this.onPlayFromCursorChanged,
@@ -228,6 +234,7 @@ class _PerformancePanel extends StatelessWidget {
   final bool isSustainEnabled;
   final bool isMetronomeEnabled;
   final bool enabled;
+  final bool showVelocity;
   final ValueChanged<double> onVolumeChanged;
   final ValueChanged<double> onVelocityChanged;
   final ValueChanged<bool> onPlayFromCursorChanged;
@@ -281,7 +288,7 @@ class _PerformancePanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Performance',
+                      context.l10n.performance,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.label,
@@ -289,7 +296,7 @@ class _PerformancePanel extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Adjust playback and how new notes sound.',
+                      context.l10n.performanceDescription,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,
@@ -300,7 +307,7 @@ class _PerformancePanel extends StatelessWidget {
               ),
               if (showCloseButton)
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: context.l10n.close,
                   onPressed: onClose,
                   visualDensity: VisualDensity.compact,
                   icon: Icon(
@@ -314,19 +321,20 @@ class _PerformancePanel extends StatelessWidget {
           _PerformanceSlider(
             colors: colors,
             icon: Icons.volume_up_rounded,
-            label: 'Volume',
+            label: context.l10n.volume,
             value: volume,
             enabled: enabled,
             onChanged: onVolumeChanged,
           ),
-          _PerformanceSlider(
-            colors: colors,
-            icon: Icons.bolt_rounded,
-            label: 'Note velocity',
-            value: velocity,
-            enabled: enabled,
-            onChanged: onVelocityChanged,
-          ),
+          if (showVelocity)
+            _PerformanceSlider(
+              colors: colors,
+              icon: Icons.bolt_rounded,
+              label: context.l10n.noteVelocity,
+              value: velocity,
+              enabled: enabled,
+              onChanged: onVelocityChanged,
+            ),
           const Gap(AppSpacing.xs),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -344,7 +352,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.play_circle_outline_rounded,
-                      label: 'From cursor',
+                      label: context.l10n.fromCursor,
                       value: playFromCursor,
                       enabled: enabled && !isLoopEnabled,
                       onChanged: onPlayFromCursorChanged,
@@ -355,7 +363,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.repeat_rounded,
-                      label: 'Loop measure',
+                      label: context.l10n.loopMeasure,
                       value: isLoopEnabled,
                       enabled: enabled,
                       onChanged: onLoopChanged,
@@ -366,7 +374,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.piano_rounded,
-                      label: 'Sustain',
+                      label: context.l10n.sustain,
                       value: isSustainEnabled,
                       enabled: enabled,
                       onChanged: onSustainChanged,
@@ -377,7 +385,7 @@ class _PerformancePanel extends StatelessWidget {
                     child: _PerformanceToggle(
                       colors: colors,
                       icon: Icons.timer_outlined,
-                      label: 'Metronome',
+                      label: context.l10n.metronome,
                       value: isMetronomeEnabled,
                       enabled: enabled,
                       onChanged: onMetronomeChanged,

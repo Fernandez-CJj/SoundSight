@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/services/composition_publish_service.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
@@ -79,9 +80,9 @@ class _PublishedCompositionsScreenState
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Published Compositions',
-          style: TextStyle(
+        title: Text(
+          context.l10n.drawerPublishedCompositions,
+          style: const TextStyle(
             fontSize: AppTextSizes.sectionTitle,
             fontWeight: FontWeight.w600,
           ),
@@ -191,7 +192,7 @@ class _PublishedCompositionsScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Explore music',
+                context.l10n.exploreMusic,
                 style: TextStyle(
                   color: colors.primaryColor,
                   fontSize: AppTextSizes.screenTitle,
@@ -200,7 +201,7 @@ class _PublishedCompositionsScreenState
               ),
               const Gap(AppSpacing.xs),
               Text(
-                'View music sheets shared by other SoundSight users.',
+                context.l10n.exploreMusicDescription,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
                   fontSize: AppTextSizes.label,
@@ -256,7 +257,7 @@ class _PublishedCompositionsScreenState
             ),
             const Gap(AppSpacing.lg),
             Text(
-              'No published compositions yet',
+              context.l10n.noPublishedCompositions,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -266,8 +267,7 @@ class _PublishedCompositionsScreenState
             ),
             const Gap(AppSpacing.sm),
             Text(
-              'Published music sheets from the SoundSight community '
-              'will appear here.',
+              context.l10n.noPublishedCompositionsDescription,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -295,7 +295,7 @@ class _PublishedCompositionsScreenState
             ),
             const Gap(AppSpacing.md),
             Text(
-              'Published compositions could not be loaded.',
+              context.l10n.publishedCompositionsLoadFailed,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -305,7 +305,7 @@ class _PublishedCompositionsScreenState
             ),
             const Gap(AppSpacing.xs),
             Text(
-              'Check your connection and Firestore permissions.',
+              context.l10n.checkConnectionFirestorePermissions,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -321,7 +321,7 @@ class _PublishedCompositionsScreenState
   Widget buildSignedOutState(AppThemeColors colors) {
     return Center(
       child: Text(
-        'Sign in to view published compositions.',
+        context.l10n.signInForPublishedCompositions,
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -407,19 +407,18 @@ class _PublishedCompositionsScreenState
       },
     );
 
-    var resultMessage =
-        'The composition could not be unpublished. '
-        'Make sure the backend is running.';
+    var resultMessage = context.l10n.compositionUnpublishFailed;
 
     try {
       await publishService.unpublishComposition(
         compositionId: composition.compositionId,
-        ownerId: composition.ownerId,
       );
 
       if (!mounted) return;
 
-      resultMessage = '"${composition.title}" was unpublished.';
+      resultMessage = context.l10n.publishedCompositionUnpublished(
+        composition.title,
+      );
     } catch (error, stackTrace) {
       debugPrint('Unpublishing failed: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -445,13 +444,20 @@ class _PublishedCompositionsScreenState
     final resultMessage = await playbackController.togglePlayback(
       composition,
       onPlaybackStarted: () {
-        showMessage('Playing "${composition.title}".');
+        showMessage(context.l10n.communityPlaying(composition.title));
       },
     );
 
     if (!mounted || resultMessage == null) return;
 
-    showMessage(resultMessage);
+    final localizedMessage = switch (resultMessage) {
+      'Playback stopped.' => context.l10n.communityPlaybackStopped,
+      'This version has no playback data. Republish it first.' =>
+        context.l10n.communityNoPlaybackData,
+      _ => context.l10n.communityPlaybackFailed,
+    };
+
+    showMessage(localizedMessage);
   }
 
   void updatePlaybackState() {

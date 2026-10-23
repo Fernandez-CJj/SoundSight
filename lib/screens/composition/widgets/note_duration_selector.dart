@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class NoteDurationSelector extends StatelessWidget {
@@ -13,6 +14,10 @@ class NoteDurationSelector extends StatelessWidget {
     required this.onDurationSelected,
     this.compact = false,
     this.enabled = true,
+    this.helperText,
+    this.showAutomatic = false,
+    this.automaticSelected = false,
+    this.onAutomaticSelected,
   });
 
   final AppThemeColors colors;
@@ -22,145 +27,273 @@ class NoteDurationSelector extends StatelessWidget {
   final ValueChanged<double> onDurationSelected;
   final bool compact;
   final bool enabled;
+  final String? helperText;
+  final bool showAutomatic;
+  final bool automaticSelected;
+  final VoidCallback? onAutomaticSelected;
 
   @override
   Widget build(BuildContext context) {
     final allOptions = beatUnit == 8
-        ? const [
-            _DurationOption('Whole', 8, Icons.circle_outlined),
-            _DurationOption('Dotted Half', 6, Icons.more_horiz_rounded),
-            _DurationOption('Half', 4, Icons.music_note_outlined),
-            _DurationOption('Dotted Quarter', 3, Icons.more_horiz_rounded),
-            _DurationOption('Quarter', 2, Icons.music_note_rounded),
-            _DurationOption('Dotted Eighth', 1.5, Icons.more_horiz_rounded),
-            _DurationOption('Eighth', 1, Icons.queue_music_rounded),
-            _DurationOption('Triplet', 2 / 3, Icons.looks_3_outlined),
-            _DurationOption('Sixteenth', 0.5, Icons.double_arrow_rounded),
+        ? [
+            _DurationOption(context.l10n.wholeNote, 8, Icons.circle_outlined),
+            _DurationOption(context.l10n.dottedHalfNote, 6, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.halfNote, 4, Icons.music_note_outlined),
+            _DurationOption(context.l10n.dottedQuarterNote, 3, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.quarterNote, 2, Icons.music_note_rounded),
+            _DurationOption(context.l10n.dottedEighthNote, 1.5, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.eighthNote, 1, Icons.queue_music_rounded),
+            _DurationOption(context.l10n.triplet, 2 / 3, Icons.looks_3_outlined),
+            _DurationOption(context.l10n.sixteenthNote, 0.5, Icons.double_arrow_rounded),
           ]
-        : const [
-            _DurationOption('Whole', 4, Icons.circle_outlined),
-            _DurationOption('Dotted Half', 3, Icons.more_horiz_rounded),
-            _DurationOption('Half', 2, Icons.music_note_outlined),
-            _DurationOption('Dotted Quarter', 1.5, Icons.more_horiz_rounded),
-            _DurationOption('Quarter', 1, Icons.music_note_rounded),
-            _DurationOption('Dotted Eighth', 0.75, Icons.more_horiz_rounded),
-            _DurationOption('Triplet', 2 / 3, Icons.looks_3_outlined),
-            _DurationOption('Eighth', 0.5, Icons.queue_music_rounded),
-            _DurationOption('Sixteenth', 0.25, Icons.double_arrow_rounded),
+        : [
+            _DurationOption(context.l10n.wholeNote, 4, Icons.circle_outlined),
+            _DurationOption(context.l10n.dottedHalfNote, 3, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.halfNote, 2, Icons.music_note_outlined),
+            _DurationOption(context.l10n.dottedQuarterNote, 1.5, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.quarterNote, 1, Icons.music_note_rounded),
+            _DurationOption(context.l10n.dottedEighthNote, 0.75, Icons.more_horiz_rounded),
+            _DurationOption(context.l10n.triplet, 2 / 3, Icons.looks_3_outlined),
+            _DurationOption(context.l10n.eighthNote, 0.5, Icons.queue_music_rounded),
+            _DurationOption(context.l10n.sixteenthNote, 0.25, Icons.double_arrow_rounded),
           ];
 
     final options = allOptions.where((option) {
       return option.beats <= beatsPerMeasure;
     }).toList();
 
-    if (compact) {
-      return Container(
-        height: 60,
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        decoration: BoxDecoration(
-          color: colors.surfaceColor,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colors.borderColor),
-        ),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-              child: Text(
-                'Duration',
-                style: TextStyle(
-                  color: colors.primaryColor,
-                  fontSize: AppTextSizes.caption,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const Gap(AppSpacing.xs),
-            Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: options.length,
-                separatorBuilder: (_, _) => const Gap(AppSpacing.xs),
-                itemBuilder: (context, index) {
-                  final option = options[index];
+    final selectedOption = options.firstWhere(
+      (option) => _sameDuration(selectedDuration, option.beats),
+      orElse: () => options.first,
+    );
 
-                  return SizedBox(
-                    width: 104,
-                    child: _CompactDurationButton(
-                      colors: colors,
-                      option: option,
-                      selected: _sameDuration(selectedDuration, option.beats),
-                      enabled: enabled,
-                      onTap: () {
-                        onDurationSelected(option.beats);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
+    return Tooltip(
+      message: helperText ?? context.l10n.chooseLengthBeforePiano,
+      child: Material(
         color: colors.surfaceColor,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: colors.isDarkMode ? 0.18 : 0.05,
-            ),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(
+            compact ? AppRadius.md : AppRadius.lg,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Note Duration',
-            style: TextStyle(
-              color: colors.primaryColor,
-              fontSize: AppTextSizes.label,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const Gap(AppSpacing.xs),
-          Text(
-            'Choose the length before tapping a piano key.',
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.caption,
-            ),
-          ),
-          const Gap(AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              for (final option in options)
-                SizedBox(
-                  width: 142,
-                  child: _DurationButton(
-                    colors: colors,
-                    option: option,
-                    selected: _sameDuration(selectedDuration, option.beats),
-                    enabled: enabled,
-                    onTap: () {
-                      onDurationSelected(option.beats);
-                    },
-                  ),
+          side: BorderSide(color: colors.borderColor),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? () => _showDurationDialog(context, options) : null,
+          child: Opacity(
+            opacity: enabled ? 1 : 0.55,
+            child: SizedBox(
+              height: compact ? 60 : 78,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? AppSpacing.sm : AppSpacing.md,
+                  vertical: AppSpacing.xs,
                 ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: compact ? 38 : 44,
+                      height: compact ? 38 : 44,
+                      decoration: BoxDecoration(
+                        color: colors.primaryColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Icon(
+                        automaticSelected
+                            ? Icons.auto_mode_rounded
+                            : selectedOption.icon,
+                        color: colors.primaryColor,
+                        size: compact ? 20 : AppIconSizes.md,
+                      ),
+                    ),
+                    const Gap(AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.l10n.duration,
+                            style: TextStyle(
+                              color: colors.secondaryTextColor,
+                              fontSize: AppTextSizes.caption,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Gap(2),
+                          Text(
+                            automaticSelected
+                                ? context.l10n.automatic
+                                : selectedOption.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.primaryColor,
+                              fontSize: AppTextSizes.label,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: colors.secondaryTextColor,
+                      size: AppIconSizes.md,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDurationDialog(
+    BuildContext context,
+    List<_DurationOption> options,
+  ) async {
+    final screenSize = MediaQuery.sizeOf(context);
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final columnCount = screenSize.width >= 800
+            ? 4
+            : screenSize.width >= 520
+            ? 3
+            : 2;
+        final optionCount = options.length + (showAutomatic ? 1 : 0);
+        final rowCount = (optionCount / columnCount).ceil();
+        final desiredGridHeight = rowCount * 78.0 + (rowCount - 1) * 8.0;
+        final maximumGridHeight = screenSize.height * 0.56;
+        final gridHeight = desiredGridHeight < maximumGridHeight
+            ? desiredGridHeight
+            : maximumGridHeight;
+
+        return AlertDialog(
+          backgroundColor: colors.surfaceColor,
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.sm,
+            0,
+          ),
+          title: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.primaryColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(
+                  Icons.music_note_rounded,
+                  color: colors.primaryColor,
+                ),
+              ),
+              const Gap(AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.chooseNoteDuration,
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.body,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      showAutomatic
+                          ? context.l10n.chooseFixedOrKeyHold
+                          : context.l10n.chooseNextNoteLength,
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: context.l10n.close,
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                icon: Icon(
+                  Icons.close_rounded,
+                  color: colors.secondaryTextColor,
+                ),
+              ),
             ],
           ),
-        ],
-      ),
+          contentPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          content: SizedBox(
+            width: 620,
+            height: gridHeight,
+            child: GridView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: optionCount,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columnCount,
+                crossAxisSpacing: AppSpacing.sm,
+                mainAxisSpacing: AppSpacing.sm,
+                mainAxisExtent: 78,
+              ),
+              itemBuilder: (context, index) {
+                if (showAutomatic && index == 0) {
+                  return _DurationDialogOption(
+                    colors: colors,
+                    icon: Icons.auto_mode_rounded,
+                    title: context.l10n.automatic,
+                    subtitle: context.l10n.useKeyHoldTime,
+                    selected: automaticSelected,
+                    enabled: onAutomaticSelected != null,
+                    onTap: () {
+                      onAutomaticSelected?.call();
+                      Navigator.of(dialogContext).pop();
+                    },
+                  );
+                }
+
+                final optionIndex = showAutomatic ? index - 1 : index;
+                final option = options[optionIndex];
+                return _DurationDialogOption(
+                  colors: colors,
+                  icon: option.icon,
+                  title: option.name,
+                  subtitle: option.beatLabel(context),
+                  selected:
+                      !automaticSelected &&
+                      _sameDuration(selectedDuration, option.beats),
+                  enabled: true,
+                  onTap: () {
+                    onDurationSelected(option.beats);
+                    Navigator.of(dialogContext).pop();
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -169,17 +302,21 @@ class NoteDurationSelector extends StatelessWidget {
   }
 }
 
-class _CompactDurationButton extends StatelessWidget {
-  const _CompactDurationButton({
+class _DurationDialogOption extends StatelessWidget {
+  const _DurationDialogOption({
     required this.colors,
-    required this.option,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
     required this.selected,
     required this.onTap,
     required this.enabled,
   });
 
   final AppThemeColors colors;
-  final _DurationOption option;
+  final IconData icon;
+  final String title;
+  final String subtitle;
   final bool selected;
   final VoidCallback onTap;
   final bool enabled;
@@ -187,65 +324,9 @@ class _CompactDurationButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? colors.primaryColor : colors.backgroundColor,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                option.icon,
-                size: 16,
-                color: selected
-                    ? colors.backgroundColor
-                    : colors.primaryColor,
-              ),
-              const Gap(3),
-              Flexible(
-                child: Text(
-                  option.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: selected
-                        ? colors.backgroundColor
-                        : colors.primaryColor,
-                    fontSize: AppTextSizes.caption,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DurationButton extends StatelessWidget {
-  const _DurationButton({
-    required this.colors,
-    required this.option,
-    required this.selected,
-    required this.onTap,
-    required this.enabled,
-  });
-
-  final AppThemeColors colors;
-  final _DurationOption option;
-  final bool selected;
-  final VoidCallback onTap;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: colors.backgroundColor,
+      color: selected
+          ? colors.primaryColor.withValues(alpha: 0.12)
+          : colors.backgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(
@@ -256,46 +337,49 @@ class _DurationButton extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        child: SizedBox(
-          height: 76,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: colors.primaryColor, size: AppIconSizes.sm),
+              const Gap(AppSpacing.sm),
+              Expanded(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      option.icon,
-                      color: colors.primaryColor,
-                      size: AppIconSizes.sm,
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.caption,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    const Gap(AppSpacing.xs),
-                    Flexible(
-                      child: Text(
-                        option.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: colors.primaryColor,
-                          fontSize: AppTextSizes.caption,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
                       ),
                     ),
                   ],
                 ),
-                const Gap(AppSpacing.xs),
-                Text(
-                  option.beatLabel,
-                  style: TextStyle(
-                    color: colors.secondaryTextColor,
-                    fontSize: AppTextSizes.caption,
-                  ),
+              ),
+              if (selected)
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: colors.primaryColor,
+                  size: 18,
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -310,12 +394,14 @@ class _DurationOption {
   final double beats;
   final IconData icon;
 
-  String get beatLabel {
-    if (beats == 1) return '1 beat';
+  String beatLabel(BuildContext context) {
+    if (beats == 1) return '1 ${context.l10n.beat}';
     if (beats == 2 || beats == 3 || beats == 4 || beats == 6 || beats == 8) {
-      return '${beats.toInt()} beats';
+      return '${beats.toInt()} ${context.l10n.beats}';
     }
-    if ((beats - (2 / 3)).abs() < 0.001) return '2/3 beat';
-    return '${beats.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '')} beats';
+    if ((beats - (2 / 3)).abs() < 0.001) {
+      return '2/3 ${context.l10n.beat}';
+    }
+    return '${beats.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '')} ${context.l10n.beats}';
   }
 }

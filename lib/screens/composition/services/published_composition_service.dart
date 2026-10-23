@@ -21,10 +21,7 @@ class PublishedCompositionService {
 
           for (final document in snapshot.docs) {
             compositions.add(
-              PublishedComposition.fromMap(
-                document.id,
-                document.data(),
-              ),
+              PublishedComposition.fromMap(document.id, document.data()),
             );
           }
 
@@ -76,9 +73,7 @@ class PublishedCompositionService {
       return Future.value(null);
     }
 
-    return FirebaseStorage.instance
-        .ref(storagePath)
-        .getData(maximumPdfSize);
+    return FirebaseStorage.instance.ref(storagePath).getData(maximumPdfSize);
   }
 
   Future<Composition?> loadPlayableComposition(
@@ -93,17 +88,15 @@ class PublishedCompositionService {
 
     final versionData = versionDocument.data();
     final notesData = versionData?['notes'];
+    final performanceNotesData = versionData?['performanceNotes'];
 
     if (!versionDocument.exists ||
         versionData == null ||
-        notesData is! List ||
-        notesData.isEmpty) {
+        ((notesData is! List || notesData.isEmpty) &&
+            (performanceNotesData is! List || performanceNotesData.isEmpty))) {
       return null;
     }
 
-    return Composition.fromMap(
-      publishedComposition.compositionId,
-      versionData,
-    );
+    return Composition.fromMap(publishedComposition.compositionId, versionData);
   }
 }

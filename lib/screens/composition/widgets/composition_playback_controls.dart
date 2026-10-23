@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class CompositionPlaybackControls extends StatelessWidget {
@@ -28,12 +29,12 @@ class CompositionPlaybackControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = isPreparing
-        ? 'Loading'
+        ? context.l10n.loading
         : isPaused
-        ? 'Paused'
+        ? context.l10n.paused
         : isPlaying
-        ? 'Playing'
-        : 'Ready';
+        ? context.l10n.playing
+        : context.l10n.ready;
 
     if (compact) {
       return Container(
@@ -73,7 +74,7 @@ class CompositionPlaybackControls extends StatelessWidget {
             _CompactPlaybackButton(
               colors: colors,
               icon: Icons.play_arrow_rounded,
-              tooltip: isPaused ? 'Resume' : 'Play',
+              tooltip: isPaused ? context.l10n.resume : context.l10n.play,
               enabled: !isPreparing && (!isPlaying || isPaused),
               onTap: onPlay,
               filled: true,
@@ -82,7 +83,7 @@ class CompositionPlaybackControls extends StatelessWidget {
             _CompactPlaybackButton(
               colors: colors,
               icon: Icons.pause_rounded,
-              tooltip: 'Pause',
+              tooltip: context.l10n.pause,
               enabled: isPlaying && !isPaused && !isPreparing,
               onTap: onPause,
             ),
@@ -90,7 +91,7 @@ class CompositionPlaybackControls extends StatelessWidget {
             _CompactPlaybackButton(
               colors: colors,
               icon: Icons.stop_rounded,
-              tooltip: 'Stop',
+              tooltip: context.l10n.stop,
               enabled: isPlaying || isPaused || isPreparing,
               onTap: onStop,
             ),
@@ -120,7 +121,7 @@ class CompositionPlaybackControls extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Playback',
+                context.l10n.playback,
                 style: TextStyle(
                   color: colors.primaryColor,
                   fontSize: AppTextSizes.label,
@@ -172,7 +173,7 @@ class CompositionPlaybackControls extends StatelessWidget {
                 child: _PlaybackButton(
                   colors: colors,
                   icon: Icons.play_arrow_rounded,
-                  label: isPaused ? 'Resume' : 'Play',
+                  label: isPaused ? context.l10n.resume : context.l10n.play,
                   filled: true,
                   enabled: !isPreparing && (!isPlaying || isPaused),
                   onTap: onPlay,
@@ -183,7 +184,7 @@ class CompositionPlaybackControls extends StatelessWidget {
                 child: _PlaybackButton(
                   colors: colors,
                   icon: Icons.pause_rounded,
-                  label: 'Pause',
+                  label: context.l10n.pause,
                   enabled: isPlaying && !isPaused && !isPreparing,
                   onTap: onPause,
                 ),
@@ -193,7 +194,7 @@ class CompositionPlaybackControls extends StatelessWidget {
                 child: _PlaybackButton(
                   colors: colors,
                   icon: Icons.stop_rounded,
-                  label: 'Stop',
+                  label: context.l10n.stop,
                   enabled: isPlaying || isPaused || isPreparing,
                   onTap: onStop,
                 ),

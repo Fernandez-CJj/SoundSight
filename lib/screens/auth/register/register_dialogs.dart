@@ -215,7 +215,8 @@ Future<bool> showAccountCreatedDialog(BuildContext context) async {
             ),
             content: const Text(
               'We sent a verification link to your email address. Open it to '
-              'finish creating your SoundSight account.',
+              'finish creating your SoundSight account. If it does not arrive '
+              'in your inbox, check your Spam or Junk folder.',
               style: TextStyle(
                 color: AppColors.lightSecondaryText,
                 fontSize: AppTextSizes.body,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -26,8 +27,8 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
       ),
       title: Text(
         isReconversion
-            ? 'Translate this sheet again?'
-            : 'Translate music sheet?',
+            ? context.l10n.translateSheetAgainQuestion
+            : context.l10n.translateMusicSheetQuestion,
         style: TextStyle(
           color: colors.primaryColor,
           fontSize: AppTextSizes.sectionTitle,
@@ -36,10 +37,8 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
       ),
       content: Text(
         isReconversion
-            ? 'SoundSight will create a new translation for "$title" and '
-                  'replace its current MusicXML and audio preview.'
-            : 'SoundSight will translate "$title" into playable music. '
-                  'This may take a few minutes.',
+            ? context.l10n.retranslateDescription(title)
+            : context.l10n.translateDescription(title),
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -67,7 +66,7 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.cancel),
                 ),
               ),
             ),
@@ -86,7 +85,9 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    isReconversion ? 'Continue' : 'Translate',
+                    isReconversion
+                        ? context.l10n.continueAction
+                        : context.l10n.translate,
                   ),
                 ),
               ),
@@ -99,10 +100,7 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
 }
 
 class MusicSheetOmrLoadingDialog extends StatelessWidget {
-  const MusicSheetOmrLoadingDialog({
-    super.key,
-    required this.colors,
-  });
+  const MusicSheetOmrLoadingDialog({super.key, required this.colors});
 
   final AppThemeColors colors;
 
@@ -131,7 +129,7 @@ class MusicSheetOmrLoadingDialog extends StatelessWidget {
               ),
               Gap(AppSpacing.lg),
               Text(
-                'Translating music sheet',
+                context.l10n.translatingMusicSheet,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.primaryColor,
@@ -141,8 +139,7 @@ class MusicSheetOmrLoadingDialog extends StatelessWidget {
               ),
               Gap(AppSpacing.xs),
               Text(
-                'Audiveris is reading the notes. Please wait and keep '
-                'the app open.',
+                context.l10n.translationLoadingDescription,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
@@ -190,7 +187,7 @@ class MusicSheetOmrSuccessDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        'Translation complete',
+        context.l10n.translationComplete,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -199,8 +196,7 @@ class MusicSheetOmrSuccessDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        'SoundSight recognized ${result.noteCount} notes across '
-        '${result.partCount} ${result.partCount == 1 ? 'part' : 'parts'}.',
+        context.l10n.translationResult(result.noteCount, result.partCount),
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.secondaryTextColor,
@@ -228,7 +224,7 @@ class MusicSheetOmrSuccessDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
-            child: const Text('Done'),
+            child: Text(context.l10n.done),
           ),
         ),
       ],
@@ -268,7 +264,7 @@ class MusicSheetOmrErrorDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        'Translation failed',
+        context.l10n.translationFailed,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -305,7 +301,7 @@ class MusicSheetOmrErrorDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
-            child: const Text('Close'),
+            child: Text(context.l10n.close),
           ),
         ),
       ],

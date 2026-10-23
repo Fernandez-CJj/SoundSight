@@ -1,29 +1,52 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
 import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
+import 'package:soundsight/screens/auth/email_verification/email_verification_screen.dart';
 import 'package:soundsight/screens/auth/login/login_dialogs.dart';
 import 'package:soundsight/screens/auth/login/login_form.dart';
 import 'package:soundsight/screens/auth/register/register_screen.dart';
+import 'package:soundsight/screens/auth/services/registration_profile_service.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/theme/app_colors.dart';
+import 'package:soundsight/localization/app_locale_controller.dart';
 
 import '../../../constants/constant.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({
+    super.key,
+    this.auth,
+    this.profileService,
+    this.assessmentService,
+  });
+
+  final FirebaseAuth? auth;
+  final RegistrationProfileService? profileService;
+  final AssessmentAttemptService? assessmentService;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  late final FirebaseAuth auth;
+  late final RegistrationProfileService profileService;
+  late final AssessmentAttemptService assessmentService;
   final formKey = GlobalKey<FormState>();
   bool isObscure = true;
   final emailCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    auth = widget.auth ?? FirebaseAuth.instance;
+    profileService = widget.profileService ?? RegistrationProfileService();
+    assessmentService =
+        widget.assessmentService ?? AssessmentAttemptService(auth: auth);
+  }
 
   @override
   void dispose() {
@@ -78,75 +101,71 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Authenticates the user, synchronizes assessment expiration, and opens the
   /// correct first screen for the user's assessment state.
-  void firebaseLogin() async {
+  Future<void> firebaseLogin() async {
+    var authenticationSucceeded = false;
     showLoginLoadingDialog(context);
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await auth.signInWithEmailAndPassword(
         email: emailCtrl.text.trim(),
         password: passwordCtrl.text,
       );
+      authenticationSucceeded = true;
 
-      await FirebaseAuth.instance.currentUser?.reload();
+      await auth.currentUser?.reload();
 
-      final currentUser = FirebaseAuth.instance.currentUser;
+      final currentUser = auth.currentUser;
 
-      if (currentUser?.emailVerified != true) {
-        await currentUser?.delete();
+      if (currentUser == null) {
+        throw StateError('The authenticated user is unavailable.');
+      }
 
-        if (!mounted) return;
+      if (!currentUser.emailVerified) {
+        if (!mounted) {
+          await auth.signOut();
+          return;
+        }
 
         Navigator.of(context).pop();
 
-        await showLoginErrorDialog(
-          context,
-          "This email hasn't been verified, so the unfinished account was "
-          'removed. Please register again.',
-        );
-
-        if (!mounted) return;
-
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const RegisterScreen()),
+          MaterialPageRoute(
+            builder: (_) => EmailVerificationScreen(
+              username: currentUser.displayName,
+              password: passwordCtrl.text,
+              auth: auth,
+              profileService: profileService,
+              assessmentService: assessmentService,
+            ),
+          ),
           (route) => false,
         );
 
         return;
       }
 
-      final userDocument = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser!.uid)
-          .get();
+      await currentUser.getIdTokenResult(true);
+      var userDocument = await profileService.loadProfile(currentUser);
 
       if (!userDocument.exists) {
-        await currentUser.delete();
+        await profileService.ensureProfile(
+          currentUser,
+          fallbackUsername: currentUser.displayName,
+        );
+        userDocument = await profileService.loadProfile(currentUser);
+      }
 
-        if (!mounted) return;
-
-        Navigator.of(context).pop();
-
-        await showLoginErrorDialog(
+      if (mounted) {
+        AppLocaleScope.of(
           context,
-          "We couldn't find a completed SoundSight profile for this account. "
-          'The incomplete account was removed. Please register again.',
-        );
-
-        if (!mounted) return;
-
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const RegisterScreen()),
-          (route) => false,
-        );
-
-        return;
+        ).applyLanguageCode(userDocument.data()?['languageCode']);
       }
 
       // The service uses Firestore server time to detect expiration.
-      final assessmentService = AssessmentAttemptService();
       final attempt = await assessmentService.loadCurrentAttempt();
 
       if (!mounted) {
+        await auth.signOut();
         return;
       }
 
@@ -154,6 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).pop();
 
       final assessmentStatus = attempt?.effectiveStatus;
+      final isDarkMode = userDocument.data()?['theme'] == 'dark';
 
       // Completed users keep their calculated level. Expired users have already
       // been assigned Beginner by the assessment service.
@@ -165,17 +185,22 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(
           builder: (_) {
             if (shouldOpenHome) {
-              return const HomeScreen();
+              return HomeScreen(isDarkMode: isDarkMode);
             }
 
             // A null attempt means the assessment has not started. An active
             // attempt is passed in so the entry screen can display Resume.
-            return AssessmentEntryScreen(initialAttempt: attempt);
+            return AssessmentEntryScreen(
+              initialAttempt: attempt,
+              isDarkMode: isDarkMode,
+            );
           },
         ),
         (route) => false,
       );
     } on FirebaseAuthException catch (error) {
+      await _signOutAfterFailedInitialization(authenticationSucceeded);
+
       if (!mounted) {
         return;
       }
@@ -209,6 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await showLoginErrorDialog(context, message);
     } on FirebaseException catch (error) {
+      await _signOutAfterFailedInitialization(authenticationSucceeded);
+
       if (!mounted) {
         return;
       }
@@ -231,6 +258,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await showLoginErrorDialog(context, message);
     } catch (error) {
+      await _signOutAfterFailedInitialization(authenticationSucceeded);
+
       if (!mounted) {
         return;
       }
@@ -241,6 +270,20 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         "We couldn't finish signing you in. Please try again.",
       );
+    }
+  }
+
+  Future<void> _signOutAfterFailedInitialization(
+    bool authenticationSucceeded,
+  ) async {
+    if (!authenticationSucceeded) {
+      return;
+    }
+
+    try {
+      await auth.signOut();
+    } on FirebaseAuthException {
+      // Preserve the original setup error shown by the caller.
     }
   }
 }

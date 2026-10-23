@@ -86,10 +86,9 @@ class CompositionPlaybackService {
     final safeOctave = octave.clamp(0, 8).toInt();
     final firstMidi = safeOctave == 0
         ? PianoNote.minimumMidi
-        : ((safeOctave + 1) * 12).clamp(
-            PianoNote.minimumMidi,
-            PianoNote.maximumMidi,
-          ).toInt();
+        : ((safeOctave + 1) * 12)
+              .clamp(PianoNote.minimumMidi, PianoNote.maximumMidi)
+              .toInt();
     final lastMidi = safeOctave == 0
         ? 23
         : safeOctave == 8
@@ -162,7 +161,7 @@ class CompositionPlaybackService {
     double startBeat = 0,
     int? loopMeasureIndex,
   }) async {
-    if (composition.notes.isEmpty) return;
+    if (!composition.hasPlayableContent) return;
 
     if (composition.tempo <= 0) {
       throw ArgumentError.value(
@@ -324,9 +323,7 @@ class CompositionPlaybackService {
   }) {
     if (_isPlaying) return Future<void>.value();
 
-    final generation = allowOverlap
-        ? _previewGeneration
-        : ++_previewGeneration;
+    final generation = allowOverlap ? _previewGeneration : ++_previewGeneration;
 
     return _enqueuePreview(() async {
       if (_isPlaying || generation != _previewGeneration) return;
@@ -359,10 +356,7 @@ class CompositionPlaybackService {
 
       final previewVolume = (_volume * velocity).clamp(0.0, 1.0).toDouble();
       final stopSound = await pool.start(volume: previewVolume);
-      final voice = _PreviewVoice(
-        midiNumber: midiNumber,
-        stopSound: stopSound,
-      );
+      final voice = _PreviewVoice(midiNumber: midiNumber, stopSound: stopSound);
 
       if (_isPlaying || generation != _previewGeneration) {
         await _stopPreviewVoiceSafely(voice);
@@ -370,12 +364,9 @@ class CompositionPlaybackService {
       }
 
       _activePreviewVoices.add(voice);
-      voice.timer = Timer(
-        Duration(seconds: _sustainEnabled ? 8 : 4),
-        () async {
-          await _finishPreviewVoice(voice);
-        },
-      );
+      voice.timer = Timer(Duration(seconds: _sustainEnabled ? 8 : 4), () async {
+        await _finishPreviewVoice(voice);
+      });
     });
   }
 
@@ -457,6 +448,43 @@ class CompositionPlaybackService {
   List<_TimelineNote> _buildTimelineNotes(Composition composition) {
     final timelineNotes = <_TimelineNote>[];
 
+    if (composition.usesPerformanceRecording) {
+      final microsecondsPerBeat =
+          (60000000 / composition.tempo) * (4 / composition.beatUnit);
+      for (
+        var index = 0;
+        index < composition.performanceNotes.length;
+        index++
+      ) {
+        final performanceNote = composition.performanceNotes[index];
+        final pianoNote = PianoNote.fromMidi(performanceNote.midiNumber);
+        final startBeat = performanceNote.startTimeUs / microsecondsPerBeat;
+        final endBeat = performanceNote.endTimeUs / microsecondsPerBeat;
+        timelineNotes.add(
+          _TimelineNote(
+            note: CompositionNote(
+              id: 'performance-$index',
+              pitch: pianoNote.pitch,
+              octave: pianoNote.octave,
+              midiNumber: performanceNote.midiNumber,
+              measureIndex: 0,
+              startBeat: 0,
+              durationBeats: 1,
+              velocity: performanceNote.velocity / 127,
+            ),
+            startBeat: startBeat,
+            endBeat: endBeat,
+          ),
+        );
+      }
+      timelineNotes.sort((first, second) {
+        final startComparison = first.startBeat.compareTo(second.startBeat);
+        if (startComparison != 0) return startComparison;
+        return first.note.midiNumber.compareTo(second.note.midiNumber);
+      });
+      return timelineNotes;
+    }
+
     for (final note in composition.notes) {
       if (note.durationBeats <= 0) continue;
 
@@ -491,28 +519,23 @@ class CompositionPlaybackService {
 
     for (final note in notes) {
       boundariesByBeat
-          .putIfAbsent(
-            note.startBeat,
-            () => _TimelineBoundary(note.startBeat),
-          )
+          .putIfAbsent(note.startBeat, () => _TimelineBoundary(note.startBeat))
           .startingNotes
           .add(note);
       boundariesByBeat
-          .putIfAbsent(
-            note.endBeat,
-            () => _TimelineBoundary(note.endBeat),
-          )
+          .putIfAbsent(note.endBeat, () => _TimelineBoundary(note.endBeat))
           .endingNotes
           .add(note);
     }
 
     for (var beat = 0; beat < metronomeTotalBeats; beat++) {
       boundariesByBeat
-          .putIfAbsent(
-            beat.toDouble(),
-            () => _TimelineBoundary(beat.toDouble()),
-          )
-          .isMetronomeBeat = true;
+              .putIfAbsent(
+                beat.toDouble(),
+                () => _TimelineBoundary(beat.toDouble()),
+              )
+              .isMetronomeBeat =
+          true;
     }
 
     final boundaries = boundariesByBeat.values.toList();
@@ -637,9 +660,7 @@ class CompositionPlaybackService {
       final requestedMicroseconds = math.min(16000, remainingMicroseconds);
       final stopwatch = Stopwatch()..start();
 
-      await Future<void>.delayed(
-        Duration(microseconds: requestedMicroseconds),
-      );
+      await Future<void>.delayed(Duration(microseconds: requestedMicroseconds));
 
       stopwatch.stop();
 
@@ -786,9 +807,7 @@ class CompositionPlaybackService {
     }
   }
 
-  Future<void> _disposePreviewPoolFuture(
-    Future<AudioPool> poolFuture,
-  ) async {
+  Future<void> _disposePreviewPoolFuture(Future<AudioPool> poolFuture) async {
     try {
       final pool = await poolFuture;
       await pool.dispose();

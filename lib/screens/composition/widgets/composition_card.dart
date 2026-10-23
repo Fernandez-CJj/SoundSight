@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -10,196 +11,274 @@ class CompositionCard extends StatelessWidget {
     required this.colors,
     required this.composition,
     required this.isDeleting,
-    required this.isPlaying,
-    required this.isPlaybackBusy,
+    required this.isGeneratingFiles,
     required this.onOpen,
-    required this.onEdit,
-    required this.onPlay,
+    required this.onRetryGeneration,
     required this.onDelete,
   });
 
   final AppThemeColors colors;
   final Composition composition;
   final bool isDeleting;
-  final bool isPlaying;
-  final bool isPlaybackBusy;
+  final bool isGeneratingFiles;
   final VoidCallback onOpen;
-  final VoidCallback onEdit;
-  final VoidCallback onPlay;
-  final VoidCallback onDelete;
+  final VoidCallback onRetryGeneration;
+  final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
     final editedDate = composition.updatedAt ?? composition.createdAt;
+    final isRecording =
+        composition.creationMethod == Composition.recordingCreationMethod;
+    final filesNeedAttention = !composition.generatedFilesAreCurrent;
+    final filesAreOutOfDate = composition.generatedFilesAreOutOfDate;
+    final generationIsRunning =
+        isGeneratingFiles ||
+        composition.generationStatus == Composition.generatingStatus;
+    final generationColor = generationIsRunning
+        ? colors.primaryColor
+        : filesAreOutOfDate
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFFDC2626);
+    final creationMethodColor = isRecording
+        ? (colors.isDarkMode
+              ? const Color(0xFFFF8A80)
+              : const Color(0xFFB3261E))
+        : (colors.isDarkMode
+              ? const Color(0xFF8AB4F8)
+              : const Color(0xFF245E9C));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: isPlaying ? colors.primaryColor : colors.borderColor,
+    return Dismissible(
+      key: ValueKey(composition.id),
+      direction: isDeleting
+          ? DismissDirection.none
+          : DismissDirection.startToEnd,
+      confirmDismiss: (_) async {
+        await onDelete();
+        return false;
+      },
+      background: Container(
+        padding: EdgeInsets.only(left: AppSpacing.lg),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: const Color(0xFFDC2626),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: Colors.white,
+          size: 26,
         ),
       ),
-      child: Column(
-        children: [
-          ListTile(
-            onTap: isDeleting ? null : onOpen,
-            contentPadding: EdgeInsets.all(AppSpacing.md),
-            leading: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: colors.backgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: colors.borderColor),
-              ),
-              child: Icon(
-                isPlaying
-                    ? Icons.graphic_eq_rounded
-                    : Icons.music_note_rounded,
-                color: colors.primaryColor,
-                size: AppIconSizes.lg,
-              ),
-            ),
-            title: Text(
-              composition.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: colors.primaryColor,
-                fontSize: AppTextSizes.body,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            subtitle: Padding(
-              padding: EdgeInsets.only(top: AppSpacing.xs),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${composition.tempo} BPM - '
-                    '${composition.keySignature}',
-                    style: TextStyle(
-                      color: colors.secondaryTextColor,
-                      fontSize: AppTextSizes.caption,
-                    ),
-                  ),
-                  Gap(2),
-                  Text(
-                    formatEditedDate(editedDate),
-                    style: TextStyle(
-                      color: colors.secondaryTextColor,
-                      fontSize: AppTextSizes.caption,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            trailing: isDeleting
-                ? SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: colors.primaryColor,
-                    ),
-                  )
-                : PopupMenuButton<String>(
-                    color: colors.surfaceColor,
-                    icon: Icon(
-                      Icons.more_vert_rounded,
-                      color: colors.secondaryTextColor,
-                    ),
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        onDelete();
-                      }
-                    },
-                    itemBuilder: (_) {
-                      return [
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.delete_outline_rounded,
-                                color: colors.primaryColor,
-                                size: AppIconSizes.sm,
-                              ),
-                              Gap(AppSpacing.sm),
-                              Text(
-                                'Delete',
-                                style: TextStyle(color: colors.primaryColor),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ];
-                    },
-                  ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceColor,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: filesNeedAttention
+                ? generationColor
+                : colors.borderColor,
           ),
-          Divider(height: 1, color: colors.borderColor),
-          Padding(
-            padding: EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: OutlinedButton.icon(
-                      onPressed: isDeleting ? null : onEdit,
-                      icon: Icon(Icons.edit_outlined, size: AppIconSizes.sm),
-                      label: Text('Edit'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colors.primaryColor,
-                        side: BorderSide(color: colors.borderColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                      ),
-                    ),
+        ),
+        child: Column(
+          children: [
+            ListTile(
+              onTap: isDeleting ? null : onOpen,
+              contentPadding: EdgeInsets.all(AppSpacing.md),
+              leading: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: creationMethodColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: creationMethodColor.withValues(alpha: 0.35),
                   ),
                 ),
-                Gap(AppSpacing.sm),
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton.icon(
-                      onPressed: isDeleting || isPlaybackBusy ? null : onPlay,
-                      icon: isPlaybackBusy && isPlaying
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.4,
-                                color: colors.backgroundColor,
-                              ),
-                            )
-                          : Icon(
-                              isPlaying
-                                  ? Icons.stop_rounded
-                                  : Icons.play_arrow_rounded,
-                              size: AppIconSizes.md,
+                child: Icon(
+                  isRecording
+                      ? Icons.mic_rounded
+                      : Icons.edit_note_rounded,
+                  color: creationMethodColor,
+                  size: AppIconSizes.lg,
+                ),
+              ),
+              title: Text(
+                composition.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colors.primaryColor,
+                  fontSize: AppTextSizes.body,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: Padding(
+                padding: EdgeInsets.only(top: AppSpacing.xs),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildCreationMethodBadge(
+                      context: context,
+                      isRecording: isRecording,
+                      color: creationMethodColor,
+                    ),
+                    Gap(AppSpacing.xs),
+                    Text(
+                      '${composition.tempo} BPM - '
+                      '${composition.keySignature}',
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                      ),
+                    ),
+                    Gap(2),
+                    Text(
+                      formatEditedDate(context, editedDate),
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              trailing: isDeleting
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: colors.primaryColor,
+                      ),
+                    )
+                  : null,
+            ),
+            if (filesNeedAttention) ...[
+              Divider(height: 1, color: colors.borderColor),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(AppSpacing.md),
+                color: generationColor.withValues(alpha: 0.08),
+                child: Row(
+                  children: [
+                    if (generationIsRunning)
+                      SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: generationColor,
+                        ),
+                      )
+                    else
+                      Icon(
+                        filesAreOutOfDate
+                            ? Icons.update_rounded
+                            : Icons.warning_amber_rounded,
+                        color: generationColor,
+                        size: AppIconSizes.md,
+                      ),
+                    Gap(AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            generationIsRunning
+                                ? context.l10n.preparingMusicFiles
+                                : filesAreOutOfDate
+                                ? context.l10n.musicFilesNeedUpdating
+                                : context.l10n.musicFilesNotReady,
+                            style: TextStyle(
+                              color: colors.primaryColor,
+                              fontSize: AppTextSizes.label,
+                              fontWeight: FontWeight.w700,
                             ),
-                      label: Text(
-                        isPlaybackBusy && isPlaying
-                            ? 'Please wait'
-                            : isPlaying
-                            ? 'Stop'
-                            : 'Play',
+                          ),
+                          Gap(2),
+                          Text(
+                            filesAreOutOfDate
+                                ? context.l10n.musicFilesOutOfDateDescription
+                                : context.l10n.musicFilesNotReadyDescription,
+                            style: TextStyle(
+                              color: colors.secondaryTextColor,
+                              fontSize: AppTextSizes.caption,
+                            ),
+                          ),
+                        ],
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primaryColor,
-                        foregroundColor: colors.backgroundColor,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
+                    ),
+                    if (!generationIsRunning) ...[
+                      Gap(AppSpacing.sm),
+                      TextButton(
+                        onPressed: isDeleting ? null : onRetryGeneration,
+                        child: Text(context.l10n.retry),
                       ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            Divider(height: 1, color: colors.borderColor),
+            Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: isDeleting ? null : onOpen,
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                    size: AppIconSizes.sm,
+                  ),
+                  label: Text(context.l10n.view),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primaryColor,
+                    foregroundColor: colors.backgroundColor,
+                    disabledBackgroundColor: colors.borderColor,
+                    disabledForegroundColor: colors.secondaryTextColor,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                   ),
                 ),
-              ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildCreationMethodBadge({
+    required BuildContext context,
+    required bool isRecording,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isRecording ? Icons.mic_rounded : Icons.edit_note_rounded,
+            size: 14,
+            color: color,
+          ),
+          Gap(4),
+          Text(
+            isRecording ? context.l10n.recording : context.l10n.manual,
+            style: TextStyle(
+              color: color,
+              fontSize: AppTextSizes.caption,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -207,27 +286,14 @@ class CompositionCard extends StatelessWidget {
     );
   }
 
-  String formatEditedDate(DateTime? date) {
+  String formatEditedDate(BuildContext context, DateTime? date) {
     if (date == null) {
-      return 'Not saved yet';
+      return context.l10n.notSavedYet;
     }
 
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    return 'Last edited ${months[date.month - 1]} '
-        '${date.day}, ${date.year}';
+    final localizedDate = MaterialLocalizations.of(context).formatMediumDate(
+      date,
+    );
+    return context.l10n.lastEdited(localizedDate);
   }
 }

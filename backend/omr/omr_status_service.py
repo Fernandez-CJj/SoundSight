@@ -5,11 +5,14 @@ from core.firebase_service import getDatabase
 
 def setOmrProcessing(
     sheetId,
+    ownerId,
 ):
     database = getDatabase()
 
     sheetReference = (
         database
+        .collection("users")
+        .document(ownerId)
         .collection("musicSheets")
         .document(sheetId)
     )
@@ -29,6 +32,7 @@ def setOmrProcessing(
 
 def setOmrCompleted(
     sheetId,
+    ownerId,
     storagePaths,
     validationResult,
 ):
@@ -36,6 +40,8 @@ def setOmrCompleted(
 
     sheetReference = (
         database
+        .collection("users")
+        .document(ownerId)
         .collection("musicSheets")
         .document(sheetId)
     )
@@ -53,6 +59,16 @@ def setOmrCompleted(
         "musicXmlStoragePath": (
             storagePaths[
                 "musicXmlStoragePath"
+            ]
+        ),
+        "midiStoragePath": (
+            storagePaths[
+                "midiStoragePath"
+            ]
+        ),
+        "recognizedPdfStoragePath": (
+            storagePaths[
+                "recognizedPdfStoragePath"
             ]
         ),
         "previewAudioStoragePath": (
@@ -75,12 +91,15 @@ def setOmrCompleted(
 
 def setOmrFailed(
     sheetId,
+    ownerId,
     errorMessage,
 ):
     database = getDatabase()
 
     sheetReference = (
         database
+        .collection("users")
+        .document(ownerId)
         .collection("musicSheets")
         .document(sheetId)
     )

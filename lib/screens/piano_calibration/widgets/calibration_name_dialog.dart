@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
+import 'package:soundsight/theme/app_theme_colors.dart';
 
 /// Dialog that validates and returns a user-friendly calibration name.
 class CalibrationNameDialog extends StatefulWidget {
-  const CalibrationNameDialog({super.key, this.initialName});
+  const CalibrationNameDialog({
+    super.key,
+    required this.colors,
+    this.initialName,
+  });
+
+  final AppThemeColors colors;
 
   /// Existing name shown when an already saved calibration is edited.
   final String? initialName;
@@ -31,36 +40,137 @@ class CalibrationNameDialogState extends State<CalibrationNameDialog> {
   @override
   /// Builds the name field and cancel/save actions.
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Name this calibration'),
-      content: TextField(
-        controller: nameController,
-        autofocus: true,
-        maxLength: 50,
-        textCapitalization: TextCapitalization.words,
-        decoration: InputDecoration(
-          labelText: 'Calibration name',
-          hintText: 'Example: Bedroom Piano',
-          errorText: nameError,
-        ),
-        onChanged: (String value) {
-          if (nameError == null) {
-            return;
-          }
+    AppThemeColors colors = widget.colors;
 
-          setState(() {
-            nameError = null;
-          });
-        },
+    return AlertDialog(
+      scrollable: true,
+      backgroundColor: colors.surfaceColor,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      icon: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: colors.backgroundColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: colors.borderColor),
+        ),
+        child: Icon(
+          Icons.drive_file_rename_outline_rounded,
+          color: colors.primaryColor,
+          size: AppIconSizes.lg,
+        ),
+      ),
+      title: Text(
+        context.l10n.namePianoSetup,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: colors.primaryColor,
+          fontSize: AppTextSizes.sectionTitle,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      content: SizedBox(
+        width: 440,
+        child: TextField(
+          controller: nameController,
+          autofocus: true,
+          maxLength: 50,
+          textCapitalization: TextCapitalization.words,
+          style: TextStyle(color: colors.primaryColor),
+          cursorColor: colors.primaryColor,
+          decoration: InputDecoration(
+            labelText: context.l10n.pianoSetupName,
+            hintText: context.l10n.pianoSetupNameHint,
+            errorText: nameError,
+            labelStyle: TextStyle(color: colors.secondaryTextColor),
+            hintStyle: TextStyle(color: colors.secondaryTextColor),
+            counterStyle: TextStyle(color: colors.secondaryTextColor),
+            errorStyle: TextStyle(color: colors.primaryColor),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(color: colors.borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(color: colors.primaryColor),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(color: colors.primaryColor),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(color: colors.primaryColor),
+            ),
+          ),
+          onChanged: (String value) {
+            if (nameError == null) {
+              return;
+            }
+
+            setState(() {
+              nameError = null;
+            });
+          },
+        ),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.md,
       ),
       actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text('Cancel'),
+        Row(
+          children: [
+            Expanded(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.primaryColor,
+                    side: BorderSide(color: colors.borderColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: Text(
+                    context.l10n.cancel,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: ElevatedButton(
+                  onPressed: saveName,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primaryColor,
+                    foregroundColor: colors.backgroundColor,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: Text(
+                    context.l10n.save,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        FilledButton(onPressed: saveName, child: const Text('Save')),
       ],
     );
   }
@@ -71,7 +181,7 @@ class CalibrationNameDialogState extends State<CalibrationNameDialog> {
 
     if (calibrationName.isEmpty) {
       setState(() {
-        nameError = 'Enter a name for this calibration.';
+        nameError = context.l10n.enterPianoSetupName;
       });
 
       return;

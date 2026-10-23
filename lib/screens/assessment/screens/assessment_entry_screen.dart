@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/models/assessment_questionnaire.dart';
 import 'package:soundsight/screens/assessment/screens/assessment_introduction_screen.dart';
@@ -8,16 +9,28 @@ import 'package:soundsight/screens/assessment/screens/assessment_piano_execution
 import 'package:soundsight/screens/assessment/screens/assessment_questionnaire_screen.dart';
 import 'package:soundsight/screens/assessment/screens/assessment_results_screen.dart';
 import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
+import 'package:soundsight/screens/assessment/widgets/assessment_theme.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 
 /// Displays the user's current assessment status and available action.
 class AssessmentEntryScreen extends StatefulWidget {
-  const AssessmentEntryScreen({super.key, this.initialAttempt});
+  const AssessmentEntryScreen({
+    super.key,
+    this.initialAttempt,
+    this.isDarkMode = false,
+    this.returnToPreviousScreenOnDone = false,
+  });
 
   /// An attempt already loaded during login.
   ///
   /// Passing it avoids an unnecessary initial Firestore request.
   final AssessmentAttempt? initialAttempt;
+
+  final bool isDarkMode;
+
+  /// Returns through both the result and entry routes when Assessment was
+  /// opened from an existing screen such as Profile.
+  final bool returnToPreviousScreenOnDone;
 
   @override
   State<AssessmentEntryScreen> createState() {
@@ -81,7 +94,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
 
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Unable to load the assessment. Please try again.';
+        _errorMessage = context.l10n.assessmentUnableToLoad;
       });
     }
   }
@@ -131,7 +144,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
 
       setState(() {
         _isSubmitting = false;
-        _errorMessage = 'Unable to start the assessment. Please try again.';
+        _errorMessage = context.l10n.assessmentUnableToStart;
       });
     }
   }
@@ -144,6 +157,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
         builder: (introductionContext) {
           return AssessmentIntroductionScreen(
             attempt: attempt,
+            isDarkMode: widget.isDarkMode,
             onContinue: () async {
               try {
                 // Save the introduction-to-questionnaire transition.
@@ -170,7 +184,11 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
                 }
 
                 ScaffoldMessenger.of(introductionContext).showSnackBar(
-                  SnackBar(content: Text(error.toString())),
+                  SnackBar(
+                    content: Text(
+                      introductionContext.l10n.assessmentUnableToContinue,
+                    ),
+                  ),
                 );
               }
             },
@@ -199,6 +217,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
       builder: (questionnaireContext) {
         return AssessmentQuestionnaireScreen(
           initialAnswers: attempt.questionnaireAnswers,
+          isDarkMode: widget.isDarkMode,
           onSubmit: (answers) async {
             // An explicit Beginner declaration can safely skip both objective
             // sections because it can never award a higher placement.
@@ -274,27 +293,69 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
     final accepted = await showDialog<bool>(
       context: currentContext,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Accept Beginner level?'),
-          content: const Text(
-            'Based on your answers, at least one required skill is at the '
-            'Beginner level. Accepting will skip Notation Reading and Piano '
-            'Execution. This result is permanent and cannot be attempted again.',
+        return Theme(
+          data: AssessmentTheme.dataFor(widget.isDarkMode),
+          child: AlertDialog(
+            title: Text(dialogContext.l10n.assessmentAcceptBeginnerQuestion),
+            content: Text(
+              dialogContext.l10n.assessmentAcceptBeginnerDescription,
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: 12,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop(false);
+                          },
+                          child: Text(
+                            dialogContext.l10n.assessmentReviewAnswers,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: 12,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop(true);
+                          },
+                          child: Text(
+                            dialogContext.l10n.assessmentAcceptBeginner,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text('Review Answers'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: const Text('Accept Beginner'),
-            ),
-          ],
         );
       },
     );
@@ -312,6 +373,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
       builder: (notationContext) {
         return AssessmentNotationReadingScreen(
           initialAnswers: attempt.notationReadingAnswers,
+          isDarkMode: widget.isDarkMode,
           onSubmit: (answers) async {
             final updatedAttempt = await _assessmentService
                 .submitNotationReading(answers);
@@ -354,6 +416,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
     final route = MaterialPageRoute<void>(
       builder: (pianoContext) {
         return AssessmentPianoExecutionScreen(
+          isDarkMode: widget.isDarkMode,
           onSubmit: (results) async {
             final updatedAttempt = await _assessmentService
                 .submitPianoExecution(results);
@@ -396,15 +459,26 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
     required bool replaceCurrentScreen,
   }) async {
     final route = MaterialPageRoute<void>(
-      builder: (_) {
+      builder: (resultsContext) {
         return AssessmentResultsScreen(
           attempt: attempt,
+          isDarkMode: widget.isDarkMode,
           onDone: () async {
             // The assessment is already permanent. Done only copies its
             // trusted final level into the user's main profile document.
             await _assessmentService.applyCompletedSkillLevel();
 
-            if (mounted) {
+            if (!mounted || !resultsContext.mounted) {
+              return;
+            }
+
+            if (widget.returnToPreviousScreenOnDone) {
+              Navigator.of(resultsContext).pop();
+
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            } else {
               _continueToHome();
             }
           },
@@ -496,27 +570,67 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Start assessment?'),
-          content: const Text(
-            'Your 72-hour deadline will begin immediately. '
-            'You only receive one attempt, and an expired '
-            'assessment will permanently assign Beginner level.',
+        return Theme(
+          data: AssessmentTheme.dataFor(widget.isDarkMode),
+          child: AlertDialog(
+            title: Text(dialogContext.l10n.assessmentStartQuestion),
+            content: Text(dialogContext.l10n.assessmentStartWarning),
+            actionsPadding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: 12,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop(false);
+                          },
+                          child: Text(
+                            dialogContext.l10n.cancel,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: 12,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop(true);
+                          },
+                          child: Text(
+                            dialogContext.l10n.start,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: const Text('Start'),
-            ),
-          ],
         );
       },
     );
@@ -530,26 +644,30 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
   /// attempt, its existing server deadline continues while the user is away.
   void _continueToHome() {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(
+        builder: (_) => HomeScreen(isDarkMode: widget.isDarkMode),
+      ),
       (route) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Assessment')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: _buildBody(),
-        ),
-      ),
+    return AssessmentTheme(
+      isDarkMode: widget.isDarkMode,
+      builder: (themedContext) {
+        return Scaffold(
+          appBar: AppBar(title: Text(themedContext.l10n.assessment)),
+          body: AssessmentPageBody(
+            child: _buildBody(themedContext),
+          ),
+        );
+      },
     );
   }
 
   /// Selects the correct body for loading, error, or loaded state.
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext themedContext) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -558,7 +676,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
       return _buildErrorState();
     }
 
-    return _buildAssessmentState();
+    return _buildAssessmentState(themedContext);
   }
 
   /// Displays an error and lets the user retry the server request.
@@ -575,7 +693,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
           const SizedBox(height: AppSpacing.md),
           ElevatedButton(
             onPressed: _loadAttempt,
-            child: const Text('Try Again'),
+            child: Text(context.l10n.tryAgain),
           ),
         ],
       ),
@@ -583,7 +701,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
   }
 
   /// Displays the current status and its available primary action.
-  Widget _buildAssessmentState() {
+  Widget _buildAssessmentState(BuildContext themedContext) {
     final attempt = _attempt;
     final status = attempt?.effectiveStatus;
 
@@ -604,31 +722,40 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
         ),
         if (status == AssessmentAttemptStatus.inProgress) ...[
           const SizedBox(height: AppSpacing.lg),
-          _buildRemainingTime(attempt!),
+          _buildRemainingTime(themedContext, attempt!),
         ],
         const Spacer(),
-        SizedBox(
-          height: 52,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 52),
           child: ElevatedButton(
             onPressed: _primaryButtonAction(status),
             child: _isSubmitting
-                ? const SizedBox(
+                ? SizedBox(
                     width: AppIconSizes.md,
                     height: AppIconSizes.md,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Theme.of(themedContext).colorScheme.onPrimary,
+                    ),
                   )
-                : Text(_primaryButtonText(status)),
+                : Text(
+                    _primaryButtonText(status),
+                    textAlign: TextAlign.center,
+                  ),
           ),
         ),
         if (status == null ||
             status == AssessmentAttemptStatus.inProgress) ...[
           const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 48,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
             child: TextButton(
               onPressed: _isSubmitting ? null : _continueToHome,
               child: Text(
-                status == null ? 'Skip for Now' : 'Continue Later',
+                status == null
+                    ? context.l10n.assessmentSkipForNow
+                    : context.l10n.assessmentContinueLater,
+                textAlign: TextAlign.center,
               ),
             ),
           ),
@@ -638,21 +765,25 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
   }
 
   /// Displays the trusted remaining duration for an active attempt.
-  Widget _buildRemainingTime(AssessmentAttempt attempt) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildRemainingTime(
+    BuildContext themedContext,
+    AssessmentAttempt attempt,
+  ) {
+    final colorScheme = Theme.of(themedContext).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
+        color: colorScheme.surface,
         border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Time remaining',
-            style: TextStyle(
+          Text(
+            context.l10n.assessmentTimeRemaining,
+            style: const TextStyle(
               fontSize: AppTextSizes.label,
               fontWeight: FontWeight.w600,
             ),
@@ -673,54 +804,48 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
   /// Returns the heading for the current assessment state.
   String _statusTitle(AssessmentAttemptStatus? status) {
     if (status == null) {
-      return 'Skill assessment';
+      return context.l10n.assessmentSkillAssessment;
     }
 
     switch (status) {
       case AssessmentAttemptStatus.inProgress:
-        return 'Assessment in progress';
+        return context.l10n.assessmentInProgressTitle;
       case AssessmentAttemptStatus.completed:
-        return 'Assessment completed';
+        return context.l10n.assessmentCompletedTitle;
       case AssessmentAttemptStatus.expired:
-        return 'Assessment expired';
+        return context.l10n.assessmentExpiredTitle;
     }
   }
 
   /// Returns the message for the current assessment state.
   String _statusDescription(AssessmentAttemptStatus? status) {
     if (status == null) {
-      return 'Complete the assessment to determine your '
-          'SoundSight Level. Your 72-hour deadline begins '
-          'only after you press Start.';
+      return context.l10n.assessmentSkillDescription;
     }
 
     switch (status) {
       case AssessmentAttemptStatus.inProgress:
-        return 'Your assessment has started. Continue before '
-            'the deadline to receive your SoundSight Level.';
+        return context.l10n.assessmentActiveDescription;
       case AssessmentAttemptStatus.completed:
-        return 'Your assessment is complete. View your permanent '
-            'SoundSight Level and section results.';
+        return context.l10n.assessmentCompleteDescription;
       case AssessmentAttemptStatus.expired:
-        return 'The assessment was not completed within 72 hours. '
-            'Your SoundSight Level is Beginner, and this assessment '
-            'cannot be attempted again.';
+        return context.l10n.assessmentExpiredFullDescription;
     }
   }
 
   /// Selects the button label for the current state.
   String _primaryButtonText(AssessmentAttemptStatus? status) {
     if (status == null) {
-      return 'Start Assessment';
+      return context.l10n.startAssessment;
     }
 
     switch (status) {
       case AssessmentAttemptStatus.inProgress:
-        return 'Resume Assessment';
+        return context.l10n.resumeAssessment;
       case AssessmentAttemptStatus.completed:
-        return 'View Results';
+        return context.l10n.assessmentViewResults;
       case AssessmentAttemptStatus.expired:
-        return 'Continue to Home';
+        return context.l10n.assessmentContinueHome;
     }
   }
 
@@ -748,13 +873,13 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
     final minutes = duration.inMinutes.remainder(60);
 
     if (days > 0) {
-      return '${days}d ${hours}h ${minutes}m';
+      return context.l10n.assessmentDurationDays(days, hours, minutes);
     }
 
     if (hours > 0) {
-      return '${hours}h ${minutes}m';
+      return context.l10n.assessmentDurationHours(hours, minutes);
     }
 
-    return '${minutes}m';
+    return context.l10n.assessmentDurationMinutes(minutes);
   }
 }

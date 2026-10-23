@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/models/published_composition_comment.dart';
 import 'package:soundsight/screens/composition/services/published_composition_social_service.dart';
@@ -55,7 +56,7 @@ class _PublishedCompositionCommentsScreenState
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
-          'Comments · V${widget.composition.currentVersion}',
+          context.l10n.commentsVersion(widget.composition.currentVersion),
           style: const TextStyle(
             fontSize: AppTextSizes.sectionTitle,
             fontWeight: FontWeight.w600,
@@ -82,8 +83,8 @@ class _PublishedCompositionCommentsScreenState
                 if (snapshot.hasError) {
                   return buildMessage(
                     icon: Icons.cloud_off_outlined,
-                    title: 'Comments could not be loaded.',
-                    message: 'Check your connection and try again.',
+                    title: context.l10n.commentsLoadFailed,
+                    message: context.l10n.checkConnectionTryAgain,
                   );
                 }
 
@@ -92,8 +93,8 @@ class _PublishedCompositionCommentsScreenState
                 if (comments.isEmpty) {
                   return buildMessage(
                     icon: Icons.chat_bubble_outline_rounded,
-                    title: 'No comments yet',
-                    message: 'Be the first to share your thoughts.',
+                    title: context.l10n.noCommentsYet,
+                    message: context.l10n.noCommentsDescription,
                   );
                 }
 
@@ -186,7 +187,7 @@ class _PublishedCompositionCommentsScreenState
           if (canDelete)
             IconButton(
               visualDensity: VisualDensity.compact,
-              tooltip: 'Delete comment',
+              tooltip: context.l10n.deleteCommentTooltip,
               onPressed: () {
                 confirmDeleteComment(comment);
               },
@@ -227,7 +228,7 @@ class _PublishedCompositionCommentsScreenState
                 textCapitalization: TextCapitalization.sentences,
                 style: TextStyle(color: colors.primaryColor),
                 decoration: InputDecoration(
-                  hintText: 'Write a comment...',
+                  hintText: context.l10n.writeComment,
                   hintStyle: TextStyle(color: colors.secondaryTextColor),
                   counterText: '',
                   filled: true,
@@ -344,7 +345,7 @@ class _PublishedCompositionCommentsScreenState
       commentController.clear();
       FocusScope.of(context).unfocus();
     } catch (_) {
-      showMessage('The comment could not be posted.');
+      showMessage(context.l10n.commentPostFailed);
     } finally {
       if (mounted) {
         setState(() {
@@ -363,26 +364,26 @@ class _PublishedCompositionCommentsScreenState
         return AlertDialog(
           backgroundColor: widget.colors.surfaceColor,
           title: Text(
-            'Delete comment?',
+            context.l10n.deleteCommentQuestion,
             style: TextStyle(color: widget.colors.primaryColor),
           ),
           content: Text(
-            'This comment will be removed permanently.',
+            context.l10n.deleteCommentDescription,
             style: TextStyle(color: widget.colors.secondaryTextColor),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
               child: Text(
-                'Cancel',
+                context.l10n.cancel,
                 style: TextStyle(color: widget.colors.primaryColor),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Color(0xFFDC2626)),
+              child: Text(
+                context.l10n.delete,
+                style: const TextStyle(color: Color(0xFFDC2626)),
               ),
             ),
           ],
@@ -399,21 +400,27 @@ class _PublishedCompositionCommentsScreenState
         comment.id,
       );
     } catch (_) {
-      showMessage('The comment could not be deleted.');
+      showMessage(context.l10n.commentDeleteFailed);
     }
   }
 
   String formatCommentDate(DateTime? date) {
-    if (date == null) return 'Just now';
+    if (date == null) return context.l10n.justNow;
 
     final difference = DateTime.now().difference(date);
 
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inHours < 1) return '${difference.inMinutes}m';
-    if (difference.inDays < 1) return '${difference.inHours}h';
-    if (difference.inDays < 7) return '${difference.inDays}d';
+    if (difference.inMinutes < 1) return context.l10n.justNow;
+    if (difference.inHours < 1) {
+      return context.l10n.minutesAgo(difference.inMinutes);
+    }
+    if (difference.inDays < 1) {
+      return context.l10n.hoursAgo(difference.inHours);
+    }
+    if (difference.inDays < 7) {
+      return context.l10n.daysAgo(difference.inDays);
+    }
 
-    return '${date.month}/${date.day}/${date.year}';
+    return MaterialLocalizations.of(context).formatMediumDate(date);
   }
 
   void showMessage(String message) {

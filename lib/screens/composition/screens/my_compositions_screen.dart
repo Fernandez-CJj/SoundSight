@@ -3,12 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/widgets/composition_card.dart';
 import 'package:soundsight/screens/composition/screens/composition_details_screen.dart';
 import 'package:soundsight/screens/composition/dialogs/composition_dialogs.dart';
-import 'package:soundsight/screens/composition/screens/composition_editor_screen.dart';
-import 'package:soundsight/screens/composition/services/composition_playback_service.dart';
+import 'package:soundsight/screens/composition/services/composition_generation_service.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
 import 'package:soundsight/screens/composition/screens/new_composition_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -25,18 +25,16 @@ class MyCompositionsScreen extends StatefulWidget {
 
 class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   final CompositionService compositionService = CompositionService();
-  final CompositionPlaybackService playbackService =
-      CompositionPlaybackService();
+  final CompositionGenerationService generationService =
+      CompositionGenerationService();
 
   final Set<String> deletingCompositionIds = {};
+  final Set<String> generatingCompositionIds = {};
 
   late bool isDarkMode;
   late final String? userId;
 
   Stream<List<Composition>>? compositionsStream;
-  String? playingCompositionId;
-  bool isPlaybackTransitioning = false;
-  int playbackRequestId = 0;
 
   @override
   void initState() {
@@ -53,13 +51,6 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   }
 
   @override
-  void dispose() {
-    playbackRequestId++;
-    playbackService.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
 
@@ -73,16 +64,16 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        title: const Text(
-          'My Compositions',
-          style: TextStyle(
+        title: Text(
+          context.l10n.myCompositions,
+          style: const TextStyle(
             fontSize: AppTextSizes.sectionTitle,
             fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
           IconButton(
-            tooltip: 'New composition',
+            tooltip: context.l10n.newComposition,
             onPressed: openNewComposition,
             icon: const Icon(Icons.add_rounded, size: AppIconSizes.lg),
           ),
@@ -152,20 +143,16 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           colors: colors,
           composition: composition,
           isDeleting: deletingCompositionIds.contains(composition.id),
-          isPlaying: playingCompositionId == composition.id,
-          isPlaybackBusy: isPlaybackTransitioning,
+          isGeneratingFiles: generatingCompositionIds.contains(
+            composition.id,
+          ),
           onOpen: () {
             openCompositionDetails(colors, composition);
           },
-          onEdit: () {
-            editComposition(colors, composition);
+          onRetryGeneration: () {
+            retryCompositionGeneration(composition);
           },
-          onPlay: () {
-            playComposition(composition);
-          },
-          onDelete: () {
-            deleteComposition(colors, composition);
-          },
+          onDelete: () => deleteComposition(colors, composition),
         );
       },
     );
@@ -182,7 +169,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Your piano pieces',
+                    context.l10n.yourPianoPieces,
                     style: TextStyle(
                       color: colors.primaryColor,
                       fontSize: AppTextSizes.screenTitle,
@@ -191,7 +178,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                   ),
                   const Gap(AppSpacing.xs),
                   Text(
-                    'Create, play, and manage your simple melodies.',
+                    context.l10n.compositionsDescription,
                     style: TextStyle(
                       color: colors.secondaryTextColor,
                       fontSize: AppTextSizes.label,
@@ -228,9 +215,9 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           child: ElevatedButton.icon(
             onPressed: openNewComposition,
             icon: const Icon(Icons.add_rounded),
-            label: const Text(
-              'New Composition',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            label: Text(
+              context.l10n.newComposition,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primaryColor,
@@ -269,7 +256,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.lg),
             Text(
-              'No compositions yet',
+              context.l10n.noCompositions,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -279,8 +266,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.sm),
             Text(
-              'Create your first piano piece using melodies, chords, '
-              'and custom measures.',
+              context.l10n.noCompositionsDescription,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -292,7 +278,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ElevatedButton.icon(
               onPressed: openNewComposition,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('New Composition'),
+              label: Text(context.l10n.newComposition),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primaryColor,
                 foregroundColor: colors.backgroundColor,
@@ -326,7 +312,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.md),
             Text(
-              'Your compositions could not be loaded.',
+              context.l10n.compositionsLoadError,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.primaryColor,
@@ -336,7 +322,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
             ),
             const Gap(AppSpacing.xs),
             Text(
-              'Check your connection and Firestore permissions.',
+              context.l10n.musicSheetsLoadErrorHelp,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.secondaryTextColor,
@@ -352,7 +338,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   Widget buildSignedOutState(AppThemeColors colors) {
     return Center(
       child: Text(
-        'Sign in to view your compositions.',
+        context.l10n.signInForCompositions,
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -378,92 +364,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
     });
   }
 
-  Future<void> playComposition(Composition composition) async {
-    if (isPlaybackTransitioning) return;
-
-    if (composition.notes.isEmpty) {
-      showMessage('"${composition.title}" does not have any notes yet.');
-      return;
-    }
-
-    final isStoppingCurrentComposition =
-        playingCompositionId == composition.id;
-    final currentRequestId = ++playbackRequestId;
-
-    setState(() {
-      isPlaybackTransitioning = true;
-
-      if (!isStoppingCurrentComposition) {
-        playingCompositionId = composition.id;
-      }
-    });
-
-    try {
-      await playbackService.stop();
-
-      if (!mounted || currentRequestId != playbackRequestId) return;
-
-      if (isStoppingCurrentComposition) {
-        showMessage('Playback stopped.');
-        return;
-      }
-
-      await playbackService.playComposition(
-        composition: composition,
-        onPlaybackStarted: () {
-          if (!mounted || currentRequestId != playbackRequestId) return;
-
-          setState(() {
-            isPlaybackTransitioning = false;
-          });
-
-          showMessage('Playing "${composition.title}".');
-        },
-      );
-    } catch (error, stackTrace) {
-      debugPrint('Composition playback failed: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
-      if (mounted && currentRequestId == playbackRequestId) {
-        showMessage(
-          'The composition could not be played. '
-          'Check the piano audio files.',
-        );
-      }
-    } finally {
-      if (mounted && currentRequestId == playbackRequestId) {
-        setState(() {
-          playingCompositionId = null;
-          isPlaybackTransitioning = false;
-        });
-      }
-    }
-  }
-
-  Future<void> stopPlayback() async {
-    final currentRequestId = ++playbackRequestId;
-
-    if (mounted) {
-      setState(() {
-        isPlaybackTransitioning = true;
-      });
-    }
-
-    await playbackService.stop();
-
-    if (!mounted || currentRequestId != playbackRequestId) return;
-
-    setState(() {
-      playingCompositionId = null;
-      isPlaybackTransitioning = false;
-    });
-  }
-
   Future<void> openNewComposition() async {
-    await stopPlayback();
-
-    if (!mounted) return;
-
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
 
     final savedCompositionId = await Navigator.of(context).push<String>(
@@ -472,17 +373,30 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
     if (!mounted || savedCompositionId == null) return;
 
-    showMessage('Composition saved.');
+    try {
+      final savedComposition = await compositionService.getComposition(
+        userId!,
+        savedCompositionId,
+      );
+
+      if (!mounted) return;
+
+      if (savedComposition?.generatedFilesAreCurrent == true) {
+        showMessage(context.l10n.compositionSavedFilesReady);
+      } else {
+        showMessage(context.l10n.compositionSavedFilesPending);
+      }
+    } catch (_) {
+      if (mounted) {
+        showMessage(context.l10n.compositionSaved);
+      }
+    }
   }
 
   Future<void> openCompositionDetails(
     AppThemeColors colors,
     Composition composition,
   ) async {
-    await stopPlayback();
-
-    if (!mounted) return;
-
     final wasDeleted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) =>
@@ -492,37 +406,41 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
     if (!mounted || wasDeleted != true) return;
 
-    showMessage('"${composition.title}" was deleted.');
+    showMessage(context.l10n.compositionDeleted(composition.title));
   }
 
-  Future<void> editComposition(
-    AppThemeColors colors,
-    Composition composition,
-  ) async {
-    await stopPlayback();
+  Future<void> retryCompositionGeneration(Composition composition) async {
+    if (generatingCompositionIds.contains(composition.id)) {
+      return;
+    }
 
-    if (!mounted) return;
+    setState(() {
+      generatingCompositionIds.add(composition.id);
+    });
 
-    final savedCompositionId = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) =>
-            CompositionEditorScreen(colors: colors, composition: composition),
-      ),
-    );
+    try {
+      await generationService.generateCompositionFiles(composition);
 
-    if (!mounted || savedCompositionId == null) return;
+      if (!mounted) return;
 
-    showMessage('Composition updated.');
+      showMessage(context.l10n.compositionMusicFilesReady);
+    } catch (_) {
+      if (!mounted) return;
+
+      showMessage(context.l10n.compositionMusicFilesFailed);
+    } finally {
+      if (mounted) {
+        setState(() {
+          generatingCompositionIds.remove(composition.id);
+        });
+      }
+    }
   }
 
   Future<void> deleteComposition(
     AppThemeColors colors,
     Composition composition,
   ) async {
-    await stopPlayback();
-
-    if (!mounted) return;
-
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (_) {
@@ -540,14 +458,17 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
     });
 
     try {
-      await compositionService.deleteComposition(composition.id);
+      await compositionService.deleteComposition(
+        composition.ownerId,
+        composition.id,
+      );
 
       if (!mounted) return;
 
-      showMessage('"${composition.title}" was deleted.');
+      showMessage(context.l10n.compositionDeleted(composition.title));
     } catch (_) {
       if (mounted) {
-        showMessage('The composition could not be deleted.');
+        showMessage(context.l10n.compositionDeleteFailed);
       }
     } finally {
       if (mounted) {

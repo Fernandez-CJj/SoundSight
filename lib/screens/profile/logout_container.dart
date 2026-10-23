@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/screens/auth/login/login_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/localization/app_locale_controller.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 
 import '../../constants/constant.dart';
 
@@ -49,7 +51,7 @@ class LogoutContainer extends StatelessWidget {
                         Gap(AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            'Log out?',
+                            context.l10n.logoutQuestion,
                             style: TextStyle(
                               color: logoutColor,
                               fontSize: AppTextSizes.sectionTitle,
@@ -60,7 +62,7 @@ class LogoutContainer extends StatelessWidget {
                       ],
                     ),
                     content: Text(
-                      'Are you sure you want to log out of your account?',
+                      context.l10n.logoutConfirmation,
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.body,
@@ -70,7 +72,7 @@ class LogoutContainer extends StatelessWidget {
                       TextButton(
                         onPressed: () => Navigator.pop(dialogContext, false),
                         child: Text(
-                          'Cancel',
+                          context.l10n.cancel,
                           style: TextStyle(color: colors.secondaryTextColor),
                         ),
                       ),
@@ -84,7 +86,7 @@ class LogoutContainer extends StatelessWidget {
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                         ),
-                        child: Text('Log Out'),
+                        child: Text(context.l10n.logout),
                       ),
                     ],
                   );
@@ -96,6 +98,10 @@ class LogoutContainer extends StatelessWidget {
 
           await FirebaseAuth.instance.signOut();
 
+          if (context.mounted) {
+            AppLocaleScope.of(context).reset();
+          }
+
           if (!context.mounted) return;
 
           Navigator.of(context).pushAndRemoveUntil(
@@ -105,7 +111,7 @@ class LogoutContainer extends StatelessWidget {
         },
         icon: Icon(Icons.logout_rounded, size: 20),
         label: Text(
-          'Log Out',
+          context.l10n.logout,
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         style: ElevatedButton.styleFrom(
