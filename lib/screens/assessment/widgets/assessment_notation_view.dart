@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 
 import '../models/assessment_notation_question.dart';
 
@@ -18,7 +19,7 @@ class AssessmentNotationView extends StatelessWidget {
     return Semantics(
       // The accessibility label identifies the visual without revealing its
       // correct answer.
-      label: 'Music notation for the current assessment question',
+      label: context.l10n.assessmentNotationSemantics,
       image: true,
       child: SizedBox(
         width: double.infinity,

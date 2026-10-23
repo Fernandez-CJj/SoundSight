@@ -4,24 +4,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../constants/constant.dart';
+import '../../../localization/localization_extension.dart';
 import '../../midi/services/midi_input_service.dart';
+import '../assessment_localization.dart';
 import '../models/assessment_piano_task.dart';
 import '../services/assessment_piano_performance_tracker.dart';
+import '../widgets/assessment_theme.dart';
 
 /// Called after all piano-execution task results are finalized.
 typedef PianoExecutionSubmitCallback = Future<void> Function(
   List<AssessmentPianoTaskResult> results,
 );
 
+enum _AssessmentMidiStatus {
+  notConnected,
+  searching,
+  notDetected,
+  connecting,
+  connected,
+  connectionFailed,
+  disconnected,
+}
+
+enum _AssessmentPianoError { connectionFailed, interrupted, saveFailed }
+
 /// Runs the MIDI-based piano-execution portion of the assessment.
 class AssessmentPianoExecutionScreen extends StatefulWidget {
   const AssessmentPianoExecutionScreen({
     super.key,
     required this.onSubmit,
+    this.isDarkMode = false,
   });
 
   /// Saves all completed task results and advances the assessment.
   final PianoExecutionSubmitCallback onSubmit;
+
+  final bool isDarkMode;
 
   @override
   State<AssessmentPianoExecutionScreen> createState() {
@@ -58,8 +76,9 @@ class _AssessmentPianoExecutionScreenState
   /// Starts at one on GO and advances with each performance click.
   int _performanceBeatNumber = 0;
 
-  String _midiStatus = 'Not connected';
-  String? _errorMessage;
+  _AssessmentMidiStatus _midiStatus = _AssessmentMidiStatus.notConnected;
+  _AssessmentPianoError? _error;
+  String? _connectedDeviceName;
 
   bool _isConnecting = false;
   bool _isCountingIn = false;
@@ -77,7 +96,7 @@ class _AssessmentPianoExecutionScreenState
   }
 
   bool get _midiIsConnected {
-    return _midiStatus.startsWith('Connected:');
+    return _midiStatus == _AssessmentMidiStatus.connected;
   }
 
   @override
@@ -110,8 +129,8 @@ class _AssessmentPianoExecutionScreenState
 
     setState(() {
       _isConnecting = true;
-      _midiStatus = 'Searching...';
-      _errorMessage = null;
+      _midiStatus = _AssessmentMidiStatus.searching;
+      _error = null;
     });
 
     try {
@@ -124,7 +143,7 @@ class _AssessmentPianoExecutionScreenState
       if (devices.isEmpty) {
         setState(() {
           _isConnecting = false;
-          _midiStatus = 'No MIDI device detected';
+          _midiStatus = _AssessmentMidiStatus.notDetected;
         });
 
         return;
@@ -133,7 +152,7 @@ class _AssessmentPianoExecutionScreenState
       final device = devices.first;
 
       setState(() {
-        _midiStatus = 'Connecting...';
+        _midiStatus = _AssessmentMidiStatus.connecting;
       });
 
       await _midiInputService.connectToDevice(device);
@@ -144,7 +163,8 @@ class _AssessmentPianoExecutionScreenState
 
       setState(() {
         _isConnecting = false;
-        _midiStatus = 'Connected: ${device.name}';
+        _midiStatus = _AssessmentMidiStatus.connected;
+        _connectedDeviceName = device.name;
       });
     } catch (error) {
       if (!mounted) {
@@ -153,8 +173,9 @@ class _AssessmentPianoExecutionScreenState
 
       setState(() {
         _isConnecting = false;
-        _midiStatus = 'Connection failed';
-        _errorMessage = 'Unable to connect to the MIDI keyboard.';
+        _midiStatus = _AssessmentMidiStatus.connectionFailed;
+        _connectedDeviceName = null;
+        _error = _AssessmentPianoError.connectionFailed;
       });
     }
   }
@@ -196,10 +217,9 @@ class _AssessmentPianoExecutionScreenState
       final deviceName = _midiInputService.connectedDevice?.name;
 
       setState(() {
-        _midiStatus = deviceName == null
-            ? 'Connected'
-            : 'Connected: $deviceName';
-        _errorMessage = null;
+        _midiStatus = _AssessmentMidiStatus.connected;
+        _connectedDeviceName = deviceName;
+        _error = null;
       });
 
       return;
@@ -225,12 +245,12 @@ class _AssessmentPianoExecutionScreenState
       _performanceBeatNumber = 0;
       _isCountingIn = false;
       _isPerforming = false;
-      _midiStatus = 'MIDI keyboard disconnected';
+      _midiStatus = _AssessmentMidiStatus.disconnected;
+      _connectedDeviceName = null;
 
       if (taskWasInterrupted) {
         _isTaskComplete = false;
-        _errorMessage =
-            'The MIDI connection was removed. Reconnect and restart this task.';
+        _error = _AssessmentPianoError.interrupted;
       }
     });
   }
@@ -255,7 +275,7 @@ class _AssessmentPianoExecutionScreenState
       _isCountingIn = true;
       _remainingCountInBeats = _currentTask.countInBeats;
       _performanceBeatNumber = 0;
-      _errorMessage = null;
+      _error = null;
     });
 
     unawaited(SystemSound.play(SystemSoundType.click));
@@ -378,7 +398,7 @@ class _AssessmentPianoExecutionScreenState
       _isTaskComplete = false;
       _activeMidiNotes = {};
       _performanceBeatNumber = 0;
-      _errorMessage = null;
+      _error = null;
     });
 
     _performanceTracker.loadTask(_currentTask);
@@ -395,7 +415,7 @@ class _AssessmentPianoExecutionScreenState
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
+      _error = null;
     });
 
     try {
@@ -408,10 +428,7 @@ class _AssessmentPianoExecutionScreenState
       }
 
       setState(() {
-        // Show the real development error while the assessment is being
-        // tested. This distinguishes rejected Firestore rules from invalid
-        // local results, expiration, authentication, and navigation failures.
-        _errorMessage = 'Unable to save the piano results.\n$error';
+        _error = _AssessmentPianoError.saveFailed;
       });
     } finally {
       if (mounted) {
@@ -449,50 +466,56 @@ class _AssessmentPianoExecutionScreenState
         !_isPerforming &&
         !_isSubmitting;
 
-    return PopScope(
-      canPop: canLeave,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Piano Execution'),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+    return AssessmentTheme(
+      isDarkMode: widget.isDarkMode,
+      builder: (themedContext) {
+        return PopScope(
+          canPop: canLeave,
+          child: Scaffold(
+            appBar: AppBar(
+              title: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(themedContext.l10n.assessmentPianoExecution),
+              ),
+            ),
+            body: AssessmentPageBody(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 _buildProgress(),
                 const SizedBox(height: AppSpacing.md),
-                _buildMidiStatus(),
+                _buildMidiStatus(themedContext),
                 const SizedBox(height: AppSpacing.lg),
                 Expanded(
                   child: SingleChildScrollView(
                     child: _buildTaskDetails(),
                   ),
                 ),
-                if (_errorMessage != null) ...[
+                if (_error != null) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    _errorMessage!,
+                    _localizedError(themedContext),
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                      color: Theme.of(themedContext).colorScheme.error,
                       fontSize: AppTextSizes.body,
                     ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  height: 52,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 52),
                   child: ElevatedButton(
                     onPressed: _primaryAction(),
                     child: _buildPrimaryButtonChild(),
                   ),
                 ),
-              ],
+                  ],
+                ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -505,7 +528,7 @@ class _AssessmentPianoExecutionScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Task $taskNumber of $taskCount',
+          context.l10n.assessmentTaskProgress(taskNumber, taskCount),
           style: const TextStyle(
             fontSize: AppTextSizes.label,
             fontWeight: FontWeight.w600,
@@ -518,21 +541,41 @@ class _AssessmentPianoExecutionScreenState
   }
 
   /// Displays connection state and a retry action when disconnected.
-  Widget _buildMidiStatus() {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            _midiStatus,
-            style: const TextStyle(fontSize: AppTextSizes.body),
+  Widget _buildMidiStatus(BuildContext themedContext) {
+    final colorScheme = Theme.of(themedContext).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _midiIsConnected ? Icons.usb_rounded : Icons.usb_off_rounded,
+            color: _midiIsConnected
+                ? colorScheme.primary
+                : colorScheme.error,
           ),
-        ),
-        if (!_midiIsConnected)
-          TextButton(
-            onPressed: _isConnecting ? null : _connectToMidi,
-            child: const Text('Refresh'),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              _localizedMidiStatus(themedContext),
+              style: const TextStyle(fontSize: AppTextSizes.body),
+            ),
           ),
-      ],
+          if (!_midiIsConnected)
+            TextButton(
+              onPressed: _isConnecting ? null : _connectToMidi,
+              child: Text(themedContext.l10n.refresh),
+            ),
+        ],
+      ),
     );
   }
 
@@ -542,7 +585,7 @@ class _AssessmentPianoExecutionScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          _currentTask.title,
+          localizedPianoTaskTitle(context.l10n, _currentTask),
           style: const TextStyle(
             fontSize: AppTextSizes.screenTitle,
             fontWeight: FontWeight.w700,
@@ -550,7 +593,7 @@ class _AssessmentPianoExecutionScreenState
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          _currentTask.instruction,
+          localizedPianoTaskInstruction(context.l10n, _currentTask),
           style: const TextStyle(
             fontSize: AppTextSizes.body,
             height: 1.4,
@@ -558,26 +601,28 @@ class _AssessmentPianoExecutionScreenState
         ),
         const SizedBox(height: AppSpacing.md),
         _buildInstructionBlock(
-          title: 'Keys to play',
+          title: context.l10n.assessmentKeysToPlay,
           description: _currentTask.displayedSequence,
         ),
         const SizedBox(height: AppSpacing.md),
         _buildInstructionBlock(
-          title: 'When to play',
-          description: _currentTask.timingInstruction,
+          title: context.l10n.assessmentWhenToPlay,
+          description: localizedPianoTaskTiming(context.l10n, _currentTask),
         ),
         const SizedBox(height: AppSpacing.sm),
-        const Text(
-          'C4 is Middle C. The number tells you the piano octave.',
-          style: TextStyle(
+        Text(
+          context.l10n.assessmentMiddleCExplanation,
+          style: const TextStyle(
             fontSize: AppTextSizes.label,
             height: 1.4,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          '${_currentTask.tempoBpm} BPM • '
-          '${_currentTask.countInBeats}-beat count-in',
+          context.l10n.assessmentTempoCountIn(
+            _currentTask.tempoBpm,
+            _currentTask.countInBeats,
+          ),
           style: const TextStyle(fontSize: AppTextSizes.label),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -585,9 +630,9 @@ class _AssessmentPianoExecutionScreenState
           Center(
             child: Column(
               children: [
-                const Text(
-                  'Count-in',
-                  style: TextStyle(
+                Text(
+                  context.l10n.assessmentCountIn,
+                  style: const TextStyle(
                     fontSize: AppTextSizes.label,
                     fontWeight: FontWeight.w600,
                   ),
@@ -602,7 +647,9 @@ class _AssessmentPianoExecutionScreenState
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Wait. Play ${_currentTask.firstGroupLabel} when GO appears.',
+                  context.l10n.assessmentWaitForGo(
+                    _currentTask.firstGroupLabel,
+                  ),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: AppTextSizes.body,
@@ -615,21 +662,19 @@ class _AssessmentPianoExecutionScreenState
         else if (_isPerforming)
           _buildPerformingState()
         else if (_isTaskComplete)
-          const Center(
+          Center(
             child: Text(
-              'Task recorded',
-              style: TextStyle(
+              context.l10n.assessmentTaskRecorded,
+              style: const TextStyle(
                 fontSize: AppTextSizes.sectionTitle,
                 fontWeight: FontWeight.w700,
               ),
             ),
           )
         else
-          const Text(
-            'Press Start Task when you are ready. Wait through the complete '
-            'count-in, then play the first shown key or chord with GO. Each '
-            'scored task can only be performed once in this session.',
-            style: TextStyle(
+          Text(
+            context.l10n.assessmentStartTaskGuidance,
+            style: const TextStyle(
               fontSize: AppTextSizes.body,
               height: 1.4,
             ),
@@ -643,25 +688,37 @@ class _AssessmentPianoExecutionScreenState
     required String title,
     required String description,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: AppTextSizes.label,
-            fontWeight: FontWeight.w700,
+    final colorScheme = AssessmentTheme.dataFor(
+      widget.isDarkMode,
+    ).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: AppTextSizes.label,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          description,
-          style: const TextStyle(
-            fontSize: AppTextSizes.body,
-            height: 1.4,
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: AppTextSizes.body,
+              height: 1.4,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -671,14 +728,14 @@ class _AssessmentPianoExecutionScreenState
     final nextGroupIndex = _performanceTracker.nextEvaluationIndex;
     final expectedLabel = nextGroupIndex < _currentTask.noteGroups.length
         ? _currentTask.noteGroups[nextGroupIndex].displayLabel
-        : 'Task complete';
+        : context.l10n.assessmentTaskComplete;
 
     return Column(
       children: [
         Text(
           _performanceBeatNumber == 1
               ? 'GO'
-              : 'Beat $_performanceBeatNumber',
+              : context.l10n.assessmentBeatNumber(_performanceBeatNumber),
           style: const TextStyle(
             fontSize: AppTextSizes.sectionTitle,
             fontWeight: FontWeight.w700,
@@ -686,7 +743,7 @@ class _AssessmentPianoExecutionScreenState
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'Play now: $expectedLabel',
+          context.l10n.assessmentPlayNow(expectedLabel),
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: AppTextSizes.body,
@@ -696,8 +753,8 @@ class _AssessmentPianoExecutionScreenState
         const SizedBox(height: AppSpacing.sm),
         Text(
           sortedNotes.isEmpty
-              ? 'Waiting for MIDI input'
-              : '${sortedNotes.length} key(s) currently held',
+              ? context.l10n.assessmentWaitingMidi
+              : context.l10n.assessmentHeldKeys(sortedNotes.length),
           style: const TextStyle(fontSize: AppTextSizes.body),
         ),
       ],
@@ -726,30 +783,68 @@ class _AssessmentPianoExecutionScreenState
   /// Builds the primary button label or saving indicator.
   Widget _buildPrimaryButtonChild() {
     if (_isSubmitting || _isConnecting) {
-      return const SizedBox(
+      return SizedBox(
         width: AppIconSizes.md,
         height: AppIconSizes.md,
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AssessmentTheme.dataFor(
+            widget.isDarkMode,
+          ).colorScheme.onPrimary,
+        ),
       );
     }
 
     if (_isCountingIn) {
-      return const Text('Get Ready');
+      return Text(context.l10n.assessmentGetReady);
     }
 
     if (_isPerforming) {
-      return const Text('Performing');
+      return Text(context.l10n.assessmentPerforming);
     }
 
     // A recorded task can be submitted or advanced without reconnecting MIDI.
     if (_isTaskComplete) {
-      return Text(_isLastTask ? 'Submit Piano Results' : 'Next Task');
+      return Text(
+        _isLastTask
+            ? context.l10n.assessmentSubmitPianoResults
+            : context.l10n.assessmentNextTask,
+        textAlign: TextAlign.center,
+      );
     }
 
     if (!_midiIsConnected) {
-      return const Text('Connect MIDI');
+      return Text(context.l10n.assessmentConnectMidi);
     }
 
-    return const Text('Start Task');
+    return Text(context.l10n.assessmentStartTask);
+  }
+
+  String _localizedMidiStatus(BuildContext currentContext) {
+    final l10n = currentContext.l10n;
+
+    return switch (_midiStatus) {
+      _AssessmentMidiStatus.notConnected => l10n.assessmentMidiNotConnected,
+      _AssessmentMidiStatus.searching => l10n.assessmentMidiSearching,
+      _AssessmentMidiStatus.notDetected => l10n.assessmentMidiNotDetected,
+      _AssessmentMidiStatus.connecting => l10n.assessmentMidiConnecting,
+      _AssessmentMidiStatus.connected => _connectedDeviceName == null
+          ? l10n.assessmentMidiConnected
+          : l10n.assessmentMidiConnectedDevice(_connectedDeviceName!),
+      _AssessmentMidiStatus.connectionFailed =>
+        l10n.assessmentMidiConnectionFailed,
+      _AssessmentMidiStatus.disconnected => l10n.assessmentMidiDisconnected,
+    };
+  }
+
+  String _localizedError(BuildContext currentContext) {
+    final l10n = currentContext.l10n;
+
+    return switch (_error!) {
+      _AssessmentPianoError.connectionFailed =>
+        l10n.assessmentMidiConnectError,
+      _AssessmentPianoError.interrupted => l10n.assessmentMidiInterrupted,
+      _AssessmentPianoError.saveFailed => l10n.assessmentSavePianoFailed,
+    };
   }
 }

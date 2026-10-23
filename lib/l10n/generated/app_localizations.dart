@@ -6432,6 +6432,1104 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Released too soon'**
   String get practiceResultIssueReleasedEarly;
+
+  /// No description provided for @assessmentUnableToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load the assessment. Please try again.'**
+  String get assessmentUnableToLoad;
+
+  /// No description provided for @assessmentUnableToStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to start the assessment. Please try again.'**
+  String get assessmentUnableToStart;
+
+  /// No description provided for @assessmentUnableToContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to continue the assessment. Please try again.'**
+  String get assessmentUnableToContinue;
+
+  /// No description provided for @assessmentAcceptBeginnerQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Beginner level?'**
+  String get assessmentAcceptBeginnerQuestion;
+
+  /// No description provided for @assessmentAcceptBeginnerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on your answers, at least one required skill is at the Beginner level. Accepting will skip Notation Reading and Piano Execution. This result is permanent and cannot be attempted again.'**
+  String get assessmentAcceptBeginnerDescription;
+
+  /// No description provided for @assessmentReviewAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Answers'**
+  String get assessmentReviewAnswers;
+
+  /// No description provided for @assessmentAcceptBeginner.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Beginner'**
+  String get assessmentAcceptBeginner;
+
+  /// No description provided for @assessmentStartQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Start assessment?'**
+  String get assessmentStartQuestion;
+
+  /// No description provided for @assessmentStartWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Your 72-hour deadline will begin immediately. You only receive one attempt, and an expired assessment will permanently assign Beginner level.'**
+  String get assessmentStartWarning;
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
+
+  /// No description provided for @assessmentSkillAssessment.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill assessment'**
+  String get assessmentSkillAssessment;
+
+  /// No description provided for @assessmentInProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment in progress'**
+  String get assessmentInProgressTitle;
+
+  /// No description provided for @assessmentCompletedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment completed'**
+  String get assessmentCompletedTitle;
+
+  /// No description provided for @assessmentExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment expired'**
+  String get assessmentExpiredTitle;
+
+  /// No description provided for @assessmentSkillDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the assessment to determine your SoundSight Level. Your 72-hour deadline begins only after you press Start.'**
+  String get assessmentSkillDescription;
+
+  /// No description provided for @assessmentActiveDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your assessment has started. Continue before the deadline to receive your SoundSight Level.'**
+  String get assessmentActiveDescription;
+
+  /// No description provided for @assessmentCompleteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your assessment is complete. View your permanent SoundSight Level and section results.'**
+  String get assessmentCompleteDescription;
+
+  /// No description provided for @assessmentExpiredFullDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The assessment was not completed within 72 hours. Your SoundSight Level is Beginner, and this assessment cannot be attempted again.'**
+  String get assessmentExpiredFullDescription;
+
+  /// No description provided for @assessmentViewResults.
+  ///
+  /// In en, this message translates to:
+  /// **'View Results'**
+  String get assessmentViewResults;
+
+  /// No description provided for @assessmentContinueHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to Home'**
+  String get assessmentContinueHome;
+
+  /// No description provided for @assessmentSkipForNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for Now'**
+  String get assessmentSkipForNow;
+
+  /// No description provided for @assessmentContinueLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Later'**
+  String get assessmentContinueLater;
+
+  /// No description provided for @assessmentTimeRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining'**
+  String get assessmentTimeRemaining;
+
+  /// No description provided for @assessmentDurationDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d {hours}h {minutes}m'**
+  String assessmentDurationDays(int days, int hours, int minutes);
+
+  /// No description provided for @assessmentDurationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String assessmentDurationHours(int hours, int minutes);
+
+  /// No description provided for @assessmentDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m'**
+  String assessmentDurationMinutes(int minutes);
+
+  /// No description provided for @assessmentBeforeYouBegin.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you begin'**
+  String get assessmentBeforeYouBegin;
+
+  /// No description provided for @assessmentReadCarefully.
+  ///
+  /// In en, this message translates to:
+  /// **'Please read the following information carefully.'**
+  String get assessmentReadCarefully;
+
+  /// No description provided for @assessmentImportantInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Important information'**
+  String get assessmentImportantInformation;
+
+  /// No description provided for @assessmentLevelExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your SoundSight Level measures your combined sheet-reading and piano-playing ability.'**
+  String get assessmentLevelExplanation;
+
+  /// No description provided for @assessmentTimingExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Piano timing becomes stricter at each level. Beginner notes may be played up to 500 ms early or late, Intermediate notes up to 350 ms, and Advanced notes up to 250 ms.'**
+  String get assessmentTimingExplanation;
+
+  /// No description provided for @assessmentPassingExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A notation level requires at least 4 of 6 correct answers in that tier. A piano level requires at least 70% correct note or chord groups. Higher levels also require passing every lower tier.'**
+  String get assessmentPassingExplanation;
+
+  /// No description provided for @assessmentChordExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'For a chord to count as correct, all required keys must be pressed within 200 ms of one another and inside the level\'s timing window.'**
+  String get assessmentChordExplanation;
+
+  /// No description provided for @assessmentOneAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'You only receive one assessment attempt. An expired attempt cannot be restarted.'**
+  String get assessmentOneAttempt;
+
+  /// No description provided for @assessmentDeadlineExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The assessment must be completed within 72 hours after it starts.'**
+  String get assessmentDeadlineExplanation;
+
+  /// No description provided for @assessmentExpirationExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'If the assessment expires before completion, your SoundSight Level will be set to Beginner.'**
+  String get assessmentExpirationExplanation;
+
+  /// No description provided for @assessmentLeaveExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'You may leave between sections and continue later while the assessment is still active.'**
+  String get assessmentLeaveExplanation;
+
+  /// No description provided for @assessmentPreparationExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare your MIDI keyboard, internet connection, and a quiet place before continuing.'**
+  String get assessmentPreparationExplanation;
+
+  /// No description provided for @assessmentNoTimeRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'No time remaining'**
+  String get assessmentNoTimeRemaining;
+
+  /// No description provided for @assessmentContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Assessment'**
+  String get assessmentContinue;
+
+  /// No description provided for @returnAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Return'**
+  String get returnAction;
+
+  /// No description provided for @assessmentBackgroundQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Background Questions'**
+  String get assessmentBackgroundQuestions;
+
+  /// No description provided for @assessmentExperienceHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about your experience'**
+  String get assessmentExperienceHeading;
+
+  /// No description provided for @assessmentExperienceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'These answers help personalize your experience. If you are new to piano or have not learned sheet music, you may accept Beginner level and skip the remaining parts.'**
+  String get assessmentExperienceDescription;
+
+  /// No description provided for @assessmentDeadlineContinues.
+  ///
+  /// In en, this message translates to:
+  /// **'Your assessment deadline continues while answering.'**
+  String get assessmentDeadlineContinues;
+
+  /// No description provided for @assessmentAnswerEveryQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Please answer every question before continuing.'**
+  String get assessmentAnswerEveryQuestion;
+
+  /// No description provided for @assessmentSaveAnswersFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save your answers. Please try again.'**
+  String get assessmentSaveAnswersFailed;
+
+  /// No description provided for @assessmentSelectOneAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one answer.'**
+  String get assessmentSelectOneAnswer;
+
+  /// No description provided for @assessmentQuestionPianoExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'How long have you been playing the piano or keyboard?'**
+  String get assessmentQuestionPianoExperience;
+
+  /// No description provided for @assessmentQuestionSheetMusicExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'How familiar are you with reading sheet music?'**
+  String get assessmentQuestionSheetMusicExperience;
+
+  /// No description provided for @assessmentQuestionLearningMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'How have you mainly learned piano?'**
+  String get assessmentQuestionLearningMethod;
+
+  /// No description provided for @assessmentQuestionPrimaryGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'What is your main goal in SoundSight?'**
+  String get assessmentQuestionPrimaryGoal;
+
+  /// No description provided for @assessmentOptionNewToPiano.
+  ///
+  /// In en, this message translates to:
+  /// **'I am just starting'**
+  String get assessmentOptionNewToPiano;
+
+  /// No description provided for @assessmentOptionUnderOneYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Less than one year'**
+  String get assessmentOptionUnderOneYear;
+
+  /// No description provided for @assessmentOptionOneToThreeYears.
+  ///
+  /// In en, this message translates to:
+  /// **'One to three years'**
+  String get assessmentOptionOneToThreeYears;
+
+  /// No description provided for @assessmentOptionMoreThanThreeYears.
+  ///
+  /// In en, this message translates to:
+  /// **'More than three years'**
+  String get assessmentOptionMoreThanThreeYears;
+
+  /// No description provided for @assessmentOptionNotFamiliar.
+  ///
+  /// In en, this message translates to:
+  /// **'I have not learned sheet music'**
+  String get assessmentOptionNotFamiliar;
+
+  /// No description provided for @assessmentOptionBasicFamiliarity.
+  ///
+  /// In en, this message translates to:
+  /// **'I recognize a few notes and symbols'**
+  String get assessmentOptionBasicFamiliarity;
+
+  /// No description provided for @assessmentOptionModerateFamiliarity.
+  ///
+  /// In en, this message translates to:
+  /// **'I can read simple sheet music'**
+  String get assessmentOptionModerateFamiliarity;
+
+  /// No description provided for @assessmentOptionComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'I am comfortable reading sheet music'**
+  String get assessmentOptionComfortable;
+
+  /// No description provided for @assessmentOptionNoFormalLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'I have not started learning yet'**
+  String get assessmentOptionNoFormalLearning;
+
+  /// No description provided for @assessmentOptionTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'With a piano teacher'**
+  String get assessmentOptionTeacher;
+
+  /// No description provided for @assessmentOptionSelfTaught.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-taught'**
+  String get assessmentOptionSelfTaught;
+
+  /// No description provided for @assessmentOptionMixedLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'A mixture of lessons and self-study'**
+  String get assessmentOptionMixedLearning;
+
+  /// No description provided for @assessmentOptionLearnNotation.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn how to read music notation'**
+  String get assessmentOptionLearnNotation;
+
+  /// No description provided for @assessmentOptionImproveSightReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve my sight-reading'**
+  String get assessmentOptionImproveSightReading;
+
+  /// No description provided for @assessmentOptionImproveCoordination.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve my piano coordination'**
+  String get assessmentOptionImproveCoordination;
+
+  /// No description provided for @assessmentOptionTrackProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Understand and track my current ability'**
+  String get assessmentOptionTrackProgress;
+
+  /// No description provided for @assessmentNotationReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Notation Reading'**
+  String get assessmentNotationReading;
+
+  /// No description provided for @assessmentNotationSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Music notation for the current assessment question'**
+  String get assessmentNotationSemantics;
+
+  /// No description provided for @assessmentAnswerEveryNotationQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer every question before submitting.'**
+  String get assessmentAnswerEveryNotationQuestion;
+
+  /// No description provided for @assessmentPleaseAnswerEveryNotationQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Please answer every notation question.'**
+  String get assessmentPleaseAnswerEveryNotationQuestion;
+
+  /// No description provided for @assessmentSaveNotationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save your notation answers. Please try again.'**
+  String get assessmentSaveNotationFailed;
+
+  /// No description provided for @previous.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get previous;
+
+  /// No description provided for @submit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get submit;
+
+  /// No description provided for @assessmentQuestionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Question {current} of {total}'**
+  String assessmentQuestionProgress(int current, int total);
+
+  /// No description provided for @assessmentAnsweredCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 answered} other {{count} answered}}'**
+  String assessmentAnsweredCount(int count);
+
+  /// No description provided for @assessmentNotationPromptNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Which note is shown?'**
+  String get assessmentNotationPromptNote;
+
+  /// No description provided for @assessmentNotationPromptBeatValue.
+  ///
+  /// In en, this message translates to:
+  /// **'In 4/4 time, how many beats does this note receive?'**
+  String get assessmentNotationPromptBeatValue;
+
+  /// No description provided for @assessmentNotationPromptTimeSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'What does this time signature mean?'**
+  String get assessmentNotationPromptTimeSignature;
+
+  /// No description provided for @assessmentNotationPromptLedgerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Which ledger-line note is shown?'**
+  String get assessmentNotationPromptLedgerNote;
+
+  /// No description provided for @assessmentNotationPromptAccidental.
+  ///
+  /// In en, this message translates to:
+  /// **'Which note with an accidental is shown?'**
+  String get assessmentNotationPromptAccidental;
+
+  /// No description provided for @assessmentNotationPromptMajorKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Which major key signature is shown?'**
+  String get assessmentNotationPromptMajorKey;
+
+  /// No description provided for @assessmentNotationPromptIntervalSize.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the size of the written interval?'**
+  String get assessmentNotationPromptIntervalSize;
+
+  /// No description provided for @assessmentNotationPromptUpperLedgerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Which upper ledger-line note is shown?'**
+  String get assessmentNotationPromptUpperLedgerNote;
+
+  /// No description provided for @assessmentNotationPromptCompoundMeter.
+  ///
+  /// In en, this message translates to:
+  /// **'How is this compound meter normally felt?'**
+  String get assessmentNotationPromptCompoundMeter;
+
+  /// No description provided for @assessmentNotationPromptWrittenInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the written interval?'**
+  String get assessmentNotationPromptWrittenInterval;
+
+  /// No description provided for @assessmentNotationPromptRootChord.
+  ///
+  /// In en, this message translates to:
+  /// **'Which root-position chord is shown?'**
+  String get assessmentNotationPromptRootChord;
+
+  /// No description provided for @assessmentNotationPromptPassageBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'How many quarter-note beats does this passage contain?'**
+  String get assessmentNotationPromptPassageBeats;
+
+  /// No description provided for @assessmentOptionHalfBeat.
+  ///
+  /// In en, this message translates to:
+  /// **'1/2 beat'**
+  String get assessmentOptionHalfBeat;
+
+  /// No description provided for @assessmentOptionOneBeat.
+  ///
+  /// In en, this message translates to:
+  /// **'1 beat'**
+  String get assessmentOptionOneBeat;
+
+  /// No description provided for @assessmentOptionTwoBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'2 beats'**
+  String get assessmentOptionTwoBeats;
+
+  /// No description provided for @assessmentOptionThreeBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'3 beats'**
+  String get assessmentOptionThreeBeats;
+
+  /// No description provided for @assessmentOptionFourBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'4 beats'**
+  String get assessmentOptionFourBeats;
+
+  /// No description provided for @assessmentOptionFiveBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'5 beats'**
+  String get assessmentOptionFiveBeats;
+
+  /// No description provided for @assessmentOptionTwoQuarterBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Two quarter-note beats per measure'**
+  String get assessmentOptionTwoQuarterBeats;
+
+  /// No description provided for @assessmentOptionThreeQuarterBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Three quarter-note beats per measure'**
+  String get assessmentOptionThreeQuarterBeats;
+
+  /// No description provided for @assessmentOptionFourQuarterBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Four quarter-note beats per measure'**
+  String get assessmentOptionFourQuarterBeats;
+
+  /// No description provided for @assessmentOptionFourEighthBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Four eighth-note beats per measure'**
+  String get assessmentOptionFourEighthBeats;
+
+  /// No description provided for @assessmentOptionTwoDottedQuarterBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Two dotted-quarter beats'**
+  String get assessmentOptionTwoDottedQuarterBeats;
+
+  /// No description provided for @assessmentOptionSixQuarterBeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Six quarter-note beats'**
+  String get assessmentOptionSixQuarterBeats;
+
+  /// No description provided for @assessmentOptionSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'Second'**
+  String get assessmentOptionSecond;
+
+  /// No description provided for @assessmentOptionThird.
+  ///
+  /// In en, this message translates to:
+  /// **'Third'**
+  String get assessmentOptionThird;
+
+  /// No description provided for @assessmentOptionFourth.
+  ///
+  /// In en, this message translates to:
+  /// **'Fourth'**
+  String get assessmentOptionFourth;
+
+  /// No description provided for @assessmentOptionFifth.
+  ///
+  /// In en, this message translates to:
+  /// **'Fifth'**
+  String get assessmentOptionFifth;
+
+  /// No description provided for @assessmentOptionMajorThird.
+  ///
+  /// In en, this message translates to:
+  /// **'Major third'**
+  String get assessmentOptionMajorThird;
+
+  /// No description provided for @assessmentOptionPerfectFourth.
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect fourth'**
+  String get assessmentOptionPerfectFourth;
+
+  /// No description provided for @assessmentOptionPerfectFifth.
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect fifth'**
+  String get assessmentOptionPerfectFifth;
+
+  /// No description provided for @assessmentOptionMajorSixth.
+  ///
+  /// In en, this message translates to:
+  /// **'Major sixth'**
+  String get assessmentOptionMajorSixth;
+
+  /// No description provided for @assessmentPianoExecution.
+  ///
+  /// In en, this message translates to:
+  /// **'Piano Execution'**
+  String get assessmentPianoExecution;
+
+  /// No description provided for @assessmentMidiNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get assessmentMidiNotConnected;
+
+  /// No description provided for @assessmentMidiSearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching...'**
+  String get assessmentMidiSearching;
+
+  /// No description provided for @assessmentMidiNotDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'No MIDI device detected'**
+  String get assessmentMidiNotDetected;
+
+  /// No description provided for @assessmentMidiConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get assessmentMidiConnecting;
+
+  /// No description provided for @assessmentMidiConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get assessmentMidiConnected;
+
+  /// No description provided for @assessmentMidiConnectedDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected: {deviceName}'**
+  String assessmentMidiConnectedDevice(String deviceName);
+
+  /// No description provided for @assessmentMidiConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed'**
+  String get assessmentMidiConnectionFailed;
+
+  /// No description provided for @assessmentMidiConnectError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to connect to the MIDI keyboard.'**
+  String get assessmentMidiConnectError;
+
+  /// No description provided for @assessmentMidiDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'MIDI keyboard disconnected'**
+  String get assessmentMidiDisconnected;
+
+  /// No description provided for @assessmentMidiInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'The MIDI connection was removed. Reconnect and restart this task.'**
+  String get assessmentMidiInterrupted;
+
+  /// No description provided for @assessmentSavePianoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save the piano results. Please try again.'**
+  String get assessmentSavePianoFailed;
+
+  /// No description provided for @assessmentTaskProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Task {current} of {total}'**
+  String assessmentTaskProgress(int current, int total);
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @assessmentKeysToPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys to play'**
+  String get assessmentKeysToPlay;
+
+  /// No description provided for @assessmentWhenToPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'When to play'**
+  String get assessmentWhenToPlay;
+
+  /// No description provided for @assessmentMiddleCExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'C4 is Middle C. The number tells you the piano octave.'**
+  String get assessmentMiddleCExplanation;
+
+  /// No description provided for @assessmentTempoCountIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{tempo} BPM • {count}-beat count-in'**
+  String assessmentTempoCountIn(int tempo, int count);
+
+  /// No description provided for @assessmentCountIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Count-in'**
+  String get assessmentCountIn;
+
+  /// No description provided for @assessmentWaitForGo.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait. Play {keys} when GO appears.'**
+  String assessmentWaitForGo(String keys);
+
+  /// No description provided for @assessmentTaskRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Task recorded'**
+  String get assessmentTaskRecorded;
+
+  /// No description provided for @assessmentStartTaskGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Start Task when you are ready. Wait through the complete count-in, then play the first shown key or chord with GO. Each scored task can only be performed once in this session.'**
+  String get assessmentStartTaskGuidance;
+
+  /// No description provided for @assessmentTaskComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Task complete'**
+  String get assessmentTaskComplete;
+
+  /// No description provided for @assessmentBeatNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Beat {number}'**
+  String assessmentBeatNumber(int number);
+
+  /// No description provided for @assessmentPlayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Play now: {keys}'**
+  String assessmentPlayNow(String keys);
+
+  /// No description provided for @assessmentWaitingMidi.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for MIDI input'**
+  String get assessmentWaitingMidi;
+
+  /// No description provided for @assessmentHeldKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 key currently held} other {{count} keys currently held}}'**
+  String assessmentHeldKeys(int count);
+
+  /// No description provided for @assessmentGetReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Ready'**
+  String get assessmentGetReady;
+
+  /// No description provided for @assessmentPerforming.
+  ///
+  /// In en, this message translates to:
+  /// **'Performing'**
+  String get assessmentPerforming;
+
+  /// No description provided for @assessmentSubmitPianoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Piano Results'**
+  String get assessmentSubmitPianoResults;
+
+  /// No description provided for @assessmentNextTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Task'**
+  String get assessmentNextTask;
+
+  /// No description provided for @assessmentConnectMidi.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect MIDI'**
+  String get assessmentConnectMidi;
+
+  /// No description provided for @assessmentStartTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Task'**
+  String get assessmentStartTask;
+
+  /// No description provided for @assessmentTaskMiddleCTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Middle C'**
+  String get assessmentTaskMiddleCTitle;
+
+  /// No description provided for @assessmentTaskMiddleCInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C4, which is Middle C.'**
+  String get assessmentTaskMiddleCInstruction;
+
+  /// No description provided for @assessmentTaskMiddleCTiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C4 once when GO appears.'**
+  String get assessmentTaskMiddleCTiming;
+
+  /// No description provided for @assessmentTaskFiveFingerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Five-finger pattern'**
+  String get assessmentTaskFiveFingerTitle;
+
+  /// No description provided for @assessmentTaskFiveFingerInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C4, D4, E4, F4, and G4 upward.'**
+  String get assessmentTaskFiveFingerInstruction;
+
+  /// No description provided for @assessmentTaskNoteEveryClickTiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Play {firstNote} with GO, then play one note on every following click.'**
+  String assessmentTaskNoteEveryClickTiming(String firstNote);
+
+  /// No description provided for @assessmentTaskCMajorChordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'C major chord'**
+  String get assessmentTaskCMajorChordTitle;
+
+  /// No description provided for @assessmentTaskCMajorChordInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C4, E4, and G4 together.'**
+  String get assessmentTaskCMajorChordInstruction;
+
+  /// No description provided for @assessmentTaskChordGoTiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Play the complete chord once when GO appears.'**
+  String get assessmentTaskChordGoTiming;
+
+  /// No description provided for @assessmentTaskCMajorScaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'C major scale'**
+  String get assessmentTaskCMajorScaleTitle;
+
+  /// No description provided for @assessmentTaskCMajorScaleInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play the C major scale upward from C4 to C5.'**
+  String get assessmentTaskCMajorScaleInstruction;
+
+  /// No description provided for @assessmentTaskCMajorArpeggioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'C major arpeggio'**
+  String get assessmentTaskCMajorArpeggioTitle;
+
+  /// No description provided for @assessmentTaskCMajorArpeggioInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C4, E4, G4, C5, G4, E4, and C4.'**
+  String get assessmentTaskCMajorArpeggioInstruction;
+
+  /// No description provided for @assessmentTaskChordProgressionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chord progression'**
+  String get assessmentTaskChordProgressionTitle;
+
+  /// No description provided for @assessmentTaskChordProgressionInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C3-E3-G3, F3-A3-C4, G3-B3-D4, then C3-E3-G3.'**
+  String get assessmentTaskChordProgressionInstruction;
+
+  /// No description provided for @assessmentTaskChordEverySecondClickTiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Play the first chord with GO, then one chord every second click.'**
+  String get assessmentTaskChordEverySecondClickTiming;
+
+  /// No description provided for @assessmentTaskTwoOctaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-octave scale'**
+  String get assessmentTaskTwoOctaveTitle;
+
+  /// No description provided for @assessmentTaskTwoOctaveInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play the C major scale upward from C3 to C5.'**
+  String get assessmentTaskTwoOctaveInstruction;
+
+  /// No description provided for @assessmentTaskChordInversionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chord inversions'**
+  String get assessmentTaskChordInversionsTitle;
+
+  /// No description provided for @assessmentTaskChordInversionsInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C3-E3-G3, E3-G3-C4, G3-C4-E4, then C4-E4-G4.'**
+  String get assessmentTaskChordInversionsInstruction;
+
+  /// No description provided for @assessmentTaskParallelScaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Parallel scale'**
+  String get assessmentTaskParallelScaleTitle;
+
+  /// No description provided for @assessmentTaskParallelScaleInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Play C3-C4 through C4-C5 with both hands in parallel motion.'**
+  String get assessmentTaskParallelScaleInstruction;
+
+  /// No description provided for @assessmentTaskParallelTiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Play both C keys with GO, then play the next pair on every click.'**
+  String get assessmentTaskParallelTiming;
+
+  /// No description provided for @assessmentReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment Review'**
+  String get assessmentReview;
+
+  /// No description provided for @assessmentApplyLevelFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to apply your saved skill level. Please try again.'**
+  String get assessmentApplyLevelFailed;
+
+  /// No description provided for @assessmentBeginnerShortcutSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Your background answers show that at least one required skill is entirely new to you. The scored sections were skipped and Beginner was assigned.'**
+  String get assessmentBeginnerShortcutSummary;
+
+  /// No description provided for @assessmentNotationSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Notation reading'**
+  String get assessmentNotationSection;
+
+  /// No description provided for @assessmentPianoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Piano execution'**
+  String get assessmentPianoSection;
+
+  /// No description provided for @assessmentCorrectScore.
+  ///
+  /// In en, this message translates to:
+  /// **'{correct} of {total} correct'**
+  String assessmentCorrectScore(int correct, int total);
+
+  /// No description provided for @assessmentCorrectGroupsScore.
+  ///
+  /// In en, this message translates to:
+  /// **'{correct} of {total} correct groups'**
+  String assessmentCorrectGroupsScore(int correct, int total);
+
+  /// No description provided for @assessmentFinalLevelExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your final level uses the lower of your notation and piano levels. Strength in one required skill cannot hide a weaker required skill.'**
+  String get assessmentFinalLevelExplanation;
+
+  /// No description provided for @assessmentYourLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your SoundSight Level'**
+  String get assessmentYourLevel;
+
+  /// No description provided for @assessmentNoSavedAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved answer'**
+  String get assessmentNoSavedAnswer;
+
+  /// No description provided for @assessmentBackgroundAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Background answers'**
+  String get assessmentBackgroundAnswers;
+
+  /// No description provided for @assessmentCorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct'**
+  String get assessmentCorrect;
+
+  /// No description provided for @assessmentCorrectAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct answer: {answer}'**
+  String assessmentCorrectAnswer(String answer);
+
+  /// No description provided for @assessmentNotationAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Notation answers'**
+  String get assessmentNotationAnswers;
+
+  /// No description provided for @assessmentNoSavedResult.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved result'**
+  String get assessmentNoSavedResult;
+
+  /// No description provided for @assessmentPianoResultDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'{wrong} wrong, {missed} missed, {timing} timing mistakes'**
+  String assessmentPianoResultDetails(int wrong, int missed, int timing);
+
+  /// No description provided for @assessmentPianoTaskResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Piano task results'**
+  String get assessmentPianoTaskResults;
+
+  /// No description provided for @assessmentResultUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The assessment is complete, but its saved result details could not be displayed.'**
+  String get assessmentResultUnavailable;
 }
 
 class _AppLocalizationsDelegate

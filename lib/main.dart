@@ -1,11 +1,16 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/screens/auth/login/login_screen.dart';
+import 'package:soundsight/screens/auth/email_verification/email_verification_screen.dart';
+import 'package:soundsight/screens/auth/services/registration_profile_service.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:soundsight/l10n/generated/app_localizations.dart';
 import 'package:soundsight/localization/app_locale_controller.dart';
+import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
+import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
+import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 
 void main() async {
@@ -15,22 +20,6 @@ void main() async {
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   await Firebase.initializeApp();
-
-  final hasUnfinishedAccount = await hasUnfinishedRegistration();
-
-  if (hasUnfinishedAccount) {
-    final unfinishedUser = FirebaseAuth.instance.currentUser;
-
-    try {
-      await unfinishedUser?.delete();
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'user-token-expired') {
-        await FirebaseAuth.instance.signOut();
-      } else {
-        await FirebaseAuth.instance.signOut();
-      }
-    }
-  }
 
   runApp(const SoundSight());
 }
@@ -59,7 +48,6 @@ class _SoundSightState extends State<SoundSight> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
     return AppLocaleScope(
       controller: localeController,
       child: AnimatedBuilder(
@@ -69,9 +57,7 @@ class _SoundSightState extends State<SoundSight> {
             locale: localeController.locale,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: currentUser == null
-                ? const LoginScreen()
-                : const HomeScreen(),
+            home: const AuthenticationGate(),
             debugShowCheckedModeBanner: false,
           );
         },
@@ -95,23 +81,166 @@ class _SoundSightState extends State<SoundSight> {
   }
 }
 
-Future<bool> hasUnfinishedRegistration() async {
-  try {
-    final user = FirebaseAuth.instance.currentUser;
+enum _AuthenticationDestination { login, verification, assessment, home }
 
-    if (user == null) return false;
+/// Validates the persisted Firebase session before exposing authenticated UI.
+class AuthenticationGate extends StatefulWidget {
+  const AuthenticationGate({
+    super.key,
+    this.auth,
+    this.profileService,
+    this.assessmentService,
+  });
 
-    if (!user.emailVerified) return true;
+  final FirebaseAuth? auth;
+  final RegistrationProfileService? profileService;
+  final AssessmentAttemptService? assessmentService;
+
+  @override
+  State<AuthenticationGate> createState() => _AuthenticationGateState();
+}
+
+class _AuthenticationGateState extends State<AuthenticationGate> {
+  late final FirebaseAuth _auth;
+  late final RegistrationProfileService _profileService;
+  late final AssessmentAttemptService _assessmentService;
+  late Future<_AuthenticationDestination> _destination;
+  AssessmentAttempt? _initialAttempt;
+  bool _isDarkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _auth = widget.auth ?? FirebaseAuth.instance;
+    _profileService = widget.profileService ?? RegistrationProfileService();
+    _assessmentService =
+        widget.assessmentService ?? AssessmentAttemptService(auth: _auth);
+    _destination = _resolveDestination();
+  }
+
+  Future<_AuthenticationDestination> _resolveDestination() async {
+    _initialAttempt = null;
+    _isDarkMode = false;
+    var user = _auth.currentUser;
+
+    if (user == null) {
+      return _AuthenticationDestination.login;
+    }
+
+    // Firebase persists a cached User object. Reload before trusting fields
+    // such as emailVerified, which may have changed outside the application.
+    await user.reload();
+    user = _auth.currentUser;
+
+    if (user == null) {
+      return _AuthenticationDestination.login;
+    }
+
+    if (!user.emailVerified) {
+      return _AuthenticationDestination.verification;
+    }
 
     await user.getIdTokenResult(true);
+    final profile = await _profileService.loadProfile(user);
 
-    final userDocument = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
+    if (!profile.exists) {
+      // Complete a registration that was verified while the app was closed.
+      await _profileService.ensureProfile(user);
+    } else {
+      _isDarkMode = profile.data()?['theme'] == 'dark';
+    }
 
-    return !userDocument.exists;
-  } on FirebaseException {
-    return false;
+    _initialAttempt = await _assessmentService.loadCurrentAttempt();
+    final assessmentStatus = _initialAttempt?.effectiveStatus;
+
+    if (assessmentStatus == AssessmentAttemptStatus.completed ||
+        assessmentStatus == AssessmentAttemptStatus.expired) {
+      return _AuthenticationDestination.home;
+    }
+
+    return _AuthenticationDestination.assessment;
+  }
+
+  void _retry() {
+    setState(() {
+      _destination = _resolveDestination();
+    });
+  }
+
+  Future<void> _signOut() async {
+    try {
+      await _auth.signOut();
+    } finally {
+      if (mounted) {
+        _retry();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_AuthenticationDestination>(
+      future: _destination,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "We couldn't verify your account status. Check your "
+                        'connection and try again.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _retry,
+                        child: const Text('Try Again'),
+                      ),
+                      TextButton(
+                        onPressed: _signOut,
+                        child: const Text('Sign Out'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        switch (snapshot.data!) {
+          case _AuthenticationDestination.login:
+            return LoginScreen(
+              auth: _auth,
+              profileService: _profileService,
+              assessmentService: _assessmentService,
+            );
+          case _AuthenticationDestination.verification:
+            return EmailVerificationScreen(
+              auth: _auth,
+              profileService: _profileService,
+              assessmentService: _assessmentService,
+            );
+          case _AuthenticationDestination.assessment:
+            return AssessmentEntryScreen(
+              initialAttempt: _initialAttempt,
+              isDarkMode: _isDarkMode,
+            );
+          case _AuthenticationDestination.home:
+            return HomeScreen(isDarkMode: _isDarkMode);
+        }
+      },
+    );
   }
 }

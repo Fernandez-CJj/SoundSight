@@ -195,6 +195,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute<void>(
         builder: (_) => AssessmentEntryScreen(
           initialAttempt: assessmentAttempt,
+          isDarkMode: isDarkMode,
+          returnToPreviousScreenOnDone: true,
         ),
       ),
     );

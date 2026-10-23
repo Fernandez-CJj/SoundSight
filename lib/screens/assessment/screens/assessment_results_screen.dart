@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
+import 'package:soundsight/localization/localization_extension.dart';
+import 'package:soundsight/screens/assessment/assessment_localization.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/models/assessment_notation_question.dart';
 import 'package:soundsight/screens/assessment/models/assessment_piano_task.dart';
 import 'package:soundsight/screens/assessment/models/assessment_questionnaire.dart';
+import 'package:soundsight/screens/assessment/widgets/assessment_theme.dart';
 
 /// Called when the user accepts the saved result and presses Done.
 typedef AssessmentResultDoneCallback = Future<void> Function();
@@ -14,6 +17,7 @@ class AssessmentResultsScreen extends StatefulWidget {
     super.key,
     required this.attempt,
     required this.onDone,
+    this.isDarkMode = false,
   });
 
   /// Contains every saved answer, section score, and calculated level.
@@ -21,6 +25,8 @@ class AssessmentResultsScreen extends StatefulWidget {
 
   /// Applies the saved final level to the profile and opens Home.
   final AssessmentResultDoneCallback onDone;
+
+  final bool isDarkMode;
 
   @override
   State<AssessmentResultsScreen> createState() {
@@ -54,8 +60,7 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
 
       setState(() {
         _isApplyingLevel = false;
-        _errorMessage =
-            'Unable to apply your saved skill level. Please try again.\n$error';
+        _errorMessage = context.l10n.assessmentApplyLevelFailed;
       });
     }
   }
@@ -83,14 +88,15 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
       return _buildUnavailableResult();
     }
 
+    final colorScheme = AssessmentTheme.dataFor(
+      widget.isDarkMode,
+    ).colorScheme;
     final scoredSummary = <Widget>[];
 
     if (usedBeginnerShortcut) {
       scoredSummary.add(
-        const Text(
-          'Your background answers show that at least one required skill is '
-          'entirely new to you. The scored sections were skipped and Beginner '
-          'was assigned.',
+        Text(
+          context.l10n.assessmentBeginnerShortcutSummary,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: AppTextSizes.body, height: 1.4),
         ),
@@ -104,65 +110,93 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
       scoredSummary.addAll([
         _buildSectionResult(
           context: context,
-          title: 'Notation reading',
+          title: context.l10n.assessmentNotationSection,
           level: savedNotationLevel,
-          scoreText:
-              '${savedNotationScore.totalCorrect} of '
-              '${AssessmentNotationScore.totalQuestions} correct',
+          scoreText: context.l10n.assessmentCorrectScore(
+            savedNotationScore.totalCorrect,
+            AssessmentNotationScore.totalQuestions,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         _buildSectionResult(
           context: context,
-          title: 'Piano execution',
+          title: context.l10n.assessmentPianoSection,
           level: savedPianoLevel,
-          scoreText:
-              '${savedPianoScore.totalCorrectGroups} of '
-              '${savedPianoScore.totalGroups} correct groups',
+          scoreText: context.l10n.assessmentCorrectGroupsScore(
+            savedPianoScore.totalCorrectGroups,
+            savedPianoScore.totalGroups,
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        const Text(
-          'Your final level uses the lower of your notation and piano levels. '
-          'Strength in one required skill cannot hide a weaker required skill.',
+        Text(
+          context.l10n.assessmentFinalLevelExplanation,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: AppTextSizes.body, height: 1.4),
         ),
       ]);
     }
 
-    return PopScope(
-      // Done is the only exit because it applies the result to the profile.
-      canPop: false,
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Assessment Review'),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+    return Theme(
+      data: AssessmentTheme.dataFor(widget.isDarkMode),
+      child: PopScope(
+        canPop: true,
+        child: Scaffold(
+          appBar: AppBar(
+            leading: BackButton(
+              onPressed: () {
+                Navigator.of(context).maybePop();
+              },
+            ),
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(context.l10n.assessmentReview),
+            ),
+          ),
+          body: AssessmentPageBody(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'Your SoundSight Level',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: AppTextSizes.sectionTitle,
-                            fontWeight: FontWeight.w600,
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface,
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          _displayLevel(finalLevel),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: AppTextSizes.screenTitle,
-                            fontWeight: FontWeight.w700,
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.workspace_premium_outlined,
+                                color: colorScheme.primary,
+                                size: AppIconSizes.lg,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                context.l10n.assessmentYourLevel,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: AppTextSizes.sectionTitle,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                _displayLevel(finalLevel),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: AppTextSizes.screenTitle,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: AppSpacing.lg),
@@ -185,27 +219,34 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
                     _errorMessage!,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                      color: AssessmentTheme.dataFor(
+                        widget.isDarkMode,
+                      ).colorScheme.error,
                       fontSize: AppTextSizes.label,
                     ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  height: 52,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 52),
                   child: ElevatedButton(
                     onPressed: _isApplyingLevel ? null : _finishReview,
                     child: _isApplyingLevel
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: AppIconSizes.md,
                             height: AppIconSizes.md,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AssessmentTheme.dataFor(
+                                widget.isDarkMode,
+                              ).colorScheme.onPrimary,
+                            ),
                           )
-                        : const Text('Done'),
+                        : Text(context.l10n.done),
                   ),
                 ),
-              ],
-            ),
+                ],
+              ),
           ),
         ),
       ),
@@ -222,17 +263,23 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
         (option) => option.id == selectedId,
       );
       final selectedLabel = matchingOptions.isEmpty
-          ? 'No saved answer'
-          : matchingOptions.first.label;
+          ? context.l10n.assessmentNoSavedAnswer
+          : localizedQuestionnaireOption(
+              context.l10n,
+              matchingOptions.first,
+            );
 
       rows.add(
-        _buildAnswerRow(title: question.title, answer: selectedLabel),
+        _buildAnswerRow(
+          title: localizedQuestionnaireQuestion(context.l10n, question),
+          answer: selectedLabel,
+        ),
       );
     }
 
     return _buildReviewGroup(
       context: context,
-      title: 'Background answers',
+      title: context.l10n.assessmentBackgroundAnswers,
       children: rows,
     );
   }
@@ -250,26 +297,26 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
         (option) => option.id == question.correctOptionId,
       );
       final selectedLabel = selectedOptions.isEmpty
-          ? 'No saved answer'
-          : selectedOptions.first.label;
+          ? context.l10n.assessmentNoSavedAnswer
+          : localizedNotationOption(context.l10n, selectedOptions.first);
       final correctLabel = correctOptions.isEmpty
           ? question.correctOptionId
-          : correctOptions.first.label;
+          : localizedNotationOption(context.l10n, correctOptions.first);
 
       rows.add(
         _buildAnswerRow(
-          title: question.prompt,
+          title: localizedNotationPrompt(context.l10n, question),
           answer: selectedLabel,
           detail: selectedId == question.correctOptionId
-              ? 'Correct'
-              : 'Correct answer: $correctLabel',
+              ? context.l10n.assessmentCorrect
+              : context.l10n.assessmentCorrectAnswer(correctLabel),
         ),
       );
     }
 
     return _buildReviewGroup(
       context: context,
-      title: 'Notation answers',
+      title: context.l10n.assessmentNotationAnswers,
       children: rows,
     );
   }
@@ -283,55 +330,60 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
 
       rows.add(
         _buildAnswerRow(
-          title: task.title,
+          title: localizedPianoTaskTitle(context.l10n, task),
           answer: result == null
-              ? 'No saved result'
-              : '${result.correctGroupCount} of '
-                  '${result.totalGroupCount} correct groups',
+              ? context.l10n.assessmentNoSavedResult
+              : context.l10n.assessmentCorrectGroupsScore(
+                  result.correctGroupCount,
+                  result.totalGroupCount,
+                ),
           detail: result == null
               ? null
-              : '${result.wrongGroupCount} wrong, '
-                  '${result.missedGroupCount} missed, '
-                  '${result.timingMistakeCount} timing mistakes',
+              : context.l10n.assessmentPianoResultDetails(
+                  result.wrongGroupCount,
+                  result.missedGroupCount,
+                  result.timingMistakeCount,
+                ),
         ),
       );
     }
 
     return _buildReviewGroup(
       context: context,
-      title: 'Piano task results',
+      title: context.l10n.assessmentPianoTaskResults,
       children: rows,
     );
   }
 
-  /// Keeps a long answer review compact until the user opens each group.
+  /// Displays one complete review group without requiring another tap.
   Widget _buildReviewGroup({
     required BuildContext context,
     required String title,
     required List<Widget> children,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = AssessmentTheme.dataFor(
+      widget.isDarkMode,
+    ).colorScheme;
 
     return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
+        color: colorScheme.surface,
         border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: ExpansionTile(
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: AppTextSizes.body,
-            fontWeight: FontWeight.w600,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: AppTextSizes.body,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        children: children,
+          ...children,
+        ],
       ),
     );
   }
@@ -375,11 +427,14 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
     required AssessmentSkillLevel level,
     required String scoreText,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = AssessmentTheme.dataFor(
+      widget.isDarkMode,
+    ).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
+        color: colorScheme.surface,
         border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
@@ -421,35 +476,45 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
   String _displayLevel(AssessmentSkillLevel level) {
     switch (level) {
       case AssessmentSkillLevel.beginner:
-        return 'Beginner';
+        return context.l10n.beginner;
       case AssessmentSkillLevel.intermediate:
-        return 'Intermediate';
+        return context.l10n.intermediate;
       case AssessmentSkillLevel.advanced:
-        return 'Advanced';
+        return context.l10n.advanced;
     }
   }
 
   /// Handles an older or incomplete result without exposing a broken screen.
   Widget _buildUnavailableResult() {
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Assessment Review'),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+    return Theme(
+      data: AssessmentTheme.dataFor(widget.isDarkMode),
+      child: PopScope(
+        canPop: true,
+        child: Scaffold(
+          appBar: AppBar(
+            leading: BackButton(
+              onPressed: () {
+                Navigator.of(context).maybePop();
+              },
+            ),
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(context.l10n.assessmentReview),
+            ),
+          ),
+          body: AssessmentPageBody(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'The assessment is complete, but its saved result details '
-                  'could not be displayed.',
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                Text(
+                  context.l10n.assessmentResultUnavailable,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: AppTextSizes.body, height: 1.4),
+                  style: const TextStyle(
+                    fontSize: AppTextSizes.body,
+                    height: 1.4,
+                  ),
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -457,27 +522,34 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
                     _errorMessage!,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                      color: AssessmentTheme.dataFor(
+                        widget.isDarkMode,
+                      ).colorScheme.error,
                       fontSize: AppTextSizes.label,
                     ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),
-                SizedBox(
-                  height: 52,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 52),
                   child: ElevatedButton(
                     onPressed: _isApplyingLevel ? null : _finishReview,
                     child: _isApplyingLevel
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: AppIconSizes.md,
                             height: AppIconSizes.md,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AssessmentTheme.dataFor(
+                                widget.isDarkMode,
+                              ).colorScheme.onPrimary,
+                            ),
                           )
-                        : const Text('Done'),
+                        : Text(context.l10n.done),
                   ),
                 ),
-              ],
-            ),
+                ],
+              ),
           ),
         ),
       ),

@@ -3943,4 +3943,680 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get practiceResultIssueReleasedEarly => 'Masyadong maagang binitawan';
+
+  @override
+  String get assessmentUnableToLoad =>
+      'Hindi ma-load ang pagsusuri. Subukan muli.';
+
+  @override
+  String get assessmentUnableToStart =>
+      'Hindi masimulan ang pagsusuri. Subukan muli.';
+
+  @override
+  String get assessmentUnableToContinue =>
+      'Hindi maipagpatuloy ang pagsusuri. Subukan muli.';
+
+  @override
+  String get assessmentAcceptBeginnerQuestion =>
+      'Tanggapin ang antas na Beginner?';
+
+  @override
+  String get assessmentAcceptBeginnerDescription =>
+      'Batay sa iyong mga sagot, nasa antas na Beginner ang hindi bababa sa isang kinakailangang kasanayan. Kapag tinanggap ito, lalaktawan ang Pagbasa ng Notasyon at Pagtugtog sa Piano. Permanente ang resultang ito at hindi na maaaring ulitin ang pagsusuri.';
+
+  @override
+  String get assessmentReviewAnswers => 'Suriin ang mga Sagot';
+
+  @override
+  String get assessmentAcceptBeginner => 'Tanggapin ang Beginner';
+
+  @override
+  String get assessmentStartQuestion => 'Simulan ang pagsusuri?';
+
+  @override
+  String get assessmentStartWarning =>
+      'Magsisimula agad ang iyong 72-oras na palugit. Isang beses mo lamang maaaring kunin ang pagsusuri, at permanenteng itatalaga ang antas na Beginner kapag nag-expire ito.';
+
+  @override
+  String get start => 'Simulan';
+
+  @override
+  String get assessmentSkillAssessment => 'Pagsusuri ng kasanayan';
+
+  @override
+  String get assessmentInProgressTitle =>
+      'Kasalukuyang isinasagawa ang pagsusuri';
+
+  @override
+  String get assessmentCompletedTitle => 'Tapos na ang pagsusuri';
+
+  @override
+  String get assessmentExpiredTitle => 'Nag-expire ang pagsusuri';
+
+  @override
+  String get assessmentSkillDescription =>
+      'Kumpletuhin ang pagsusuri upang matukoy ang iyong SoundSight Level. Magsisimula lamang ang 72-oras na palugit kapag pinindot mo ang Simulan.';
+
+  @override
+  String get assessmentActiveDescription =>
+      'Nagsimula na ang iyong pagsusuri. Magpatuloy bago ang deadline upang makuha ang iyong SoundSight Level.';
+
+  @override
+  String get assessmentCompleteDescription =>
+      'Tapos na ang iyong pagsusuri. Tingnan ang iyong permanenteng SoundSight Level at mga resulta ng bawat bahagi.';
+
+  @override
+  String get assessmentExpiredFullDescription =>
+      'Hindi natapos ang pagsusuri sa loob ng 72 oras. Beginner ang iyong SoundSight Level, at hindi na maaaring ulitin ang pagsusuring ito.';
+
+  @override
+  String get assessmentViewResults => 'Tingnan ang mga Resulta';
+
+  @override
+  String get assessmentContinueHome => 'Magpatuloy sa Home';
+
+  @override
+  String get assessmentSkipForNow => 'Laktawan Muna';
+
+  @override
+  String get assessmentContinueLater => 'Ipagpatuloy Mamaya';
+
+  @override
+  String get assessmentTimeRemaining => 'Natitirang oras';
+
+  @override
+  String assessmentDurationDays(int days, int hours, int minutes) {
+    return '${days}a ${hours}o ${minutes}m';
+  }
+
+  @override
+  String assessmentDurationHours(int hours, int minutes) {
+    return '${hours}o ${minutes}m';
+  }
+
+  @override
+  String assessmentDurationMinutes(int minutes) {
+    return '${minutes}m';
+  }
+
+  @override
+  String get assessmentBeforeYouBegin => 'Bago ka magsimula';
+
+  @override
+  String get assessmentReadCarefully =>
+      'Basahing mabuti ang sumusunod na impormasyon.';
+
+  @override
+  String get assessmentImportantInformation => 'Mahalagang impormasyon';
+
+  @override
+  String get assessmentLevelExplanation =>
+      'Sinusukat ng iyong SoundSight Level ang pinagsamang kakayahan mo sa pagbasa ng piyesa at pagtugtog ng piano.';
+
+  @override
+  String get assessmentTimingExplanation =>
+      'Mas humihigpit ang tiyempo ng piano sa bawat antas. Maaaring tumugtog ang Beginner nang hanggang 500 ms na maaga o huli, 350 ms para sa Intermediate, at 250 ms para sa Advanced.';
+
+  @override
+  String get assessmentPassingExplanation =>
+      'Kailangan ang hindi bababa sa 4 sa 6 na tamang sagot sa bawat antas ng notasyon. Kailangan naman ang hindi bababa sa 70% tamang grupo ng nota o chord sa piano. Kailangan ding maipasa ang lahat ng mas mababang antas bago ang mas mataas na antas.';
+
+  @override
+  String get assessmentChordExplanation =>
+      'Upang mabilang na tama ang chord, kailangang pindutin ang lahat ng kinakailangang key sa loob ng 200 ms mula sa isa\'t isa at sa tamang tiyempo ng antas.';
+
+  @override
+  String get assessmentOneAttempt =>
+      'Isang beses mo lamang maaaring kunin ang pagsusuri. Hindi na maaaring simulan muli ang nag-expire na pagtatangka.';
+
+  @override
+  String get assessmentDeadlineExplanation =>
+      'Kailangang matapos ang pagsusuri sa loob ng 72 oras mula nang simulan ito.';
+
+  @override
+  String get assessmentExpirationExplanation =>
+      'Kapag nag-expire ang pagsusuri bago matapos, itatakda sa Beginner ang iyong SoundSight Level.';
+
+  @override
+  String get assessmentLeaveExplanation =>
+      'Maaari kang umalis sa pagitan ng mga bahagi at magpatuloy mamaya habang aktibo pa ang pagsusuri.';
+
+  @override
+  String get assessmentPreparationExplanation =>
+      'Ihanda ang iyong MIDI keyboard, koneksyon sa internet, at isang tahimik na lugar bago magpatuloy.';
+
+  @override
+  String get assessmentNoTimeRemaining => 'Wala nang natitirang oras';
+
+  @override
+  String get assessmentContinue => 'Ipagpatuloy ang Pagsusuri';
+
+  @override
+  String get returnAction => 'Bumalik';
+
+  @override
+  String get assessmentBackgroundQuestions => 'Mga Tanong Tungkol sa Karanasan';
+
+  @override
+  String get assessmentExperienceHeading => 'Ikuwento ang iyong karanasan';
+
+  @override
+  String get assessmentExperienceDescription =>
+      'Nakakatulong ang mga sagot na ito upang iangkop ang iyong karanasan. Kung nagsisimula ka pa lamang sa piano o hindi ka pa natutong magbasa ng piyesa, maaari mong tanggapin ang antas na Beginner at laktawan ang mga natitirang bahagi.';
+
+  @override
+  String get assessmentDeadlineContinues =>
+      'Patuloy ang iyong deadline habang sumasagot.';
+
+  @override
+  String get assessmentAnswerEveryQuestion =>
+      'Sagutin ang lahat ng tanong bago magpatuloy.';
+
+  @override
+  String get assessmentSaveAnswersFailed =>
+      'Hindi ma-save ang iyong mga sagot. Subukan muli.';
+
+  @override
+  String get assessmentSelectOneAnswer => 'Pumili ng isang sagot.';
+
+  @override
+  String get assessmentQuestionPianoExperience =>
+      'Gaano ka na katagal tumutugtog ng piano o keyboard?';
+
+  @override
+  String get assessmentQuestionSheetMusicExperience =>
+      'Gaano ka kapamilyar sa pagbasa ng piyesa?';
+
+  @override
+  String get assessmentQuestionLearningMethod =>
+      'Paano ka pangunahing natutong tumugtog ng piano?';
+
+  @override
+  String get assessmentQuestionPrimaryGoal =>
+      'Ano ang pangunahing layunin mo sa SoundSight?';
+
+  @override
+  String get assessmentOptionNewToPiano => 'Nagsisimula pa lamang ako';
+
+  @override
+  String get assessmentOptionUnderOneYear => 'Mas mababa sa isang taon';
+
+  @override
+  String get assessmentOptionOneToThreeYears => 'Isa hanggang tatlong taon';
+
+  @override
+  String get assessmentOptionMoreThanThreeYears => 'Mahigit tatlong taon';
+
+  @override
+  String get assessmentOptionNotFamiliar =>
+      'Hindi pa ako natutong magbasa ng piyesa';
+
+  @override
+  String get assessmentOptionBasicFamiliarity =>
+      'Nakikilala ko ang ilang nota at simbolo';
+
+  @override
+  String get assessmentOptionModerateFamiliarity =>
+      'Nakakabasa ako ng simpleng piyesa';
+
+  @override
+  String get assessmentOptionComfortable =>
+      'Komportable akong magbasa ng piyesa';
+
+  @override
+  String get assessmentOptionNoFormalLearning =>
+      'Hindi pa ako nagsisimulang matuto';
+
+  @override
+  String get assessmentOptionTeacher => 'Sa tulong ng guro sa piano';
+
+  @override
+  String get assessmentOptionSelfTaught => 'Sariling pag-aaral';
+
+  @override
+  String get assessmentOptionMixedLearning =>
+      'Pinagsamang leksiyon at sariling pag-aaral';
+
+  @override
+  String get assessmentOptionLearnNotation =>
+      'Matutong magbasa ng notasyong pangmusika';
+
+  @override
+  String get assessmentOptionImproveSightReading =>
+      'Pagbutihin ang aking sight-reading';
+
+  @override
+  String get assessmentOptionImproveCoordination =>
+      'Pagbutihin ang koordinasyon ko sa piano';
+
+  @override
+  String get assessmentOptionTrackProgress =>
+      'Unawain at subaybayan ang kasalukuyan kong kakayahan';
+
+  @override
+  String get assessmentNotationReading => 'Pagbasa ng Notasyon';
+
+  @override
+  String get assessmentNotationSemantics =>
+      'Notasyong pangmusika para sa kasalukuyang tanong sa pagsusuri';
+
+  @override
+  String get assessmentAnswerEveryNotationQuestion =>
+      'Sagutin ang lahat ng tanong bago isumite.';
+
+  @override
+  String get assessmentPleaseAnswerEveryNotationQuestion =>
+      'Sagutin ang lahat ng tanong sa notasyon.';
+
+  @override
+  String get assessmentSaveNotationFailed =>
+      'Hindi ma-save ang iyong mga sagot sa notasyon. Subukan muli.';
+
+  @override
+  String get previous => 'Nakaraan';
+
+  @override
+  String get submit => 'Isumite';
+
+  @override
+  String assessmentQuestionProgress(int current, int total) {
+    return 'Tanong $current sa $total';
+  }
+
+  @override
+  String assessmentAnsweredCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ang nasagutan',
+      one: '1 ang nasagutan',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentNotationPromptNote => 'Anong nota ang ipinapakita?';
+
+  @override
+  String get assessmentNotationPromptBeatValue =>
+      'Sa 4/4 na kumpas, ilang beat ang katumbas ng notang ito?';
+
+  @override
+  String get assessmentNotationPromptTimeSignature =>
+      'Ano ang ibig sabihin ng time signature na ito?';
+
+  @override
+  String get assessmentNotationPromptLedgerNote =>
+      'Anong nota sa ledger line ang ipinapakita?';
+
+  @override
+  String get assessmentNotationPromptAccidental =>
+      'Anong notang may accidental ang ipinapakita?';
+
+  @override
+  String get assessmentNotationPromptMajorKey =>
+      'Anong major key signature ang ipinapakita?';
+
+  @override
+  String get assessmentNotationPromptIntervalSize =>
+      'Ano ang laki ng nakasulat na interval?';
+
+  @override
+  String get assessmentNotationPromptUpperLedgerNote =>
+      'Anong nota sa itaas na ledger line ang ipinapakita?';
+
+  @override
+  String get assessmentNotationPromptCompoundMeter =>
+      'Paano karaniwang binibilang ang compound meter na ito?';
+
+  @override
+  String get assessmentNotationPromptWrittenInterval =>
+      'Ano ang nakasulat na interval?';
+
+  @override
+  String get assessmentNotationPromptRootChord =>
+      'Anong chord sa root position ang ipinapakita?';
+
+  @override
+  String get assessmentNotationPromptPassageBeats =>
+      'Ilang quarter-note beat ang nasa bahaging ito?';
+
+  @override
+  String get assessmentOptionHalfBeat => '1/2 beat';
+
+  @override
+  String get assessmentOptionOneBeat => '1 beat';
+
+  @override
+  String get assessmentOptionTwoBeats => '2 beat';
+
+  @override
+  String get assessmentOptionThreeBeats => '3 beat';
+
+  @override
+  String get assessmentOptionFourBeats => '4 beat';
+
+  @override
+  String get assessmentOptionFiveBeats => '5 beat';
+
+  @override
+  String get assessmentOptionTwoQuarterBeats =>
+      'Dalawang quarter-note beat bawat sukat';
+
+  @override
+  String get assessmentOptionThreeQuarterBeats =>
+      'Tatlong quarter-note beat bawat sukat';
+
+  @override
+  String get assessmentOptionFourQuarterBeats =>
+      'Apat na quarter-note beat bawat sukat';
+
+  @override
+  String get assessmentOptionFourEighthBeats =>
+      'Apat na eighth-note beat bawat sukat';
+
+  @override
+  String get assessmentOptionTwoDottedQuarterBeats =>
+      'Dalawang dotted-quarter beat';
+
+  @override
+  String get assessmentOptionSixQuarterBeats => 'Anim na quarter-note beat';
+
+  @override
+  String get assessmentOptionSecond => 'Second';
+
+  @override
+  String get assessmentOptionThird => 'Third';
+
+  @override
+  String get assessmentOptionFourth => 'Fourth';
+
+  @override
+  String get assessmentOptionFifth => 'Fifth';
+
+  @override
+  String get assessmentOptionMajorThird => 'Major third';
+
+  @override
+  String get assessmentOptionPerfectFourth => 'Perfect fourth';
+
+  @override
+  String get assessmentOptionPerfectFifth => 'Perfect fifth';
+
+  @override
+  String get assessmentOptionMajorSixth => 'Major sixth';
+
+  @override
+  String get assessmentPianoExecution => 'Pagtugtog sa Piano';
+
+  @override
+  String get assessmentMidiNotConnected => 'Hindi nakakonekta';
+
+  @override
+  String get assessmentMidiSearching => 'Naghahanap...';
+
+  @override
+  String get assessmentMidiNotDetected => 'Walang natukoy na MIDI device';
+
+  @override
+  String get assessmentMidiConnecting => 'Kumokonekta...';
+
+  @override
+  String get assessmentMidiConnected => 'Nakakonekta';
+
+  @override
+  String assessmentMidiConnectedDevice(String deviceName) {
+    return 'Nakakonekta: $deviceName';
+  }
+
+  @override
+  String get assessmentMidiConnectionFailed => 'Hindi nakakonekta';
+
+  @override
+  String get assessmentMidiConnectError =>
+      'Hindi makakonekta sa MIDI keyboard.';
+
+  @override
+  String get assessmentMidiDisconnected => 'Nadiskonekta ang MIDI keyboard';
+
+  @override
+  String get assessmentMidiInterrupted =>
+      'Natanggal ang koneksyon sa MIDI. Ikonekta itong muli at simulang muli ang gawaing ito.';
+
+  @override
+  String get assessmentSavePianoFailed =>
+      'Hindi ma-save ang mga resulta sa piano. Subukan muli.';
+
+  @override
+  String assessmentTaskProgress(int current, int total) {
+    return 'Gawain $current sa $total';
+  }
+
+  @override
+  String get refresh => 'I-refresh';
+
+  @override
+  String get assessmentKeysToPlay => 'Mga key na tutugtugin';
+
+  @override
+  String get assessmentWhenToPlay => 'Kailan tutugtugin';
+
+  @override
+  String get assessmentMiddleCExplanation =>
+      'Ang C4 ang Middle C. Ipinapakita ng numero ang octave sa piano.';
+
+  @override
+  String assessmentTempoCountIn(int tempo, int count) {
+    return '$tempo BPM • $count-beat na count-in';
+  }
+
+  @override
+  String get assessmentCountIn => 'Count-in';
+
+  @override
+  String assessmentWaitForGo(String keys) {
+    return 'Maghintay. Tugtugin ang $keys kapag lumabas ang GO.';
+  }
+
+  @override
+  String get assessmentTaskRecorded => 'Naitala ang gawain';
+
+  @override
+  String get assessmentStartTaskGuidance =>
+      'Pindutin ang Simulan ang Gawain kapag handa ka na. Hintayin ang buong count-in, pagkatapos ay tugtugin ang unang ipinakitang key o chord kasabay ng GO. Isang beses lamang maaaring gawin ang bawat gawaing may puntos sa sesyong ito.';
+
+  @override
+  String get assessmentTaskComplete => 'Tapos na ang gawain';
+
+  @override
+  String assessmentBeatNumber(int number) {
+    return 'Beat $number';
+  }
+
+  @override
+  String assessmentPlayNow(String keys) {
+    return 'Tugtugin ngayon: $keys';
+  }
+
+  @override
+  String get assessmentWaitingMidi => 'Naghihintay ng MIDI input';
+
+  @override
+  String assessmentHeldKeys(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count key ang kasalukuyang nakapindot',
+      one: '1 key ang kasalukuyang nakapindot',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentGetReady => 'Humanda';
+
+  @override
+  String get assessmentPerforming => 'Tumutugtog';
+
+  @override
+  String get assessmentSubmitPianoResults => 'Isumite ang mga Resulta sa Piano';
+
+  @override
+  String get assessmentNextTask => 'Susunod na Gawain';
+
+  @override
+  String get assessmentConnectMidi => 'Ikonekta ang MIDI';
+
+  @override
+  String get assessmentStartTask => 'Simulan ang Gawain';
+
+  @override
+  String get assessmentTaskMiddleCTitle => 'Middle C';
+
+  @override
+  String get assessmentTaskMiddleCInstruction =>
+      'Tugtugin ang C4, na siyang Middle C.';
+
+  @override
+  String get assessmentTaskMiddleCTiming =>
+      'Tugtugin nang isang beses ang C4 kapag lumabas ang GO.';
+
+  @override
+  String get assessmentTaskFiveFingerTitle => 'Five-finger pattern';
+
+  @override
+  String get assessmentTaskFiveFingerInstruction =>
+      'Tugtugin nang pataas ang C4, D4, E4, F4, at G4.';
+
+  @override
+  String assessmentTaskNoteEveryClickTiming(String firstNote) {
+    return 'Tugtugin ang $firstNote kasabay ng GO, pagkatapos ay isang nota sa bawat susunod na click.';
+  }
+
+  @override
+  String get assessmentTaskCMajorChordTitle => 'C major chord';
+
+  @override
+  String get assessmentTaskCMajorChordInstruction =>
+      'Tugtugin nang sabay ang C4, E4, at G4.';
+
+  @override
+  String get assessmentTaskChordGoTiming =>
+      'Tugtugin nang isang beses ang buong chord kapag lumabas ang GO.';
+
+  @override
+  String get assessmentTaskCMajorScaleTitle => 'C major scale';
+
+  @override
+  String get assessmentTaskCMajorScaleInstruction =>
+      'Tugtugin nang pataas ang C major scale mula C4 hanggang C5.';
+
+  @override
+  String get assessmentTaskCMajorArpeggioTitle => 'C major arpeggio';
+
+  @override
+  String get assessmentTaskCMajorArpeggioInstruction =>
+      'Tugtugin ang C4, E4, G4, C5, G4, E4, at C4.';
+
+  @override
+  String get assessmentTaskChordProgressionTitle => 'Chord progression';
+
+  @override
+  String get assessmentTaskChordProgressionInstruction =>
+      'Tugtugin ang C3-E3-G3, F3-A3-C4, G3-B3-D4, at pagkatapos ay C3-E3-G3.';
+
+  @override
+  String get assessmentTaskChordEverySecondClickTiming =>
+      'Tugtugin ang unang chord kasabay ng GO, pagkatapos ay isang chord sa bawat ikalawang click.';
+
+  @override
+  String get assessmentTaskTwoOctaveTitle => 'Two-octave scale';
+
+  @override
+  String get assessmentTaskTwoOctaveInstruction =>
+      'Tugtugin nang pataas ang C major scale mula C3 hanggang C5.';
+
+  @override
+  String get assessmentTaskChordInversionsTitle => 'Mga chord inversion';
+
+  @override
+  String get assessmentTaskChordInversionsInstruction =>
+      'Tugtugin ang C3-E3-G3, E3-G3-C4, G3-C4-E4, at pagkatapos ay C4-E4-G4.';
+
+  @override
+  String get assessmentTaskParallelScaleTitle => 'Parallel scale';
+
+  @override
+  String get assessmentTaskParallelScaleInstruction =>
+      'Tugtugin ang C3-C4 hanggang C4-C5 gamit ang dalawang kamay sa magkapantay na galaw.';
+
+  @override
+  String get assessmentTaskParallelTiming =>
+      'Tugtugin ang dalawang C key kasabay ng GO, pagkatapos ay ang susunod na pares sa bawat click.';
+
+  @override
+  String get assessmentReview => 'Pagsusuri ng mga Resulta';
+
+  @override
+  String get assessmentApplyLevelFailed =>
+      'Hindi mailapat ang naka-save mong antas ng kasanayan. Subukan muli.';
+
+  @override
+  String get assessmentBeginnerShortcutSummary =>
+      'Ipinapakita ng iyong mga sagot tungkol sa karanasan na bago pa sa iyo ang hindi bababa sa isang kinakailangang kasanayan. Nilaktawan ang mga bahaging may puntos at itinalaga ang Beginner.';
+
+  @override
+  String get assessmentNotationSection => 'Pagbasa ng notasyon';
+
+  @override
+  String get assessmentPianoSection => 'Pagtugtog sa piano';
+
+  @override
+  String assessmentCorrectScore(int correct, int total) {
+    return '$correct sa $total ang tama';
+  }
+
+  @override
+  String assessmentCorrectGroupsScore(int correct, int total) {
+    return '$correct sa $total grupo ang tama';
+  }
+
+  @override
+  String get assessmentFinalLevelExplanation =>
+      'Ginagamit ng iyong huling antas ang mas mababa sa antas ng notasyon at piano. Hindi maitatago ng lakas sa isang kinakailangang kasanayan ang kahinaan sa isa pa.';
+
+  @override
+  String get assessmentYourLevel => 'Iyong SoundSight Level';
+
+  @override
+  String get assessmentNoSavedAnswer => 'Walang naka-save na sagot';
+
+  @override
+  String get assessmentBackgroundAnswers => 'Mga sagot tungkol sa karanasan';
+
+  @override
+  String get assessmentCorrect => 'Tama';
+
+  @override
+  String assessmentCorrectAnswer(String answer) {
+    return 'Tamang sagot: $answer';
+  }
+
+  @override
+  String get assessmentNotationAnswers => 'Mga sagot sa notasyon';
+
+  @override
+  String get assessmentNoSavedResult => 'Walang naka-save na resulta';
+
+  @override
+  String assessmentPianoResultDetails(int wrong, int missed, int timing) {
+    return '$wrong mali, $missed hindi natugtog, $timing pagkakamali sa tiyempo';
+  }
+
+  @override
+  String get assessmentPianoTaskResults => 'Mga resulta ng gawain sa piano';
+
+  @override
+  String get assessmentResultUnavailable =>
+      'Tapos na ang pagsusuri, ngunit hindi maipakita ang mga detalye ng naka-save na resulta.';
 }

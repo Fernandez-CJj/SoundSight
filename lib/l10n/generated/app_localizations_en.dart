@@ -3891,4 +3891,674 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get practiceResultIssueReleasedEarly => 'Released too soon';
+
+  @override
+  String get assessmentUnableToLoad =>
+      'Unable to load the assessment. Please try again.';
+
+  @override
+  String get assessmentUnableToStart =>
+      'Unable to start the assessment. Please try again.';
+
+  @override
+  String get assessmentUnableToContinue =>
+      'Unable to continue the assessment. Please try again.';
+
+  @override
+  String get assessmentAcceptBeginnerQuestion => 'Accept Beginner level?';
+
+  @override
+  String get assessmentAcceptBeginnerDescription =>
+      'Based on your answers, at least one required skill is at the Beginner level. Accepting will skip Notation Reading and Piano Execution. This result is permanent and cannot be attempted again.';
+
+  @override
+  String get assessmentReviewAnswers => 'Review Answers';
+
+  @override
+  String get assessmentAcceptBeginner => 'Accept Beginner';
+
+  @override
+  String get assessmentStartQuestion => 'Start assessment?';
+
+  @override
+  String get assessmentStartWarning =>
+      'Your 72-hour deadline will begin immediately. You only receive one attempt, and an expired assessment will permanently assign Beginner level.';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get assessmentSkillAssessment => 'Skill assessment';
+
+  @override
+  String get assessmentInProgressTitle => 'Assessment in progress';
+
+  @override
+  String get assessmentCompletedTitle => 'Assessment completed';
+
+  @override
+  String get assessmentExpiredTitle => 'Assessment expired';
+
+  @override
+  String get assessmentSkillDescription =>
+      'Complete the assessment to determine your SoundSight Level. Your 72-hour deadline begins only after you press Start.';
+
+  @override
+  String get assessmentActiveDescription =>
+      'Your assessment has started. Continue before the deadline to receive your SoundSight Level.';
+
+  @override
+  String get assessmentCompleteDescription =>
+      'Your assessment is complete. View your permanent SoundSight Level and section results.';
+
+  @override
+  String get assessmentExpiredFullDescription =>
+      'The assessment was not completed within 72 hours. Your SoundSight Level is Beginner, and this assessment cannot be attempted again.';
+
+  @override
+  String get assessmentViewResults => 'View Results';
+
+  @override
+  String get assessmentContinueHome => 'Continue to Home';
+
+  @override
+  String get assessmentSkipForNow => 'Skip for Now';
+
+  @override
+  String get assessmentContinueLater => 'Continue Later';
+
+  @override
+  String get assessmentTimeRemaining => 'Time remaining';
+
+  @override
+  String assessmentDurationDays(int days, int hours, int minutes) {
+    return '${days}d ${hours}h ${minutes}m';
+  }
+
+  @override
+  String assessmentDurationHours(int hours, int minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String assessmentDurationMinutes(int minutes) {
+    return '${minutes}m';
+  }
+
+  @override
+  String get assessmentBeforeYouBegin => 'Before you begin';
+
+  @override
+  String get assessmentReadCarefully =>
+      'Please read the following information carefully.';
+
+  @override
+  String get assessmentImportantInformation => 'Important information';
+
+  @override
+  String get assessmentLevelExplanation =>
+      'Your SoundSight Level measures your combined sheet-reading and piano-playing ability.';
+
+  @override
+  String get assessmentTimingExplanation =>
+      'Piano timing becomes stricter at each level. Beginner notes may be played up to 500 ms early or late, Intermediate notes up to 350 ms, and Advanced notes up to 250 ms.';
+
+  @override
+  String get assessmentPassingExplanation =>
+      'A notation level requires at least 4 of 6 correct answers in that tier. A piano level requires at least 70% correct note or chord groups. Higher levels also require passing every lower tier.';
+
+  @override
+  String get assessmentChordExplanation =>
+      'For a chord to count as correct, all required keys must be pressed within 200 ms of one another and inside the level\'s timing window.';
+
+  @override
+  String get assessmentOneAttempt =>
+      'You only receive one assessment attempt. An expired attempt cannot be restarted.';
+
+  @override
+  String get assessmentDeadlineExplanation =>
+      'The assessment must be completed within 72 hours after it starts.';
+
+  @override
+  String get assessmentExpirationExplanation =>
+      'If the assessment expires before completion, your SoundSight Level will be set to Beginner.';
+
+  @override
+  String get assessmentLeaveExplanation =>
+      'You may leave between sections and continue later while the assessment is still active.';
+
+  @override
+  String get assessmentPreparationExplanation =>
+      'Prepare your MIDI keyboard, internet connection, and a quiet place before continuing.';
+
+  @override
+  String get assessmentNoTimeRemaining => 'No time remaining';
+
+  @override
+  String get assessmentContinue => 'Continue Assessment';
+
+  @override
+  String get returnAction => 'Return';
+
+  @override
+  String get assessmentBackgroundQuestions => 'Background Questions';
+
+  @override
+  String get assessmentExperienceHeading => 'Tell us about your experience';
+
+  @override
+  String get assessmentExperienceDescription =>
+      'These answers help personalize your experience. If you are new to piano or have not learned sheet music, you may accept Beginner level and skip the remaining parts.';
+
+  @override
+  String get assessmentDeadlineContinues =>
+      'Your assessment deadline continues while answering.';
+
+  @override
+  String get assessmentAnswerEveryQuestion =>
+      'Please answer every question before continuing.';
+
+  @override
+  String get assessmentSaveAnswersFailed =>
+      'Unable to save your answers. Please try again.';
+
+  @override
+  String get assessmentSelectOneAnswer => 'Select one answer.';
+
+  @override
+  String get assessmentQuestionPianoExperience =>
+      'How long have you been playing the piano or keyboard?';
+
+  @override
+  String get assessmentQuestionSheetMusicExperience =>
+      'How familiar are you with reading sheet music?';
+
+  @override
+  String get assessmentQuestionLearningMethod =>
+      'How have you mainly learned piano?';
+
+  @override
+  String get assessmentQuestionPrimaryGoal =>
+      'What is your main goal in SoundSight?';
+
+  @override
+  String get assessmentOptionNewToPiano => 'I am just starting';
+
+  @override
+  String get assessmentOptionUnderOneYear => 'Less than one year';
+
+  @override
+  String get assessmentOptionOneToThreeYears => 'One to three years';
+
+  @override
+  String get assessmentOptionMoreThanThreeYears => 'More than three years';
+
+  @override
+  String get assessmentOptionNotFamiliar => 'I have not learned sheet music';
+
+  @override
+  String get assessmentOptionBasicFamiliarity =>
+      'I recognize a few notes and symbols';
+
+  @override
+  String get assessmentOptionModerateFamiliarity =>
+      'I can read simple sheet music';
+
+  @override
+  String get assessmentOptionComfortable =>
+      'I am comfortable reading sheet music';
+
+  @override
+  String get assessmentOptionNoFormalLearning =>
+      'I have not started learning yet';
+
+  @override
+  String get assessmentOptionTeacher => 'With a piano teacher';
+
+  @override
+  String get assessmentOptionSelfTaught => 'Self-taught';
+
+  @override
+  String get assessmentOptionMixedLearning =>
+      'A mixture of lessons and self-study';
+
+  @override
+  String get assessmentOptionLearnNotation =>
+      'Learn how to read music notation';
+
+  @override
+  String get assessmentOptionImproveSightReading => 'Improve my sight-reading';
+
+  @override
+  String get assessmentOptionImproveCoordination =>
+      'Improve my piano coordination';
+
+  @override
+  String get assessmentOptionTrackProgress =>
+      'Understand and track my current ability';
+
+  @override
+  String get assessmentNotationReading => 'Notation Reading';
+
+  @override
+  String get assessmentNotationSemantics =>
+      'Music notation for the current assessment question';
+
+  @override
+  String get assessmentAnswerEveryNotationQuestion =>
+      'Answer every question before submitting.';
+
+  @override
+  String get assessmentPleaseAnswerEveryNotationQuestion =>
+      'Please answer every notation question.';
+
+  @override
+  String get assessmentSaveNotationFailed =>
+      'Unable to save your notation answers. Please try again.';
+
+  @override
+  String get previous => 'Previous';
+
+  @override
+  String get submit => 'Submit';
+
+  @override
+  String assessmentQuestionProgress(int current, int total) {
+    return 'Question $current of $total';
+  }
+
+  @override
+  String assessmentAnsweredCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count answered',
+      one: '1 answered',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentNotationPromptNote => 'Which note is shown?';
+
+  @override
+  String get assessmentNotationPromptBeatValue =>
+      'In 4/4 time, how many beats does this note receive?';
+
+  @override
+  String get assessmentNotationPromptTimeSignature =>
+      'What does this time signature mean?';
+
+  @override
+  String get assessmentNotationPromptLedgerNote =>
+      'Which ledger-line note is shown?';
+
+  @override
+  String get assessmentNotationPromptAccidental =>
+      'Which note with an accidental is shown?';
+
+  @override
+  String get assessmentNotationPromptMajorKey =>
+      'Which major key signature is shown?';
+
+  @override
+  String get assessmentNotationPromptIntervalSize =>
+      'What is the size of the written interval?';
+
+  @override
+  String get assessmentNotationPromptUpperLedgerNote =>
+      'Which upper ledger-line note is shown?';
+
+  @override
+  String get assessmentNotationPromptCompoundMeter =>
+      'How is this compound meter normally felt?';
+
+  @override
+  String get assessmentNotationPromptWrittenInterval =>
+      'What is the written interval?';
+
+  @override
+  String get assessmentNotationPromptRootChord =>
+      'Which root-position chord is shown?';
+
+  @override
+  String get assessmentNotationPromptPassageBeats =>
+      'How many quarter-note beats does this passage contain?';
+
+  @override
+  String get assessmentOptionHalfBeat => '1/2 beat';
+
+  @override
+  String get assessmentOptionOneBeat => '1 beat';
+
+  @override
+  String get assessmentOptionTwoBeats => '2 beats';
+
+  @override
+  String get assessmentOptionThreeBeats => '3 beats';
+
+  @override
+  String get assessmentOptionFourBeats => '4 beats';
+
+  @override
+  String get assessmentOptionFiveBeats => '5 beats';
+
+  @override
+  String get assessmentOptionTwoQuarterBeats =>
+      'Two quarter-note beats per measure';
+
+  @override
+  String get assessmentOptionThreeQuarterBeats =>
+      'Three quarter-note beats per measure';
+
+  @override
+  String get assessmentOptionFourQuarterBeats =>
+      'Four quarter-note beats per measure';
+
+  @override
+  String get assessmentOptionFourEighthBeats =>
+      'Four eighth-note beats per measure';
+
+  @override
+  String get assessmentOptionTwoDottedQuarterBeats =>
+      'Two dotted-quarter beats';
+
+  @override
+  String get assessmentOptionSixQuarterBeats => 'Six quarter-note beats';
+
+  @override
+  String get assessmentOptionSecond => 'Second';
+
+  @override
+  String get assessmentOptionThird => 'Third';
+
+  @override
+  String get assessmentOptionFourth => 'Fourth';
+
+  @override
+  String get assessmentOptionFifth => 'Fifth';
+
+  @override
+  String get assessmentOptionMajorThird => 'Major third';
+
+  @override
+  String get assessmentOptionPerfectFourth => 'Perfect fourth';
+
+  @override
+  String get assessmentOptionPerfectFifth => 'Perfect fifth';
+
+  @override
+  String get assessmentOptionMajorSixth => 'Major sixth';
+
+  @override
+  String get assessmentPianoExecution => 'Piano Execution';
+
+  @override
+  String get assessmentMidiNotConnected => 'Not connected';
+
+  @override
+  String get assessmentMidiSearching => 'Searching...';
+
+  @override
+  String get assessmentMidiNotDetected => 'No MIDI device detected';
+
+  @override
+  String get assessmentMidiConnecting => 'Connecting...';
+
+  @override
+  String get assessmentMidiConnected => 'Connected';
+
+  @override
+  String assessmentMidiConnectedDevice(String deviceName) {
+    return 'Connected: $deviceName';
+  }
+
+  @override
+  String get assessmentMidiConnectionFailed => 'Connection failed';
+
+  @override
+  String get assessmentMidiConnectError =>
+      'Unable to connect to the MIDI keyboard.';
+
+  @override
+  String get assessmentMidiDisconnected => 'MIDI keyboard disconnected';
+
+  @override
+  String get assessmentMidiInterrupted =>
+      'The MIDI connection was removed. Reconnect and restart this task.';
+
+  @override
+  String get assessmentSavePianoFailed =>
+      'Unable to save the piano results. Please try again.';
+
+  @override
+  String assessmentTaskProgress(int current, int total) {
+    return 'Task $current of $total';
+  }
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get assessmentKeysToPlay => 'Keys to play';
+
+  @override
+  String get assessmentWhenToPlay => 'When to play';
+
+  @override
+  String get assessmentMiddleCExplanation =>
+      'C4 is Middle C. The number tells you the piano octave.';
+
+  @override
+  String assessmentTempoCountIn(int tempo, int count) {
+    return '$tempo BPM • $count-beat count-in';
+  }
+
+  @override
+  String get assessmentCountIn => 'Count-in';
+
+  @override
+  String assessmentWaitForGo(String keys) {
+    return 'Wait. Play $keys when GO appears.';
+  }
+
+  @override
+  String get assessmentTaskRecorded => 'Task recorded';
+
+  @override
+  String get assessmentStartTaskGuidance =>
+      'Press Start Task when you are ready. Wait through the complete count-in, then play the first shown key or chord with GO. Each scored task can only be performed once in this session.';
+
+  @override
+  String get assessmentTaskComplete => 'Task complete';
+
+  @override
+  String assessmentBeatNumber(int number) {
+    return 'Beat $number';
+  }
+
+  @override
+  String assessmentPlayNow(String keys) {
+    return 'Play now: $keys';
+  }
+
+  @override
+  String get assessmentWaitingMidi => 'Waiting for MIDI input';
+
+  @override
+  String assessmentHeldKeys(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count keys currently held',
+      one: '1 key currently held',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentGetReady => 'Get Ready';
+
+  @override
+  String get assessmentPerforming => 'Performing';
+
+  @override
+  String get assessmentSubmitPianoResults => 'Submit Piano Results';
+
+  @override
+  String get assessmentNextTask => 'Next Task';
+
+  @override
+  String get assessmentConnectMidi => 'Connect MIDI';
+
+  @override
+  String get assessmentStartTask => 'Start Task';
+
+  @override
+  String get assessmentTaskMiddleCTitle => 'Middle C';
+
+  @override
+  String get assessmentTaskMiddleCInstruction => 'Play C4, which is Middle C.';
+
+  @override
+  String get assessmentTaskMiddleCTiming => 'Play C4 once when GO appears.';
+
+  @override
+  String get assessmentTaskFiveFingerTitle => 'Five-finger pattern';
+
+  @override
+  String get assessmentTaskFiveFingerInstruction =>
+      'Play C4, D4, E4, F4, and G4 upward.';
+
+  @override
+  String assessmentTaskNoteEveryClickTiming(String firstNote) {
+    return 'Play $firstNote with GO, then play one note on every following click.';
+  }
+
+  @override
+  String get assessmentTaskCMajorChordTitle => 'C major chord';
+
+  @override
+  String get assessmentTaskCMajorChordInstruction =>
+      'Play C4, E4, and G4 together.';
+
+  @override
+  String get assessmentTaskChordGoTiming =>
+      'Play the complete chord once when GO appears.';
+
+  @override
+  String get assessmentTaskCMajorScaleTitle => 'C major scale';
+
+  @override
+  String get assessmentTaskCMajorScaleInstruction =>
+      'Play the C major scale upward from C4 to C5.';
+
+  @override
+  String get assessmentTaskCMajorArpeggioTitle => 'C major arpeggio';
+
+  @override
+  String get assessmentTaskCMajorArpeggioInstruction =>
+      'Play C4, E4, G4, C5, G4, E4, and C4.';
+
+  @override
+  String get assessmentTaskChordProgressionTitle => 'Chord progression';
+
+  @override
+  String get assessmentTaskChordProgressionInstruction =>
+      'Play C3-E3-G3, F3-A3-C4, G3-B3-D4, then C3-E3-G3.';
+
+  @override
+  String get assessmentTaskChordEverySecondClickTiming =>
+      'Play the first chord with GO, then one chord every second click.';
+
+  @override
+  String get assessmentTaskTwoOctaveTitle => 'Two-octave scale';
+
+  @override
+  String get assessmentTaskTwoOctaveInstruction =>
+      'Play the C major scale upward from C3 to C5.';
+
+  @override
+  String get assessmentTaskChordInversionsTitle => 'Chord inversions';
+
+  @override
+  String get assessmentTaskChordInversionsInstruction =>
+      'Play C3-E3-G3, E3-G3-C4, G3-C4-E4, then C4-E4-G4.';
+
+  @override
+  String get assessmentTaskParallelScaleTitle => 'Parallel scale';
+
+  @override
+  String get assessmentTaskParallelScaleInstruction =>
+      'Play C3-C4 through C4-C5 with both hands in parallel motion.';
+
+  @override
+  String get assessmentTaskParallelTiming =>
+      'Play both C keys with GO, then play the next pair on every click.';
+
+  @override
+  String get assessmentReview => 'Assessment Review';
+
+  @override
+  String get assessmentApplyLevelFailed =>
+      'Unable to apply your saved skill level. Please try again.';
+
+  @override
+  String get assessmentBeginnerShortcutSummary =>
+      'Your background answers show that at least one required skill is entirely new to you. The scored sections were skipped and Beginner was assigned.';
+
+  @override
+  String get assessmentNotationSection => 'Notation reading';
+
+  @override
+  String get assessmentPianoSection => 'Piano execution';
+
+  @override
+  String assessmentCorrectScore(int correct, int total) {
+    return '$correct of $total correct';
+  }
+
+  @override
+  String assessmentCorrectGroupsScore(int correct, int total) {
+    return '$correct of $total correct groups';
+  }
+
+  @override
+  String get assessmentFinalLevelExplanation =>
+      'Your final level uses the lower of your notation and piano levels. Strength in one required skill cannot hide a weaker required skill.';
+
+  @override
+  String get assessmentYourLevel => 'Your SoundSight Level';
+
+  @override
+  String get assessmentNoSavedAnswer => 'No saved answer';
+
+  @override
+  String get assessmentBackgroundAnswers => 'Background answers';
+
+  @override
+  String get assessmentCorrect => 'Correct';
+
+  @override
+  String assessmentCorrectAnswer(String answer) {
+    return 'Correct answer: $answer';
+  }
+
+  @override
+  String get assessmentNotationAnswers => 'Notation answers';
+
+  @override
+  String get assessmentNoSavedResult => 'No saved result';
+
+  @override
+  String assessmentPianoResultDetails(int wrong, int missed, int timing) {
+    return '$wrong wrong, $missed missed, $timing timing mistakes';
+  }
+
+  @override
+  String get assessmentPianoTaskResults => 'Piano task results';
+
+  @override
+  String get assessmentResultUnavailable =>
+      'The assessment is complete, but its saved result details could not be displayed.';
 }

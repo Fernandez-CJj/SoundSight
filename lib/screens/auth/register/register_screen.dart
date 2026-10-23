@@ -107,11 +107,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       try {
         final userCred = await createRegistrationAccount();
+        await userCred.user!.updateDisplayName(usernameCtrl.text.trim());
 
         try {
           await userCred.user!.sendEmailVerification();
         } on FirebaseAuthException catch (e) {
-          await userCred.user?.delete();
+          await FirebaseAuth.instance.signOut();
 
           if (!mounted) return;
 
@@ -122,15 +123,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (e.code == 'network-request-failed') {
             message =
                 "We couldn't send the verification email. Check your internet "
-                'connection and register again.';
+                'connection, then log in to resend it.';
           } else if (e.code == 'too-many-requests') {
             message =
                 'Too many verification emails were requested. Please wait a '
-                'while and register again.';
+                'while, then log in to resend it.';
           } else {
             message =
-                "We couldn't send the verification email, so the temporary "
-                'account was removed. Please try registering again.';
+                "Your account was kept, but we couldn't send the verification "
+                'email. Log in to try sending it again.';
           }
 
           await showRegisterErrorDialog(context, message);
@@ -147,11 +148,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) =>
-                EmailVerificationScreen(
-                  username: usernameCtrl.text.trim(),
-                  password: passwordCtrl.text,
-                ),
+            builder: (_) => EmailVerificationScreen(
+              username: usernameCtrl.text.trim(),
+              password: passwordCtrl.text,
+            ),
           ),
         );
       } on FirebaseAuthException catch (e) {
@@ -233,12 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         rethrow;
       }
 
-      await unfinishedUser.delete();
-
-      return await auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      return unfinishedCredential;
     }
   }
 }

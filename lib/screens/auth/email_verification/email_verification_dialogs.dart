@@ -4,82 +4,22 @@ import 'package:gap/gap.dart';
 import '../../../constants/constant.dart';
 import '../../../theme/app_colors.dart';
 
-Future<void> showVerificationCompleteDialog(BuildContext context) async {
+Future<void> showCancellationRequiresLoginDialog(BuildContext context) async {
   await showDialog<void>(
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) {
       return AlertDialog(
-        backgroundColor: AppColors.lightSurface,
-        surfaceTintColor: AppColors.lightSurface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: AppSpacing.xl,
-              height: AppSpacing.xl,
-              decoration: BoxDecoration(
-                color: AppColors.lightPrimary,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: const Icon(
-                Icons.verified_outlined,
-                size: AppIconSizes.sm,
-                color: AppColors.lightSurface,
-              ),
-            ),
-            const Gap(AppSpacing.sm),
-            const Expanded(
-              child: Text(
-                'Email Verified',
-                style: TextStyle(
-                  color: AppColors.lightPrimary,
-                  fontSize: AppTextSizes.sectionTitle,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Sign In Required'),
         content: const Text(
-          'Your email has been verified and your account is ready. '
-          'Please log in to continue.',
-          style: TextStyle(
-            color: AppColors.lightSecondaryText,
-            fontSize: AppTextSizes.body,
-            height: 1.4,
-          ),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
+          'For your security, sign in again before cancelling this '
+          'registration. After signing in, return to verification and choose '
+          'Cancel Registration.',
         ),
         actions: [
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              icon: const Icon(
-                Icons.login_outlined,
-                size: AppIconSizes.sm,
-              ),
-              label: const Text('Go to Login'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.lightPrimary,
-                foregroundColor: AppColors.lightSurface,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-              ),
-            ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Go to Login'),
           ),
         ],
       );
