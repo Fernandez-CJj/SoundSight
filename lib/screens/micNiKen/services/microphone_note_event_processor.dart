@@ -9,6 +9,7 @@ import '../models/microphone_note_event.dart';
 /// It does not depend on the MIDI feature or modify MIDI behavior.
 class MicrophoneNoteEventProcessor {
   final Set<int> _activeNotes = <int>{};
+  final Set<int> _expectedNotes = <int>{};
   final StreamController<MicrophoneNoteEvent> _noteEvents =
       StreamController<MicrophoneNoteEvent>.broadcast();
   final StreamController<int> _noteAttacks = StreamController<int>.broadcast();
@@ -18,6 +19,8 @@ class MicrophoneNoteEventProcessor {
       StreamController<MicrophoneInputState>.broadcast();
   final StreamController<MicrophoneSignalQuality> _signalQualities =
       StreamController<MicrophoneSignalQuality>.broadcast();
+  final StreamController<Set<int>> _expectedNoteSnapshots =
+      StreamController<Set<int>>.broadcast();
 
   MicrophoneInputState _state = MicrophoneInputState.stopped;
   MicrophoneSignalQuality _signalQuality = MicrophoneSignalQuality.unknown;
@@ -25,6 +28,9 @@ class MicrophoneNoteEventProcessor {
 
   /// Returns a detached, immutable snapshot of acoustically active pitches.
   Set<int> get activeNotes => Set<int>.unmodifiable(_activeNotes);
+
+  /// Returns the current score-provided piano notes used as detector context.
+  Set<int> get expectedNotes => Set<int>.unmodifiable(_expectedNotes);
 
   /// Returns the most recently reported microphone lifecycle state.
   MicrophoneInputState get state => _state;
@@ -35,7 +41,7 @@ class MicrophoneNoteEventProcessor {
   /// Publishes accepted microphone note attacks and releases.
   Stream<MicrophoneNoteEvent> get noteEventStream => _noteEvents.stream;
 
-  /// Publishes the MIDI number for each accepted acoustic attack.
+  /// Publishes the piano note number for each accepted acoustic attack.
   Stream<int> get noteOnStream => _noteAttacks.stream;
 
   /// Publishes the complete acoustically active note set after each change.
@@ -47,6 +53,31 @@ class MicrophoneNoteEventProcessor {
   /// Publishes audio quality changes for calibration and user guidance.
   Stream<MicrophoneSignalQuality> get signalQualityStream =>
       _signalQualities.stream;
+
+  /// Publishes score-provided note sets for future score-aware recognition.
+  Stream<Set<int>> get expectedNotesStream => _expectedNoteSnapshots.stream;
+
+  /// Replaces detector context with a validated set of piano note numbers.
+  void updateExpectedNotes(Iterable<int> noteNumbers) {
+    if (_isDisposed) return;
+
+    final nextNotes = noteNumbers
+        .where((noteNumber) => noteNumber >= 0 && noteNumber <= 127)
+        .toSet();
+    final isUnchanged = nextNotes.length == _expectedNotes.length &&
+        nextNotes.every(_expectedNotes.contains);
+    if (isUnchanged) return;
+
+    _expectedNotes
+      ..clear()
+      ..addAll(nextNotes);
+    _expectedNoteSnapshots.add(expectedNotes);
+  }
+
+  /// Removes score context when an exercise ends or changes input source.
+  void clearExpectedNotes() {
+    updateExpectedNotes(const <int>[]);
+  }
 
   /// Accepts one recognized note attack and adds it to the active-note layer.
   void acceptNoteOn({
@@ -138,5 +169,6 @@ class MicrophoneNoteEventProcessor {
     await _activeNoteSnapshots.close();
     await _states.close();
     await _signalQualities.close();
+    await _expectedNoteSnapshots.close();
   }
 }

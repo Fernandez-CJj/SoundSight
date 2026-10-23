@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import 'models/microphone_audio_level.dart';
 import 'models/microphone_input_state.dart';
+import 'models/microphone_note_event.dart';
 import 'services/microphone_audio_capture_service.dart';
 import 'services/microphone_note_event_processor.dart';
+import 'services/microphone_single_note_detector.dart';
 
 /// Displays Android microphone capture controls and live audio diagnostics.
 class MicrophoneScreen extends StatefulWidget {
@@ -28,13 +31,20 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
 
   late final MicrophoneNoteEventProcessor _noteEventProcessor;
   late final MicrophoneAudioCaptureService _captureService;
+  late final MicrophoneSingleNoteDetector _singleNoteDetector;
   StreamSubscription<MicrophoneAudioLevel>? _levelSubscription;
   StreamSubscription<MicrophoneInputState>? _stateSubscription;
   StreamSubscription<MicrophoneSignalQuality>? _qualitySubscription;
+  StreamSubscription<Set<int>>? _activeNotesSubscription;
+  StreamSubscription<MicrophoneNoteEvent>? _noteEventSubscription;
+  StreamSubscription<Uint8List>? _pcmSubscription;
 
   MicrophoneAudioLevel _level = _silentLevel;
   MicrophoneInputState _inputState = MicrophoneInputState.stopped;
   MicrophoneSignalQuality _signalQuality = MicrophoneSignalQuality.unknown;
+  Set<int> _activeNotes = const <int>{};
+  int? _lastDetectedNote;
+  double? _lastDetectionConfidence;
 
   /// Creates microphone services and subscribes the screen to their state.
   @override
@@ -42,6 +52,9 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _noteEventProcessor = MicrophoneNoteEventProcessor();
+    _singleNoteDetector = MicrophoneSingleNoteDetector(
+      noteEventProcessor: _noteEventProcessor,
+    );
     _captureService = MicrophoneAudioCaptureService(
       noteEventProcessor: _noteEventProcessor,
     );
@@ -49,6 +62,15 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
     _stateSubscription = _noteEventProcessor.stateStream.listen(_receiveState);
     _qualitySubscription = _noteEventProcessor.signalQualityStream.listen(
       _receiveQuality,
+    );
+    _activeNotesSubscription = _noteEventProcessor.activeNotesStream.listen(
+      _receiveActiveNotes,
+    );
+    _noteEventSubscription = _noteEventProcessor.noteEventStream.listen(
+      _receiveNoteEvent,
+    );
+    _pcmSubscription = _captureService.pcmStream.listen(
+      _singleNoteDetector.addPcmChunk,
     );
   }
 
@@ -87,6 +109,21 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
     setState(() => _signalQuality = value);
   }
 
+  /// Displays the latest complete set of acoustically active piano notes.
+  void _receiveActiveNotes(Set<int> value) {
+    if (!mounted) return;
+    setState(() => _activeNotes = value);
+  }
+
+  /// Retains the latest accepted attack so confidence remains visible.
+  void _receiveNoteEvent(MicrophoneNoteEvent event) {
+    if (!mounted || event.type != MicrophoneNoteEventType.noteOn) return;
+    setState(() {
+      _lastDetectedNote = event.noteNumber;
+      _lastDetectionConfidence = event.confidence;
+    });
+  }
+
   /// Starts capture or stops the active session when the main button is tapped.
   Future<void> _toggleListening() async {
     if (_captureService.isListening) {
@@ -94,12 +131,18 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
       return;
     }
 
+    _singleNoteDetector.reset();
+    setState(() {
+      _lastDetectedNote = null;
+      _lastDetectionConfidence = null;
+    });
     await _captureService.start();
     if (mounted) setState(() {});
   }
 
   /// Stops microphone capture and resets the visible audio meters.
   Future<void> _stopListening({bool interrupted = false}) async {
+    _singleNoteDetector.reset();
     await _captureService.stop(interrupted: interrupted);
     if (!mounted) return;
     setState(() => _level = _silentLevel);
@@ -120,6 +163,10 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
 
   /// Returns Android-focused guidance for the current signal classification.
   String _qualityLabel(MicrophoneSignalQuality quality) {
+    if (_inputState == MicrophoneInputState.calibrating) {
+      return 'Keep the room quiet for 3 seconds while background noise is measured.';
+    }
+
     return switch (quality) {
       MicrophoneSignalQuality.unknown =>
         'Start listening to check the microphone signal.',
@@ -132,6 +179,45 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
       MicrophoneSignalQuality.tooNoisy =>
         'Background noise is too high for reliable recognition.',
     };
+  }
+
+  /// Converts a piano note number into a readable pitch such as C4 or F#5.
+  String _noteName(int noteNumber) {
+    const pitchClasses = <String>[
+      'C',
+      'C#',
+      'D',
+      'D#',
+      'E',
+      'F',
+      'F#',
+      'G',
+      'G#',
+      'A',
+      'A#',
+      'B',
+    ];
+    final pitchClass = pitchClasses[noteNumber % 12];
+    final octave = noteNumber ~/ 12 - 1;
+    return '$pitchClass$octave';
+  }
+
+  /// Formats the currently active monophonic detection for the diagnostic UI.
+  String _activeNotesLabel() {
+    if (_activeNotes.isEmpty) return 'Detected piano notes: none';
+    final notes = _activeNotes.toList()..sort();
+    return 'Detected piano notes: ${notes.map(_noteName).join(', ')}';
+  }
+
+  /// Formats the latest accepted attack and its detector confidence.
+  String _lastDetectionLabel() {
+    final noteNumber = _lastDetectedNote;
+    final confidence = _lastDetectionConfidence;
+    if (noteNumber == null || confidence == null) {
+      return 'Last detected note: none';
+    }
+    return 'Last detected note: ${_noteName(noteNumber)} '
+        '(${(confidence * 100).toStringAsFixed(0)}% confidence)';
   }
 
   /// Selects a status color that distinguishes usable and problem states.
@@ -192,8 +278,8 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
             ),
             const SizedBox(height: 8),
             const Text(
-              'This step checks live microphone PCM and signal level only. '
-              'Piano note and chord recognition will be added next.',
+              'This feasibility step detects one piano note at a time. '
+              'Chord recognition will be added separately.',
             ),
             const SizedBox(height: 24),
             Card(
@@ -244,6 +330,15 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
               visualMultiplier: 2,
               color: colors.tertiary,
             ),
+            const SizedBox(height: 20),
+            Text(
+              'Ambient baseline: '
+              '${(_captureService.noiseFloorRms * 100).toStringAsFixed(2)}%',
+            ),
+            const SizedBox(height: 8),
+            Text(_activeNotesLabel()),
+            const SizedBox(height: 8),
+            Text(_lastDetectionLabel()),
             const SizedBox(height: 28),
             FilledButton.icon(
               onPressed: isStarting ? null : _toggleListening,
@@ -268,6 +363,10 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
     unawaited(_levelSubscription?.cancel());
     unawaited(_stateSubscription?.cancel());
     unawaited(_qualitySubscription?.cancel());
+    unawaited(_activeNotesSubscription?.cancel());
+    unawaited(_noteEventSubscription?.cancel());
+    unawaited(_pcmSubscription?.cancel());
+    _singleNoteDetector.dispose();
     unawaited(_disposeServices());
     super.dispose();
   }

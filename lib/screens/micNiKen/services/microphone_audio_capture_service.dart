@@ -19,7 +19,10 @@ class MicrophoneAudioCaptureService {
 
   static const int sampleRate = 44100;
   static const Duration _levelInterval = Duration(milliseconds: 60);
+  static const Duration calibrationDuration = Duration(seconds: 3);
   static const double _quietRmsThreshold = 0.003;
+  static const double _noisyFloorThreshold = 0.006;
+  static const double _signalAboveNoiseMultiplier = 1.6;
   static const double _clippingPeakThreshold = 0.98;
 
   final MicrophoneNoteEventProcessor _noteEventProcessor;
@@ -32,6 +35,9 @@ class MicrophoneAudioCaptureService {
 
   StreamSubscription<Uint8List>? _captureSubscription;
   Duration _lastLevelEmission = Duration.zero;
+  double _calibrationRmsTotal = 0;
+  int _calibrationSampleCount = 0;
+  double _noiseFloorRms = 0;
   String? _lastError;
   bool _isStarting = false;
   bool _isListening = false;
@@ -49,12 +55,16 @@ class MicrophoneAudioCaptureService {
   /// Returns the latest capture or permission error for user guidance.
   String? get lastError => _lastError;
 
+  /// Returns the average ambient RMS measured during the current calibration.
+  double get noiseFloorRms => _noiseFloorRms;
+
   /// Requests permission and starts in-memory mono PCM16 microphone capture.
   Future<bool> start() async {
     if (_isDisposed || _isStarting || _isListening) return _isListening;
 
     _isStarting = true;
     _lastError = null;
+    _resetCalibration();
     _noteEventProcessor.updateState(MicrophoneInputState.starting);
     _noteEventProcessor.updateSignalQuality(MicrophoneSignalQuality.unknown);
 
@@ -91,7 +101,7 @@ class MicrophoneAudioCaptureService {
         onDone: _handleCaptureDone,
         cancelOnError: true,
       );
-      _noteEventProcessor.updateState(MicrophoneInputState.ready);
+      _noteEventProcessor.updateState(MicrophoneInputState.calibrating);
       return true;
     } catch (error) {
       _lastError = 'Microphone capture could not start: $error';
@@ -118,6 +128,7 @@ class MicrophoneAudioCaptureService {
     _isStarting = false;
     _isListening = false;
     _captureClock.stop();
+    _resetCalibration();
     await _captureSubscription?.cancel();
     _captureSubscription = null;
 
@@ -150,7 +161,32 @@ class MicrophoneAudioCaptureService {
     if (level == null) return;
 
     _levels.add(level);
+
+    if (_noteEventProcessor.state == MicrophoneInputState.calibrating) {
+      _collectCalibrationLevel(level);
+      return;
+    }
+
     _noteEventProcessor.updateSignalQuality(_classifySignal(level));
+  }
+
+  /// Collects ambient RMS readings until the three-second baseline is ready.
+  void _collectCalibrationLevel(MicrophoneAudioLevel level) {
+    _calibrationRmsTotal += level.rms;
+    _calibrationSampleCount++;
+
+    if (level.capturedAt < calibrationDuration) return;
+
+    _noiseFloorRms = _calibrationSampleCount == 0
+        ? 0
+        : _calibrationRmsTotal / _calibrationSampleCount;
+    final quality = _classifySignal(level);
+    _noteEventProcessor.updateSignalQuality(quality);
+    _noteEventProcessor.updateState(
+      quality == MicrophoneSignalQuality.tooNoisy
+          ? MicrophoneInputState.degraded
+          : MicrophoneInputState.ready,
+    );
   }
 
   /// Calculates normalized RMS and peak values from little-endian PCM16 data.
@@ -185,10 +221,25 @@ class MicrophoneAudioCaptureService {
     if (level.peak >= _clippingPeakThreshold) {
       return MicrophoneSignalQuality.clipping;
     }
-    if (level.rms < _quietRmsThreshold) {
+
+    final adaptiveThreshold = math.max(
+      _quietRmsThreshold,
+      _noiseFloorRms * _signalAboveNoiseMultiplier,
+    );
+    if (level.rms <= adaptiveThreshold) {
+      if (_noiseFloorRms >= _noisyFloorThreshold) {
+        return MicrophoneSignalQuality.tooNoisy;
+      }
       return MicrophoneSignalQuality.tooQuiet;
     }
     return MicrophoneSignalQuality.usable;
+  }
+
+  /// Clears the ambient baseline so every new capture session recalibrates.
+  void _resetCalibration() {
+    _calibrationRmsTotal = 0;
+    _calibrationSampleCount = 0;
+    _noiseFloorRms = 0;
   }
 
   /// Converts an asynchronous recorder error into a failed microphone state.
@@ -209,6 +260,7 @@ class MicrophoneAudioCaptureService {
   void _finishUnexpectedCapture(MicrophoneInputState state) {
     _isListening = false;
     _captureClock.stop();
+    _resetCalibration();
     _captureSubscription = null;
     _noteEventProcessor.updateSignalQuality(MicrophoneSignalQuality.unknown);
     _noteEventProcessor.updateState(state);

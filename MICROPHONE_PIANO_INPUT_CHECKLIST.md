@@ -43,6 +43,9 @@ analysis, verification, benchmarking, or formatting instructions below.
 - Mark coding tasks complete when implemented. Leave test and validation
   checkboxes unchecked until the user confirms their results. Do not advance
   past a validation gate that depends on results the user has not supplied.
+- When the user requests faster progress, Codex may combine tightly related
+  tasks into one small end-to-end batch. The user then validates the complete
+  batch on the Android phone before the next batch begins.
 
 The target is **microphone behavior compatible with SoundSight's expectations**:
 the microphone feature should provide note attacks, active-note snapshots,
@@ -225,7 +228,7 @@ yet. The first phone test begins with microphone capture in Phase 3.
 
 - [x] Microphone event code is organized under the microphone feature.
 - [x] No microphone service imports or changes the MIDI implementation.
-- [ ] User confirms the project still opens on their phone when they next run it.
+- [x] User confirms the project opens on their Android phone.
 
 ## 5. Phase 2 — microphone input service contract
 
@@ -237,14 +240,14 @@ yet. The first phone test begins with microphone capture in Phase 3.
 - [x] Expose the current immutable active-note set.
 - [x] Add microphone `start`, `stop`, and `dispose` lifecycle operations around
       the future PCM capture service.
-- [ ] Add expected-note/context updates for score-aware recognition.
+- [x] Add expected-note/context updates for score-aware recognition.
 - [x] Wire the microphone service into `MicrophoneScreen` after PCM capture is
       implemented.
 
 ### Exit criteria
 
-- [ ] Microphone capture can feed the service without importing MIDI code.
-- [ ] The microphone screen can observe state, signal quality, and active notes.
+- [x] Microphone capture can feed the service without importing MIDI code.
+- [x] The microphone screen can observe state, signal quality, and active notes.
 
 ## 6. Phase 3 — microphone PCM capture and lifecycle
 
@@ -255,9 +258,9 @@ yet. The first phone test begins with microphone capture in Phase 3.
 - [x] Keep iOS microphone configuration out of scope for this Android-only app.
 - [x] Confirm Android `RECORD_AUDIO` is declared and request it at runtime.
 - [ ] Implement permission denied, permanently denied, and restricted states.
-- [ ] Implement a ring buffer; plugin callbacks may contain arbitrary chunk
-      sizes and must not define analysis-frame boundaries.
-- [ ] Run DSP/model work outside the UI isolate.
+- [x] Implement a simple PCM frame buffer; plugin callbacks may contain
+      arbitrary chunk sizes and do not define analysis-frame boundaries.
+- [x] Run pitch-detection work outside the UI isolate.
 - [x] Stop capture on navigation and when the Android app leaves the foreground.
 - [ ] Handle Android calls and audio-route interruptions explicitly.
 - [ ] Resume only after the screen confirms that resuming is safe.
@@ -268,39 +271,43 @@ yet. The first phone test begins with microphone capture in Phase 3.
 
 ### Exit criteria
 
-- [ ] A diagnostic screen displays live RMS/peak level without dropped UI
+- [x] A diagnostic screen displays live RMS/peak level without dropped UI
       frames.
-- [ ] No PCM is written to disk or uploaded unless a future feature explicitly
+- [x] No PCM is written to disk or uploaded unless a future feature explicitly
       requests and discloses recording.
-- [ ] Microphone resources are always released after leaving the feature.
+- [x] Microphone resources are always released after leaving the feature.
 
 ### Android phone test list for the PCM capture step
 
-- [ ] Run the app on the Android phone and open **Microphone Piano Input**.
-- [ ] Tap **Start listening** and allow microphone permission when prompted.
-- [ ] Confirm the status changes to **Listening**.
+- [x] Run the app on the Android phone and open **Microphone Piano Input**.
+- [x] Tap **Start listening** and allow microphone permission when prompted.
+- [x] Confirm the status changes to **Listening**.
 - [ ] Stay quiet and confirm the meters remain low and may show **too quiet**.
-- [ ] Speak, clap, or play the piano and confirm both meters move.
+- [x] Speak, clap, or play the piano and confirm both meters move.
 - [ ] Play or speak very loudly near the phone and optionally confirm clipping
       guidance appears.
-- [ ] Tap **Stop listening** and confirm both meters reset.
-- [ ] Tap **Start listening** again and confirm capture works a second time.
-- [ ] While listening, background the app and return; confirm capture stopped
+- [x] Tap **Stop listening** and confirm both meters reset.
+- [x] Tap **Start listening** again and confirm capture works a second time.
+- [x] While listening, background the app and return; confirm capture stopped
       and can be started again manually.
-- [ ] Leave the microphone screen and confirm Android's microphone indicator
+- [x] Leave the microphone screen and confirm Android's microphone indicator
       turns off; reopen the screen and confirm it still works.
 - [ ] If practical, deny microphone permission and confirm a useful permission
       message is shown without a crash.
 
-Coding status: capture and diagnostic UI are prepared. These checks remain
-unchecked until the user reports the Android phone results. Codex did not run
-tests, analysis, formatting, builds, or automated verification.
+User result: PCM capture, meters, start/stop, restart, and cleanup work on the
+Android phone. The electric fan keeps the raw level above the quiet threshold;
+adaptive noise calibration remains planned for Phase 4. Permission-denial and
+optional clipping checks remain unconfirmed. Codex did not run tests, analysis,
+formatting, builds, or automated verification.
 
 ## 7. Phase 4 — calibration and signal-quality gate
 
+- [x] Add an initial 3-second whole-signal ambient RMS baseline. This is the
+      simple first calibration step; per-band calibration remains below.
 - [ ] Add a 3–5 second silence calibration to estimate per-band noise floor.
-- [ ] Detect input that is too quiet.
-- [ ] Detect clipping/saturation.
+- [x] Detect input that is too quiet relative to the ambient baseline.
+- [x] Detect clipping/saturation.
 - [ ] Estimate signal-to-noise ratio.
 - [ ] Add a short played-note check to verify piano audibility.
 - [ ] Allow an A4/tuning-offset check; do not assume every acoustic piano is
@@ -311,17 +318,42 @@ tests, analysis, formatting, builds, or automated verification.
   - [ ] move the device closer;
   - [ ] uncover the microphone;
   - [ ] increase keyboard volume;
-  - [ ] reduce room noise;
+  - [x] reduce room noise;
   - [ ] use wired headphones for SoundSight playback;
   - [ ] use a natural piano sound;
   - [ ] turn sustain off for MVP exercises.
 - [ ] Block scoring when the signal is unusable rather than scoring silence as
       mistakes.
 
+### Android phone test list for initial noise calibration
+
+- [ ] Open **Microphone Piano Input** and tap **Start listening**.
+- [ ] Keep the room quiet for three seconds while the status says
+      **Calibrating**. A steady fan may remain on so it becomes part of the
+      measured ambient baseline.
+- [ ] Confirm the status changes to **Listening** or
+      **Listening with limited quality** after calibration.
+- [ ] With only the fan running, confirm the raw meters may move but the quality
+      does not continually report the fan as a usable foreground signal.
+- [ ] Play the piano after calibration and confirm sufficiently louder sound is
+      reported as usable.
+- [ ] Stop and start listening again, then confirm a fresh three-second
+      calibration occurs.
+- [ ] Leave the screen and confirm Android's microphone indicator turns off.
+
+Coding status: initial ambient-level calibration is prepared for Android phone
+testing. Per-frequency noise calibration and piano-specific filtering are not
+implemented yet. Codex did not run tests, analysis, formatting, builds, or
+automated verification.
+
 ## 8. Phase 5 — score-aware single-note detector
 
 Start with expected-note verification, not unrestricted transcription.
 
+- [x] Add a monophonic YIN feasibility detector using the existing
+      `pitch_detector_dart` dependency.
+- [x] Convert detected frequencies to the nearest piano note number.
+- [x] Gate pitch analysis behind calibrated usable-signal quality.
 - [ ] Convert expected MIDI numbers to frequencies using A4 tuning.
 - [ ] Implement windowing and a spectral representation (FFT, multi-resolution
       FFT, or constant-Q transform).
@@ -331,12 +363,36 @@ Start with expected-note verification, not unrestricted transcription.
       alternatives.
 - [ ] Detect attacks using spectral flux/energy rise, not steady energy alone.
 - [ ] Use separate attack-on, active, and release thresholds.
-- [ ] Add hysteresis and minimum confirmation frames.
+- [x] Add hysteresis and minimum confirmation frames.
 - [ ] Preserve capture timestamps and compensate measured detector latency.
-- [ ] Map confidence to a conservative estimated velocity, but keep confidence
+- [x] Map frame loudness to a conservative estimated velocity and keep confidence
       available separately.
-- [ ] Suppress notes below the supported range rather than misclassifying them.
-- [ ] Make thresholds configuration data, not scattered constants.
+- [x] Suppress notes outside the MVP range C3–C6 rather than misclassifying them.
+- [x] Keep feasibility thresholds together as named constants.
+
+### Android phone test list for the single-note feasibility batch
+
+- [ ] Start listening and remain quiet for the three-second calibration.
+- [ ] Keep the electric fan running during calibration, then wait with only the
+      fan for at least 30 seconds and record any false piano notes.
+- [ ] Play middle C (`C4`) alone and confirm the active note shows `C4`.
+- [ ] Release `C4` and confirm the active note returns to `none` shortly after
+      the sound decays.
+- [ ] Test `C3`, `C4`, `C5`, and `C6` individually.
+- [ ] Test several black keys and confirm sharp-note names are correct.
+- [ ] Test soft, medium, and loud single notes.
+- [ ] Play the same note repeatedly and confirm each new attack can be observed.
+- [ ] Speak and clap near the phone, then record any false piano notes.
+- [ ] Play a chord only as an observation; this detector is monophonic, so chord
+      accuracy is not part of this batch's pass criteria.
+- [ ] Watch for visible UI lag, delayed notes, stuck active notes, or crashes.
+- [ ] Stop listening and leave the screen; confirm the active note clears and
+      Android's microphone indicator turns off.
+
+Coding status: the first end-to-end single-note feasibility batch is prepared
+for Android phone testing. Chord and layer recognition are intentionally not
+implemented by this monophonic detector. Codex did not run tests, analysis,
+formatting, builds, or automated verification.
 
 ### Single-note tests
 
