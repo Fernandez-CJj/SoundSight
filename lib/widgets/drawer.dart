@@ -276,10 +276,7 @@ class AppDrawer extends StatelessWidget {
             Divider(color: colors.borderColor),
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              leading: Icon(
-                Icons.language_rounded,
-                color: colors.primaryColor,
-              ),
+              leading: Icon(Icons.language_rounded, color: colors.primaryColor),
               title: Text(
                 l10n.language,
                 style: TextStyle(
@@ -436,7 +433,9 @@ class AppDrawer extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(context.l10n.languageSaveFailed)));
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.languageSaveFailed)),
+        );
     }
   }
 

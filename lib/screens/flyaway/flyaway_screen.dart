@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'screens/flyaway_setup_screen.dart';
+import 'screens/flyaway_practice_test_screen.dart';
 
-/// Introduces the Flyaway feature and opens its camera setup screen.
-/// This widget does not manage the camera or hand detector. Those responsibilities
-/// belong to [FlyawaySetupScreen].
+/// Introduces the standalone Flyaway practice prototype.
 class FlyawayScreen extends StatelessWidget {
   const FlyawayScreen({super.key});
 
@@ -30,7 +28,12 @@ class FlyawayScreen extends StatelessWidget {
               'SoundSight can analyze one or two visible hands during practice.',
             ),
             const SizedBox(height: 12),
-            const Text('Camera frames are processed live and are not saved.'),
+            const Text('Camera frames and session results are not saved.'),
+            const SizedBox(height: 12),
+            const Text(
+              'Flyaway estimates excessive finger lift. It does not measure '
+              'distance from the piano keys.',
+            ),
 
             // Uses the remaining vertical space to keep the setup button
             // near the bottom of the screen.
@@ -40,16 +43,14 @@ class FlyawayScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Places the setup screen above this introduction screen.
-                  // Pressing Back from setup returns the user here.
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const FlyawaySetupScreen(),
+                      builder: (_) => const FlyawayPracticeTestScreen(),
                     ),
                   );
                 },
                 icon: const Icon(Icons.camera_alt_outlined),
-                label: const Text('Set Up Camera'),
+                label: const Text('Open practice test'),
               ),
             ),
           ],
