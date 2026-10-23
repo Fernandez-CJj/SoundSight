@@ -1,0 +1,73 @@
+// Lesson 8 Practice Quiz - Chords (Triads, Formulas & Inversions)
+
+Q: What is the basic definition of a chord in music?
+A) A sequence of notes played one after another
+* B) A musical combination created when 3 or more notes are played at the same time
+C) A sustained note played across multiple measures
+D) The rhythmic tempo pattern of a piece
+
+Q: Most standard chords are built as triads, which consist of which three parts?
+A) First, second, and third notes
+* B) Root, 3rd, and 5th
+C) Key, pitch, and octave
+D) Bass, tenor, and treble
+
+Q: What is the primary role of the "root" in a triad chord?
+* A) It serves as the anchor and names the chord
+B) It determines whether the chord is major or minor
+C) It acts as the upper boundary/frame of the chord
+D) It changes the key signature automatically
+
+Q: What is the half-step formula for a Major Triad in root position?
+* A) 3 + 2
+B) 2 + 3
+C) 2 + 2
+D) 3 + 3
+
+Q: Which note in a triad is responsible for setting the chord quality to either major or minor?
+A) Root
+* B) 3rd
+C) 5th
+D) Octave
+
+Q: Which triad type follows the formula of 2 half-steps + 2 half-steps between its notes?
+A) Major triad
+B) Minor triad
+* C) Diminished triad
+D) Augmented triad
+
+Q: An Augmented triad in root position is constructed using which half-step formula?
+A) 3 + 2
+B) 2 + 3
+C) 2 + 2
+* D) 3 + 3
+
+Q: What are the three notes that make up the standard C Major chord?
+* A) C, E, G
+B) C, D, E
+C) C, F, G
+D) C, E♭, G
+
+Q: What is the note order for a triad played in 1st Inversion?
+A) 1-3-5
+* B) 3-5-1
+C) 5-1-3
+D) 5-3-
+
+Q: What is the half-step formula for a Minor Triad in root position?
+A) 3 + 2
+* B) 2 + 3
+C) 2 + 2
+D) 3 + 3
+
+Q: Identify which type of triad is F#(root) A#(3rd) D(5th)?
+A) Major
+B) Minor
+C) Diminished
+* D) Augmented
+
+Q: Identify the triad chord C#(root) E(3rd) G#(5th)?
+A) E#m
+* B) C#m
+C) C#aug or C#+
+D) D♭° or D♭dim

@@ -55,6 +55,9 @@ dependencies:
   hand_detection: ^4.1.0
   flutter_litert: ^3.8.0
   video_player: ^2.14.0
+  record: ^7.1.1
+  web_socket_channel: ^3.0.0
+  archive: ^4.3.0
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +83,22 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/practice/
+    - assets/practice/stage_1/
+    - assets/practice/stage_2/
+    - assets/practice/stage_3/
+    - assets/practice/stage_4/
+    - assets/practice/stage_5/
+    - assets/practice/stage_6/
+    - assets/practice/stage_7/
+    - assets/practice/stage_8/
+    - assets/practice/stage_9/
+    - assets/practice/stage_10/
+    - assets/practice/stage_11/
+    - assets/practice/stage_12/
+    - assets/practice/stage_13/
+    - assets/practice/stage_14/
+    - assets/practice/stage_15/
     - assets/video_lessons/
     - assets/audio/piano/
     - assets/audio/piano/cleaned/

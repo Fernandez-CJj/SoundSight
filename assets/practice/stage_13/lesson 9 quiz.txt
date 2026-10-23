@@ -1,0 +1,61 @@
+// Lesson 9 Practice Quiz - Piano Scales (Major & Minor Scales)
+
+Q: What is a musical scale?
+A) Three or more notes played simultaneously
+* B) An ordered sequence of notes arranged by pitch
+C) The speed or tempo at which a piece of music is performed
+D) A random collection of notes chosen without any specific pattern
+
+Q: In the context of scale formulas, what does "H" stand for?
+A) Heavy accent
+* B) Half-step
+C) High pitch
+D) Harmonic minor
+
+Q: What is the exact formula for constructing a Major Scale?
+* A) W - W - H - W - W - W - H
+B) W - H - W - W - H - W - W
+C) H - W - W - H - W - W - W
+D) W - W - W - H - W - W - H
+
+Q: What is the exact formula for constructing a Minor Scale?
+A) W - W - H - W - W - W - H
+* B) W - H - W - W - H - W - W
+C) H - W - H - W - H - W - H
+D) W - W - W - W - H - H - W
+
+Q: Which notes make up the standard C Major scale following the major scale formula?
+A) C, D, E, F#, G, A, B, C
+* B) C, D, E, F, G, A, B, C
+C) C, D, Eb, F, G, Ab, Bb, C
+D) C, E, G, B, C
+
+Q: When applying the major scale formula starting from the root note G, what is the resulting G Major scale?
+A) G, A, B, C, D, E, F, G
+* B) G, A, B, C, D, E, F#, G
+C) G, A, Bb, C, D, Eb, F, G
+D) G, B, D, F#, G
+
+Q: Using the minor scale formula starting at C, what are the notes in a C minor scale?
+A) C, D, E, F, G, A, B, C
+* B) C, D, E♭, F, G, A♭, B♭, C
+C) C, D♭, E♭, F, G♭, A♭, B♭, C
+D) C, D, F, G, A, C
+
+Q: How many total major and minor scale variations exist following these consistent formulas across all root notes?
+A) 12 scales
+B) 16 scales
+* C) 24 scales
+D) 48 scales
+
+Q: What key difference distinguishes a Minor Scale formula from a Major Scale formula?
+A) A minor scale has no half-steps at all
+* B) A minor scale shifts the position of the half-steps closer to the beginning (between the 2nd-3rd and 5th-6th degrees)
+C) A minor scale uses exclusively black keys
+D) A minor scale moves entirely in whole-steps and skips the root note
+
+Q: Why are formulas for scales important for piano players?
+A) They replace the need to ever practice fingerings
+* B) They allow you to construct and play any of the 24 major and minor scales consistently by following the step patterns from any root note
+C) They automatically tune the piano keys
+D) They dictate the exact lyrics of a song

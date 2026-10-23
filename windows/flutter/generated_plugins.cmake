@@ -11,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_storage
   flutter_midi_command_windows
   hand_detection
+  record_windows
   url_launcher_windows
 )
 

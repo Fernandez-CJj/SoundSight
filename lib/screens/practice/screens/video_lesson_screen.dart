@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:soundsight/screens/practice/screens/level_1/level_1_screen.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoLessonScreen extends StatefulWidget {
@@ -9,11 +8,13 @@ class VideoLessonScreen extends StatefulWidget {
     required this.title,
     required this.videoAssetPath,
     this.onStartQuiz,
+    this.onViewPdf,
   });
 
   final String title;
   final String videoAssetPath;
   final VoidCallback? onStartQuiz;
+  final VoidCallback? onViewPdf;
 
   @override
   State<VideoLessonScreen> createState() {
@@ -233,56 +234,49 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: SafeArea(
-              left: false,
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12, right: 24),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black54,
-                        blurRadius: 14,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.of(
-                        context,
-                      ).push(MaterialPageRoute(builder: (_) => Level1Screen()));
-                    },
-                    icon: const Icon(Icons.quiz_outlined, size: 20),
-                    label: const Text(
-                      'Start Quiz',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: BorderSide(
-                          color: colorScheme.onPrimary.withValues(alpha: 0.3),
+          // Show lesson resources together at the upper-right of the video.
+          if (controlsVisible &&
+              (widget.onStartQuiz != null || widget.onViewPdf != null))
+            Positioned(
+              top: 0,
+              right: 0,
+              child: SafeArea(
+                left: false,
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, right: 24),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.onViewPdf != null) ...[
+                        _LessonActionButton(
+                          colorScheme: colorScheme,
+                          icon: Icons.picture_as_pdf_outlined,
+                          label: 'View PDF',
+                          onPressed: () async {
+                            await videoController.pause();
+                            widget.onViewPdf?.call();
+                          },
                         ),
-                      ),
-                    ),
+                        if (widget.onStartQuiz != null)
+                          const SizedBox(width: 8),
+                      ],
+                      if (widget.onStartQuiz != null)
+                        _LessonActionButton(
+                          colorScheme: colorScheme,
+                          icon: Icons.quiz_outlined,
+                          label: 'Start Quiz',
+                          onPressed: () async {
+                            // Stop video and audio before opening the quiz route.
+                            await videoController.pause();
+                            widget.onStartQuiz?.call();
+                          },
+                        ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -295,4 +289,43 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
 
     return '$minutes:$secondText';
   }
+}
+
+class _LessonActionButton extends StatelessWidget {
+  const _LessonActionButton({
+    required this.colorScheme,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final ColorScheme colorScheme;
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: colorScheme.primary,
+      borderRadius: BorderRadius.circular(14),
+      boxShadow: const [
+        BoxShadow(color: Colors.black54, blurRadius: 14, offset: Offset(0, 4)),
+      ],
+    ),
+    child: FilledButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+      style: FilledButton.styleFrom(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: colorScheme.onPrimary.withValues(alpha: 0.3)),
+        ),
+      ),
+    ),
+  );
 }

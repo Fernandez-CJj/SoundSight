@@ -13,6 +13,7 @@ import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/screens/micNiKen/microphone_screen.dart';
 import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
+import 'package:soundsight/screens/pdiddy/practice.dart';
 import 'package:soundsight/screens/practice/practice_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -164,6 +165,19 @@ class AppDrawer extends StatelessWidget {
 
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const MicrophoneScreen()),
+                );
+              },
+            ),
+            _DrawerTile(
+              colors: colors,
+              active: activeItem == DrawerItem.mic,
+              icon: Icons.mic_none_outlined,
+              title: 'pdiddy',
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FundamentalsScreen()),
                 );
               },
             ),

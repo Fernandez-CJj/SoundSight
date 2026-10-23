@@ -1,0 +1,62 @@
+// Lesson 6 Practice Quiz - Accidentals (Sharp, Flat & Natural)
+
+Q: What is the primary function of an accidental in musical notation?
+A) To change the speed or tempo of a measure
+* B) To alter the pitch of a note by raising or lowering it
+C) To indicate which finger to use on a key
+D) To show where a section of music repeats
+
+Q: Which symbol raises a note's pitch by one half step (semitone)?
+* A) Sharp (♯)
+B) Flat (♭)
+C) Natural (♮)
+D) Tie
+
+Q: Which symbol lowers a note's pitch by one half step (semitone)?
+A) Sharp (♯)
+* B) Flat (♭)
+C) Natural (♮)
+D) Repeat sign
+
+Q: Which symbol cancels a previous sharp or flat and restores a note to its original pitch?
+A) Sharp (♯)
+B) Flat (♭)
+* C) Natural (♮)
+D) Barline
+
+Q: Where is an accidental written relative to the notehead in sheet music?
+A) Directly above the notehead
+B) Directly below the notehead
+* C) On the same line or space, directly to the left of the notehead
+D) To the right of the notehead
+
+Q: If a sharp symbol is placed next to a F note on sheet music, which key do you play on the piano?
+A) The white key directly to the left of F
+* B) The black key directly to the right of F (F#)
+C) The white key two steps above F
+D) The same F white key without changes
+
+Exchange rate:
+Q: How long does an accidental remain in effect once written in a measure of sheet music?
+A) For only the single note it is attached to
+* B) For all identical pitch notes throughout the rest of that specific measure
+C) For the entire piece of music
+D) Until the next line of the staff
+
+Q: What happens to an accidental's effect when a barline is crossed into a new measure?
+* A) Its effect automatically expires and resets
+B) It stays active for one more measure
+C) It permanently changes all future notes
+D) It converts all notes into flats
+
+Q: Playing the key C♯ (C Sharp) and the key D♭ (D Flat) on a piano results in:
+A) Two completely different sounds on different keys
+* B) The exact same physical key and sound (Enharmonic equivalence)
+C) A full octave gap in pitch
+D) Silent playback
+
+Q: If a measure contains a B♭ (B Flat) and later in that same measure you see a B with a ♮ symbol, how should you play the second note?
+A) Play B Flat again
+* B) Play the regular white key B (B Natural)
+C) Play B Sharp
+D) Skip the note completely
