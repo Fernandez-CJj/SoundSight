@@ -27,7 +27,7 @@ service firebase.storage {
     }
 
     match /profilePictures/{userId}/{fileName} {
-      allow read: if isVerifiedUser();
+      allow read: if isVerifiedUser() || isAdmin();
 
       allow create, update: if isVerifiedUser()
                             && request.auth.uid == userId
@@ -73,13 +73,13 @@ service firebase.storage {
     }
 
     match /published_compositions/{ownerId}/{fileName} {
-      allow read: if isVerifiedUser();
+      allow read: if isVerifiedUser() || isAdmin();
 
       allow create, update, delete: if false;
     }
 
     match /published_compositions/{ownerId}/{compositionId}/{fileName} {
-      allow read: if isVerifiedUser();
+      allow read: if isVerifiedUser() || isAdmin();
 
       allow create, update, delete: if false;
     }

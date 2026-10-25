@@ -1208,12 +1208,12 @@ service cloud.firestore {
     }
 
     match /compositionPosts/{postId} {
-      allow read: if isVerifiedUser();
+      allow read: if isVerifiedUser() || isAdmin();
 
       allow create, update, delete: if false;
 
       match /versions/{versionId} {
-        allow read: if isVerifiedUser();
+        allow read: if isVerifiedUser() || isAdmin();
 
         allow create, update, delete: if false;
 
