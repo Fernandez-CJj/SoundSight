@@ -26,3 +26,13 @@ class SynthesiaDocumentSource extends SynthesiaScoreSource {
   final String documentPath;
   final String fallbackTitle;
 }
+
+class SynthesiaLibraryPieceSource extends SynthesiaScoreSource {
+  const SynthesiaLibraryPieceSource({
+    required this.documentPath,
+    required this.fallbackTitle,
+  });
+
+  final String documentPath;
+  final String fallbackTitle;
+}

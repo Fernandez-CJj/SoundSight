@@ -79,7 +79,8 @@ class MusicSheetUploadService {
       final isPdf =
           files.length == 1 && files.first.extension?.toLowerCase() == 'pdf';
 
-      await sheetDocument.set({
+      final batch = FirebaseFirestore.instance.batch();
+      batch.set(sheetDocument, {
         'ownerId': ownerId,
         'title': title,
         'type': isPdf ? 'pdf' : 'images',
@@ -88,6 +89,11 @@ class MusicSheetUploadService {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      batch.update(
+        FirebaseFirestore.instance.collection('users').doc(ownerId),
+        {'hasUploadedMusicSheet': true},
+      );
+      await batch.commit();
 
       return sheetDocument.id;
     } catch (error, stackTrace) {

@@ -1,0 +1,73 @@
+// Pagsusulit sa Aralin 8 - Mga Chord (Triad, Formula, at Inversion)
+
+Q: Ano ang pangunahing kahulugan ng chord sa musika?
+A) Pagkakasunod-sunod ng mga notang isa-isang tinutugtog
+* B) Kombinasyong musikal na nalilikha kapag sabay na tinutugtog ang tatlo o higit pang nota
+C) Isang notang pinatatagal sa maraming measure
+D) Rhythmic tempo pattern ng isang piyesa
+
+Q: Karamihan sa karaniwang chord ay binubuo bilang triad. Aling tatlong bahagi ang bumubuo rito?
+A) Una, ikalawa, at ikatlong nota
+* B) Root, 3rd, at 5th
+C) Key, pitch, at octave
+D) Bass, tenor, at treble
+
+Q: Ano ang pangunahing tungkulin ng "root" sa isang triad chord?
+* A) Ito ang nagsisilbing pundasyon at nagbibigay ng pangalan sa chord
+B) Ito ang tumutukoy kung major o minor ang chord
+C) Ito ang nagsisilbing itaas na hangganan ng chord
+D) Awtomatiko nitong binabago ang key signature
+
+Q: Ano ang half-step formula para sa Major Triad sa root position?
+* A) 3 + 2
+B) 2 + 3
+C) 2 + 2
+D) 3 + 3
+
+Q: Aling nota sa triad ang tumutukoy kung major o minor ang kalidad ng chord?
+A) Root
+* B) 3rd
+C) 5th
+D) Octave
+
+Q: Aling uri ng triad ang sumusunod sa formulang 2 half-step + 2 half-step sa pagitan ng mga nota nito?
+A) Major triad
+B) Minor triad
+* C) Diminished triad
+D) Augmented triad
+
+Q: Aling half-step formula ang ginagamit upang buuin ang Augmented triad sa root position?
+A) 3 + 2
+B) 2 + 3
+C) 2 + 2
+* D) 3 + 3
+
+Q: Aling tatlong nota ang bumubuo sa karaniwang C Major chord?
+* A) C, E, G
+B) C, D, E
+C) C, F, G
+D) C, E♭, G
+
+Q: Ano ang pagkakasunod-sunod ng mga nota sa isang triad na tinutugtog sa 1st Inversion?
+A) 1-3-5
+* B) 3-5-1
+C) 5-1-3
+D) 5-3-1
+
+Q: Ano ang half-step formula para sa Minor Triad sa root position?
+A) 3 + 2
+* B) 2 + 3
+C) 2 + 2
+D) 3 + 3
+
+Q: Anong uri ng triad ang F#(root), A#(3rd), at D(5th)?
+A) Major
+B) Minor
+C) Diminished
+* D) Augmented
+
+Q: Anong triad chord ang C#(root), E(3rd), at G#(5th)?
+A) E#m
+* B) C#m
+C) C#aug o C#+
+D) D♭° o D♭dim

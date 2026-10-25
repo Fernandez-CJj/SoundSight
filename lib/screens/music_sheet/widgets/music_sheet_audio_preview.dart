@@ -332,9 +332,13 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
           isLoading = true;
         });
 
-        final downloadedBytes = await FirebaseStorage.instance
-            .ref(widget.storagePath)
-            .getData(maximumAudioSize);
+        final location = widget.storagePath;
+        final uri = Uri.tryParse(location);
+        final storage = FirebaseStorage.instance;
+        final reference = uri != null && uri.hasScheme
+            ? storage.refFromURL(location)
+            : storage.ref(location);
+        final downloadedBytes = await reference.getData(maximumAudioSize);
 
         if (downloadedBytes == null || downloadedBytes.isEmpty) {
           throw StateError('empty-audio-preview');

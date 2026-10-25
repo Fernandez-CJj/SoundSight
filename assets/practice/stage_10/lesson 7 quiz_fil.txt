@@ -1,0 +1,55 @@
+// Pagsusulit sa Aralin 7 - Mga Time Signature, Note Value, Rest, at Subdivision
+
+Q: Ano ang tawag sa palagian at pantay na pulso ng musika?
+A) Tempo
+* B) Beat
+C) Measure
+D) Rest
+
+Q: Saan nakapuwesto ang time signature sa staff?
+A) Pagkatapos ng unang barline ng bawat measure
+* B) Malapit sa clef sa simula ng isang piyesa
+C) Sa ibabaw ng final barline
+D) Sa ibaba ng mga ledger line
+
+Q: Sa 4/4 time signature, ano ang ipinapahiwatig ng numerong nasa itaas?
+A) Aling nota ang katumbas ng isang beat
+* B) May apat na beat sa bawat measure
+C) May apat na staff line sa bawat measure
+D) Kailangang tugtugin ang piyesa nang apat na minuto
+
+Q: Ano ang tawag sa bilis o takbo ng beat ng isang piyesa?
+* A) Tempo
+B) Time signature
+C) Staff line
+D) Clef
+
+Q: Ilang beat ang itinatagal ng half note sa karaniwang 4/4 time signature?
+A) 1 beat
+* B) 2 beat
+C) 3 beat
+D) 4 beat
+
+Q: Aling simbolo ang nagpapahiwatig ng katahimikang tumatagal nang apat na buong beat sa 4/4 time?
+A) Quarter rest
+B) Half rest
+* C) Whole rest
+D) Eighth rest
+
+Q: Ilang beat ang natatanggap ng isang quaver sa 4/4 time?
+A) 2 beat
+B) 1 beat
+* C) 1/2 beat
+D) 1/4 beat
+
+Q: Aling subdivision ang naghahati sa isang beat sa apat na magkakapantay na bahagi?
+A) Quaver
+* B) Semiquaver
+C) Demisemiquaver
+D) Half note
+
+Q: Bakit pinagdurugtong ng beam ang mga flag ng magkakasunod na quaver o semiquaver?
+* A) Upang malinaw na mapangkat ang mga nota ayon sa beat at mas madaling mabasa ang mga ito
+B) Upang maging dalawang beses na mas malakas ang tunog ng mga nota
+C) Upang ipakitang kaliwang kamay lamang ang dapat tumugtog sa mga nota
+D) Upang pahabain ang tagal ng mga nota patawid sa mga barline

@@ -1,0 +1,31 @@
+// Pagsusulit sa Aralin 2 - Ang Grand Staff
+
+Q: Aling instrumentong pangmusika ang gumagamit ng isang five-line staff sa halip na grand staff?
+A) Piano
+* B) Gitara
+C) Pipe organ
+D) Harp
+
+Q: Anong bahagi ang nagdurugtong sa dalawang staff sa isang grand staff?
+A) Isang manipis na barline
+* B) Isang kulot na bracket
+C) Isang repeat sign
+D) Isang dobleng makapal na barline
+
+Q: Aling dalawang clef ang karaniwang pinagtatambal sa grand staff?
+A) Alto clef at Tenor clef
+B) Treble clef at Alto clef
+* C) Treble clef at Bass clef
+D) Bass clef at Tenor clef
+
+Q: Bakit kailangan ng grand staff sa piyesa para sa piano sa halip na isang staff lamang?
+A) Wala sa mga sagot sa ibaba
+B) Upang magkaroon ng lugar para sa lyrics
+* C) Hindi kayang saklawin ng isang staff ang malawak na 88-key range ng piano
+D) Upang ihiwalay ang melody sa rhythm
+
+Q: Sa grand staff, aling clef ang karaniwang nasa itaas na staff?
+* A) Treble clef
+B) Bass clef
+C) Alto clef
+D) Tenor clef

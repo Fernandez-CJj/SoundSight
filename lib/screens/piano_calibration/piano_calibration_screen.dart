@@ -4841,7 +4841,11 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       practiceType: PracticeResultType.arPerformance,
       ownerId: '',
       scoreDocumentPath: cleanDocumentPath,
-      source: isComposition ? 'composition' : 'musicSheet',
+      source: cleanDocumentPath.startsWith('available_pieces/')
+          ? 'musicLibrary'
+          : isComposition
+          ? 'composition'
+          : 'musicSheet',
       pieceTitle: timeline?.pieceTitle ?? context.l10n.synthesiaUntitledScore,
       completedAt: null,
       targetDurationMs: targetDurationMs,

@@ -1,0 +1,67 @@
+// Pagsusulit sa Aralin 10 - Nashville Number System
+
+Q: Ano ang pangunahing layunin ng Nashville Number System o NNS?
+A) Ipahiwatig kung aling numero ng daliri ang gagamitin sa mga piano key
+* B) Bigyang-daan ang mga musikero na agad mag-transpose at magpahayag ng chord progression gamit ang scale degree sa halip na tiyak na pangalan ng letra
+C) Sukatin ang eksaktong tempo at beats per minute o BPM ng isang kanta
+D) Ipakita ang eksaktong rhythm at mga linya ng staff sa piyesa
+
+Q: Sa major key formula ng Nashville Number System, ano ang kinakatawan ng maliliit na letra gaya ng "m" o lowercase Roman numeral?
+A) Mga major chord
+* B) Mga minor chord
+C) Mga diminished chord
+D) Mga augmented chord
+
+Q: Sa Nashville Number System, ano ang ibig sabihin ng degree symbol na ° sa tabi ng isang numero?
+A) Major chord
+B) Minor chord
+* C) Diminished chord
+D) Augmented chord
+
+Q: Ano ang 2m sa key ng G?
+A) D minor (Dm)
+* B) A minor (Am)
+C) B minor (Bm)
+D) E minor (Em)
+
+Q: Ano ang 5 sa key ng D?
+A) G major (G)
+* B) A major (A)
+C) B minor (Bm)
+D) F# minor (F#m)
+
+Q: Ano ang 6m sa key ng C?
+A) D minor (Dm)
+* B) A minor (Am)
+C) E minor (Em)
+D) F major (F)
+
+Q: Ano ang 3m sa key ng G?
+A) E minor (Em)
+* B) B minor (Bm)
+C) A minor (Am)
+D) F# diminished (F#dim)
+
+Q: Ano ang 4 sa key ng D?
+A) D major (D)
+* B) G major (G)
+C) A major (A)
+D) B minor (Bm)
+
+Q: Ano ang 7° sa key ng C?
+A) A minor (Am)
+* B) B diminished (Bdim)
+C) C diminished (Cdim)
+D) F# diminished (F#dim)
+
+Q: Alin sa mga sumusunod ang isa sa pinakasikat na chord progression na ginagamit sa daan-daang hit song sa pop, country, at rock?
+* A) 1 - 5 - 6m - 4 (I - V - vi - IV)
+B) 2m - 5 - 1 - 3m (ii - V - I - iii)
+C) 7° - 3m - 4 - 5 (vii° - iii - IV - V)
+D) 1 - 3m - 5 - 7° (I - iii - V - vii°)
+
+Q: Ano ang 6m sa key ng A?
+A) D major (D)
+* B) F# minor (F#m)
+C) C# minor (C#m)
+D) B minor (Bm)

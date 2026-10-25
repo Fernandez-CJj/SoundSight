@@ -104,6 +104,84 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get drawerHome;
 
+  /// No description provided for @searchMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Search music'**
+  String get searchMusic;
+
+  /// No description provided for @musicLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Music Library'**
+  String get musicLibrary;
+
+  /// No description provided for @musicLibraryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse pieces uploaded by SoundSight.'**
+  String get musicLibraryDescription;
+
+  /// No description provided for @searchMusicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by title'**
+  String get searchMusicHint;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// No description provided for @signInToSearchMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to browse the music library.'**
+  String get signInToSearchMusic;
+
+  /// No description provided for @musicLibraryLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'The music library could not be loaded.'**
+  String get musicLibraryLoadError;
+
+  /// No description provided for @noLibraryPieces.
+  ///
+  /// In en, this message translates to:
+  /// **'No music pieces available yet.'**
+  String get noLibraryPieces;
+
+  /// No description provided for @noMusicSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No music pieces match your search.'**
+  String get noMusicSearchResults;
+
+  /// No description provided for @untitledPiece.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled piece'**
+  String get untitledPiece;
+
+  /// No description provided for @libraryPieceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This music piece is no longer available.'**
+  String get libraryPieceMissing;
+
+  /// No description provided for @libraryPracticeFilesMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This piece is missing files needed for that play mode.'**
+  String get libraryPracticeFilesMissing;
+
+  /// No description provided for @musicLibraryOpenPiece.
+  ///
+  /// In en, this message translates to:
+  /// **'Open {title}'**
+  String musicLibraryOpenPiece(String title);
+
   /// No description provided for @drawerMusicSheets.
   ///
   /// In en, this message translates to:
@@ -299,7 +377,7 @@ abstract class AppLocalizations {
   /// No description provided for @musicSheetsLoadErrorHelp.
   ///
   /// In en, this message translates to:
-  /// **'Check your connection and Firebase permissions.'**
+  /// **'Check your internet connection and try again.'**
   String get musicSheetsLoadErrorHelp;
 
   /// No description provided for @signInForMusicSheets.
@@ -401,7 +479,7 @@ abstract class AppLocalizations {
   /// No description provided for @waitForTranslationBeforeDelete.
   ///
   /// In en, this message translates to:
-  /// **'Wait for the music-sheet translation to finish before deleting it.'**
+  /// **'Wait for the music sheet to finish converting before deleting it.'**
   String get waitForTranslationBeforeDelete;
 
   /// No description provided for @musicSheetDeleted.
@@ -449,13 +527,13 @@ abstract class AppLocalizations {
   /// No description provided for @translateBeforeAr.
   ///
   /// In en, this message translates to:
-  /// **'Translate the music sheet before starting AR Practice.'**
+  /// **'Convert the music sheet before starting AR Practice.'**
   String get translateBeforeAr;
 
   /// No description provided for @translatedMidiMissing.
   ///
   /// In en, this message translates to:
-  /// **'The translated MIDI file is missing.'**
+  /// **'The file needed for this practice mode is not ready.'**
   String get translatedMidiMissing;
 
   /// No description provided for @openArFailed.
@@ -467,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @translateBeforeSynthesia.
   ///
   /// In en, this message translates to:
-  /// **'Translate the music sheet before starting Synthesia.'**
+  /// **'Convert the music sheet before starting Synthesia.'**
   String get translateBeforeSynthesia;
 
   /// No description provided for @openSynthesiaFailed.
@@ -479,13 +557,13 @@ abstract class AppLocalizations {
   /// No description provided for @translateBeforeSightReading.
   ///
   /// In en, this message translates to:
-  /// **'Translate the music sheet before starting Sight Reading.'**
+  /// **'Convert the music sheet before starting Sight Reading.'**
   String get translateBeforeSightReading;
 
   /// No description provided for @translatedPracticeFilesMissing.
   ///
   /// In en, this message translates to:
-  /// **'The translated MusicXML, MIDI, or MP3 file is missing.'**
+  /// **'The files needed for this practice mode are not ready.'**
   String get translatedPracticeFilesMissing;
 
   /// No description provided for @openSightReadingFailed.
@@ -497,7 +575,7 @@ abstract class AppLocalizations {
   /// No description provided for @recognized.
   ///
   /// In en, this message translates to:
-  /// **'Recognized'**
+  /// **'Converted'**
   String get recognized;
 
   /// No description provided for @original.
@@ -509,7 +587,7 @@ abstract class AppLocalizations {
   /// No description provided for @recognizedPdfLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'The recognized PDF could not be loaded. Showing the original sheet instead.'**
+  /// **'The converted sheet could not be loaded. Showing the original sheet instead.'**
   String get recognizedPdfLoadFailed;
 
   /// No description provided for @retry.
@@ -545,25 +623,25 @@ abstract class AppLocalizations {
   /// No description provided for @translateSheetAgainQuestion.
   ///
   /// In en, this message translates to:
-  /// **'Translate this sheet again?'**
+  /// **'Convert this sheet again?'**
   String get translateSheetAgainQuestion;
 
   /// No description provided for @translateMusicSheetQuestion.
   ///
   /// In en, this message translates to:
-  /// **'Translate music sheet?'**
+  /// **'Convert music sheet?'**
   String get translateMusicSheetQuestion;
 
   /// No description provided for @retranslateDescription.
   ///
   /// In en, this message translates to:
-  /// **'SoundSight will create a new translation for \"{title}\" and replace its current MusicXML, MIDI, recognized PDF, and audio preview.'**
+  /// **'SoundSight will process \"{title}\" again and replace its current converted version.'**
   String retranslateDescription(String title);
 
   /// No description provided for @translateDescription.
   ///
   /// In en, this message translates to:
-  /// **'SoundSight will translate \"{title}\" into MusicXML, MIDI, a recognized PDF, and an audio preview. This may take a few minutes.'**
+  /// **'SoundSight will create a playable digital version of \"{title}\". This may take a few minutes.'**
   String translateDescription(String title);
 
   /// No description provided for @continueAction.
@@ -575,31 +653,31 @@ abstract class AppLocalizations {
   /// No description provided for @translate.
   ///
   /// In en, this message translates to:
-  /// **'Translate'**
+  /// **'Convert'**
   String get translate;
 
   /// No description provided for @translatingMusicSheet.
   ///
   /// In en, this message translates to:
-  /// **'Translating music sheet'**
+  /// **'Converting music sheet'**
   String get translatingMusicSheet;
 
   /// No description provided for @translationLoadingDescription.
   ///
   /// In en, this message translates to:
-  /// **'Audiveris is reading the notes. Please wait and keep the app open.'**
+  /// **'SoundSight is reading the notes. Please wait and keep the app open.'**
   String get translationLoadingDescription;
 
   /// No description provided for @translationComplete.
   ///
   /// In en, this message translates to:
-  /// **'Translation complete'**
+  /// **'Conversion complete'**
   String get translationComplete;
 
   /// No description provided for @translationResult.
   ///
   /// In en, this message translates to:
-  /// **'SoundSight recognized {noteCount, plural, =1 {1 note} other {{noteCount} notes}} across {partCount, plural, =1 {1 part} other {{partCount} parts}}.'**
+  /// **'SoundSight found {noteCount, plural, =1 {1 note} other {{noteCount} notes}} across {partCount, plural, =1 {1 part} other {{partCount} parts}}.'**
   String translationResult(int noteCount, int partCount);
 
   /// No description provided for @done.
@@ -611,7 +689,7 @@ abstract class AppLocalizations {
   /// No description provided for @translationFailed.
   ///
   /// In en, this message translates to:
-  /// **'Translation failed'**
+  /// **'Conversion failed'**
   String get translationFailed;
 
   /// No description provided for @close.
@@ -623,7 +701,7 @@ abstract class AppLocalizations {
   /// No description provided for @translationReady.
   ///
   /// In en, this message translates to:
-  /// **'Translation ready'**
+  /// **'Converted sheet ready'**
   String get translationReady;
 
   /// No description provided for @translationSummary.
@@ -635,55 +713,55 @@ abstract class AppLocalizations {
   /// No description provided for @translationFailedDescription.
   ///
   /// In en, this message translates to:
-  /// **'The sheet could not be translated. You can try again.'**
+  /// **'The sheet could not be converted. You can try again.'**
   String get translationFailedDescription;
 
   /// No description provided for @translationProcessingDescription.
   ///
   /// In en, this message translates to:
-  /// **'Audiveris is recognizing the notes.'**
+  /// **'SoundSight is reading the notes.'**
   String get translationProcessingDescription;
 
   /// No description provided for @translationStartDescription.
   ///
   /// In en, this message translates to:
-  /// **'Create MusicXML, MIDI, a clean PDF, and an audio preview.'**
+  /// **'Create a playable digital version for SoundSight\'s practice modes.'**
   String get translationStartDescription;
 
   /// No description provided for @reconvert.
   ///
   /// In en, this message translates to:
-  /// **'Reconvert'**
+  /// **'Convert Again'**
   String get reconvert;
 
   /// No description provided for @translationGenericError.
   ///
   /// In en, this message translates to:
-  /// **'The music sheet could not be translated.'**
+  /// **'The music sheet could not be converted.'**
   String get translationGenericError;
 
   /// No description provided for @translationTimedOut.
   ///
   /// In en, this message translates to:
-  /// **'Translation took too long. Check the backend and try again.'**
+  /// **'Conversion took too long. Please try again.'**
   String get translationTimedOut;
 
   /// No description provided for @translationConnectionError.
   ///
   /// In en, this message translates to:
-  /// **'SoundSight could not connect to the translation service.'**
+  /// **'SoundSight could not connect. Check your internet connection and try again.'**
   String get translationConnectionError;
 
   /// No description provided for @translationRejected.
   ///
   /// In en, this message translates to:
-  /// **'The translation service could not process this music sheet.'**
+  /// **'SoundSight could not read this music sheet. Try using a clearer image or PDF.'**
   String get translationRejected;
 
   /// No description provided for @translationInvalidResponse.
   ///
   /// In en, this message translates to:
-  /// **'The translation service returned an invalid response.'**
+  /// **'Something went wrong while converting the music sheet. Please try again.'**
   String get translationInvalidResponse;
 
   /// No description provided for @audioPreview.
@@ -695,13 +773,13 @@ abstract class AppLocalizations {
   /// No description provided for @audioLoading.
   ///
   /// In en, this message translates to:
-  /// **'Loading audio from Firebase...'**
+  /// **'Loading audio...'**
   String get audioLoading;
 
   /// No description provided for @audioPlaying.
   ///
   /// In en, this message translates to:
-  /// **'Playing translated music'**
+  /// **'Playing converted music'**
   String get audioPlaying;
 
   /// No description provided for @audioPaused.
@@ -713,7 +791,7 @@ abstract class AppLocalizations {
   /// No description provided for @audioIdle.
   ///
   /// In en, this message translates to:
-  /// **'Listen to the translated music sheet'**
+  /// **'Listen to the converted music sheet'**
   String get audioIdle;
 
   /// No description provided for @pause.
@@ -1171,6 +1249,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile'**
   String get profile;
+
+  /// No description provided for @achievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements'**
+  String get achievements;
+
+  /// No description provided for @viewAchievementDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get viewAchievementDetails;
+
+  /// No description provided for @achievementDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge details'**
+  String get achievementDetails;
+
+  /// No description provided for @achievementProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{earned} of {total} badges earned'**
+  String achievementProgress(int earned, int total);
+
+  /// No description provided for @badgeFirstMeasure.
+  ///
+  /// In en, this message translates to:
+  /// **'First Measure'**
+  String get badgeFirstMeasure;
+
+  /// No description provided for @badgeFirstMeasureDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the skill assessment to discover your SoundSight level.'**
+  String get badgeFirstMeasureDescription;
+
+  /// No description provided for @badgeSheetCollector.
+  ///
+  /// In en, this message translates to:
+  /// **'Sheet Collector'**
+  String get badgeSheetCollector;
+
+  /// No description provided for @badgeSheetCollectorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your first music sheet by uploading a file or capturing it with the camera.'**
+  String get badgeSheetCollectorDescription;
+
+  /// No description provided for @badgeFirstComposer.
+  ///
+  /// In en, this message translates to:
+  /// **'First Composer'**
+  String get badgeFirstComposer;
+
+  /// No description provided for @badgeFirstComposerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your first composition, whether created manually or from a recording.'**
+  String get badgeFirstComposerDescription;
+
+  /// No description provided for @badgeMiddleC.
+  ///
+  /// In en, this message translates to:
+  /// **'Middle C'**
+  String get badgeMiddleC;
+
+  /// No description provided for @badgeMiddleCDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete lesson stage 3: The Middle C.'**
+  String get badgeMiddleCDescription;
+
+  /// No description provided for @badgeFirstMelody.
+  ///
+  /// In en, this message translates to:
+  /// **'First Melody'**
+  String get badgeFirstMelody;
+
+  /// No description provided for @badgeFirstMelodyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete lesson stage 6: Play Twinkle Twinkle.'**
+  String get badgeFirstMelodyDescription;
+
+  /// No description provided for @badgeGrowingMusician.
+  ///
+  /// In en, this message translates to:
+  /// **'Growing Musician'**
+  String get badgeGrowingMusician;
+
+  /// No description provided for @badgeGrowingMusicianDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete lesson stage 9: Play Fur Elise.'**
+  String get badgeGrowingMusicianDescription;
+
+  /// No description provided for @badgeChordBuilder.
+  ///
+  /// In en, this message translates to:
+  /// **'Chord Builder'**
+  String get badgeChordBuilder;
+
+  /// No description provided for @badgeChordBuilderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete lesson stage 12: Chords.'**
+  String get badgeChordBuilderDescription;
+
+  /// No description provided for @badgeMusicNavigator.
+  ///
+  /// In en, this message translates to:
+  /// **'Music Navigator'**
+  String get badgeMusicNavigator;
+
+  /// No description provided for @badgeMusicNavigatorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete lesson stage 15: Nashville Number System.'**
+  String get badgeMusicNavigatorDescription;
+
+  /// No description provided for @badgeSoundSightMaster.
+  ///
+  /// In en, this message translates to:
+  /// **'SoundSight Master'**
+  String get badgeSoundSightMaster;
+
+  /// No description provided for @badgeSoundSightMasterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete all 16 lesson stages.'**
+  String get badgeSoundSightMasterDescription;
+
+  /// No description provided for @badgeUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked'**
+  String get badgeUnlocked;
+
+  /// No description provided for @badgeLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get badgeLocked;
+
+  /// No description provided for @badgeChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking'**
+  String get badgeChecking;
+
+  /// No description provided for @badgeEarnedAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge unlocked!'**
+  String get badgeEarnedAnnouncement;
 
   /// No description provided for @editProfileTooltip.
   ///
@@ -7536,6 +7770,521 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The assessment is complete, but its saved result details could not be displayed.'**
   String get assessmentResultUnavailable;
+
+  /// No description provided for @lessonSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to open lessons.'**
+  String get lessonSignInRequired;
+
+  /// No description provided for @lessonProgressLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson progress could not be loaded. Please try again.'**
+  String get lessonProgressLoadFailed;
+
+  /// No description provided for @lessonProgressSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson progress could not be saved. Please try again.'**
+  String get lessonProgressSaveFailed;
+
+  /// No description provided for @lessonCompactProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed}/{total} complete'**
+  String lessonCompactProgress(int completed, int total);
+
+  /// No description provided for @lessonAllStagesComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'All stages complete'**
+  String get lessonAllStagesComplete;
+
+  /// No description provided for @lessonStageProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {current} of {total}'**
+  String lessonStageProgress(int current, int total);
+
+  /// No description provided for @lessonStagesCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed} of {total} stages completed'**
+  String lessonStagesCompleted(int completed, int total);
+
+  /// No description provided for @lessonSavingStageProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving Stage {stage} progress...'**
+  String lessonSavingStageProgress(int stage);
+
+  /// No description provided for @lessonStageProgressNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {stage} passed, but progress was not saved.'**
+  String lessonStageProgressNotSaved(int stage);
+
+  /// No description provided for @lessonVideoAndQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Video + quiz'**
+  String get lessonVideoAndQuiz;
+
+  /// No description provided for @lessonPianoPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Piano performance'**
+  String get lessonPianoPerformance;
+
+  /// No description provided for @lessonCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get lessonCompleted;
+
+  /// No description provided for @lessonCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get lessonCurrent;
+
+  /// No description provided for @lessonLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get lessonLocked;
+
+  /// No description provided for @lessonReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay'**
+  String get lessonReplay;
+
+  /// No description provided for @lessonStageAndStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'STAGE {stage}  /  {status}'**
+  String lessonStageAndStatus(int stage, String status);
+
+  /// No description provided for @lessonStageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {stage}'**
+  String lessonStageLabel(int stage);
+
+  /// No description provided for @lessonFinishStageToUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Stage {stage} to unlock this stage.'**
+  String lessonFinishStageToUnlock(int stage);
+
+  /// No description provided for @lessonRankMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank milestone'**
+  String get lessonRankMilestone;
+
+  /// No description provided for @lessonStageReplayComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {stage} replay complete.'**
+  String lessonStageReplayComplete(int stage);
+
+  /// No description provided for @lessonAllStagesCompleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All stages complete!'**
+  String get lessonAllStagesCompleteMessage;
+
+  /// No description provided for @lessonStageUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {stage} unlocked!'**
+  String lessonStageUnlocked(int stage);
+
+  /// No description provided for @lessonAdvancedRankWillNotLower.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have the Advanced rank. Completing this stage will not lower it.'**
+  String get lessonAdvancedRankWillNotLower;
+
+  /// No description provided for @lessonIntermediateRankKept.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have the Intermediate rank. Completing this stage will keep it.'**
+  String get lessonIntermediateRankKept;
+
+  /// No description provided for @lessonIntermediateAwardedFirstCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'The Intermediate promotion is awarded on the first completion of this stage.'**
+  String get lessonIntermediateAwardedFirstCompletion;
+
+  /// No description provided for @lessonPerfectRunPromotesIntermediate.
+  ///
+  /// In en, this message translates to:
+  /// **'A perfect Performance run promotes you to Intermediate once your progress is saved.'**
+  String get lessonPerfectRunPromotesIntermediate;
+
+  /// No description provided for @lessonAdvancedRankKept.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have the Advanced rank. Completing this stage will keep it.'**
+  String get lessonAdvancedRankKept;
+
+  /// No description provided for @lessonAdvancedAwardedFirstCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'The Advanced promotion is awarded on the first completion of this stage.'**
+  String get lessonAdvancedAwardedFirstCompletion;
+
+  /// No description provided for @lessonPerfectRunPromotesAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'A perfect Performance run in this final stage promotes you to Advanced once your progress is saved.'**
+  String get lessonPerfectRunPromotesAdvanced;
+
+  /// No description provided for @lessonStageSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {stage}, {title}, {activity}, {status}'**
+  String lessonStageSemantics(
+    int stage,
+    String title,
+    String activity,
+    String status,
+  );
+
+  /// No description provided for @lessonNumberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson {number}: {title}'**
+  String lessonNumberTitle(int number, String title);
+
+  /// No description provided for @lessonStage1ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The Canvas'**
+  String get lessonStage1ShortTitle;
+
+  /// No description provided for @lessonStage2ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The Grand Staff'**
+  String get lessonStage2ShortTitle;
+
+  /// No description provided for @lessonStage3ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Middle C'**
+  String get lessonStage3ShortTitle;
+
+  /// No description provided for @lessonStage4ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find and Play Middle C'**
+  String get lessonStage4ShortTitle;
+
+  /// No description provided for @lessonStage5ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Musical Notes'**
+  String get lessonStage5ShortTitle;
+
+  /// No description provided for @lessonStage6ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play Twinkle Twinkle'**
+  String get lessonStage6ShortTitle;
+
+  /// No description provided for @lessonStage7ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finger Numbers'**
+  String get lessonStage7ShortTitle;
+
+  /// No description provided for @lessonStage8ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accidentals'**
+  String get lessonStage8ShortTitle;
+
+  /// No description provided for @lessonStage9ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play Für Elise'**
+  String get lessonStage9ShortTitle;
+
+  /// No description provided for @lessonStage10ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Signatures'**
+  String get lessonStage10ShortTitle;
+
+  /// No description provided for @lessonStage11ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sense of Time'**
+  String get lessonStage11ShortTitle;
+
+  /// No description provided for @lessonStage11Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Signature Performance Test'**
+  String get lessonStage11Title;
+
+  /// No description provided for @lessonStage12ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chords'**
+  String get lessonStage12ShortTitle;
+
+  /// No description provided for @lessonStage13ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Major and Minor Scales'**
+  String get lessonStage13ShortTitle;
+
+  /// No description provided for @lessonStage14ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play the C Minor Scale'**
+  String get lessonStage14ShortTitle;
+
+  /// No description provided for @lessonStage15ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nashville Number System'**
+  String get lessonStage15ShortTitle;
+
+  /// No description provided for @lessonStage16ShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a Song'**
+  String get lessonStage16ShortTitle;
+
+  /// No description provided for @lessonWatchThenQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch the lesson video, then take the quiz to review it.'**
+  String get lessonWatchThenQuiz;
+
+  /// No description provided for @lessonOpenScoreAndPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the sheet music, connect your piano, and play the notes shown.'**
+  String get lessonOpenScoreAndPlay;
+
+  /// No description provided for @lessonWatchTopicVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch the lesson video about {topic}.'**
+  String lessonWatchTopicVideo(String topic);
+
+  /// No description provided for @lessonPlayWithMovingCursor.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your piano and play the score in time with its moving cursor.'**
+  String get lessonPlayWithMovingCursor;
+
+  /// No description provided for @lessonWatchViewPdfAndQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch the lesson, view the chord cheat sheet, and take the quiz.'**
+  String get lessonWatchViewPdfAndQuiz;
+
+  /// No description provided for @lessonConnectAndPlayScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your piano and play the notes shown on the score.'**
+  String get lessonConnectAndPlayScore;
+
+  /// No description provided for @lessonSightReadingChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Sight Reading Challenge'**
+  String get lessonSightReadingChallenge;
+
+  /// No description provided for @lessonSightReadingChallengeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your piano and play the score'**
+  String get lessonSightReadingChallengeDescription;
+
+  /// No description provided for @lessonVideoLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Video lesson'**
+  String get lessonVideoLesson;
+
+  /// No description provided for @lessonQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson questions'**
+  String get lessonQuestions;
+
+  /// No description provided for @lessonSheetMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Sheet music'**
+  String get lessonSheetMusic;
+
+  /// No description provided for @lessonCompressedMusicXmlScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Compressed MusicXML score'**
+  String get lessonCompressedMusicXmlScore;
+
+  /// No description provided for @lessonSightReadingScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Sight-reading score'**
+  String get lessonSightReadingScore;
+
+  /// No description provided for @lessonFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson file'**
+  String get lessonFile;
+
+  /// No description provided for @lessonChordCheatSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Chord cheat sheet'**
+  String get lessonChordCheatSheet;
+
+  /// No description provided for @lessonQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson quiz'**
+  String get lessonQuiz;
+
+  /// No description provided for @lessonStageQuizTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {stage} Quiz'**
+  String lessonStageQuizTitle(int stage);
+
+  /// No description provided for @lessonOpenFromVideoPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this lesson from the video player.'**
+  String get lessonOpenFromVideoPlayer;
+
+  /// No description provided for @lessonQuizLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson quiz could not be loaded.'**
+  String get lessonQuizLoadFailed;
+
+  /// No description provided for @lessonPdfLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson PDF could not be loaded.'**
+  String get lessonPdfLoadFailed;
+
+  /// No description provided for @lessonSightReadingFilesRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sight reading requires a matching MIDI and MusicXML pair.'**
+  String get lessonSightReadingFilesRequired;
+
+  /// No description provided for @lessonFileEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson file is empty.'**
+  String get lessonFileEmpty;
+
+  /// No description provided for @lessonQuestionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Question {current} of {total}'**
+  String lessonQuestionProgress(int current, int total);
+
+  /// No description provided for @lessonQuizComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiz complete'**
+  String get lessonQuizComplete;
+
+  /// No description provided for @lessonQuizScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Your score: {correct}/{total}'**
+  String lessonQuizScore(int correct, int total);
+
+  /// No description provided for @lessonQuizPerfect.
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect score! The next stage will unlock after progress is saved.'**
+  String get lessonQuizPerfect;
+
+  /// No description provided for @lessonQuizRetryGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your answers below. Retry with the questions in a new order for a perfect score.'**
+  String get lessonQuizRetryGuidance;
+
+  /// No description provided for @lessonBackToStages.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to stages'**
+  String get lessonBackToStages;
+
+  /// No description provided for @lessonYourAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your answer: {answer}'**
+  String lessonYourAnswer(String answer);
+
+  /// No description provided for @lessonNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer'**
+  String get lessonNoAnswer;
+
+  /// No description provided for @lessonCorrectAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct answer: {answer}'**
+  String lessonCorrectAnswer(String answer);
+
+  /// No description provided for @lessonVideoLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The lesson video could not be loaded.'**
+  String get lessonVideoLoadFailed;
+
+  /// No description provided for @lessonPauseVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause video'**
+  String get lessonPauseVideo;
+
+  /// No description provided for @lessonPlayVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Play video'**
+  String get lessonPlayVideo;
+
+  /// No description provided for @lessonBackToPractice.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Practice'**
+  String get lessonBackToPractice;
+
+  /// No description provided for @lessonStartQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Quiz'**
+  String get lessonStartQuiz;
+
+  /// No description provided for @lessonViewPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'View PDF'**
+  String get lessonViewPdf;
 }
 
 class _AppLocalizationsDelegate

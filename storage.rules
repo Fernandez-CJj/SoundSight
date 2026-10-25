@@ -23,7 +23,8 @@ service firebase.storage {
     }
 
     match /pieces/{allPaths=**} {
-      allow read, write: if isAdmin();
+      allow read: if isVerifiedUser() || isAdmin();
+      allow write: if isAdmin();
     }
 
     match /profilePictures/{userId}/{fileName} {

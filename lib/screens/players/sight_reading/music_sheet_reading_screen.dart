@@ -29,12 +29,13 @@ import 'sight_reading_note_matcher.dart';
 import 'sight_reading_performance_tracker.dart';
 import 'sight_reading_progress_service.dart';
 
-enum SightReadingSource { composition, musicSheet, lesson }
+enum SightReadingSource { composition, musicSheet, musicLibrary, lesson }
 
 class SightReadingLessonAssets {
   const SightReadingLessonAssets({
     required this.stageNumber,
     required this.title,
+    required this.displayTitle,
     required this.scoreAssetPath,
     required this.midiAssetPath,
     this.pdfAssetPath,
@@ -42,6 +43,7 @@ class SightReadingLessonAssets {
 
   final int stageNumber;
   final String title;
+  final String displayTitle;
   final String scoreAssetPath;
   final String midiAssetPath;
   final String? pdfAssetPath;
@@ -589,7 +591,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '${pieceTitle == 'Untitled score' ? context.l10n.sightReadingUntitledScore : pieceTitle} · ${sourceLabel()}',
+                  '${widget.lesson?.displayTitle ?? (pieceTitle == 'Untitled score' ? context.l10n.sightReadingUntitledScore : pieceTitle)} · ${sourceLabel()}',
                   maxLines: 1,
                   style: TextStyle(
                     color: colors.secondaryTextColor,
@@ -2150,6 +2152,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       SightReadingSource.composition =>
         context.l10n.sightReadingComposition,
       SightReadingSource.musicSheet => context.l10n.sightReadingMusicSheet,
+      SightReadingSource.musicLibrary => context.l10n.musicLibrary,
       SightReadingSource.lesson => context.l10n.drawerPractice,
     };
   }
@@ -2162,12 +2165,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
-          appBar: AppBar(title: Text(lesson.title)),
+          appBar: AppBar(title: Text(lesson.displayTitle)),
           body: FutureBuilder<ByteData>(
             future: pdfBytes,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('Could not load PDF: ${snapshot.error}'));
+                return Center(child: Text(context.l10n.lessonPdfLoadFailed));
               }
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -2939,7 +2942,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         directUrlValue: data?['midiUrl'],
         storagePathValue: data?['midiStoragePath'],
       );
-      final mp3StorageField = widget.source == SightReadingSource.composition
+      final mp3StorageField =
+          widget.source == SightReadingSource.composition ||
+              widget.source == SightReadingSource.musicLibrary
           ? 'mp3StoragePath'
           : 'previewAudioStoragePath';
       final mp3StoragePath = data?[mp3StorageField];

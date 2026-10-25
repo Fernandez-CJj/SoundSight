@@ -47,7 +47,7 @@ Returning from Profile does not call `loadHomeData()` again. A username, skill-l
 
 ### Practice banner
 
-Tapping **Start Practice** opens `PracticeScreen`.
+Tapping **Start Practice** opens the lesson stage map (`FundamentalsScreen`).
 
 The banner changes its background image and text/button colors for light or dark mode. Its message and destination are fixed; it does not choose a practice activity based on the user's skill level.
 

@@ -2,11 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
+import 'lesson_localization.dart';
 import 'practice_content.dart';
 import 'practice_progress_service.dart';
 import 'stages/stages.dart';
+
+enum _PracticeProgressError { signInRequired, loadFailed }
 
 /// The portrait and landscape map of the user's practice stages.
 class FundamentalsScreen extends StatefulWidget {
@@ -22,7 +26,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
   bool _isDarkMode = false;
   String? _skillLevel;
   int? _practiceLevel;
-  String? _progressError;
+  _PracticeProgressError? _progressError;
   int? _pendingPassedStage;
   bool _savingProgress = false;
   Orientation? _lastOrientation;
@@ -51,7 +55,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
   Future<void> _loadProfile() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      setState(() => _progressError = 'Sign in to open lessons.');
+      setState(() => _progressError = _PracticeProgressError.signInRequired);
       return;
     }
     try {
@@ -72,16 +76,18 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
         _progressError = null;
       });
       _scrollToCurrentStage();
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
-        setState(() => _progressError = 'Could not load lesson progress: $error');
+        setState(() => _progressError = _PracticeProgressError.loadFailed);
       }
     }
   }
 
   void _scrollToCurrentStage() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _practiceLevel == null || !_pathScrollController.hasClients) {
+      if (!mounted ||
+          _practiceLevel == null ||
+          !_pathScrollController.hasClients) {
         return;
       }
       final index = _practiceLevel! > practiceStages.length
@@ -90,10 +96,9 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
       final horizontal = _lastOrientation == Orientation.landscape;
       final step = horizontal ? 248.0 : 128.0;
       final position = _pathScrollController.position;
-      final offset = (index * step - position.viewportDimension * .12).clamp(
-        0.0,
-        position.maxScrollExtent,
-      ).toDouble();
+      final offset = (index * step - position.viewportDimension * .12)
+          .clamp(0.0, position.maxScrollExtent)
+          .toDouble();
       _pathScrollController.animateTo(
         offset,
         duration: const Duration(milliseconds: 350),
@@ -112,7 +117,8 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(_isDarkMode);
-    final horizontal = MediaQuery.orientationOf(context) == Orientation.landscape;
+    final horizontal =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
     return Scaffold(
       backgroundColor: colors.backgroundColor,
       body: SafeArea(
@@ -123,14 +129,14 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: context.l10n.back,
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: Icon(Icons.arrow_back, color: colors.primaryColor),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      'Practice',
+                      context.l10n.drawerPractice,
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: 22,
@@ -139,41 +145,61 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                     ),
                   ),
                   if (_practiceLevel != null)
-                    Text(
-                      '${_completedCount()}/${practiceStages.length} complete',
-                      style: TextStyle(
-                        color: _completedCount() > 0
-                            ? colors.completedStageColor
-                            : colors.secondaryTextColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          context.l10n.lessonCompactProgress(
+                            _completedCount(),
+                            practiceStages.length,
+                          ),
+                          style: TextStyle(
+                            color: _completedCount() > 0
+                                ? colors.completedStageColor
+                                : colors.secondaryTextColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                 ],
               ),
             ),
-            if (_practiceLevel != null) _buildProgressHeader(colors, horizontal),
+            if (_practiceLevel != null)
+              _buildProgressHeader(colors, horizontal),
             if (_pendingPassedStage != null) _buildSaveBanner(colors),
             Expanded(
               child: _practiceLevel == null
                   ? Center(
                       child: _progressError == null
-                          ? CircularProgressIndicator(color: colors.primaryColor)
+                          ? CircularProgressIndicator(
+                              color: colors.primaryColor,
+                            )
                           : Padding(
                               padding: const EdgeInsets.all(24),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _progressError!,
+                                    _progressError ==
+                                            _PracticeProgressError
+                                                .signInRequired
+                                        ? context.l10n.lessonSignInRequired
+                                        : context.l10n.lessonProgressLoadFailed,
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(color: colors.primaryColor),
+                                    style: TextStyle(
+                                      color: colors.primaryColor,
+                                    ),
                                   ),
                                   TextButton(
                                     onPressed: _loadProfile,
                                     child: Text(
-                                      'Retry',
-                                      style: TextStyle(color: colors.primaryColor),
+                                      context.l10n.retry,
+                                      style: TextStyle(
+                                        color: colors.primaryColor,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -196,8 +222,11 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
     final allComplete = _practiceLevel! > practiceStages.length;
     final completed = _completedCount();
     final heading = allComplete
-        ? 'All stages complete'
-        : 'Stage $_practiceLevel of ${practiceStages.length}';
+        ? context.l10n.lessonAllStagesComplete
+        : context.l10n.lessonStageProgress(
+            _practiceLevel!,
+            practiceStages.length,
+          );
     final continueButton = FilledButton.icon(
       onPressed: allComplete
           ? null
@@ -207,11 +236,16 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
         foregroundColor: colors.isDarkMode ? Colors.black : Colors.white,
       ),
       icon: const Icon(Icons.play_arrow_rounded),
-      label: const Text('Continue'),
+      label: Text(context.l10n.continueAction),
     );
 
     return Container(
-      margin: EdgeInsets.fromLTRB(20, horizontal ? 2 : 4, 20, horizontal ? 6 : 8),
+      margin: EdgeInsets.fromLTRB(
+        20,
+        horizontal ? 2 : 4,
+        20,
+        horizontal ? 6 : 8,
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: 16,
         vertical: horizontal ? 12 : 16,
@@ -242,7 +276,10 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '$completed of ${practiceStages.length} stages completed',
+                      context.l10n.lessonStagesCompleted(
+                        completed,
+                        practiceStages.length,
+                      ),
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: 12,
@@ -291,8 +328,10 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
           Expanded(
             child: Text(
               _savingProgress
-                  ? 'Saving Stage $_pendingPassedStage progress...'
-                  : 'Stage $_pendingPassedStage passed, but progress was not saved.',
+                  ? context.l10n.lessonSavingStageProgress(_pendingPassedStage!)
+                  : context.l10n.lessonStageProgressNotSaved(
+                      _pendingPassedStage!,
+                    ),
               style: TextStyle(color: colors.primaryColor),
             ),
           ),
@@ -301,7 +340,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                 ? null
                 : () => _savePassedStage(_pendingPassedStage!),
             child: Text(
-              'Retry save',
+              context.l10n.retrySave,
               style: TextStyle(color: colors.primaryColor),
             ),
           ),
@@ -398,20 +437,25 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
       context: context,
       builder: (dialogContext) {
         final narrow = MediaQuery.sizeOf(dialogContext).width < 390;
-        final activity = practiceStageActivityLabel(stage);
+        final activityType = practiceStageActivity(stage);
+        final activity = localizedPracticeStageActivity(
+          context.l10n,
+          activityType,
+        );
         final stageStatus = !unlocked
-            ? 'LOCKED'
+            ? context.l10n.lessonLocked
             : completed
-            ? 'COMPLETED'
-            : 'CURRENT';
+            ? context.l10n.lessonCompleted
+            : context.l10n.lessonCurrent;
         final closeButton = OutlinedButton(
           onPressed: () => Navigator.of(dialogContext).pop(false),
           style: OutlinedButton.styleFrom(
             foregroundColor: colors.primaryColor,
             side: BorderSide(color: colors.borderColor),
             minimumSize: const Size.fromHeight(48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          child: const Text('Close'),
+          child: Text(context.l10n.close),
         );
         final startButton = FilledButton(
           onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -419,13 +463,21 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.isDarkMode ? Colors.black : Colors.white,
             minimumSize: const Size.fromHeight(48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          child: Text(completed ? 'Replay' : 'Start'),
+          child: Text(
+            completed ? context.l10n.lessonReplay : context.l10n.start,
+          ),
         );
         return Dialog(
           backgroundColor: colors.surfaceColor,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 16,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: SizedBox(
             width: 440,
             child: SingleChildScrollView(
@@ -435,7 +487,10 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'STAGE ${stage.number}  /  $stageStatus',
+                    context.l10n.lessonStageAndStatus(
+                      stage.number,
+                      stageStatus,
+                    ),
                     style: TextStyle(
                       color: completed
                           ? colors.completedStageColor
@@ -447,7 +502,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    stage.title,
+                    localizedPracticeStageTitle(context.l10n, stage.number),
                     style: TextStyle(
                       color: colors.primaryColor,
                       fontSize: 22,
@@ -458,7 +513,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                   Row(
                     children: [
                       Icon(
-                        activity == 'Video + quiz'
+                        activityType == PracticeStageActivity.videoQuiz
                             ? Icons.play_circle_outline_rounded
                             : Icons.piano_rounded,
                         size: 20,
@@ -479,8 +534,13 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                   const SizedBox(height: 12),
                   Text(
                     unlocked
-                        ? stage.description
-                        : 'Finish Stage ${stage.number - 1} to unlock this stage.',
+                        ? localizedPracticeStageDescription(
+                            context.l10n,
+                            stage.number,
+                          )
+                        : context.l10n.lessonFinishStageToUnlock(
+                            stage.number - 1,
+                          ),
                     style: TextStyle(color: colors.secondaryTextColor),
                   ),
                   if (rankMilestoneMessage != null) ...[
@@ -491,7 +551,9 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                         color: colors.completedStageSurfaceColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: colors.completedStageColor.withValues(alpha: .5),
+                          color: colors.completedStageColor.withValues(
+                            alpha: .5,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -507,7 +569,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Rank milestone',
+                                  context.l10n.lessonRankMilestone,
                                   style: TextStyle(
                                     color: colors.completedStageColor,
                                     fontWeight: FontWeight.w700,
@@ -560,7 +622,9 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
       await _savePassedStage(stage.number);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Stage ${stage.number} replay complete.')),
+        SnackBar(
+          content: Text(context.l10n.lessonStageReplayComplete(stage.number)),
+        ),
       );
     }
   }
@@ -569,22 +633,22 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
     final rank = _skillLevel?.toLowerCase();
     if (stageNumber == 9) {
       if (rank == 'advanced') {
-        return 'You already have the Advanced rank. Completing this stage will not lower it.';
+        return context.l10n.lessonAdvancedRankWillNotLower;
       }
       if (rank == 'intermediate') {
-        return 'You already have the Intermediate rank. Completing this stage will keep it.';
+        return context.l10n.lessonIntermediateRankKept;
       }
       return completed
-          ? 'The Intermediate promotion is awarded on the first completion of this stage.'
-          : 'A perfect Performance run promotes you to Intermediate once your progress is saved.';
+          ? context.l10n.lessonIntermediateAwardedFirstCompletion
+          : context.l10n.lessonPerfectRunPromotesIntermediate;
     }
     if (stageNumber == 16) {
       if (rank == 'advanced') {
-        return 'You already have the Advanced rank. Completing this stage will keep it.';
+        return context.l10n.lessonAdvancedRankKept;
       }
       return completed
-          ? 'The Advanced promotion is awarded on the first completion of this stage.'
-          : 'A perfect Performance run in this final stage promotes you to Advanced once your progress is saved.';
+          ? context.l10n.lessonAdvancedAwardedFirstCompletion
+          : context.l10n.lessonPerfectRunPromotesAdvanced;
     }
     return null;
   }
@@ -611,14 +675,16 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            level == 17 ? 'All stages complete!' : 'Stage $level unlocked!',
+            level == 17
+                ? context.l10n.lessonAllStagesCompleteMessage
+                : context.l10n.lessonStageUnlocked(level),
           ),
         ),
       );
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save progress: $error')),
+        SnackBar(content: Text(context.l10n.lessonProgressSaveFailed)),
       );
     } finally {
       if (mounted) setState(() => _savingProgress = false);

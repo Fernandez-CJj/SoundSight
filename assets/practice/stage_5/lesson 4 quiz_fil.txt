@@ -1,0 +1,67 @@
+// Pagsusulit sa Aralin 4 - Mga Nota, Ledger Line, at Landmark
+
+Q: Mula sa landmark sa gitna ng simbolo ng treble clef, aling mas mataas na nota ang kasunod na may interval na 7th?
+* A) F5
+B) G5
+C) B4
+D) B5
+
+Q: Ano ang tawag sa maiikling pahalang na linyang idinaragdag sa itaas o ibaba ng staff upang palawakin ang pitch range nito?
+A) Mga barline
+* B) Mga ledger line
+C) Mga stem
+D) Mga extra
+
+Q: Sa treble clef, aling mnemonic ang karaniwang ginagamit upang matandaan ang mga nota sa LIMANG LINYA?
+A) FACE
+* B) Every Good Boy Does Fine
+C) All Cows Eat Grass
+D) Greedy Big Dog Fell Asleep
+
+Q: Sa treble clef, anong salita ang nabubuo ng mga nota sa APAT NA PUWANG mula ibaba pataas?
+A) FAME
+B) FAST
+* C) FACE
+D) FATE
+
+Q: Aling nota ang nakasulat sa unang ledger line sa itaas ng bass clef staff?
+A) B3
+* B) C4 (Middle C)
+C) D4
+D) A3
+
+Q: Sa bass clef, aling mnemonic ang karaniwang ginagamit upang matandaan ang mga nota sa APAT NA PUWANG?
+A) Every Good Boy Does Fine
+B) Fine All Cows Eat
+* C) All Cows Eat Grass
+D) Always Count Every Group
+
+Q: Gamit ang paraang "Landmark Notes," aling dalawang nota ang nakahanay sa gitna ng bawat simbolo ng clef?
+A) Treble F at Bass B
+* B) Treble G (G4) at Bass F (F3)
+C) Treble C at Bass A
+D) Treble E at Bass G
+
+Q: Ano ang tawag sa distansya sa pagitan ng dalawang nota?
+A) Measure
+B) Clef
+* C) Interval
+D) Ledger line
+
+Q: Sa bass clef, aling mnemonic ang karaniwang ginagamit upang matandaan ang mga nota sa LIMANG LINYA?
+* A) Greedy Big Dog Fell Asleep
+B) Every Good Boy Does Fine
+C) All Cows Eat Grass
+D) Green Bus Drives Fast Always
+
+Q: Aling nota ang nakasulat sa unang ledger line sa ibaba ng treble clef staff?
+A) D4
+* B) C4
+C) B3
+D) E4
+
+Q: Paano nakatutulong ang pagbasa ng mga nota ayon sa "interval" upang mas mabilis basahin ang piyesa kaysa pangalanan ang bawat nota?
+* A) Nagbibigay-daan itong makilala ang distansya at direksiyon, kung hakbang o laktaw, sa pagitan ng mga nota
+B) Ganap nitong inaalis ang pangangailangang gumamit ng bass clef
+C) Awtomatiko nitong inililipat ang musika sa ibang key
+D) Direkta nitong ginagawang mga numero ng piano key ang mga nota

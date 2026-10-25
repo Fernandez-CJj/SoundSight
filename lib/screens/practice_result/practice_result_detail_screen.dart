@@ -3,6 +3,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
+import 'package:soundsight/screens/lessons/lesson_localization.dart';
 import 'package:soundsight/screens/midi/utils/midi_note_converter.dart';
 import 'package:soundsight/screens/players/sight_reading/practice_result_models.dart';
 import 'package:soundsight/screens/players/sight_reading/practice_result_service.dart';
@@ -112,7 +113,11 @@ class PracticeResultDetailScreen extends StatelessWidget {
                     ),
                     const Gap(AppSpacing.xs),
                     Text(
-                      result.pieceTitle,
+                      localizedLessonResultTitle(
+                        context.l10n,
+                        result.scoreDocumentPath,
+                        result.pieceTitle,
+                      ),
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.sectionTitle,
@@ -580,6 +585,7 @@ class PracticeResultDetailScreen extends StatelessWidget {
       'lesson' => context.l10n.practiceResultsLesson,
       'composition' => context.l10n.practiceResultsComposition,
       'challenge' => context.l10n.practiceResultsChallenge,
+      'musicLibrary' => context.l10n.musicLibrary,
       _ => context.l10n.practiceResultsMusicSheet,
     };
   }

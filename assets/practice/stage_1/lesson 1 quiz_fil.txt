@@ -1,0 +1,55 @@
+// Pagsusulit sa Aralin 1
+
+Q: Ano ang tawag sa kabuuan ng limang pahalang na linya at apat na puwang kung saan isinusulat ang mga nota?
+A) Measure
+B) Clef
+* C) Staff
+D) Barline
+
+Q: Aling simbolo ang inilalagay sa simula ng staff upang ipakita ang pitch ng mga nota?
+A) Repeat sign
+* B) Clef
+C) Final barline
+D) Measure
+
+Q: Ano ang pangunahing gamit ng isang patayong barline sa staff?
+A) Ipakita ang katapusan ng isang piyesa
+* B) Hatiin ang staff sa mga measure
+C) Ulitin ang isang bahagi ng musika
+D) Ipakita ang pagpapalit ng clef
+
+Q: Ano ang tawag sa puwang o bahagi ng oras sa pagitan ng dalawang barline?
+* A) Measure
+B) Staff
+C) Clef
+D) Ledger line
+
+Q: Aling clef ang kumakatawan sa mabababang nota?
+A) Treble clef
+* B) Bass clef
+C) Alto clef
+D) Tenor clef
+
+Q: Ilang linya ang bumubuo sa karaniwang musical staff?
+A) 4
+* B) 5
+C) 6
+D) 8
+
+Q: Aling simbolo ang nagsasabi sa musikero na tugtugin muli ang isang bahagi ng musika?
+A) Final barline
+B) Treble clef
+* C) Repeat sign
+D) Single barline
+
+Q: Anong uri ng linya ang tanda ng ganap na katapusan ng isang piyesa?
+A) Single barline
+B) Ledger line
+* C) Final barline
+D) Staff line
+
+Q: Aling dalawang batayan ang ginagamit sa pagbasa ng mga nota sa staff?
+A) Mga barline at measure
+* B) Mga linya at puwang
+C) Mga repeat at final barline
+D) Mga clef at bracket

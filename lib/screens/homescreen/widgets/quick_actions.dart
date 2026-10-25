@@ -10,7 +10,7 @@ class QuickActions extends StatelessWidget {
     required this.colors,
     required this.onMusicSheets,
     required this.onUploadSheet,
-    required this.onCaptureSheet,
+    required this.onPracticeResults,
     required this.onSavedSheets,
     required this.onComposition,
     required this.onPublishedCompositions,
@@ -19,7 +19,7 @@ class QuickActions extends StatelessWidget {
   final AppThemeColors colors;
   final VoidCallback onMusicSheets;
   final VoidCallback onUploadSheet;
-  final VoidCallback onCaptureSheet;
+  final VoidCallback onPracticeResults;
   final VoidCallback onSavedSheets;
   final VoidCallback onComposition;
   final VoidCallback onPublishedCompositions;
@@ -28,28 +28,22 @@ class QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final quickActions = [
       _QuickAction(
-        context.l10n.musicSheets,
-        Icons.queue_music,
-        const Color(0xFF3B82F6),
-        onMusicSheets,
-      ),
-      _QuickAction(
         context.l10n.drawerUploadSheet,
         Icons.upload,
         const Color(0xFF22C55E),
         onUploadSheet,
       ),
       _QuickAction(
-        context.l10n.captureSheet,
-        Icons.camera_alt_outlined,
-        const Color(0xFFF59E0B),
-        onCaptureSheet,
+        context.l10n.musicSheets,
+        Icons.queue_music,
+        const Color(0xFF3B82F6),
+        onMusicSheets,
       ),
       _QuickAction(
-        context.l10n.drawerSavedSheets,
-        Icons.folder_open,
-        const Color(0xFF8B5CF6),
-        onSavedSheets,
+        context.l10n.drawerPracticeResults,
+        Icons.insights_outlined,
+        const Color(0xFFF59E0B),
+        onPracticeResults,
       ),
       _QuickAction(
         context.l10n.drawerComposition,
@@ -62,6 +56,12 @@ class QuickActions extends StatelessWidget {
         Icons.public_rounded,
         const Color(0xFF06B6D4),
         onPublishedCompositions,
+      ),
+      _QuickAction(
+        context.l10n.drawerSavedSheets,
+        Icons.folder_open,
+        const Color(0xFF8B5CF6),
+        onSavedSheets,
       ),
     ];
 

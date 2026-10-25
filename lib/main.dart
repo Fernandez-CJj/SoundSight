@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:soundsight/screens/auth/login/login_screen.dart';
 import 'package:soundsight/screens/auth/email_verification/email_verification_screen.dart';
 import 'package:soundsight/screens/auth/services/registration_profile_service.dart';
+import 'package:soundsight/screens/auth/widgets/auth_loading_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +13,7 @@ import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
 import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
+import 'package:soundsight/screens/profile/achievement_announcements.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +35,10 @@ class SoundSight extends StatefulWidget {
 
 class _SoundSightState extends State<SoundSight> {
   final AppLocaleController localeController = AppLocaleController();
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+  final AchievementPopupObserver _achievementPopupObserver =
+      AchievementPopupObserver();
 
   @override
   void initState() {
@@ -43,6 +49,7 @@ class _SoundSightState extends State<SoundSight> {
   @override
   void dispose() {
     localeController.dispose();
+    _achievementPopupObserver.dispose();
     super.dispose();
   }
 
@@ -54,6 +61,13 @@ class _SoundSightState extends State<SoundSight> {
         animation: localeController,
         builder: (context, _) {
           return MaterialApp(
+            scaffoldMessengerKey: _messengerKey,
+            navigatorObservers: [_achievementPopupObserver],
+            builder: (context, child) => AchievementAnnouncements(
+              messengerKey: _messengerKey,
+              popupObserver: _achievementPopupObserver,
+              child: child ?? const SizedBox.shrink(),
+            ),
             locale: localeController.locale,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -115,7 +129,19 @@ class _AuthenticationGateState extends State<AuthenticationGate> {
     _profileService = widget.profileService ?? RegistrationProfileService();
     _assessmentService =
         widget.assessmentService ?? AssessmentAttemptService(auth: _auth);
-    _destination = _resolveDestination();
+    _destination = _resolveInitialDestination();
+  }
+
+  Future<_AuthenticationDestination> _resolveInitialDestination() async {
+    final timer = Stopwatch()..start();
+    try {
+      return await _resolveDestination();
+    } finally {
+      final remaining = const Duration(seconds: 3) - timer.elapsed;
+      if (remaining > Duration.zero) {
+        await Future<void>.delayed(remaining);
+      }
+    }
   }
 
   Future<_AuthenticationDestination> _resolveDestination() async {
@@ -183,9 +209,7 @@ class _AuthenticationGateState extends State<AuthenticationGate> {
       future: _destination,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const AuthLoadingScreen();
         }
 
         if (snapshot.hasError) {

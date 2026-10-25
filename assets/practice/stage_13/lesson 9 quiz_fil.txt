@@ -1,0 +1,61 @@
+// Pagsusulit sa Aralin 9 - Mga Piano Scale (Major at Minor Scale)
+
+Q: Ano ang musical scale?
+A) Tatlo o higit pang notang sabay-sabay na tinutugtog
+* B) Maayos na pagkakasunod-sunod ng mga nota ayon sa pitch
+C) Bilis o tempo ng pagtugtog sa isang piyesa
+D) Mga notang pinili nang walang tiyak na pattern
+
+Q: Sa mga formula ng scale, ano ang ibig sabihin ng "H"?
+A) Heavy accent
+* B) Half-step
+C) High pitch
+D) Harmonic minor
+
+Q: Ano ang eksaktong formula sa pagbuo ng Major Scale?
+* A) W - W - H - W - W - W - H
+B) W - H - W - W - H - W - W
+C) H - W - W - H - W - W - W
+D) W - W - W - H - W - W - H
+
+Q: Ano ang eksaktong formula sa pagbuo ng Minor Scale?
+A) W - W - H - W - W - W - H
+* B) W - H - W - W - H - W - W
+C) H - W - H - W - H - W - H
+D) W - W - W - W - H - H - W
+
+Q: Aling mga nota ang bumubuo sa karaniwang C Major scale ayon sa major scale formula?
+A) C, D, E, F#, G, A, B, C
+* B) C, D, E, F, G, A, B, C
+C) C, D, E♭, F, G, A♭, B♭, C
+D) C, E, G, B, C
+
+Q: Kapag inilapat ang major scale formula mula sa root note na G, ano ang mabubuong G Major scale?
+A) G, A, B, C, D, E, F, G
+* B) G, A, B, C, D, E, F#, G
+C) G, A, B♭, C, D, E♭, F, G
+D) G, B, D, F#, G
+
+Q: Gamit ang minor scale formula mula C, ano ang mga nota sa C minor scale?
+A) C, D, E, F, G, A, B, C
+* B) C, D, E♭, F, G, A♭, B♭, C
+C) C, D♭, E♭, F, G♭, A♭, B♭, C
+D) C, D, F, G, A, C
+
+Q: Ilang kabuuang variation ng major at minor scale ang mabubuo gamit ang magkakaparehong formula sa lahat ng root note?
+A) 12 scale
+B) 16 scale
+* C) 24 scale
+D) 48 scale
+
+Q: Anong pangunahing pagkakaiba ng formula ng Minor Scale sa formula ng Major Scale?
+A) Walang half-step ang minor scale
+* B) Inililipat ng minor scale ang posisyon ng mga half-step nang mas malapit sa simula, sa pagitan ng ika-2 at ika-3 at ng ika-5 at ika-6 na degree
+C) Black key lamang ang ginagamit ng minor scale
+D) Pawang whole-step ang minor scale at nilalaktawan nito ang root note
+
+Q: Bakit mahalaga sa mga pianist ang mga formula ng scale?
+A) Inaalis nito ang pangangailangang magsanay ng fingering
+* B) Nagbibigay-daan itong buuin at tugtugin ang alinman sa 24 major at minor scale sa pamamagitan ng pagsunod sa step pattern mula sa anumang root note
+C) Awtomatiko nitong itinutono ang mga key ng piano
+D) Tinutukoy nito ang eksaktong lyrics ng isang kanta

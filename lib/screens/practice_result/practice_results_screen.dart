@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
+import 'package:soundsight/screens/lessons/lesson_localization.dart';
 import 'package:soundsight/screens/players/sight_reading/practice_result_models.dart';
 import 'package:soundsight/screens/players/sight_reading/practice_result_service.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -16,7 +17,14 @@ enum _ResultDateFilter { allTime, today, last7Days, last30Days }
 
 enum _ResultAccuracyFilter { all, excellent, good, needsPractice }
 
-enum _ResultSourceFilter { all, musicSheet, lesson, composition, challenge }
+enum _ResultSourceFilter {
+  all,
+  musicSheet,
+  musicLibrary,
+  lesson,
+  composition,
+  challenge,
+}
 
 enum _ResultSort { newest, oldest, highestAccuracy, lowestAccuracy }
 
@@ -389,8 +397,13 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
     };
 
     final filtered = results.where((result) {
+      final displayTitle = localizedLessonResultTitle(
+        context.l10n,
+        result.scoreDocumentPath,
+        result.pieceTitle,
+      );
       if (normalizedSearch.isNotEmpty &&
-          !result.pieceTitle.toLowerCase().contains(normalizedSearch)) {
+          !displayTitle.toLowerCase().contains(normalizedSearch)) {
         return false;
       }
       if (selectedPracticeType != null &&
@@ -448,6 +461,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
     return switch (selectedSourceFilter) {
       _ResultSourceFilter.all => true,
       _ResultSourceFilter.musicSheet => source == 'musicSheet',
+      _ResultSourceFilter.musicLibrary => source == 'musicLibrary',
       _ResultSourceFilter.lesson => source == 'lesson',
       _ResultSourceFilter.composition => source == 'composition',
       _ResultSourceFilter.challenge => source == 'challenge',
@@ -797,6 +811,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
     return switch (filter) {
       _ResultSourceFilter.all => context.l10n.practiceResultsAllSources,
       _ResultSourceFilter.musicSheet => context.l10n.practiceResultsMusicSheet,
+      _ResultSourceFilter.musicLibrary => context.l10n.musicLibrary,
       _ResultSourceFilter.lesson => context.l10n.practiceResultsLesson,
       _ResultSourceFilter.composition =>
         context.l10n.practiceResultsComposition,
@@ -876,7 +891,11 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                     ),
                     const Gap(AppSpacing.xs),
                     Text(
-                      result.pieceTitle,
+                      localizedLessonResultTitle(
+                        context.l10n,
+                        result.scoreDocumentPath,
+                        result.pieceTitle,
+                      ),
                       style: TextStyle(
                         color: colors.primaryColor,
                         fontSize: AppTextSizes.body,
@@ -1117,7 +1136,11 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
               ),
               content: Text(
                 context.l10n.practiceResultsDeleteDescription(
-                  result.pieceTitle,
+                  localizedLessonResultTitle(
+                    context.l10n,
+                    result.scoreDocumentPath,
+                    result.pieceTitle,
+                  ),
                 ),
                 style: TextStyle(color: colors.secondaryTextColor),
               ),
@@ -1288,6 +1311,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
       'lesson' => context.l10n.practiceResultsLesson,
       'composition' => context.l10n.practiceResultsComposition,
       'challenge' => context.l10n.practiceResultsChallenge,
+      'musicLibrary' => context.l10n.musicLibrary,
       _ => context.l10n.practiceResultsMusicSheet,
     };
   }

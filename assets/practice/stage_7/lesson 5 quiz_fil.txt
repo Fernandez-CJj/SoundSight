@@ -1,0 +1,37 @@
+// Pagsusulit sa Aralin 5 - Mga Numero ng Daliri at Posisyon ng Kamay
+
+Q: Aling daliri ang itinatalaga bilang Daliri 1?
+A) Hintuturo
+* B) Hinlalaki
+C) Hinliliit
+D) Gitnang daliri
+
+Q: Aling daliri ang itinatalaga bilang Daliri 5?
+A) Hinlalaki
+B) Palasingsingan
+* C) Hinliliit
+D) Hintuturo
+
+Q: Aling numero ng daliri ang katumbas ng gitnang daliri sa alinmang kamay?
+A) Daliri 2
+* B) Daliri 3
+C) Daliri 4
+D) Daliri 5
+
+Q: Kung may nakasaad na "2" sa ibabaw ng isang nota para sa kanang kamay, aling daliri ang dapat pumindot sa key?
+* A) Hintuturo
+B) Hinlalaki
+C) Palasingsingan
+D) Hinliliit
+
+Q: Paano nagsasalamin ang mga numero ng daliri ng kaliwa at kanang kamay kapag magkatabi ang mga ito?
+A) Daliri 5 ang mga hinlalaki at Daliri 1 ang mga hinliliit
+* B) Parehong Daliri 1 ang mga hinlalaki at nakaturo ang mga ito sa isa't isa sa gitna
+C) Nagsisimula sa 1 ang hinliliit ng kaliwang kamay at sa 1 ang hinlalaki ng kanang kamay
+D) Para lamang sa kanang kamay ang mga numero ng daliri sa piyesa
+
+Q: Bakit isinusulat ang mga numero ng daliri sa ibabaw o ibaba ng mga nota sa piyesa?
+A) Upang ipakita kung gaano kalakas dapat tugtugin ang nota
+* B) Upang imungkahi ang pinakamabisang galaw ng kamay at fingering pattern
+C) Upang ipakita kung ilang segundo dapat hawakan ang nota
+D) Upang sabihin kung saang octave ito tutugtugin

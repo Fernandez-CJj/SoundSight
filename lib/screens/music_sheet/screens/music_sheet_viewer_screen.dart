@@ -474,30 +474,102 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         AppSpacing.md,
         0,
       ),
-      child: SizedBox(
-        width: double.infinity,
-        child: SegmentedButton<bool>(
-          segments: [
-            ButtonSegment<bool>(
-              value: true,
-              label: Text(context.l10n.recognized),
-              icon: Icon(Icons.picture_as_pdf_outlined),
-            ),
-            ButtonSegment<bool>(
-              value: false,
-              label: Text(context.l10n.original),
-              icon: Icon(Icons.image_outlined),
-            ),
-          ],
-          selected: {showRecognizedPdf},
-          onSelectionChanged: (selection) {
-            setState(() {
-              showRecognizedPdf = selection.first;
-            });
-          },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            border: Border.all(color: widget.colors.borderColor),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: buildSourceToggleSegment(
+                  selected: showRecognizedPdf,
+                  label: context.l10n.recognized,
+                  icon: Icons.auto_fix_high_rounded,
+                  onTap: () => selectSource(true),
+                ),
+              ),
+              Container(
+                width: 1,
+                constraints: const BoxConstraints(minHeight: 52),
+                color: widget.colors.borderColor,
+              ),
+              Expanded(
+                child: buildSourceToggleSegment(
+                  selected: !showRecognizedPdf,
+                  label: context.l10n.original,
+                  icon: Icons.description_outlined,
+                  onTap: () => selectSource(false),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget buildSourceToggleSegment({
+    required bool selected,
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final foregroundColor = selected
+        ? widget.colors.backgroundColor
+        : widget.colors.primaryColor;
+
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: selected
+            ? widget.colors.primaryColor
+            : widget.colors.surfaceColor,
+        child: InkWell(
+          onTap: selected ? null : onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 52),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 20, color: foregroundColor),
+                  const SizedBox(width: AppSpacing.xs),
+                  Flexible(
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      softWrap: true,
+                      style: TextStyle(
+                        color: foregroundColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void selectSource(bool showConverted) {
+    if (showRecognizedPdf == showConverted) return;
+    setState(() {
+      showRecognizedPdf = showConverted;
+    });
   }
 
   Widget buildOriginalViewer() {
@@ -533,9 +605,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
           padding: EdgeInsets.all(AppSpacing.md),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
-            child: PdfViewer.data(
+            child: buildPdfPreview(
               snapshot.data!,
-              sourceName: '${widget.title} - ${context.l10n.recognized}',
+              '${widget.title} - ${context.l10n.recognized}',
             ),
           ),
         );
@@ -616,10 +688,143 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
           padding: EdgeInsets.all(AppSpacing.md),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
-            child: PdfViewer.data(snapshot.data!, sourceName: widget.title),
+            child: buildPdfPreview(snapshot.data!, widget.title),
           ),
         );
       },
+    );
+  }
+
+  Widget buildPdfPreview(Uint8List pdfBytes, String sourceName) {
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      label: context.l10n.fullScreen,
+      onTap: () => showPdfDialog(pdfBytes, sourceName),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          IgnorePointer(
+            child: PdfViewer.data(
+              pdfBytes,
+              sourceName: sourceName,
+              params: PdfViewerParams(
+                margin: AppSpacing.sm,
+                backgroundColor: widget.colors.backgroundColor,
+                sizeDelegateProvider:
+                    const PdfViewerSizeDelegateProviderSmart(
+                  smartMaxScale: 2,
+                  maxPagesVisible: 1,
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => showPdfDialog(pdfBytes, sourceName),
+            ),
+          ),
+          Positioned(
+            top: AppSpacing.sm,
+            right: AppSpacing.sm,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: widget.colors.surfaceColor.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: widget.colors.borderColor),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Icon(
+                    Icons.open_in_full_rounded,
+                    color: widget.colors.primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> showPdfDialog(Uint8List pdfBytes, String sourceName) {
+    final screenSize = MediaQuery.sizeOf(context);
+
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: widget.colors.surfaceColor,
+        insetPadding: const EdgeInsets.all(AppSpacing.sm),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: screenSize.height * 0.9,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.xs,
+                  AppSpacing.sm,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        sourceName,
+                        maxLines: 2,
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                          color: widget.colors.primaryColor,
+                          fontSize: AppTextSizes.body,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: context.l10n.close,
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: widget.colors.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: widget.colors.borderColor),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: PdfViewer.data(
+                      pdfBytes,
+                      sourceName: sourceName,
+                      params: PdfViewerParams(
+                        margin: AppSpacing.sm,
+                        backgroundColor: widget.colors.backgroundColor,
+                        sizeDelegateProvider:
+                            const PdfViewerSizeDelegateProviderSmart(
+                          smartMaxScale: 2,
+                          maxPagesVisible: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:soundsight/screens/practice/screens/level_1/level_1_screen.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoLessonScreen extends StatefulWidget {
@@ -82,18 +82,13 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
   }
 
   Future<void> _openQuiz() async {
+    if (widget.onStartQuiz == null) return;
     await _pauseVideo();
     if (!mounted) return;
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     if (!mounted) return;
     try {
-      if (widget.onStartQuiz != null) {
-        await widget.onStartQuiz!();
-      } else {
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const Level1Screen()),
-        );
-      }
+      await widget.onStartQuiz!();
     } finally {
       if (mounted) {
         await SystemChrome.setPreferredOrientations([
@@ -139,10 +134,10 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return const Center(
+                  return Center(
                     child: Text(
-                      'Could not load the video.',
-                      style: TextStyle(color: Colors.white),
+                      context.l10n.lessonVideoLoadFailed,
+                      style: const TextStyle(color: Colors.white),
                     ),
                   );
                 }
@@ -207,8 +202,8 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                               }
                             },
                             tooltip: videoState.isPlaying
-                                ? 'Pause video'
-                                : 'Play video',
+                                ? context.l10n.lessonPauseVideo
+                                : context.l10n.lessonPlayVideo,
                             icon: Icon(
                               videoState.isPlaying
                                   ? Icons.pause
@@ -327,7 +322,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                     await _pauseVideo();
                     if (context.mounted) Navigator.of(context).pop();
                   },
-                  tooltip: 'Back to Practice',
+                  tooltip: context.l10n.lessonBackToPractice,
                   icon: const Icon(Icons.arrow_back),
                   color: Colors.white,
                   style: IconButton.styleFrom(backgroundColor: Colors.black54),
@@ -335,7 +330,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
               ),
             ),
           ),
-          Positioned(
+          if (widget.onStartQuiz != null) Positioned(
             top: 0,
             right: 0,
             child: SafeArea(
@@ -358,9 +353,9 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                   child: FilledButton.icon(
                     onPressed: _openQuiz,
                     icon: const Icon(Icons.quiz_outlined, size: 20),
-                    label: const Text(
-                      'Start Quiz',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    label: Text(
+                      context.l10n.lessonStartQuiz,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: colorScheme.primary,
@@ -389,7 +384,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                 child: FilledButton.icon(
                   onPressed: _openPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('View PDF'),
+                  label: Text(context.l10n.lessonViewPdf),
                 ),
               ),
             ),

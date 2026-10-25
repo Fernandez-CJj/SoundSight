@@ -1938,13 +1938,13 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
       return 'compositionPosts/${source.composition.id}/versions/${source.composition.currentVersion}';
     }
     if (source is SynthesiaDocumentSource) return source.documentPath;
+    if (source is SynthesiaLibraryPieceSource) return source.documentPath;
     return '';
   }
 
   String get _resultSource {
-    return widget.source is SynthesiaDocumentSource
-        ? 'musicSheet'
-        : 'composition';
+    if (widget.source is SynthesiaLibraryPieceSource) return 'musicLibrary';
+    return widget.source is SynthesiaDocumentSource ? 'musicSheet' : 'composition';
   }
 
   SightReadingPerformanceReport _buildSynthesiaPerformanceReport() {

@@ -19,6 +19,13 @@ A video and its quiz belong in the same folder and the same `assets` list, with
 the video listed first and its quiz listed second. The player pairs them in
 that order and opens the quiz from **Start Quiz**.
 
+Keep the English quiz path in `PracticeStage.assets`. For Filipino, add a file
+beside it using the same filename with `_fil` before `.txt`, for example
+`lesson 1 quiz.txt` and `lesson 1 quiz_fil.txt`. Keep the parser markers (`Q:`,
+`A)` through `D)`, and `*` before the correct option) unchanged in both files;
+only the visible question and option text should be translated. English is the
+fallback for every locale other than Filipino.
+
 Only entries in `practiceStages` appear on the practice map. Keep entries in
 stage number order so the displayed sequence matches saved progress.
 Fully stop and relaunch the app after adding or moving assets.

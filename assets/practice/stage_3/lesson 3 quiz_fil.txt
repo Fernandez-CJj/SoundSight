@@ -1,0 +1,55 @@
+// Pagsusulit sa Aralin 3 - Middle C at Ayos ng Keyboard
+
+Q: Anong palatandaan sa piano keyboard ang tumutulong upang mabilis na mahanap ang notang C?
+A) Sa kanan ng anumang grupo ng tatlong black key
+* B) Sa kaliwa ng anumang grupo ng dalawang black key
+C) Direkta sa pagitan ng dalawang black key
+D) Sa kanan ng anumang grupo ng dalawang black key
+
+Q: Sa karaniwang 88-key piano, ano ang ibang pangalan ng Middle C ayon sa octave nito?
+A) C1
+B) C2
+* C) C4
+D) C8
+
+Q: Paano matatagpuan ang Middle C (C4) sa karaniwang 88-key piano keyboard?
+A) Ito ang pinakaunang white key sa kaliwang bahagi ng piano
+* B) Bilangin ang mga octave mula kaliwa pakanan; ito ang C na nagsisimula sa ikaapat na octave
+C) Magbilang ng limang grupo ng black key mula sa kanang bahagi
+D) Matatagpuan ito sa pinakadulong kanan ng keyboard
+
+Q: Ano ang bumubuo sa isang kumpletong octave sa piano keyboard?
+A) Grupo ng apat na white key at dalawang black key
+B) Isang grupo lamang ng tatlong black key
+* C) Pinagsamang grupo ng dalawang black key at tatlong black key, mula C hanggang B
+D) Lahat ng white key na sunod-sunod na tinugtog mula A hanggang Z
+
+Q: Bakit mahalagang batayan ang Middle C para sa mga tumutugtog ng piano?
+* A) Ito ang sentrong batayan para sa posisyon ng kamay at pagbasa ng piyesa
+B) Ito ang pinakamalakas na nota sa piano
+C) Ito lamang ang notang isinusulat sa treble clef
+D) Kanang kamay lamang ang maaaring tumugtog nito
+
+Q: Saan nakapuwesto ang Middle C kaugnay ng grand staff sa piyesa?
+A) Mataas sa ibabaw ng mga linya ng treble clef staff
+B) Sa pinakailalim na linya ng bass clef
+* C) Sa isang ledger line sa pagitan ng treble clef at bass clef
+D) Sa gitnang puwang ng treble clef
+
+Q: Kapag lumipat mula Middle C (C4) patungo sa susunod na C sa kanan, anong nota ang narating?
+A) C3
+* B) C5
+C) D4
+D) B4
+
+Q: Ilang black key ang mayroon sa isang octave ng piano?
+A) 2
+B) 3
+* C) 5
+D) 7
+
+Q: Sa piyesa, ang Middle C (C4) na nakasulat sa treble staff at ang Middle C na nakasulat sa bass staff ay:
+A) Magkahiwalay ng isang octave
+B) Ganap na magkaiba ang pitch
+* C) Magkapareho ang pitch at tinutugtog sa eksaktong parehong frequency
+D) Magkahiwalay ng dalawang octave

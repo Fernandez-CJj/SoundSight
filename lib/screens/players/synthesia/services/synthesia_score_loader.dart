@@ -43,7 +43,13 @@ class SynthesiaScoreLoader {
       case SynthesiaPublishedCompositionSource():
         return _fromPublishedComposition(source);
       case SynthesiaDocumentSource():
-        return _fromDocument(source);
+        return _fromDocument(
+          source.documentPath,
+          source.fallbackTitle,
+          requireCompletedOmr: true,
+        );
+      case SynthesiaLibraryPieceSource():
+        return _fromDocument(source.documentPath, source.fallbackTitle);
     }
   }
 
@@ -188,9 +194,11 @@ class SynthesiaScoreLoader {
   }
 
   Future<SynthesiaScore> _fromDocument(
-    SynthesiaDocumentSource source,
-  ) async {
-    final snapshot = await firestore.doc(source.documentPath).get();
+    String documentPath,
+    String fallbackTitle, {
+    bool requireCompletedOmr = false,
+  }) async {
+    final snapshot = await firestore.doc(documentPath).get();
     final data = snapshot.data();
 
     if (!snapshot.exists || data == null) {
@@ -199,7 +207,7 @@ class SynthesiaScoreLoader {
       );
     }
 
-    if (data['omrStatus'] != 'completed') {
+    if (requireCompletedOmr && data['omrStatus'] != 'completed') {
       throw const SynthesiaScoreLoadException(
         'Translate the music sheet before starting Synthesia.',
       );
@@ -212,7 +220,7 @@ class SynthesiaScoreLoader {
     final loadedTitle = data['title'];
     final title = loadedTitle is String && loadedTitle.trim().isNotEmpty
         ? loadedTitle.trim()
-        : source.fallbackTitle;
+        : fallbackTitle;
     final audioUrl = await _resolveAudioUrl(
       directUrl: data['mp3Url'] ?? data['previewAudioUrl'],
       storagePath:

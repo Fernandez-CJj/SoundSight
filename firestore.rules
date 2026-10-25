@@ -976,7 +976,10 @@ service cloud.firestore {
                         ])
                  && data.ownerId == userId
                  && data.scoreDocumentPath is string
-                 && data.source in ['composition', 'musicSheet', 'challenge', 'lesson']
+                 && data.source in [
+                      'composition', 'musicSheet', 'musicLibrary',
+                      'challenge', 'lesson'
+                    ]
                  && data.pieceTitle is string
                  && data.pieceTitle.size() > 0
                  && data.pieceTitle.size() <= 200

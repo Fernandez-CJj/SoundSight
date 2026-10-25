@@ -12,6 +12,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get drawerHome => 'Home';
 
   @override
+  String get searchMusic => 'Search music';
+
+  @override
+  String get musicLibrary => 'Music Library';
+
+  @override
+  String get musicLibraryDescription => 'Browse pieces uploaded by SoundSight.';
+
+  @override
+  String get searchMusicHint => 'Search by title';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get signInToSearchMusic => 'Sign in to browse the music library.';
+
+  @override
+  String get musicLibraryLoadError => 'The music library could not be loaded.';
+
+  @override
+  String get noLibraryPieces => 'No music pieces available yet.';
+
+  @override
+  String get noMusicSearchResults => 'No music pieces match your search.';
+
+  @override
+  String get untitledPiece => 'Untitled piece';
+
+  @override
+  String get libraryPieceMissing => 'This music piece is no longer available.';
+
+  @override
+  String get libraryPracticeFilesMissing =>
+      'This piece is missing files needed for that play mode.';
+
+  @override
+  String musicLibraryOpenPiece(String title) {
+    return 'Open $title';
+  }
+
+  @override
   String get drawerMusicSheets => 'Music Sheets';
 
   @override
@@ -112,7 +154,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get musicSheetsLoadErrorHelp =>
-      'Check your connection and Firebase permissions.';
+      'Check your internet connection and try again.';
 
   @override
   String get signInForMusicSheets => 'Sign in to view your music sheets.';
@@ -176,7 +218,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get waitForTranslationBeforeDelete =>
-      'Wait for the music-sheet translation to finish before deleting it.';
+      'Wait for the music sheet to finish converting before deleting it.';
 
   @override
   String musicSheetDeleted(String title) {
@@ -203,41 +245,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get translateBeforeAr =>
-      'Translate the music sheet before starting AR Practice.';
+      'Convert the music sheet before starting AR Practice.';
 
   @override
-  String get translatedMidiMissing => 'The translated MIDI file is missing.';
+  String get translatedMidiMissing =>
+      'The file needed for this practice mode is not ready.';
 
   @override
   String get openArFailed => 'Could not open AR Practice.';
 
   @override
   String get translateBeforeSynthesia =>
-      'Translate the music sheet before starting Synthesia.';
+      'Convert the music sheet before starting Synthesia.';
 
   @override
   String get openSynthesiaFailed => 'Could not open Synthesia.';
 
   @override
   String get translateBeforeSightReading =>
-      'Translate the music sheet before starting Sight Reading.';
+      'Convert the music sheet before starting Sight Reading.';
 
   @override
   String get translatedPracticeFilesMissing =>
-      'The translated MusicXML, MIDI, or MP3 file is missing.';
+      'The files needed for this practice mode are not ready.';
 
   @override
   String get openSightReadingFailed => 'Could not open Sight Reading.';
 
   @override
-  String get recognized => 'Recognized';
+  String get recognized => 'Converted';
 
   @override
   String get original => 'Original';
 
   @override
   String get recognizedPdfLoadFailed =>
-      'The recognized PDF could not be loaded. Showing the original sheet instead.';
+      'The converted sheet could not be loaded. Showing the original sheet instead.';
 
   @override
   String get retry => 'Retry';
@@ -258,36 +301,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tryAgain => 'Try Again';
 
   @override
-  String get translateSheetAgainQuestion => 'Translate this sheet again?';
+  String get translateSheetAgainQuestion => 'Convert this sheet again?';
 
   @override
-  String get translateMusicSheetQuestion => 'Translate music sheet?';
+  String get translateMusicSheetQuestion => 'Convert music sheet?';
 
   @override
   String retranslateDescription(String title) {
-    return 'SoundSight will create a new translation for \"$title\" and replace its current MusicXML, MIDI, recognized PDF, and audio preview.';
+    return 'SoundSight will process \"$title\" again and replace its current converted version.';
   }
 
   @override
   String translateDescription(String title) {
-    return 'SoundSight will translate \"$title\" into MusicXML, MIDI, a recognized PDF, and an audio preview. This may take a few minutes.';
+    return 'SoundSight will create a playable digital version of \"$title\". This may take a few minutes.';
   }
 
   @override
   String get continueAction => 'Continue';
 
   @override
-  String get translate => 'Translate';
+  String get translate => 'Convert';
 
   @override
-  String get translatingMusicSheet => 'Translating music sheet';
+  String get translatingMusicSheet => 'Converting music sheet';
 
   @override
   String get translationLoadingDescription =>
-      'Audiveris is reading the notes. Please wait and keep the app open.';
+      'SoundSight is reading the notes. Please wait and keep the app open.';
 
   @override
-  String get translationComplete => 'Translation complete';
+  String get translationComplete => 'Conversion complete';
 
   @override
   String translationResult(int noteCount, int partCount) {
@@ -303,20 +346,20 @@ class AppLocalizationsEn extends AppLocalizations {
       other: '$partCount parts',
       one: '1 part',
     );
-    return 'SoundSight recognized $_temp0 across $_temp1.';
+    return 'SoundSight found $_temp0 across $_temp1.';
   }
 
   @override
   String get done => 'Done';
 
   @override
-  String get translationFailed => 'Translation failed';
+  String get translationFailed => 'Conversion failed';
 
   @override
   String get close => 'Close';
 
   @override
-  String get translationReady => 'Translation ready';
+  String get translationReady => 'Converted sheet ready';
 
   @override
   String translationSummary(int noteCount, int partCount) {
@@ -337,53 +380,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get translationFailedDescription =>
-      'The sheet could not be translated. You can try again.';
+      'The sheet could not be converted. You can try again.';
 
   @override
   String get translationProcessingDescription =>
-      'Audiveris is recognizing the notes.';
+      'SoundSight is reading the notes.';
 
   @override
   String get translationStartDescription =>
-      'Create MusicXML, MIDI, a clean PDF, and an audio preview.';
+      'Create a playable digital version for SoundSight\'s practice modes.';
 
   @override
-  String get reconvert => 'Reconvert';
+  String get reconvert => 'Convert Again';
 
   @override
   String get translationGenericError =>
-      'The music sheet could not be translated.';
+      'The music sheet could not be converted.';
 
   @override
   String get translationTimedOut =>
-      'Translation took too long. Check the backend and try again.';
+      'Conversion took too long. Please try again.';
 
   @override
   String get translationConnectionError =>
-      'SoundSight could not connect to the translation service.';
+      'SoundSight could not connect. Check your internet connection and try again.';
 
   @override
   String get translationRejected =>
-      'The translation service could not process this music sheet.';
+      'SoundSight could not read this music sheet. Try using a clearer image or PDF.';
 
   @override
   String get translationInvalidResponse =>
-      'The translation service returned an invalid response.';
+      'Something went wrong while converting the music sheet. Please try again.';
 
   @override
   String get audioPreview => 'Audio preview';
 
   @override
-  String get audioLoading => 'Loading audio from Firebase...';
+  String get audioLoading => 'Loading audio...';
 
   @override
-  String get audioPlaying => 'Playing translated music';
+  String get audioPlaying => 'Playing converted music';
 
   @override
   String get audioPaused => 'Playback paused';
 
   @override
-  String get audioIdle => 'Listen to the translated music sheet';
+  String get audioIdle => 'Listen to the converted music sheet';
 
   @override
   String get pause => 'Pause';
@@ -663,6 +706,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profile => 'Profile';
+
+  @override
+  String get achievements => 'Achievements';
+
+  @override
+  String get viewAchievementDetails => 'View details';
+
+  @override
+  String get achievementDetails => 'Badge details';
+
+  @override
+  String achievementProgress(int earned, int total) {
+    return '$earned of $total badges earned';
+  }
+
+  @override
+  String get badgeFirstMeasure => 'First Measure';
+
+  @override
+  String get badgeFirstMeasureDescription =>
+      'Complete the skill assessment to discover your SoundSight level.';
+
+  @override
+  String get badgeSheetCollector => 'Sheet Collector';
+
+  @override
+  String get badgeSheetCollectorDescription =>
+      'Save your first music sheet by uploading a file or capturing it with the camera.';
+
+  @override
+  String get badgeFirstComposer => 'First Composer';
+
+  @override
+  String get badgeFirstComposerDescription =>
+      'Save your first composition, whether created manually or from a recording.';
+
+  @override
+  String get badgeMiddleC => 'Middle C';
+
+  @override
+  String get badgeMiddleCDescription =>
+      'Complete lesson stage 3: The Middle C.';
+
+  @override
+  String get badgeFirstMelody => 'First Melody';
+
+  @override
+  String get badgeFirstMelodyDescription =>
+      'Complete lesson stage 6: Play Twinkle Twinkle.';
+
+  @override
+  String get badgeGrowingMusician => 'Growing Musician';
+
+  @override
+  String get badgeGrowingMusicianDescription =>
+      'Complete lesson stage 9: Play Fur Elise.';
+
+  @override
+  String get badgeChordBuilder => 'Chord Builder';
+
+  @override
+  String get badgeChordBuilderDescription =>
+      'Complete lesson stage 12: Chords.';
+
+  @override
+  String get badgeMusicNavigator => 'Music Navigator';
+
+  @override
+  String get badgeMusicNavigatorDescription =>
+      'Complete lesson stage 15: Nashville Number System.';
+
+  @override
+  String get badgeSoundSightMaster => 'SoundSight Master';
+
+  @override
+  String get badgeSoundSightMasterDescription =>
+      'Complete all 16 lesson stages.';
+
+  @override
+  String get badgeUnlocked => 'Unlocked';
+
+  @override
+  String get badgeLocked => 'Locked';
+
+  @override
+  String get badgeChecking => 'Checking';
+
+  @override
+  String get badgeEarnedAnnouncement => 'Badge unlocked!';
 
   @override
   String get editProfileTooltip => 'Edit profile';
@@ -4564,4 +4696,319 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get assessmentResultUnavailable =>
       'The assessment is complete, but its saved result details could not be displayed.';
+
+  @override
+  String get lessonSignInRequired => 'Sign in to open lessons.';
+
+  @override
+  String get lessonProgressLoadFailed =>
+      'Lesson progress could not be loaded. Please try again.';
+
+  @override
+  String get lessonProgressSaveFailed =>
+      'Lesson progress could not be saved. Please try again.';
+
+  @override
+  String lessonCompactProgress(int completed, int total) {
+    return '$completed/$total complete';
+  }
+
+  @override
+  String get lessonAllStagesComplete => 'All stages complete';
+
+  @override
+  String lessonStageProgress(int current, int total) {
+    return 'Stage $current of $total';
+  }
+
+  @override
+  String lessonStagesCompleted(int completed, int total) {
+    return '$completed of $total stages completed';
+  }
+
+  @override
+  String lessonSavingStageProgress(int stage) {
+    return 'Saving Stage $stage progress...';
+  }
+
+  @override
+  String lessonStageProgressNotSaved(int stage) {
+    return 'Stage $stage passed, but progress was not saved.';
+  }
+
+  @override
+  String get lessonVideoAndQuiz => 'Video + quiz';
+
+  @override
+  String get lessonPianoPerformance => 'Piano performance';
+
+  @override
+  String get lessonCompleted => 'Completed';
+
+  @override
+  String get lessonCurrent => 'Current';
+
+  @override
+  String get lessonLocked => 'Locked';
+
+  @override
+  String get lessonReplay => 'Replay';
+
+  @override
+  String lessonStageAndStatus(int stage, String status) {
+    return 'STAGE $stage  /  $status';
+  }
+
+  @override
+  String lessonStageLabel(int stage) {
+    return 'Stage $stage';
+  }
+
+  @override
+  String lessonFinishStageToUnlock(int stage) {
+    return 'Finish Stage $stage to unlock this stage.';
+  }
+
+  @override
+  String get lessonRankMilestone => 'Rank milestone';
+
+  @override
+  String lessonStageReplayComplete(int stage) {
+    return 'Stage $stage replay complete.';
+  }
+
+  @override
+  String get lessonAllStagesCompleteMessage => 'All stages complete!';
+
+  @override
+  String lessonStageUnlocked(int stage) {
+    return 'Stage $stage unlocked!';
+  }
+
+  @override
+  String get lessonAdvancedRankWillNotLower =>
+      'You already have the Advanced rank. Completing this stage will not lower it.';
+
+  @override
+  String get lessonIntermediateRankKept =>
+      'You already have the Intermediate rank. Completing this stage will keep it.';
+
+  @override
+  String get lessonIntermediateAwardedFirstCompletion =>
+      'The Intermediate promotion is awarded on the first completion of this stage.';
+
+  @override
+  String get lessonPerfectRunPromotesIntermediate =>
+      'A perfect Performance run promotes you to Intermediate once your progress is saved.';
+
+  @override
+  String get lessonAdvancedRankKept =>
+      'You already have the Advanced rank. Completing this stage will keep it.';
+
+  @override
+  String get lessonAdvancedAwardedFirstCompletion =>
+      'The Advanced promotion is awarded on the first completion of this stage.';
+
+  @override
+  String get lessonPerfectRunPromotesAdvanced =>
+      'A perfect Performance run in this final stage promotes you to Advanced once your progress is saved.';
+
+  @override
+  String lessonStageSemantics(
+    int stage,
+    String title,
+    String activity,
+    String status,
+  ) {
+    return 'Stage $stage, $title, $activity, $status';
+  }
+
+  @override
+  String lessonNumberTitle(int number, String title) {
+    return 'Lesson $number: $title';
+  }
+
+  @override
+  String get lessonStage1ShortTitle => 'The Canvas';
+
+  @override
+  String get lessonStage2ShortTitle => 'The Grand Staff';
+
+  @override
+  String get lessonStage3ShortTitle => 'Middle C';
+
+  @override
+  String get lessonStage4ShortTitle => 'Find and Play Middle C';
+
+  @override
+  String get lessonStage5ShortTitle => 'Musical Notes';
+
+  @override
+  String get lessonStage6ShortTitle => 'Play Twinkle Twinkle';
+
+  @override
+  String get lessonStage7ShortTitle => 'Finger Numbers';
+
+  @override
+  String get lessonStage8ShortTitle => 'Accidentals';
+
+  @override
+  String get lessonStage9ShortTitle => 'Play Für Elise';
+
+  @override
+  String get lessonStage10ShortTitle => 'Time Signatures';
+
+  @override
+  String get lessonStage11ShortTitle => 'Sense of Time';
+
+  @override
+  String get lessonStage11Title => 'Time Signature Performance Test';
+
+  @override
+  String get lessonStage12ShortTitle => 'Chords';
+
+  @override
+  String get lessonStage13ShortTitle => 'Major and Minor Scales';
+
+  @override
+  String get lessonStage14ShortTitle => 'Play the C Minor Scale';
+
+  @override
+  String get lessonStage15ShortTitle => 'Nashville Number System';
+
+  @override
+  String get lessonStage16ShortTitle => 'Play a Song';
+
+  @override
+  String get lessonWatchThenQuiz =>
+      'Watch the lesson video, then take the quiz to review it.';
+
+  @override
+  String get lessonOpenScoreAndPlay =>
+      'Open the sheet music, connect your piano, and play the notes shown.';
+
+  @override
+  String lessonWatchTopicVideo(String topic) {
+    return 'Watch the lesson video about $topic.';
+  }
+
+  @override
+  String get lessonPlayWithMovingCursor =>
+      'Connect your piano and play the score in time with its moving cursor.';
+
+  @override
+  String get lessonWatchViewPdfAndQuiz =>
+      'Watch the lesson, view the chord cheat sheet, and take the quiz.';
+
+  @override
+  String get lessonConnectAndPlayScore =>
+      'Connect your piano and play the notes shown on the score.';
+
+  @override
+  String get lessonSightReadingChallenge => 'Sight Reading Challenge';
+
+  @override
+  String get lessonSightReadingChallengeDescription =>
+      'Connect your piano and play the score';
+
+  @override
+  String get lessonVideoLesson => 'Video lesson';
+
+  @override
+  String get lessonQuestions => 'Lesson questions';
+
+  @override
+  String get lessonSheetMusic => 'Sheet music';
+
+  @override
+  String get lessonCompressedMusicXmlScore => 'Compressed MusicXML score';
+
+  @override
+  String get lessonSightReadingScore => 'Sight-reading score';
+
+  @override
+  String get lessonFile => 'Lesson file';
+
+  @override
+  String get lessonChordCheatSheet => 'Chord cheat sheet';
+
+  @override
+  String get lessonQuiz => 'Lesson quiz';
+
+  @override
+  String lessonStageQuizTitle(int stage) {
+    return 'Stage $stage Quiz';
+  }
+
+  @override
+  String get lessonOpenFromVideoPlayer =>
+      'Open this lesson from the video player.';
+
+  @override
+  String get lessonQuizLoadFailed => 'This lesson quiz could not be loaded.';
+
+  @override
+  String get lessonPdfLoadFailed => 'This lesson PDF could not be loaded.';
+
+  @override
+  String get lessonSightReadingFilesRequired =>
+      'Sight reading requires a matching MIDI and MusicXML pair.';
+
+  @override
+  String get lessonFileEmpty => 'This lesson file is empty.';
+
+  @override
+  String lessonQuestionProgress(int current, int total) {
+    return 'Question $current of $total';
+  }
+
+  @override
+  String get lessonQuizComplete => 'Quiz complete';
+
+  @override
+  String lessonQuizScore(int correct, int total) {
+    return 'Your score: $correct/$total';
+  }
+
+  @override
+  String get lessonQuizPerfect =>
+      'Perfect score! The next stage will unlock after progress is saved.';
+
+  @override
+  String get lessonQuizRetryGuidance =>
+      'Review your answers below. Retry with the questions in a new order for a perfect score.';
+
+  @override
+  String get lessonBackToStages => 'Back to stages';
+
+  @override
+  String lessonYourAnswer(String answer) {
+    return 'Your answer: $answer';
+  }
+
+  @override
+  String get lessonNoAnswer => 'No answer';
+
+  @override
+  String lessonCorrectAnswer(String answer) {
+    return 'Correct answer: $answer';
+  }
+
+  @override
+  String get lessonVideoLoadFailed => 'The lesson video could not be loaded.';
+
+  @override
+  String get lessonPauseVideo => 'Pause video';
+
+  @override
+  String get lessonPlayVideo => 'Play video';
+
+  @override
+  String get lessonBackToPractice => 'Back to Practice';
+
+  @override
+  String get lessonStartQuiz => 'Start Quiz';
+
+  @override
+  String get lessonViewPdf => 'View PDF';
 }

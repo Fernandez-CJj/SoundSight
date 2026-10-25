@@ -1,0 +1,61 @@
+// Pagsusulit sa Aralin 6 - Mga Accidental (Sharp, Flat, at Natural)
+
+Q: Ano ang pangunahing gamit ng accidental sa musical notation?
+A) Baguhin ang bilis o tempo ng isang measure
+* B) Baguhin ang pitch ng nota sa pamamagitan ng pagtataas o pagbaba nito
+C) Ipahiwatig kung aling daliri ang gagamitin sa isang key
+D) Ipakita kung saan inuulit ang isang bahagi ng musika
+
+Q: Aling simbolo ang nagtataas sa pitch ng nota nang isang half-step o semitone?
+* A) Sharp (♯)
+B) Flat (♭)
+C) Natural (♮)
+D) Tie
+
+Q: Aling simbolo ang nagpapababa sa pitch ng nota nang isang half-step o semitone?
+A) Sharp (♯)
+* B) Flat (♭)
+C) Natural (♮)
+D) Repeat sign
+
+Q: Aling simbolo ang nagkakansela sa naunang sharp o flat at ibinabalik ang nota sa orihinal nitong pitch?
+A) Sharp (♯)
+B) Flat (♭)
+* C) Natural (♮)
+D) Barline
+
+Q: Saan isinusulat ang accidental kaugnay ng notehead sa piyesa?
+A) Direkta sa ibabaw ng notehead
+B) Direkta sa ibaba ng notehead
+* C) Sa parehong linya o puwang, direkta sa kaliwa ng notehead
+D) Sa kanan ng notehead
+
+Q: Kung may sharp symbol sa tabi ng notang F sa piyesa, aling key ang tutugtugin sa piano?
+A) Ang white key na direkta sa kaliwa ng F
+* B) Ang black key na direkta sa kanan ng F (F#)
+C) Ang white key na dalawang hakbang sa itaas ng F
+D) Ang parehong F white key nang walang pagbabago
+
+Q: Gaano katagal nananatiling may bisa ang accidental kapag naisulat ito sa isang measure ng piyesa?
+A) Para lamang sa iisang notang katabi nito
+* B) Para sa lahat ng kaparehong pitch na nota sa natitirang bahagi ng measure na iyon
+C) Para sa buong piyesa
+D) Hanggang sa susunod na linya ng staff
+
+Q: Ano ang nangyayari sa bisa ng accidental kapag lumampas sa barline patungo sa bagong measure?
+* A) Awtomatiko itong nawawalan ng bisa at nare-reset
+B) Nananatili itong aktibo sa isa pang measure
+C) Permanente nitong binabago ang lahat ng susunod na nota
+D) Ginagawa nitong flat ang lahat ng nota
+
+Q: Kapag tinugtog ang C♯ (C Sharp) at D♭ (D Flat) sa piano, ang resulta ay:
+A) Dalawang ganap na magkaibang tunog sa magkaibang key
+* B) Eksaktong parehong pisikal na key at tunog, na tinatawag na enharmonic equivalence
+C) Isang buong octave na pagitan sa pitch
+D) Walang tunog
+
+Q: Kung may B♭ (B Flat) sa isang measure at pagkatapos ay may B na may simbolong ♮ sa parehong measure, paano tutugtugin ang ikalawang nota?
+A) Tugtugin muli ang B Flat
+* B) Tugtugin ang karaniwang white key na B (B Natural)
+C) Tugtugin ang B Sharp
+D) Laktawan nang tuluyan ang nota

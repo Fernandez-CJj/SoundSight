@@ -75,7 +75,12 @@ class CompositionService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    await document.set(compositionData);
+    final batch = firestore.batch();
+    batch.set(document, compositionData);
+    batch.update(firestore.collection('users').doc(composition.ownerId), {
+      'hasCreatedComposition': true,
+    });
+    await batch.commit();
 
     return document.id;
   }

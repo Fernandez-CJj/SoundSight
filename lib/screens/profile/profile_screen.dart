@@ -6,7 +6,7 @@ import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
 import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
-import 'package:soundsight/screens/profile/account_container.dart';
+import 'package:soundsight/screens/profile/achievements_container.dart';
 import 'package:soundsight/screens/profile/assessment_container.dart';
 import 'package:soundsight/screens/profile/edit_profile_sheet.dart';
 import 'package:soundsight/screens/profile/logout_container.dart';
@@ -105,17 +105,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               experiencePoints: experiencePoints,
             ),
             Gap(AppSpacing.md),
+            AchievementsContainer(
+              colors: colors,
+              userId: FirebaseAuth.instance.currentUser?.uid,
+              assessmentCompleted: isAssessmentLoading || assessmentLoadFailed
+                  ? null
+                  : assessmentAttempt?.effectiveStatus ==
+                        AssessmentAttemptStatus.completed,
+            ),
+            Gap(AppSpacing.md),
             AssessmentContainer(
               colors: colors,
               actionLabel: assessmentActionLabel,
               description: assessmentDescription,
               isLoading: isAssessmentLoading,
               onTap: openAssessment,
-            ),
-            Gap(AppSpacing.md),
-            AccountContainer(
-              colors: colors,
-              onEditProfile: () => showEditProfileSheet(colors),
             ),
             Gap(AppSpacing.md),
             PreferencesContainer(

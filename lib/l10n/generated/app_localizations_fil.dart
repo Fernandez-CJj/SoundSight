@@ -12,6 +12,51 @@ class AppLocalizationsFil extends AppLocalizations {
   String get drawerHome => 'Pangunahing Pahina';
 
   @override
+  String get searchMusic => 'Maghanap ng musika';
+
+  @override
+  String get musicLibrary => 'Aklatan ng Musika';
+
+  @override
+  String get musicLibraryDescription =>
+      'Tingnan ang mga piyesang in-upload ng SoundSight.';
+
+  @override
+  String get searchMusicHint => 'Maghanap ayon sa pamagat';
+
+  @override
+  String get clearSearch => 'Burahin ang paghahanap';
+
+  @override
+  String get signInToSearchMusic =>
+      'Mag-sign in upang makita ang aklatan ng musika.';
+
+  @override
+  String get musicLibraryLoadError => 'Hindi ma-load ang aklatan ng musika.';
+
+  @override
+  String get noLibraryPieces => 'Wala pang available na piyesa ng musika.';
+
+  @override
+  String get noMusicSearchResults =>
+      'Walang piyesang tumutugma sa iyong paghahanap.';
+
+  @override
+  String get untitledPiece => 'Piyesang walang pamagat';
+
+  @override
+  String get libraryPieceMissing => 'Hindi na available ang piyesang ito.';
+
+  @override
+  String get libraryPracticeFilesMissing =>
+      'Kulang ang mga file na kailangan para sa napiling paraan ng pagtugtog.';
+
+  @override
+  String musicLibraryOpenPiece(String title) {
+    return 'Buksan ang $title';
+  }
+
+  @override
   String get drawerMusicSheets => 'Mga Music Sheet';
 
   @override
@@ -111,7 +156,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get musicSheetsLoadErrorHelp =>
-      'Suriin ang iyong koneksyon at mga pahintulot sa Firebase.';
+      'Suriin ang iyong koneksyon sa internet at subukan muli.';
 
   @override
   String get signInForMusicSheets =>
@@ -177,7 +222,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get waitForTranslationBeforeDelete =>
-      'Hintaying matapos ang pagsasalin ng music sheet bago ito burahin.';
+      'Hintaying matapos ang pag-convert ng music sheet bago ito burahin.';
 
   @override
   String musicSheetDeleted(String title) {
@@ -204,41 +249,42 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get translateBeforeAr =>
-      'Isalin muna ang music sheet bago simulan ang AR Practice.';
+      'I-convert muna ang music sheet bago simulan ang AR Practice.';
 
   @override
-  String get translatedMidiMissing => 'Nawawala ang naisaling MIDI file.';
+  String get translatedMidiMissing =>
+      'Hindi pa handa ang file na kailangan para sa practice mode na ito.';
 
   @override
   String get openArFailed => 'Hindi mabuksan ang AR Practice.';
 
   @override
   String get translateBeforeSynthesia =>
-      'Isalin muna ang music sheet bago simulan ang Synthesia.';
+      'I-convert muna ang music sheet bago simulan ang Synthesia.';
 
   @override
   String get openSynthesiaFailed => 'Hindi mabuksan ang Synthesia.';
 
   @override
   String get translateBeforeSightReading =>
-      'Isalin muna ang music sheet bago simulan ang Pagbabasa ng Nota.';
+      'I-convert muna ang music sheet bago simulan ang Pagbabasa ng Nota.';
 
   @override
   String get translatedPracticeFilesMissing =>
-      'Nawawala ang naisaling MusicXML, MIDI, o MP3 file.';
+      'Hindi pa handa ang mga file na kailangan para sa practice mode na ito.';
 
   @override
   String get openSightReadingFailed => 'Hindi mabuksan ang Pagbabasa ng Nota.';
 
   @override
-  String get recognized => 'Nakilala';
+  String get recognized => 'Na-convert';
 
   @override
   String get original => 'Orihinal';
 
   @override
   String get recognizedPdfLoadFailed =>
-      'Hindi ma-load ang nakilalang PDF. Ipinapakita na lamang ang orihinal na sheet.';
+      'Hindi ma-load ang na-convert na sheet. Ipinapakita na lamang ang orihinal na sheet.';
 
   @override
   String get retry => 'Subukan muli';
@@ -258,36 +304,36 @@ class AppLocalizationsFil extends AppLocalizations {
   String get tryAgain => 'Subukan Muli';
 
   @override
-  String get translateSheetAgainQuestion => 'Isalin muli ang sheet na ito?';
+  String get translateSheetAgainQuestion => 'I-convert muli ang sheet na ito?';
 
   @override
-  String get translateMusicSheetQuestion => 'Isalin ang music sheet?';
+  String get translateMusicSheetQuestion => 'I-convert ang music sheet?';
 
   @override
   String retranslateDescription(String title) {
-    return 'Gagawa ang SoundSight ng bagong salin para sa \"$title\" at papalitan ang kasalukuyang MusicXML, MIDI, nakilalang PDF, at audio preview nito.';
+    return 'Ipoproseso muli ng SoundSight ang \"$title\" at papalitan ang kasalukuyang na-convert na bersyon nito.';
   }
 
   @override
   String translateDescription(String title) {
-    return 'Isasalin ng SoundSight ang \"$title\" sa MusicXML, MIDI, nakilalang PDF, at audio preview. Maaaring tumagal ito nang ilang minuto.';
+    return 'Gagawa ang SoundSight ng digital na bersyon ng \"$title\" na maaaring patugtugin. Maaaring tumagal ito nang ilang minuto.';
   }
 
   @override
   String get continueAction => 'Magpatuloy';
 
   @override
-  String get translate => 'Isalin';
+  String get translate => 'I-convert';
 
   @override
-  String get translatingMusicSheet => 'Isinasalin ang music sheet';
+  String get translatingMusicSheet => 'Kino-convert ang music sheet';
 
   @override
   String get translationLoadingDescription =>
-      'Binabasa ng Audiveris ang mga nota. Mangyaring maghintay at panatilihing bukas ang app.';
+      'Binabasa ng SoundSight ang mga nota. Mangyaring maghintay at panatilihing bukas ang app.';
 
   @override
-  String get translationComplete => 'Tapos na ang pagsasalin';
+  String get translationComplete => 'Tapos na ang pag-convert';
 
   @override
   String translationResult(int noteCount, int partCount) {
@@ -303,20 +349,20 @@ class AppLocalizationsFil extends AppLocalizations {
       other: '$partCount bahagi',
       one: '1 bahagi',
     );
-    return 'Nakilala ng SoundSight ang $_temp0 sa $_temp1.';
+    return 'Nakita ng SoundSight ang $_temp0 sa $_temp1.';
   }
 
   @override
   String get done => 'Tapos na';
 
   @override
-  String get translationFailed => 'Nabigo ang pagsasalin';
+  String get translationFailed => 'Nabigo ang pag-convert';
 
   @override
   String get close => 'Isara';
 
   @override
-  String get translationReady => 'Handa na ang salin';
+  String get translationReady => 'Handa na ang na-convert na sheet';
 
   @override
   String translationSummary(int noteCount, int partCount) {
@@ -337,52 +383,52 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get translationFailedDescription =>
-      'Hindi naisalin ang sheet. Maaari mong subukan muli.';
+      'Hindi ma-convert ang sheet. Maaari mong subukan muli.';
 
   @override
   String get translationProcessingDescription =>
-      'Kinikilala ng Audiveris ang mga nota.';
+      'Binabasa ng SoundSight ang mga nota.';
 
   @override
   String get translationStartDescription =>
-      'Gumawa ng MusicXML, MIDI, malinis na PDF, at audio preview.';
+      'Gumawa ng digital na bersyong maaaring gamitin sa mga practice mode ng SoundSight.';
 
   @override
-  String get reconvert => 'Isalin muli';
+  String get reconvert => 'I-convert Muli';
 
   @override
-  String get translationGenericError => 'Hindi maisalin ang music sheet.';
+  String get translationGenericError => 'Hindi ma-convert ang music sheet.';
 
   @override
   String get translationTimedOut =>
-      'Masyadong matagal ang pagsasalin. Suriin ang backend at subukan muli.';
+      'Masyadong matagal ang pag-convert. Subukan muli.';
 
   @override
   String get translationConnectionError =>
-      'Hindi makakonekta ang SoundSight sa translation service.';
+      'Hindi makakonekta ang SoundSight. Suriin ang iyong internet connection at subukan muli.';
 
   @override
   String get translationRejected =>
-      'Hindi maproseso ng translation service ang music sheet na ito.';
+      'Hindi mabasa ng SoundSight ang music sheet na ito. Gumamit ng mas malinaw na larawan o PDF.';
 
   @override
   String get translationInvalidResponse =>
-      'Hindi wasto ang tugon ng translation service.';
+      'Nagkaproblema habang kino-convert ang music sheet. Subukan muli.';
 
   @override
   String get audioPreview => 'Audio preview';
 
   @override
-  String get audioLoading => 'Nilo-load ang audio mula sa Firebase...';
+  String get audioLoading => 'Nilo-load ang audio...';
 
   @override
-  String get audioPlaying => 'Pinapatugtog ang naisaling musika';
+  String get audioPlaying => 'Pinapatugtog ang na-convert na musika';
 
   @override
   String get audioPaused => 'Naka-pause ang playback';
 
   @override
-  String get audioIdle => 'Pakinggan ang naisaling music sheet';
+  String get audioIdle => 'Pakinggan ang na-convert na music sheet';
 
   @override
   String get pause => 'I-pause';
@@ -668,6 +714,95 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get profile => 'Profile';
+
+  @override
+  String get achievements => 'Mga Nakamit';
+
+  @override
+  String get viewAchievementDetails => 'Tingnan ang detalye';
+
+  @override
+  String get achievementDetails => 'Mga Detalye ng Badge';
+
+  @override
+  String achievementProgress(int earned, int total) {
+    return 'Nakamit na badge: $earned sa $total';
+  }
+
+  @override
+  String get badgeFirstMeasure => 'Unang Sukat';
+
+  @override
+  String get badgeFirstMeasureDescription =>
+      'Tapusin ang pagsusuri ng kasanayan upang malaman ang iyong antas sa SoundSight.';
+
+  @override
+  String get badgeSheetCollector => 'Kolektor ng Piyesa';
+
+  @override
+  String get badgeSheetCollectorDescription =>
+      'I-save ang una mong music sheet sa pag-upload ng file o pagkuha ng larawan gamit ang camera.';
+
+  @override
+  String get badgeFirstComposer => 'Unang Kompositor';
+
+  @override
+  String get badgeFirstComposerDescription =>
+      'I-save ang una mong komposisyon, mano-mano man o mula sa recording.';
+
+  @override
+  String get badgeMiddleC => 'Gitnang C';
+
+  @override
+  String get badgeMiddleCDescription =>
+      'Tapusin ang stage 3 ng leksiyon: Ang Gitnang C.';
+
+  @override
+  String get badgeFirstMelody => 'Unang Melodiya';
+
+  @override
+  String get badgeFirstMelodyDescription =>
+      'Tapusin ang stage 6 ng leksiyon: Tugtuin ang Twinkle Twinkle.';
+
+  @override
+  String get badgeGrowingMusician => 'Umuunlad na Musikero';
+
+  @override
+  String get badgeGrowingMusicianDescription =>
+      'Tapusin ang stage 9 ng leksiyon: Tugtuin ang Fur Elise.';
+
+  @override
+  String get badgeChordBuilder => 'Tagabuo ng Chord';
+
+  @override
+  String get badgeChordBuilderDescription =>
+      'Tapusin ang stage 12 ng leksiyon: Mga Chord.';
+
+  @override
+  String get badgeMusicNavigator => 'Gabay sa Musika';
+
+  @override
+  String get badgeMusicNavigatorDescription =>
+      'Tapusin ang stage 15 ng leksiyon: Nashville Number System.';
+
+  @override
+  String get badgeSoundSightMaster => 'Dalubhasa sa SoundSight';
+
+  @override
+  String get badgeSoundSightMasterDescription =>
+      'Tapusin ang lahat ng 16 na stage ng leksiyon.';
+
+  @override
+  String get badgeUnlocked => 'Nakamit';
+
+  @override
+  String get badgeLocked => 'Naka-lock';
+
+  @override
+  String get badgeChecking => 'Sinusuri';
+
+  @override
+  String get badgeEarnedAnnouncement => 'Nakamit ang badge!';
 
   @override
   String get editProfileTooltip => 'I-edit ang profile';
@@ -4622,4 +4757,321 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get assessmentResultUnavailable =>
       'Tapos na ang pagsusuri, ngunit hindi maipakita ang mga detalye ng naka-save na resulta.';
+
+  @override
+  String get lessonSignInRequired => 'Mag-sign in upang buksan ang mga aralin.';
+
+  @override
+  String get lessonProgressLoadFailed =>
+      'Hindi ma-load ang progreso sa mga aralin. Subukan muli.';
+
+  @override
+  String get lessonProgressSaveFailed =>
+      'Hindi ma-save ang progreso sa mga aralin. Subukan muli.';
+
+  @override
+  String lessonCompactProgress(int completed, int total) {
+    return '$completed/$total ang kumpleto';
+  }
+
+  @override
+  String get lessonAllStagesComplete => 'Kumpleto na ang lahat ng yugto';
+
+  @override
+  String lessonStageProgress(int current, int total) {
+    return 'Yugto $current sa $total';
+  }
+
+  @override
+  String lessonStagesCompleted(int completed, int total) {
+    return '$completed sa $total yugto ang nakumpleto';
+  }
+
+  @override
+  String lessonSavingStageProgress(int stage) {
+    return 'Sine-save ang progreso sa Yugto $stage...';
+  }
+
+  @override
+  String lessonStageProgressNotSaved(int stage) {
+    return 'Naipasa ang Yugto $stage, ngunit hindi na-save ang progreso.';
+  }
+
+  @override
+  String get lessonVideoAndQuiz => 'Video at pagsusulit';
+
+  @override
+  String get lessonPianoPerformance => 'Pagtugtog sa piano';
+
+  @override
+  String get lessonCompleted => 'Kumpleto';
+
+  @override
+  String get lessonCurrent => 'Kasalukuyan';
+
+  @override
+  String get lessonLocked => 'Naka-lock';
+
+  @override
+  String get lessonReplay => 'Ulitin';
+
+  @override
+  String lessonStageAndStatus(int stage, String status) {
+    return 'YUGTO $stage  /  $status';
+  }
+
+  @override
+  String lessonStageLabel(int stage) {
+    return 'Yugto $stage';
+  }
+
+  @override
+  String lessonFinishStageToUnlock(int stage) {
+    return 'Tapusin ang Yugto $stage upang ma-unlock ang yugtong ito.';
+  }
+
+  @override
+  String get lessonRankMilestone => 'Mahalagang yugto ng ranggo';
+
+  @override
+  String lessonStageReplayComplete(int stage) {
+    return 'Natapos ang pag-ulit sa Yugto $stage.';
+  }
+
+  @override
+  String get lessonAllStagesCompleteMessage =>
+      'Kumpleto na ang lahat ng yugto!';
+
+  @override
+  String lessonStageUnlocked(int stage) {
+    return 'Na-unlock ang Yugto $stage!';
+  }
+
+  @override
+  String get lessonAdvancedRankWillNotLower =>
+      'Advanced na ang iyong ranggo. Hindi ito bababa kapag natapos mo ang yugtong ito.';
+
+  @override
+  String get lessonIntermediateRankKept =>
+      'Intermediate na ang iyong ranggo. Mananatili ito kapag natapos mo ang yugtong ito.';
+
+  @override
+  String get lessonIntermediateAwardedFirstCompletion =>
+      'Iginagawad ang promosyon sa Intermediate sa unang pagkumpleto ng yugtong ito.';
+
+  @override
+  String get lessonPerfectRunPromotesIntermediate =>
+      'Kapag perpekto ang iyong Performance at na-save ang progreso, aangat ka sa Intermediate.';
+
+  @override
+  String get lessonAdvancedRankKept =>
+      'Advanced na ang iyong ranggo. Mananatili ito kapag natapos mo ang yugtong ito.';
+
+  @override
+  String get lessonAdvancedAwardedFirstCompletion =>
+      'Iginagawad ang promosyon sa Advanced sa unang pagkumpleto ng yugtong ito.';
+
+  @override
+  String get lessonPerfectRunPromotesAdvanced =>
+      'Kapag perpekto ang iyong Performance sa huling yugtong ito at na-save ang progreso, aangat ka sa Advanced.';
+
+  @override
+  String lessonStageSemantics(
+    int stage,
+    String title,
+    String activity,
+    String status,
+  ) {
+    return 'Yugto $stage, $title, $activity, $status';
+  }
+
+  @override
+  String lessonNumberTitle(int number, String title) {
+    return 'Aralin $number: $title';
+  }
+
+  @override
+  String get lessonStage1ShortTitle => 'Ang Canvas';
+
+  @override
+  String get lessonStage2ShortTitle => 'Ang Grand Staff';
+
+  @override
+  String get lessonStage3ShortTitle => 'Middle C';
+
+  @override
+  String get lessonStage4ShortTitle => 'Hanapin at Tugtugin ang Middle C';
+
+  @override
+  String get lessonStage5ShortTitle => 'Mga Nota sa Musika';
+
+  @override
+  String get lessonStage6ShortTitle => 'Tugtugin ang Twinkle Twinkle';
+
+  @override
+  String get lessonStage7ShortTitle => 'Mga Numero ng Daliri';
+
+  @override
+  String get lessonStage8ShortTitle => 'Mga Accidental';
+
+  @override
+  String get lessonStage9ShortTitle => 'Tugtugin ang Für Elise';
+
+  @override
+  String get lessonStage10ShortTitle => 'Mga Time Signature';
+
+  @override
+  String get lessonStage11ShortTitle => 'Pakiramdam sa Tiyempo';
+
+  @override
+  String get lessonStage11Title => 'Pagsubok sa Pagtugtog ng Time Signature';
+
+  @override
+  String get lessonStage12ShortTitle => 'Mga Chord';
+
+  @override
+  String get lessonStage13ShortTitle => 'Mga Major at Minor Scale';
+
+  @override
+  String get lessonStage14ShortTitle => 'Tugtugin ang C Minor Scale';
+
+  @override
+  String get lessonStage15ShortTitle => 'Nashville Number System';
+
+  @override
+  String get lessonStage16ShortTitle => 'Tugtugin ang Isang Kanta';
+
+  @override
+  String get lessonWatchThenQuiz =>
+      'Panoorin ang video lesson, pagkatapos ay sagutan ang pagsusulit upang balikan ang aralin.';
+
+  @override
+  String get lessonOpenScoreAndPlay =>
+      'Buksan ang piyesa, ikonekta ang iyong piano, at tugtugin ang mga ipinakitang nota.';
+
+  @override
+  String lessonWatchTopicVideo(String topic) {
+    return 'Panoorin ang video lesson tungkol sa $topic.';
+  }
+
+  @override
+  String get lessonPlayWithMovingCursor =>
+      'Ikonekta ang iyong piano at tugtugin ang piyesa kasabay ng gumagalaw na cursor.';
+
+  @override
+  String get lessonWatchViewPdfAndQuiz =>
+      'Panoorin ang aralin, tingnan ang gabay sa mga chord, at sagutan ang pagsusulit.';
+
+  @override
+  String get lessonConnectAndPlayScore =>
+      'Ikonekta ang iyong piano at tugtugin ang mga notang ipinakita sa piyesa.';
+
+  @override
+  String get lessonSightReadingChallenge => 'Hamon sa Sight Reading';
+
+  @override
+  String get lessonSightReadingChallengeDescription =>
+      'Ikonekta ang iyong piano at tugtugin ang piyesa';
+
+  @override
+  String get lessonVideoLesson => 'Video lesson';
+
+  @override
+  String get lessonQuestions => 'Mga tanong sa aralin';
+
+  @override
+  String get lessonSheetMusic => 'Piyesa';
+
+  @override
+  String get lessonCompressedMusicXmlScore => 'Naka-compress na MusicXML score';
+
+  @override
+  String get lessonSightReadingScore => 'Piyesa para sa sight reading';
+
+  @override
+  String get lessonFile => 'File ng aralin';
+
+  @override
+  String get lessonChordCheatSheet => 'Gabay sa mga chord';
+
+  @override
+  String get lessonQuiz => 'Pagsusulit sa aralin';
+
+  @override
+  String lessonStageQuizTitle(int stage) {
+    return 'Pagsusulit sa Yugto $stage';
+  }
+
+  @override
+  String get lessonOpenFromVideoPlayer =>
+      'Buksan ang araling ito mula sa video player.';
+
+  @override
+  String get lessonQuizLoadFailed =>
+      'Hindi ma-load ang pagsusulit sa araling ito.';
+
+  @override
+  String get lessonPdfLoadFailed => 'Hindi ma-load ang PDF ng araling ito.';
+
+  @override
+  String get lessonSightReadingFilesRequired =>
+      'Kailangan ng sight reading ang magkatugmang MIDI at MusicXML file.';
+
+  @override
+  String get lessonFileEmpty => 'Walang laman ang file ng araling ito.';
+
+  @override
+  String lessonQuestionProgress(int current, int total) {
+    return 'Tanong $current sa $total';
+  }
+
+  @override
+  String get lessonQuizComplete => 'Tapos na ang pagsusulit';
+
+  @override
+  String lessonQuizScore(int correct, int total) {
+    return 'Iyong iskor: $correct/$total';
+  }
+
+  @override
+  String get lessonQuizPerfect =>
+      'Perpekto ang iskor! Maa-unlock ang susunod na yugto kapag na-save ang progreso.';
+
+  @override
+  String get lessonQuizRetryGuidance =>
+      'Suriin ang iyong mga sagot sa ibaba. Subukan muli gamit ang bagong pagkakasunod-sunod ng mga tanong upang makakuha ng perpektong iskor.';
+
+  @override
+  String get lessonBackToStages => 'Bumalik sa mga yugto';
+
+  @override
+  String lessonYourAnswer(String answer) {
+    return 'Iyong sagot: $answer';
+  }
+
+  @override
+  String get lessonNoAnswer => 'Walang sagot';
+
+  @override
+  String lessonCorrectAnswer(String answer) {
+    return 'Tamang sagot: $answer';
+  }
+
+  @override
+  String get lessonVideoLoadFailed => 'Hindi ma-load ang video lesson.';
+
+  @override
+  String get lessonPauseVideo => 'I-pause ang video';
+
+  @override
+  String get lessonPlayVideo => 'I-play ang video';
+
+  @override
+  String get lessonBackToPractice => 'Bumalik sa Pagsasanay';
+
+  @override
+  String get lessonStartQuiz => 'Simulan ang Pagsusulit';
+
+  @override
+  String get lessonViewPdf => 'Tingnan ang PDF';
 }

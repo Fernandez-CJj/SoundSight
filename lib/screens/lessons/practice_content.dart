@@ -3,11 +3,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
-import 'package:soundsight/screens/practice/screens/video_lesson_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
+import 'lesson_localization.dart';
 import 'models/practice_stage.dart';
+import 'video_lesson_screen.dart';
 
 /// Opens a stage's primary activity directly, falling back to its file list.
 Future<bool> openPracticeStage(
@@ -23,12 +25,18 @@ Future<bool> openPracticeStage(
     final quizPaths = stage.assets
         .where((path) => path.toLowerCase().endsWith('.txt'))
         .toList();
-    final quizPath = quizPaths.elementAtOrNull(0);
+    final englishQuizPath = quizPaths.elementAtOrNull(0);
+    final quizPath = englishQuizPath == null
+        ? null
+        : localizedQuizAssetPath(context, englishQuizPath);
     final pdfPath = stage.assets
         .where((path) => path.toLowerCase().endsWith('.pdf'))
         .firstOrNull;
     final videoPath = videoPaths.first;
-    final videoName = _assetNameWithoutExtension(videoPath);
+    final videoName = localizedPracticeStageTitle(
+      context.l10n,
+      stage.number,
+    );
 
     final passed = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -47,7 +55,7 @@ Future<bool> openPracticeStage(
                     MaterialPageRoute<void>(
                       builder: (_) => AssetContentScreen(
                         path: pdfPath,
-                        title: _assetNameWithoutExtension(pdfPath),
+                        title: context.l10n.lessonChordCheatSheet,
                         colors: colors,
                       ),
                     ),
@@ -60,7 +68,7 @@ Future<bool> openPracticeStage(
                     MaterialPageRoute<bool>(
                       builder: (_) => AssetContentScreen(
                         path: quizPath,
-                        title: _assetNameWithoutExtension(quizPath),
+                        title: context.l10n.lessonStageQuizTitle(stage.number),
                         colors: colors,
                       ),
                     ),
@@ -100,6 +108,10 @@ Future<bool> openPracticeStage(
           lesson: SightReadingLessonAssets(
             stageNumber: stage.number,
             title: stage.title,
+            displayTitle: localizedPracticeStageTitle(
+              context.l10n,
+              stage.number,
+            ),
             scoreAssetPath: scorePath,
             midiAssetPath: midiPath,
             pdfAssetPath: pdfPath,
@@ -125,19 +137,7 @@ Future<bool> openPracticeStage(
   return false;
 }
 
-// Removes the file extension for video and quiz screen titles.
-String _assetNameWithoutExtension(String path) {
-  final name = path.split('/').last;
-  final extensionIndex = name.lastIndexOf('.');
-  return extensionIndex < 0 ? name : name.substring(0, extensionIndex);
-}
-
 enum PracticeStageStatus { completed, current, locked }
-
-String practiceStageActivityLabel(PracticeStage stage) =>
-    stage.assets.any((path) => path.toLowerCase().endsWith('.mp4'))
-    ? 'Video + quiz'
-    : 'Piano performance';
 
 /// A stage in the lesson path, with progress read from the saved profile.
 class PracticeStageCard extends StatelessWidget {
@@ -169,9 +169,13 @@ class PracticeStageCard extends StatelessWidget {
         ? colors.secondaryTextColor
         : colors.primaryColor;
     final statusColor = isCompleted ? colors.completedStageColor : foreground;
-    final title = stage.title.replaceFirst(RegExp(r'^Lesson \d+:\s*'), '');
-    final activity = practiceStageActivityLabel(stage);
-    final activityIcon = activity == 'Video + quiz'
+    final title = localizedPracticeStageShortTitle(context.l10n, stage.number);
+    final activityType = practiceStageActivity(stage);
+    final activity = localizedPracticeStageActivity(
+      context.l10n,
+      activityType,
+    );
+    final activityIcon = activityType == PracticeStageActivity.videoQuiz
         ? Icons.play_circle_outline_rounded
         : Icons.piano_rounded;
     final statusIcon = switch (status) {
@@ -180,16 +184,19 @@ class PracticeStageCard extends StatelessWidget {
       PracticeStageStatus.locked => Icons.lock_rounded,
     };
     final statusText = switch (status) {
-      PracticeStageStatus.completed => 'Completed',
-      PracticeStageStatus.current => 'Current',
-      PracticeStageStatus.locked => 'Locked',
+      PracticeStageStatus.completed => context.l10n.lessonCompleted,
+      PracticeStageStatus.current => context.l10n.lessonCurrent,
+      PracticeStageStatus.locked => context.l10n.lessonLocked,
     };
-    final statusLabel = Text(
-      statusText,
-      style: TextStyle(
-        color: statusColor.withValues(alpha: .9),
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
+    final statusLabel = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: statusColor.withValues(alpha: .9),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
     final numberBadge = Container(
@@ -225,13 +232,15 @@ class PracticeStageCard extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         Flexible(
-          child: Text(
-            activity,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: foreground.withValues(alpha: .78),
-              fontSize: 12,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              activity,
+              style: TextStyle(
+                color: foreground.withValues(alpha: .78),
+                fontSize: 12,
+              ),
             ),
           ),
         ),
@@ -239,8 +248,6 @@ class PracticeStageCard extends StatelessWidget {
     );
     final titleText = Text(
       title,
-      maxLines: compact ? 1 : 2,
-      overflow: TextOverflow.ellipsis,
       style: TextStyle(
         color: foreground,
         fontSize: horizontal ? 15 : 16,
@@ -252,7 +259,12 @@ class PracticeStageCard extends StatelessWidget {
     return Semantics(
       button: true,
       excludeSemantics: true,
-      label: 'Stage ${stage.number}, $title, $activity, $statusText',
+      label: context.l10n.lessonStageSemantics(
+        stage.number,
+        title,
+        activity,
+        statusText,
+      ),
       onTap: onTap,
       child: Material(
         color: isCurrent
@@ -275,15 +287,19 @@ class PracticeStageCard extends StatelessWidget {
         child: InkWell(
           excludeFromSemantics: true,
           onTap: onTap,
-          child: SizedBox(
-            width: horizontal ? 218 : null,
-            height: horizontal ? (compact ? 102 : 126) : 104,
-            child: Padding(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: horizontal ? (compact ? 118 : 140) : 112,
+            ),
+            child: SizedBox(
+              width: horizontal ? 250 : null,
+              height: horizontal ? (compact ? 118 : 140) : null,
+              child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: compact ? 8 : horizontal ? 12 : 16,
               ),
-              child: horizontal
+                child: horizontal
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -333,6 +349,7 @@ class PracticeStageCard extends StatelessWidget {
                         ),
                       ],
                     ),
+              ),
             ),
           ),
         ),
@@ -394,7 +411,7 @@ class StageContentsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
-        title: Text('Stage ${stage.number}'),
+        title: Text(context.l10n.lessonStageLabel(stage.number)),
         backgroundColor: colors.backgroundColor,
         foregroundColor: colors.primaryColor,
         surfaceTintColor: Colors.transparent,
@@ -403,7 +420,7 @@ class StageContentsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            stage.title,
+            localizedPracticeStageTitle(context.l10n, stage.number),
             style: TextStyle(
               color: colors.primaryColor,
               fontSize: 24,
@@ -415,6 +432,10 @@ class StageContentsScreen extends StatelessWidget {
             _SightReadingTile(
               stageNumber: stage.number,
               title: stage.title,
+              displayTitle: localizedPracticeStageTitle(
+                context.l10n,
+                stage.number,
+              ),
               midiPath: midiPath,
               scorePath: scorePath,
               pdfPath: pdfPath,
@@ -440,6 +461,7 @@ class _SightReadingTile extends StatelessWidget {
   const _SightReadingTile({
     required this.stageNumber,
     required this.title,
+    required this.displayTitle,
     required this.midiPath,
     required this.scorePath,
     required this.pdfPath,
@@ -448,6 +470,7 @@ class _SightReadingTile extends StatelessWidget {
 
   final int stageNumber;
   final String title;
+  final String displayTitle;
   final String midiPath;
   final String scorePath;
   final String? pdfPath;
@@ -465,11 +488,11 @@ class _SightReadingTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(Icons.piano, color: colors.primaryColor),
         title: Text(
-          'Sight Reading Challenge',
+          context.l10n.lessonSightReadingChallenge,
           style: TextStyle(color: colors.primaryColor),
         ),
         subtitle: Text(
-          'Connect your piano and play the score',
+          context.l10n.lessonSightReadingChallengeDescription,
           style: TextStyle(color: colors.secondaryTextColor),
         ),
         trailing: Icon(Icons.chevron_right, color: colors.primaryColor),
@@ -479,6 +502,7 @@ class _SightReadingTile extends StatelessWidget {
               lesson: SightReadingLessonAssets(
                 stageNumber: stageNumber,
                 title: title,
+                displayTitle: displayTitle,
                 scoreAssetPath: scorePath,
                 midiAssetPath: midiPath,
                 pdfAssetPath: pdfPath,
@@ -515,15 +539,18 @@ class _AssetTile extends StatelessWidget {
         ? fileName.substring(0, fileName.lastIndexOf('.'))
         : fileName;
     final (icon, label) = switch (extension) {
-      'mp4' => (Icons.play_circle, 'Video lesson'),
-      'txt' => (Icons.quiz_outlined, 'Lesson questions'),
-      'pdf' => (Icons.picture_as_pdf_outlined, 'Sheet music'),
-      'mxl' => (Icons.music_note, 'Compressed MusicXML score'),
+      'mp4' => (Icons.play_circle, context.l10n.lessonVideoLesson),
+      'txt' => (Icons.quiz_outlined, context.l10n.lessonQuestions),
+      'pdf' => (Icons.picture_as_pdf_outlined, context.l10n.lessonSheetMusic),
+      'mxl' => (
+        Icons.music_note,
+        context.l10n.lessonCompressedMusicXmlScore,
+      ),
       'mid' ||
       'midi' ||
       'xml' ||
-      'musicxml' => (Icons.music_note, 'Sight reading score'),
-      _ => (Icons.insert_drive_file_outlined, 'Lesson file'),
+      'musicxml' => (Icons.music_note, context.l10n.lessonSightReadingScore),
+      _ => (Icons.insert_drive_file_outlined, context.l10n.lessonFile),
     };
 
     return Card(
@@ -564,8 +591,8 @@ class _AssetTile extends StatelessWidget {
                     await Navigator.of(context).push<bool>(
                       MaterialPageRoute<bool>(
                         builder: (_) => AssetContentScreen(
-                          path: quizPath!,
-                          title: quizPath!.split('/').last.split('.').first,
+                          path: localizedQuizAssetPath(context, quizPath!),
+                          title: context.l10n.lessonQuiz,
                           colors: colors,
                         ),
                       ),
@@ -622,12 +649,12 @@ class _AssetContentScreenState extends State<AssetContentScreen> {
         surfaceTintColor: Colors.transparent,
       ),
       body: switch (extension) {
-        'mp4' => _message('Open this lesson from the video player.'),
+        'mp4' => _message(context.l10n.lessonOpenFromVideoPlayer),
         'txt' => FutureBuilder<String>(
           future: _text,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return _message('Could not load this test: ${snapshot.error}');
+              return _message(context.l10n.lessonQuizLoadFailed);
             }
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -642,7 +669,7 @@ class _AssetContentScreenState extends State<AssetContentScreen> {
           future: _bytes,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return _message('Could not load this PDF: ${snapshot.error}');
+              return _message(context.l10n.lessonPdfLoadFailed);
             }
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -651,7 +678,7 @@ class _AssetContentScreenState extends State<AssetContentScreen> {
           },
         ),
         _ => _message(
-          'Sight reading requires a matching MIDI and MusicXML pair.',
+          context.l10n.lessonSightReadingFilesRequired,
         ),
       },
     );
@@ -702,7 +729,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
           padding: const EdgeInsets.all(24),
           child: Text(
             widget.text.trim().isEmpty
-                ? 'This lesson file is empty.'
+                ? context.l10n.lessonFileEmpty
                 : widget.text,
             style: TextStyle(color: widget.colors.primaryColor),
           ),
@@ -725,7 +752,10 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Question ${_questionIndex + 1} of ${questions.length}',
+                    context.l10n.lessonQuestionProgress(
+                      _questionIndex + 1,
+                      questions.length,
+                    ),
                     style: TextStyle(color: widget.colors.secondaryTextColor),
                   ),
                   const SizedBox(height: 12),
@@ -791,7 +821,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                         ),
                         onPressed: () => setState(() => _questionIndex--),
                         icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                        label: const Text('Previous'),
+                        label: Text(context.l10n.previous),
                       );
                       final nextButton = FilledButton(
                         style: FilledButton.styleFrom(
@@ -816,8 +846,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                           children: [
                             Text(
                               _questionIndex == questions.length - 1
-                                  ? 'Finish'
-                                  : 'Next',
+                                  ? context.l10n.finish
+                                  : context.l10n.next,
                             ),
                             const SizedBox(width: 8),
                             Icon(
@@ -880,8 +910,9 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
       builder: (dialogContext) => AlertDialog(
         scrollable: true,
         backgroundColor: widget.colors.surfaceColor,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         title: Text(
-          'Quiz complete',
+          context.l10n.lessonQuizComplete,
           style: TextStyle(color: widget.colors.primaryColor),
         ),
         content: Column(
@@ -889,7 +920,10 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your score: $correctAnswers/${questions.length}',
+              context.l10n.lessonQuizScore(
+                correctAnswers,
+                questions.length,
+              ),
               style: TextStyle(
                 color: widget.colors.primaryColor,
                 fontWeight: FontWeight.bold,
@@ -898,8 +932,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
             const SizedBox(height: 8),
             Text(
               passed
-                  ? 'Perfect score! The next stage will unlock after progress is saved.'
-                  : 'Review your answers below. Retry with the questions in a new order for a perfect score.',
+                  ? context.l10n.lessonQuizPerfect
+                  : context.l10n.lessonQuizRetryGuidance,
               style: TextStyle(color: widget.colors.secondaryTextColor),
             ),
             const Divider(),
@@ -908,9 +942,12 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(
-              'Retry',
+              context.l10n.retry,
               style: TextStyle(color: widget.colors.primaryColor),
             ),
           ),
@@ -920,9 +957,12 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
               foregroundColor: widget.colors.isDarkMode
                   ? Colors.black
                   : Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(passed ? 'Finish' : 'Back to stages'),
+            child: Text(
+              passed ? context.l10n.finish : context.l10n.lessonBackToStages,
+            ),
           ),
         ],
       ),
@@ -968,12 +1008,18 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
             ),
           ),
           Text(
-            'Your answer: ${selected == null ? 'No answer' : question.options[selected]}',
+            context.l10n.lessonYourAnswer(
+              selected == null
+                  ? context.l10n.lessonNoAnswer
+                  : question.options[selected],
+            ),
             style: TextStyle(color: correct ? Colors.green : Colors.red),
           ),
           if (!correct)
             Text(
-              'Correct answer: ${question.options[question.answer]}',
+              context.l10n.lessonCorrectAnswer(
+                question.options[question.answer],
+              ),
               style: const TextStyle(color: Colors.green),
             ),
         ],

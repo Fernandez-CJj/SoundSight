@@ -15,7 +15,8 @@ import 'package:soundsight/screens/profile/player_progress_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/practice_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/quick_actions.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
-import 'package:soundsight/screens/profile/profile_screen.dart';
+import 'package:soundsight/screens/music_library/music_library_search_screen.dart';
+import 'package:soundsight/screens/practice_result/practice_results_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
 
@@ -88,15 +89,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: context.l10n.openProfile,
+            tooltip: context.l10n.searchMusic,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ProfileScreen(colors: colors),
+                  builder: (_) =>
+                      MusicLibrarySearchScreen(isDarkMode: isDarkMode),
                 ),
               );
             },
-            icon: const Icon(Icons.person, size: 30),
+            icon: const Icon(Icons.search_rounded, size: 30),
           ),
         ],
       ),
@@ -148,12 +150,8 @@ class _HomeScreenState extends State<HomeScreen> {
             QuickActions(
               colors: colors,
               onMusicSheets: openMusicSheets,
-              onUploadSheet: () {
-                openAddSheet(SheetInputAction.upload);
-              },
-              onCaptureSheet: () {
-                openAddSheet(SheetInputAction.capture);
-              },
+              onUploadSheet: openAddSheet,
+              onPracticeResults: openPracticeResults,
               onSavedSheets: openSavedSheets,
               onComposition: openCompositions,
               onPublishedCompositions: openPublishedCompositions,
@@ -191,8 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
       isDarkMode = theme == 'dark';
       username = userData?['username'] ?? '';
       skillLevel = userData?['skillLevel'] ?? '';
-      experiencePoints =
-          (userData?['experiencePoints'] as num?)?.toInt() ?? 0;
+      experiencePoints = (userData?['experiencePoints'] as num?)?.toInt() ?? 0;
     });
   }
 
@@ -204,12 +201,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> openAddSheet(SheetInputAction initialAction) async {
+  Future<void> openAddSheet() async {
     final wasUploaded = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => CaptureUploadSheetScreen(
           isDarkMode: isDarkMode,
-          initialAction: initialAction,
         ),
       ),
     );
@@ -219,6 +215,14 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MusicSheetScreen(isDarkMode: isDarkMode),
+      ),
+    );
+  }
+
+  void openPracticeResults() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PracticeResultsScreen(isDarkMode: isDarkMode),
       ),
     );
   }
