@@ -1,0 +1,37 @@
+// Lesson 5 Practice Quiz - Finger Numbers & Hand Placement
+
+Q: which finger is designated as Finger 1?
+A) Index finger
+* B) Thumb
+C) Pinky
+D) Middle finger
+
+Q: which finger is designated as Finger 5?
+A) Thumb
+B) Ring finger
+* C) Pinky finger
+D) Index finger
+
+Q: Which finger number corresponds to the middle finger on either hand?
+A) Finger 2
+* B) Finger 3
+C) Finger 4
+D) Finger 5
+
+Q: If sheet music indicates a "2" above a note for the right hand, which finger should press the key?
+* A) Index finger
+B) Thumb
+C) Ring finger
+D) Pinky finger
+
+Q: How are finger numbers mirrored between the left and right hands when placed side by side?
+A) Thumbs are Finger 5 and pinkies are Finger 1
+* B) Thumbs are both Finger 1 and point toward each other in the center
+C) The left hand starts with 1 on the pinky and the right hand starts with 1 on the thumb
+D) Finger numbers only apply to the right hand in sheet music
+
+Q: Why are finger numbers written above or below notes in sheet music?
+A) To indicate how loud the note should be played
+* B) To suggest the most efficient hand movement and fingering pattern
+C) To show how many seconds to hold the note
+D) To tell you which octave to play in

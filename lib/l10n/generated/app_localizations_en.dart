@@ -725,7 +725,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assessmentExpiredDescription =>
-      'Beginner was assigned permanently. No retry is available.';
+      'The assessment expired and cannot be retried. Your saved rank is kept; otherwise Beginner is assigned.';
 
   @override
   String get updatePersonalInformation => 'Update your personal information.';
@@ -3600,6 +3600,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceResultsMusicSheet => 'Music Sheet';
 
   @override
+  String get practiceResultsLesson => 'Lesson';
+
+  @override
   String get practiceResultsComposition => 'Composition';
 
   @override
@@ -3922,7 +3925,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assessmentStartWarning =>
-      'Your 72-hour deadline will begin immediately. You only receive one attempt, and an expired assessment will permanently assign Beginner level.';
+      'Your 72-hour deadline will begin immediately. You only receive one attempt. If it expires, your saved rank is kept, or Beginner is assigned if you have no rank yet.';
 
   @override
   String get start => 'Start';
@@ -3953,7 +3956,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assessmentExpiredFullDescription =>
-      'The assessment was not completed within 72 hours. Your SoundSight Level is Beginner, and this assessment cannot be attempted again.';
+      'The assessment was not completed within 72 hours and cannot be attempted again. Your saved rank is kept, or Beginner is assigned if you had no rank.';
 
   @override
   String get assessmentViewResults => 'View Results';
@@ -4021,7 +4024,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assessmentExpirationExplanation =>
-      'If the assessment expires before completion, your SoundSight Level will be set to Beginner.';
+      'If the assessment expires before completion, your saved rank is kept. Beginner is assigned if you have no rank yet.';
 
   @override
   String get assessmentLeaveExplanation =>

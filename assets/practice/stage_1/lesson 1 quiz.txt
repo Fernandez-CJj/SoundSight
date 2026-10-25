@@ -1,0 +1,56 @@
+// Lesson 1 Practice Quiz
+
+Q: What are altogether the five horizontal lines and four spaces where music notes are written?
+A) Measure
+B) Clef
+* C) Staff
+D) Barline
+
+Q: Which symbol is placed at the beginning of a staff to indicate the pitch of the notes?
+A) Repeat sign
+* B) Clef
+C) Final barline
+D) Measure
+
+Q: What is the main purpose of a single vertical barline on a staff?
+A) To show the end of a piece
+* B) To divide the staff into measures
+C) To repeat a section of music
+D) To indicate a clef change
+
+Q: What is the space or segment of time between two barlines is called?
+* A) Measure
+B) Staff
+C) Clef
+D) Ledger line
+
+Q: Which clef represents low pitch notes?
+A) Treble clef
+* B) Bass clef
+C) Alto clef
+D) Tenor clef
+
+Q: How many lines make up a standard musical staff?
+A) 4
+* B) 5
+C) 6
+D) 8
+
+Q: Which symbol tells a musician to play a section of the music again?
+A) Final barline
+B) Treble clef
+* C) Repeat sign
+D) Single barline
+
+Q: What type of line marks the complete end of a piece of music?
+A) Single barline
+B) Ledger line
+* C) Final barline
+D) Staff line
+
+Q: Notes on a staff are read using which two reference features?
+A) Barlines and measures
+* B) Lines and spaces
+C) Repeats and final barlines
+D) Clefs and brackets
+

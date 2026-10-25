@@ -16,7 +16,7 @@ import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/screens/micNiKen/microphone_screen.dart';
 import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
-import 'package:soundsight/screens/practice/practice_screen.dart';
+import 'package:soundsight/screens/lessons/practice.dart';
 import 'package:soundsight/screens/practice_result/practice_results_screen.dart';
 import 'package:soundsight/screens/profile/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -151,7 +151,7 @@ class AppDrawer extends StatelessWidget {
 
                 if (activeItem != DrawerItem.practice) {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const PracticeScreen()),
+                    MaterialPageRoute(builder: (_) => const FundamentalsScreen()),
                   );
                 }
               },

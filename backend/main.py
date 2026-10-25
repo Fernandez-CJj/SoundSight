@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import WebSocket
 
 from composition.post_service import getNextPublishedVersion
 from composition.post_service import saveCompositionPost
@@ -9,6 +10,7 @@ from composition.storage_service import copyPublishedCompositionFiles
 from composition.storage_service import deleteStoragePaths
 from composition.unpublish_service import unpublishComposition
 from core.auth_service import requireVerifiedFirebaseUser
+from mic.stream import stream_microphone_audio
 from omr.audiveris_service import isAudiverisInstalled
 from omr.music_sheet_models import OmrConversionRequest
 from omr.omr_conversion_service import convertMusicSheet
@@ -29,6 +31,12 @@ app = FastAPI(
     ),
     version="1.0.0",
 )
+
+
+@app.websocket("/mic/stream")
+async def microphone_stream(websocket: WebSocket):
+    """Receive the Android microphone stream in memory for live processing."""
+    await stream_microphone_audio(websocket)
 
 
 @app.get("/")

@@ -16,7 +16,7 @@ enum _ResultDateFilter { allTime, today, last7Days, last30Days }
 
 enum _ResultAccuracyFilter { all, excellent, good, needsPractice }
 
-enum _ResultSourceFilter { all, musicSheet, composition, challenge }
+enum _ResultSourceFilter { all, musicSheet, lesson, composition, challenge }
 
 enum _ResultSort { newest, oldest, highestAccuracy, lowestAccuracy }
 
@@ -448,6 +448,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
     return switch (selectedSourceFilter) {
       _ResultSourceFilter.all => true,
       _ResultSourceFilter.musicSheet => source == 'musicSheet',
+      _ResultSourceFilter.lesson => source == 'lesson',
       _ResultSourceFilter.composition => source == 'composition',
       _ResultSourceFilter.challenge => source == 'challenge',
     };
@@ -796,6 +797,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
     return switch (filter) {
       _ResultSourceFilter.all => context.l10n.practiceResultsAllSources,
       _ResultSourceFilter.musicSheet => context.l10n.practiceResultsMusicSheet,
+      _ResultSourceFilter.lesson => context.l10n.practiceResultsLesson,
       _ResultSourceFilter.composition =>
         context.l10n.practiceResultsComposition,
       _ResultSourceFilter.challenge => context.l10n.practiceResultsChallenge,
@@ -1283,6 +1285,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
 
   String sourceLabel(String source) {
     return switch (source) {
+      'lesson' => context.l10n.practiceResultsLesson,
       'composition' => context.l10n.practiceResultsComposition,
       'challenge' => context.l10n.practiceResultsChallenge,
       _ => context.l10n.practiceResultsMusicSheet,

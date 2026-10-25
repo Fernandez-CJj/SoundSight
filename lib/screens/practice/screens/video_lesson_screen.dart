@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:soundsight/screens/practice/screens/level_1/level_1_screen.dart';
@@ -9,11 +11,15 @@ class VideoLessonScreen extends StatefulWidget {
     required this.title,
     required this.videoAssetPath,
     this.onStartQuiz,
+    this.onViewPdf,
+    this.restoreOrientations = const [DeviceOrientation.portraitUp],
   });
 
   final String title;
   final String videoAssetPath;
-  final VoidCallback? onStartQuiz;
+  final Future<void> Function()? onStartQuiz;
+  final Future<void> Function()? onViewPdf;
+  final List<DeviceOrientation> restoreOrientations;
 
   @override
   State<VideoLessonScreen> createState() {
@@ -21,7 +27,8 @@ class VideoLessonScreen extends StatefulWidget {
   }
 }
 
-class _VideoLessonScreenState extends State<VideoLessonScreen> {
+class _VideoLessonScreenState extends State<VideoLessonScreen>
+    with WidgetsBindingObserver {
   late final VideoPlayerController videoController;
   late final Future<void> videoInitialization;
   bool controlsVisible = true;
@@ -42,6 +49,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     videoController = VideoPlayerController.asset(widget.videoAssetPath);
 
     videoInitialization = videoController.initialize();
@@ -54,9 +62,65 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
 
   @override
   void dispose() {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    WidgetsBinding.instance.removeObserver(this);
+    SystemChrome.setPreferredOrientations(widget.restoreOrientations);
     videoController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      unawaited(_pauseVideo());
+    }
+  }
+
+  Future<void> _pauseVideo() async {
+    if (videoController.value.isInitialized) {
+      await videoController.pause();
+    }
+  }
+
+  Future<void> _openQuiz() async {
+    await _pauseVideo();
+    if (!mounted) return;
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    if (!mounted) return;
+    try {
+      if (widget.onStartQuiz != null) {
+        await widget.onStartQuiz!();
+      } else {
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const Level1Screen()),
+        );
+      }
+    } finally {
+      if (mounted) {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      }
+    }
+  }
+
+  Future<void> _openPdf() async {
+    final onViewPdf = widget.onViewPdf;
+    if (onViewPdf == null) return;
+    await _pauseVideo();
+    if (!mounted) return;
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    if (!mounted) return;
+    try {
+      await onViewPdf();
+    } finally {
+      if (mounted) {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      }
+    }
   }
 
   @override
@@ -259,8 +323,9 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(left: 20, top: 12),
                 child: IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
+                  onPressed: () async {
+                    await _pauseVideo();
+                    if (context.mounted) Navigator.of(context).pop();
                   },
                   tooltip: 'Back to Practice',
                   icon: const Icon(Icons.arrow_back),
@@ -291,22 +356,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                     ],
                   ),
                   child: FilledButton.icon(
-                    onPressed: () async {
-                      await SystemChrome.setPreferredOrientations([
-                        DeviceOrientation.portraitUp,
-                      ]);
-                      if (!context.mounted) return;
-
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const Level1Screen()),
-                      );
-                      if (!context.mounted) return;
-
-                      SystemChrome.setPreferredOrientations([
-                        DeviceOrientation.landscapeLeft,
-                        DeviceOrientation.landscapeRight,
-                      ]);
-                    },
+                    onPressed: _openQuiz,
                     icon: const Icon(Icons.quiz_outlined, size: 20),
                     label: const Text(
                       'Start Quiz',
@@ -331,6 +381,18 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
               ),
             ),
           ),
+          if (widget.onViewPdf != null)
+            Positioned(
+              top: 72,
+              right: 24,
+              child: SafeArea(
+                child: FilledButton.icon(
+                  onPressed: _openPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('View PDF'),
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -1,0 +1,67 @@
+// Lesson 10 Practice Quiz - Nashville Number System
+
+Q: What is the primary purpose of the Nashville Number System (NNS)?
+A) To indicate which finger numbers to use on the piano keys
+* B) To allow musicians to instantly transpose and communicate chord progressions using scale degrees instead of specific letter names
+C) To measure the precise tempo and beats per minute (BPM) of a song
+D) To show the exact rhythm and sheet music staff lines
+
+Q: In the major key Nashville Number System formula, what do lowercase letters (like "m") or lower-case Roman numerals represent?
+A) Major chords
+* B) Minor chords
+C) Diminished chords
+D) Augmented chords
+
+Q: In the Nashville Number System, what does the degree symbol (°) next to a number indicate?
+A) Major chord
+B) Minor chord
+* C) Diminished chord
+D) Augmented chord
+
+Q: What is 2m in the key of G?
+A) D minor (Dm)
+* B) A minor (Am)
+C) B minor (Bm)
+D) E minor (Em)
+
+Q: What is 5 in the key of D?
+A) G major (G)
+* B) A major (A)
+C) B minor (Bm)
+D) F# minor (F#m)
+
+Q: What is 6m in the key of C?
+A) D minor (Dm)
+* B) A minor (Am)
+C) E minor (Em)
+D) F major (F)
+
+Q: What is 3m in the key of G?
+A) E minor (Em)
+* B) B minor (Bm)
+C) A minor (Am)
+D) F# diminished (F#dim)
+
+Q: What is 4 in the key of D?
+A) D major (D)
+* B) G major (G)
+C) A major (A)
+D) B minor (Bm)
+
+Q: What is 7° in the key of C?
+A) A minor (Am)
+* B) B diminished (Bdim)
+C) C diminished (Cdim)
+D) F# diminished (F#dim)
+
+Q: Which of the following is one of the most popular chord progressions used in hundreds of hit songs across pop, country, and rock?
+* A) 1 - 5 - 6m - 4 (I - V - vi - IV)
+B) 2m - 5 - 1 - 3m (ii - V - I - iii)
+C) 7° - 3m - 4 - 5 (vii° - iii - IV - V)
+D) 1 - 3m - 5 - 7° (I - iii - V - vii°)
+
+Q: What is 6m in the key of A?
+A) D major (D)
+* B) F# minor (F#m)
+C) C# minor (C#m)
+D) B minor (Bm)

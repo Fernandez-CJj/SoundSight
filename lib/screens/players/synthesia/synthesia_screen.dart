@@ -11,6 +11,7 @@ import 'package:soundsight/screens/midi/models/midi_note_event.dart';
 import 'package:soundsight/screens/midi/services/midi_input_service.dart';
 import 'package:soundsight/screens/practice_result/practice_result_detail_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/widgets/practice_mode_toggle.dart';
 
 import '../ar/services/ar_practice_performance_tracker.dart';
 import '../ar/utils/midi_note_utils.dart';
@@ -2328,56 +2329,18 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
             ),
           ],
           const Gap(AppSpacing.sm),
-          SizedBox(
-            height: 38,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: widget.colors.backgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: SegmentedButton<SynthesiaMode>(
-                segments: [
-                  ButtonSegment(
-                    value: SynthesiaMode.wait,
-                    label: Text(context.l10n.synthesiaWait),
-                  ),
-                  ButtonSegment(
-                    value: SynthesiaMode.performance,
-                    label: Text(context.l10n.synthesiaPerformance),
-                  ),
-                ],
-                selected: {mode},
-                showSelectedIcon: false,
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: const WidgetStatePropertyAll(
-                    TextStyle(
-                      fontSize: AppTextSizes.caption,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  foregroundColor: WidgetStateProperty.resolveWith((states) {
-                    return states.contains(WidgetState.selected)
-                        ? widget.colors.backgroundColor
-                        : widget.colors.primaryColor;
-                  }),
-                  backgroundColor: WidgetStateProperty.resolveWith((states) {
-                    return states.contains(WidgetState.selected)
-                        ? widget.colors.primaryColor
-                        : Colors.transparent;
-                  }),
-                  side: WidgetStatePropertyAll(
-                    BorderSide(color: widget.colors.borderColor),
-                  ),
-                ),
-                onSelectionChanged: canSwitchMode
-                    ? (selection) {
-                        unawaited(_changeMode(selection.first));
-                      }
-                    : null,
-              ),
-            ),
+          PracticeModeToggle<SynthesiaMode>(
+            firstValue: SynthesiaMode.wait,
+            firstLabel: context.l10n.synthesiaWait,
+            secondValue: SynthesiaMode.performance,
+            secondLabel: context.l10n.synthesiaPerformance,
+            selectedValue: mode,
+            colors: colors,
+            onChanged: canSwitchMode
+                ? (selectedMode) {
+                    unawaited(_changeMode(selectedMode));
+                  }
+                : null,
           ),
           const Gap(AppSpacing.sm),
           if (showProgress)

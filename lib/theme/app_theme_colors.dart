@@ -9,6 +9,8 @@ class AppThemeColors {
     required this.primaryColor,
     required this.secondaryTextColor,
     required this.borderColor,
+    required this.completedStageColor,
+    required this.completedStageSurfaceColor,
     required this.sightReadingResultColor,
     required this.synthesiaResultColor,
     required this.arPerformanceResultColor,
@@ -21,6 +23,8 @@ class AppThemeColors {
   final Color primaryColor;
   final Color secondaryTextColor;
   final Color borderColor;
+  final Color completedStageColor;
+  final Color completedStageSurfaceColor;
   final Color sightReadingResultColor;
   final Color synthesiaResultColor;
   final Color arPerformanceResultColor;
@@ -35,6 +39,8 @@ class AppThemeColors {
             primaryColor: AppColors.darkPrimary,
             secondaryTextColor: AppColors.darkSecondaryText,
             borderColor: AppColors.darkBorder,
+            completedStageColor: AppColors.darkCompletedStage,
+            completedStageSurfaceColor: AppColors.darkCompletedStageSurface,
             sightReadingResultColor: AppColors.darkSightReadingResult,
             synthesiaResultColor: AppColors.darkSynthesiaResult,
             arPerformanceResultColor: AppColors.darkArPerformanceResult,
@@ -47,6 +53,8 @@ class AppThemeColors {
             primaryColor: AppColors.lightPrimary,
             secondaryTextColor: AppColors.lightSecondaryText,
             borderColor: AppColors.lightBorder,
+            completedStageColor: AppColors.lightCompletedStage,
+            completedStageSurfaceColor: AppColors.lightCompletedStageSurface,
             sightReadingResultColor: AppColors.sightReadingResult,
             synthesiaResultColor: AppColors.synthesiaResult,
             arPerformanceResultColor: AppColors.arPerformanceResult,

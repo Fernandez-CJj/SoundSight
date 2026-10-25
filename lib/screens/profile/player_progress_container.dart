@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -6,28 +8,45 @@ import 'package:soundsight/theme/app_theme_colors.dart';
 import '../../constants/constant.dart';
 
 class PlayerProgressContainer extends StatelessWidget {
+  static const int _xpPerLevel = 100;
+
   const PlayerProgressContainer({
     super.key,
     required this.colors,
     required this.skillLevel,
-    required this.level,
     required this.experiencePoints,
-    required this.experienceToNextLevel,
   });
 
   final AppThemeColors colors;
   final String skillLevel;
-  final int level;
   final int experiencePoints;
-  final int experienceToNextLevel;
 
   @override
   Widget build(BuildContext context) {
-    final progress = experienceToNextLevel <= 0
-        ? 0.0
-        : (experiencePoints / experienceToNextLevel).clamp(0.0, 1.0).toDouble();
-    final remainingExperience = (experienceToNextLevel - experiencePoints)
-        .clamp(0, experienceToNextLevel);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return _buildCard(context, null);
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, snapshot) => _buildCard(context, snapshot.data?.data()),
+    );
+  }
+
+  Widget _buildCard(BuildContext context, Map<String, dynamic>? data) {
+    final skillLevel = data == null
+        ? this.skillLevel
+        : (data['skillLevel'] as String? ?? '');
+    final savedExperience = data == null
+        ? this.experiencePoints
+        : ((data['experiencePoints'] as num?)?.toInt() ?? 0);
+    final experiencePoints = savedExperience < 0 ? 0 : savedExperience;
+    final level = experiencePoints ~/ _xpPerLevel + 1;
+    final experienceToNextLevel = level * _xpPerLevel;
+    final progress = (experiencePoints % _xpPerLevel) / _xpPerLevel;
+    final remainingExperience = experienceToNextLevel - experiencePoints;
     final normalizedSkillLevel = skillLevel.trim();
     final isUnderAssessment = normalizedSkillLevel.isEmpty;
     final localizedSkillLevel = switch (normalizedSkillLevel.toLowerCase()) {

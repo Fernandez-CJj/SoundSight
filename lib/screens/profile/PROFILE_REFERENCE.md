@@ -25,8 +25,8 @@ The user can open **Profile** from the drawer or the profile icon on the home sc
 2. It asks the assessment service for the current assessment document.
 3. This assessment check can also permanently expire an overdue attempt and assign Beginner.
 4. The screen then reads `/users/{userId}` from Firestore.
-5. It displays the saved username, email, profile picture, skill level, level, and XP values.
-6. Missing progress values use local display defaults: level `1`, XP `0`, and XP needed for the next level `100`.
+5. It displays the saved username, email, profile picture, skill level, and XP, with player level derived from XP.
+6. Missing XP defaults to `0`, which displays Level 1 and a 100 XP next-level target.
 
 Tapping the main profile picture opens a larger square view. A network picture can be zoomed from 1x to 4x. If there is no valid image, the app shows a person icon.
 
@@ -133,9 +133,7 @@ The screen reads:
 - `email`;
 - `profileImageUrl`;
 - `skillLevel`;
-- `level`;
-- `experiencePoints`;
-- `experienceToNextLevel`; and
+- `experiencePoints`; and
 - indirectly, `theme`, which is passed into the screen by the surrounding app.
 
 The Profile folder does not create the original account or its initial user document.
@@ -195,11 +193,7 @@ There is a small boundary difference: the app rejects files **larger than** 5 MB
 
 ### Saved profile values
 
-The Profile screen uses defaults when progress fields are missing:
-
-- `level`: `1`;
-- `experiencePoints`: `0`; and
-- `experienceToNextLevel`: `100`.
+The Profile screen treats a missing `experiencePoints` value as `0`.
 
 It expects username, email, and skill level to be strings when present. There is no friendly validation recovery if the user document contains incompatible field types.
 
@@ -238,27 +232,25 @@ Only that owner can delete the file. The current Profile UI does not provide a d
 
 ## 9. How levels and progress are displayed
 
-The Profile folder does not award XP or calculate a new player level. It displays the values already stored in the user document.
+The Profile folder does not award XP. Its shared progress card derives the player level from the saved total XP, and listens for profile updates so Home and Profile refresh after an award.
 
 If `skillLevel` is empty, the displayed rank is `Beginner`. Otherwise, the first letter is capitalized for display.
 
-The XP progress bar uses:
+Each 100 XP advances one player level:
 
 ```text
-progress = experiencePoints / experienceToNextLevel
+level = experiencePoints ~/ 100 + 1
+next level at = level * 100 XP
+progress = (experiencePoints % 100) / 100
 ```
-
-The result is limited to the range `0` through `1`. If `experienceToNextLevel` is zero or negative, progress is shown as zero.
 
 Remaining XP uses:
 
 ```text
-remaining XP = experienceToNextLevel - experiencePoints
+remaining XP = next level at - experiencePoints
 ```
 
-That result is limited between zero and the XP target.
-
-For example, `40` XP out of `100` displays a 40% progress bar and **60 XP needed**.
+For example, `100` total XP displays Level 2, `100 / 200 XP`, an empty Level 2 progress bar, and **100 XP needed**.
 
 Assessment scoring and final skill-level calculation happen in the Assessment feature. Profile only loads and displays the resulting `skillLevel`.
 

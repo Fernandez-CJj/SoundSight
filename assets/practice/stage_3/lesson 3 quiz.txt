@@ -1,0 +1,55 @@
+// Lesson 3 Practice Quiz - Middle C & Keyboard Geography
+
+Q: Which landmark on the piano keyboard helps you quickly locate the note C?
+A) To the right of any group of three black keys
+* B) To the left of any group of two black keys
+C) Directly between two black keys
+D) To the right of any group of two black keys
+
+Q: On a standard 88-key piano, what is the alternative name for Middle C based on its octave position?
+A) C1
+B) C2
+* C) C4
+D) C8
+
+Q: How do you locate Middle C (C4) on a standard 88-key piano keyboard?
+A) It is the very first white key on the left side of the piano
+* B) Count the octaves from left to right; it is the C starting the 4th octave
+C) Count five black key groups from the right side
+D) It is located on the far right end of the keyboard
+
+Q: What forms a complete octave on the piano keyboard?
+A) A group of four white keys and two black keys
+B) A single group of three black keys only
+* C) A group of two black keys and three black keys combined, spanning C to B
+D) All the white keys played consecutively from A to Z
+
+Q: Why is Middle C considered a crucial reference point for piano players?
+* A) It serves as the central anchor for hand placement and sheet music reading
+B) It is the loudest note on the piano
+C) It is the only note written on the treble clef
+D) It can only be played with the right hand
+
+Q: Where does Middle C sit relative to the grand staff in sheet music?
+A) High above the treble clef staff lines
+B) At the very bottom line of the bass clef
+* C) On a ledger line between the treble clef and bass clef
+D) Inside the middle space of the treble clef
+
+Q: If you move from Middle C (C4) to the next C to the right, which note have you reached?
+A) C3
+* B) C5
+C) D4
+D) B4
+
+Q: How many total black keys are contained within a single octave on the piano?
+A) 2
+B) 3
+* C) 5
+D) 7
+
+Q: On sheet music, Middle C (C4) written on the treble staff and Middle C written on the bass staff sound:
+A) One octave apart from each other
+B) Completely different pitches
+* C) Identical in pitch, played at the exact same frequency
+D) Two octaves apart from each other

@@ -37,9 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String skillLevel = '';
   String email = '';
   String? profileImageUrl;
-  int level = 1;
   int experiencePoints = 0;
-  int experienceToNextLevel = 100;
 
   /// Null means the user has not started an assessment yet.
   AssessmentAttempt? assessmentAttempt;
@@ -104,9 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             PlayerProgressContainer(
               colors: colors,
               skillLevel: skillLevel,
-              level: level,
               experiencePoints: experiencePoints,
-              experienceToNextLevel: experienceToNextLevel,
             ),
             Gap(AppSpacing.md),
             AssessmentContainer(
@@ -157,8 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       failedToLoadAssessment = true;
     }
 
-    // Load the profile after the assessment so a newly expired Beginner level
-    // is immediately reflected in the same screen.
+    // Load the profile after assessment reconciliation.
     final userDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -172,10 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       skillLevel = data?['skillLevel'] ?? '';
       email = data?['email'] ?? '';
       profileImageUrl = data?['profileImageUrl'];
-      level = (data?['level'] as num?)?.toInt() ?? 1;
       experiencePoints = (data?['experiencePoints'] as num?)?.toInt() ?? 0;
-      experienceToNextLevel =
-          (data?['experienceToNextLevel'] as num?)?.toInt() ?? 100;
       assessmentAttempt = loadedAttempt;
       isAssessmentLoading = false;
       assessmentLoadFailed = failedToLoadAssessment;

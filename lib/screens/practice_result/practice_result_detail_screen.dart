@@ -577,6 +577,7 @@ class PracticeResultDetailScreen extends StatelessWidget {
 
   String sourceLabel(BuildContext context, String source) {
     return switch (source) {
+      'lesson' => context.l10n.practiceResultsLesson,
       'composition' => context.l10n.practiceResultsComposition,
       'challenge' => context.l10n.practiceResultsChallenge,
       _ => context.l10n.practiceResultsMusicSheet,

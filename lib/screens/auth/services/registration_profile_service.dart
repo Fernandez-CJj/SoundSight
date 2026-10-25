@@ -40,6 +40,8 @@ class RegistrationProfileService {
         'theme': 'light',
         'languageCode': 'en',
         'skillLevel': null,
+        'practiceLevel': 1,
+        'experiencePoints': 0,
         'preferredNotation': null,
         'accountStatus': 'active',
         'createdAt': FieldValue.serverTimestamp(),

@@ -1,26 +1,24 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import 'models/microphone_audio_level.dart';
 import 'models/microphone_input_state.dart';
-import 'models/microphone_note_event.dart';
 import 'services/microphone_audio_capture_service.dart';
+import 'services/microphone_backend_stream_service.dart';
 import 'services/microphone_note_event_processor.dart';
-import 'services/microphone_single_note_detector.dart';
 
-/// Displays Android microphone capture controls and live audio diagnostics.
+/// Shows Android microphone capture and Python backend connection diagnostics.
 class MicrophoneScreen extends StatefulWidget {
-  /// Creates the Android microphone input diagnostic screen.
+  /// Creates the microphone streaming screen.
   const MicrophoneScreen({super.key});
 
-  /// Creates the state that owns this screen's microphone capture session.
+  /// Creates the state that owns this screen's live audio session.
   @override
   State<MicrophoneScreen> createState() => _MicrophoneScreenState();
 }
 
-/// Coordinates capture lifecycle while keeping PCM processing in its service.
+/// Connects the capture service to the backend without processing pitch here.
 class _MicrophoneScreenState extends State<MicrophoneScreen>
     with WidgetsBindingObserver {
   static const MicrophoneAudioLevel _silentLevel = MicrophoneAudioLevel(
@@ -29,216 +27,149 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
     capturedAt: Duration.zero,
   );
 
+  final TextEditingController _serverAddressController = TextEditingController(
+    text: '192.168.0.104:8000',
+  );
   late final MicrophoneNoteEventProcessor _noteEventProcessor;
   late final MicrophoneAudioCaptureService _captureService;
-  late final MicrophoneSingleNoteDetector _singleNoteDetector;
+  late final MicrophoneBackendStreamService _backendService;
   StreamSubscription<MicrophoneAudioLevel>? _levelSubscription;
   StreamSubscription<MicrophoneInputState>? _stateSubscription;
-  StreamSubscription<MicrophoneSignalQuality>? _qualitySubscription;
-  StreamSubscription<Set<int>>? _activeNotesSubscription;
-  StreamSubscription<MicrophoneNoteEvent>? _noteEventSubscription;
-  StreamSubscription<Uint8List>? _pcmSubscription;
 
   MicrophoneAudioLevel _level = _silentLevel;
   MicrophoneInputState _inputState = MicrophoneInputState.stopped;
-  MicrophoneSignalQuality _signalQuality = MicrophoneSignalQuality.unknown;
-  Set<int> _activeNotes = const <int>{};
-  int? _lastDetectedNote;
-  double? _lastDetectionConfidence;
+  int _sensitivity = 70;
+  bool _isStopping = false;
 
-  /// Creates microphone services and subscribes the screen to their state.
+  /// Creates the capture and backend services and observes capture diagnostics.
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _noteEventProcessor = MicrophoneNoteEventProcessor();
-    _singleNoteDetector = MicrophoneSingleNoteDetector(
-      noteEventProcessor: _noteEventProcessor,
-    );
     _captureService = MicrophoneAudioCaptureService(
       noteEventProcessor: _noteEventProcessor,
     );
+    _backendService = MicrophoneBackendStreamService(
+      captureService: _captureService,
+      noteEventProcessor: _noteEventProcessor,
+      onChanged: _refresh,
+    );
     _levelSubscription = _captureService.levelStream.listen(_receiveLevel);
     _stateSubscription = _noteEventProcessor.stateStream.listen(_receiveState);
-    _qualitySubscription = _noteEventProcessor.signalQualityStream.listen(
-      _receiveQuality,
-    );
-    _activeNotesSubscription = _noteEventProcessor.activeNotesStream.listen(
-      _receiveActiveNotes,
-    );
-    _noteEventSubscription = _noteEventProcessor.noteEventStream.listen(
-      _receiveNoteEvent,
-    );
-    _pcmSubscription = _captureService.pcmStream.listen(
-      _singleNoteDetector.addPcmChunk,
-    );
   }
 
-  /// Stops listening whenever Android moves the app away from the foreground.
+  /// Stops live audio when Android moves the app out of the foreground.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused ||
+    if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.hidden) {
       unawaited(_stopListening(interrupted: true));
     }
   }
 
-  /// Applies the newest microphone level to the live diagnostic meters.
-  void _receiveLevel(MicrophoneAudioLevel value) {
-    if (!mounted) return;
-    setState(() => _level = value);
+  /// Refreshes the screen after a backend connection or receipt update.
+  void _refresh() {
+    if (mounted) setState(() {});
   }
 
-  /// Applies microphone lifecycle changes and clears meters after capture ends.
+  /// Displays the latest local microphone RMS and peak measurements.
+  void _receiveLevel(MicrophoneAudioLevel value) {
+    if (mounted) setState(() => _level = value);
+  }
+
+  /// Clears the meter and backend session if capture is unexpectedly lost.
   void _receiveState(MicrophoneInputState value) {
     if (!mounted) return;
     setState(() {
       _inputState = value;
       if (value != MicrophoneInputState.ready &&
-          value != MicrophoneInputState.degraded) {
+          value != MicrophoneInputState.degraded &&
+          value != MicrophoneInputState.calibrating) {
         _level = _silentLevel;
       }
     });
+    if ((value == MicrophoneInputState.failed ||
+            value == MicrophoneInputState.interrupted) &&
+        _backendService.isStreaming) {
+      unawaited(_backendService.stop(
+        interrupted: true,
+        reason: _captureService.lastError ?? 'Microphone input was interrupted.',
+      ));
+    }
   }
 
-  /// Applies the latest signal-quality classification to the guidance card.
-  void _receiveQuality(MicrophoneSignalQuality value) {
-    if (!mounted) return;
-    setState(() => _signalQuality = value);
-  }
-
-  /// Displays the latest complete set of acoustically active piano notes.
-  void _receiveActiveNotes(Set<int> value) {
-    if (!mounted) return;
-    setState(() => _activeNotes = value);
-  }
-
-  /// Retains the latest accepted attack so confidence remains visible.
-  void _receiveNoteEvent(MicrophoneNoteEvent event) {
-    if (!mounted || event.type != MicrophoneNoteEventType.noteOn) return;
-    setState(() {
-      _lastDetectedNote = event.noteNumber;
-      _lastDetectionConfidence = event.confidence;
-    });
-  }
-
-  /// Starts capture or stops the active session when the main button is tapped.
+  /// Starts the LAN stream or stops the current microphone session.
   Future<void> _toggleListening() async {
-    if (_captureService.isListening) {
+    if (_backendService.isStreaming) {
       await _stopListening();
       return;
     }
-
-    _singleNoteDetector.reset();
-    setState(() {
-      _lastDetectedNote = null;
-      _lastDetectionConfidence = null;
-    });
-    await _captureService.start();
-    if (mounted) setState(() {});
+    FocusScope.of(context).unfocus();
+    await _backendService.start(
+      _serverAddressController.text,
+      sensitivity: _sensitivity,
+    );
   }
 
-  /// Stops microphone capture and resets the visible audio meters.
+  /// Stops the backend stream and releases Android microphone capture.
   Future<void> _stopListening({bool interrupted = false}) async {
-    _singleNoteDetector.reset();
-    await _captureService.stop(interrupted: interrupted);
-    if (!mounted) return;
-    setState(() => _level = _silentLevel);
-  }
-
-  /// Returns a concise user-facing label for the capture lifecycle state.
-  String _stateLabel(MicrophoneInputState state) {
-    return switch (state) {
-      MicrophoneInputState.stopped => 'Stopped',
-      MicrophoneInputState.starting => 'Starting microphone...',
-      MicrophoneInputState.calibrating => 'Calibrating',
-      MicrophoneInputState.ready => 'Listening',
-      MicrophoneInputState.degraded => 'Listening with limited quality',
-      MicrophoneInputState.interrupted => 'Stopped when app left foreground',
-      MicrophoneInputState.failed => 'Could not listen',
-    };
-  }
-
-  /// Returns Android-focused guidance for the current signal classification.
-  String _qualityLabel(MicrophoneSignalQuality quality) {
-    if (_inputState == MicrophoneInputState.calibrating) {
-      return 'Keep the room quiet for 3 seconds while background noise is measured.';
+    if (_isStopping) return;
+    _isStopping = true;
+    try {
+      await _backendService.stop(interrupted: interrupted);
+    } finally {
+      _isStopping = false;
+      if (mounted) setState(() => _level = _silentLevel);
     }
+  }
 
-    return switch (quality) {
-      MicrophoneSignalQuality.unknown =>
-        'Start listening to check the microphone signal.',
-      MicrophoneSignalQuality.tooQuiet =>
-        'Signal is very quiet. Move the phone closer to the piano.',
-      MicrophoneSignalQuality.usable =>
-        'The microphone is receiving a usable signal.',
-      MicrophoneSignalQuality.clipping =>
-        'Signal is clipping. Move the phone farther from the piano.',
-      MicrophoneSignalQuality.tooNoisy =>
-        'Background noise is too high for reliable recognition.',
+  /// Returns a short capture-state label for the device status card.
+  String _captureLabel() {
+    return switch (_inputState) {
+      MicrophoneInputState.stopped => 'Microphone off',
+      MicrophoneInputState.starting => 'Starting microphone...',
+      MicrophoneInputState.calibrating => 'Capturing audio',
+      MicrophoneInputState.ready => 'Capturing audio',
+      MicrophoneInputState.degraded => 'Capturing with background noise',
+      MicrophoneInputState.interrupted => 'Microphone interrupted',
+      MicrophoneInputState.failed => 'Microphone unavailable',
     };
   }
 
-  /// Converts a piano note number into a readable pitch such as C4 or F#5.
+  /// Converts a piano note number into a name such as C4 or F#5.
   String _noteName(int noteNumber) {
-    const pitchClasses = <String>[
-      'C',
-      'C#',
-      'D',
-      'D#',
-      'E',
-      'F',
-      'F#',
-      'G',
-      'G#',
-      'A',
-      'A#',
-      'B',
+    const names = <String>[
+      'C', 'C#', 'D', 'D#', 'E', 'F',
+      'F#', 'G', 'G#', 'A', 'A#', 'B',
     ];
-    final pitchClass = pitchClasses[noteNumber % 12];
-    final octave = noteNumber ~/ 12 - 1;
-    return '$pitchClass$octave';
+    return '${names[noteNumber % 12]}${noteNumber ~/ 12 - 1}';
   }
 
-  /// Formats the currently active monophonic detection for the diagnostic UI.
+  /// Formats the complete active-note set returned by the Python backend.
   String _activeNotesLabel() {
-    if (_activeNotes.isEmpty) return 'Detected piano notes: none';
-    final notes = _activeNotes.toList()..sort();
+    final notes = _backendService.serverActiveNotes.toList()..sort();
+    if (notes.isEmpty) return 'Detected piano notes: none';
     return 'Detected piano notes: ${notes.map(_noteName).join(', ')}';
   }
 
-  /// Formats the latest accepted attack and its detector confidence.
-  String _lastDetectionLabel() {
-    final noteNumber = _lastDetectedNote;
-    final confidence = _lastDetectionConfidence;
-    if (noteNumber == null || confidence == null) {
-      return 'Last detected note: none';
-    }
-    return 'Last detected note: ${_noteName(noteNumber)} '
+  /// Formats the most recently confirmed note attack and its confidence.
+  String _lastNoteLabel() {
+    final note = _backendService.lastNoteNumber;
+    final confidence = _backendService.lastNoteConfidence;
+    if (note == null || confidence == null) return 'Last detected note: none';
+    return 'Last detected note: ${_noteName(note)} '
         '(${(confidence * 100).toStringAsFixed(0)}% confidence)';
   }
 
-  /// Selects a status color that distinguishes usable and problem states.
-  Color _qualityColor(ColorScheme colors) {
-    return switch (_signalQuality) {
-      MicrophoneSignalQuality.usable => colors.primary,
-      MicrophoneSignalQuality.tooQuiet => colors.tertiary,
-      MicrophoneSignalQuality.clipping ||
-      MicrophoneSignalQuality.tooNoisy => colors.error,
-      MicrophoneSignalQuality.unknown => colors.outline,
-    };
-  }
-
-  /// Builds one scaled meter while retaining the raw normalized percentage.
+  /// Builds one visual meter with its unscaled microphone level.
   Widget _buildMeter({
     required String label,
     required double value,
     required double visualMultiplier,
     required Color color,
   }) {
-    final visualValue = (value * visualMultiplier).clamp(0.0, 1.0).toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -248,7 +179,7 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
         ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
-          value: visualValue,
+          value: (value * visualMultiplier).clamp(0.0, 1.0).toDouble(),
           minHeight: 12,
           color: color,
           backgroundColor: color.withValues(alpha: 0.15),
@@ -258,13 +189,13 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
     );
   }
 
-  /// Builds the Android microphone diagnostic and its capture controls.
+  /// Builds the LAN address control and live connection/audio indicators.
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final isStarting = _inputState == MicrophoneInputState.starting;
-    final isListening = _captureService.isListening;
-    final error = _captureService.lastError;
+    final busy = _backendService.isStarting || _isStopping;
+    final streaming = _backendService.isStreaming;
+    final error = _backendService.lastError ?? _captureService.lastError;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Microphone Piano Input')),
@@ -273,43 +204,88 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              'Android microphone check',
+              'Python audio connection',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             const Text(
-              'This feasibility step detects one piano note at a time. '
-              'Chord recognition will be added separately.',
+              'Batch 2 detects one piano note at a time. Do not play the piano '
+              'during the first second of each listening session. Keep the fan '
+              'in the same state during calibration and testing.',
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _serverAddressController,
+              enabled: !busy && !streaming,
+              keyboardType: TextInputType.url,
+              decoration: const InputDecoration(
+                labelText: 'Computer LAN IP and port',
+                hintText: '192.168.0.104:8000',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text('Use the computer\'s Wi-Fi IPv4 address, not localhost.'),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Expanded(child: Text('Input sensitivity')),
+                DropdownButton<int>(
+                  value: _sensitivity,
+                  onChanged: busy || streaming
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _sensitivity = value);
+                          }
+                        },
+                  items: const [
+                    DropdownMenuItem(value: 60, child: Text('60%')),
+                    DropdownMenuItem(value: 70, child: Text('70%')),
+                    DropdownMenuItem(value: 100, child: Text('100%')),
+                  ],
+                ),
+              ],
+            ),
+            const Text(
+              'Lower sensitivity ignores more quiet sounds but may miss soft keys. '
+              'Change it before starting a new session.',
+            ),
+            const SizedBox(height: 20),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _stateLabel(_inputState),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text(_captureLabel()),
                     const SizedBox(height: 8),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.circle,
                           size: 14,
-                          color: _qualityColor(colors),
+                          color: _backendService.isConnected
+                              ? colors.primary
+                              : colors.outline,
                         ),
                         const SizedBox(width: 8),
-                        Expanded(child: Text(_qualityLabel(_signalQuality))),
+                        Expanded(child: Text(_backendService.status)),
                       ],
                     ),
-                    if (error != null &&
-                        (_inputState == MicrophoneInputState.failed ||
-                            _inputState ==
-                                MicrophoneInputState.interrupted)) ...[
-                      const SizedBox(height: 12),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Python received ${_backendService.chunksReceived} '
+                      'chunks / ${_backendService.bytesReceived} bytes',
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Python calibration: ${_backendService.calibrationStatus}'),
+                    if (streaming) ...[
+                      const SizedBox(height: 8),
+                      Text('PCM16 mono, ${_captureService.effectiveSampleRate} Hz'),
+                    ],
+                    if (error != null) ...[
+                      const SizedBox(height: 8),
                       Text(error, style: TextStyle(color: colors.error)),
                     ],
                   ],
@@ -331,23 +307,24 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
               color: colors.tertiary,
             ),
             const SizedBox(height: 20),
-            Text(
-              'Ambient baseline: '
-              '${(_captureService.noiseFloorRms * 100).toStringAsFixed(2)}%',
-            ),
-            const SizedBox(height: 8),
             Text(_activeNotesLabel()),
             const SizedBox(height: 8),
-            Text(_lastDetectionLabel()),
+            Text(_lastNoteLabel()),
+            const SizedBox(height: 8),
+            Text(
+              'Note attacks: ${_backendService.detectedAttacks}  '
+              'Releases: ${_backendService.detectedReleases}',
+            ),
             const SizedBox(height: 28),
             FilledButton.icon(
-              onPressed: isStarting ? null : _toggleListening,
-              icon: Icon(isListening ? Icons.stop : Icons.mic),
-              label: Text(isListening ? 'Stop listening' : 'Start listening'),
+              onPressed: busy ? null : _toggleListening,
+              icon: Icon(streaming ? Icons.stop : Icons.mic),
+              label: Text(streaming ? 'Stop listening' : 'Start listening'),
             ),
             const SizedBox(height: 12),
             const Text(
-              'Audio stays in memory for live processing and is not saved or uploaded.',
+              'Live audio is sent to your computer over Wi-Fi for processing. '
+              'The backend keeps no recording.',
               textAlign: TextAlign.center,
             ),
           ],
@@ -356,23 +333,20 @@ class _MicrophoneScreenState extends State<MicrophoneScreen>
     );
   }
 
-  /// Cancels UI subscriptions before asynchronously releasing the microphone.
+  /// Stops streaming and releases subscriptions when navigating away.
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _serverAddressController.dispose();
     unawaited(_levelSubscription?.cancel());
     unawaited(_stateSubscription?.cancel());
-    unawaited(_qualitySubscription?.cancel());
-    unawaited(_activeNotesSubscription?.cancel());
-    unawaited(_noteEventSubscription?.cancel());
-    unawaited(_pcmSubscription?.cancel());
-    _singleNoteDetector.dispose();
     unawaited(_disposeServices());
     super.dispose();
   }
 
-  /// Releases capture before closing the downstream microphone event streams.
+  /// Releases backend transport before closing capture and event streams.
   Future<void> _disposeServices() async {
+    await _backendService.dispose();
     await _captureService.dispose();
     await _noteEventProcessor.dispose();
   }

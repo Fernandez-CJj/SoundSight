@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -7,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
+import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/midi/models/midi_note_event.dart';
@@ -14,6 +18,7 @@ import 'package:soundsight/screens/midi/services/midi_input_service.dart';
 import 'package:soundsight/screens/midi/utils/midi_note_converter.dart';
 import 'package:soundsight/screens/practice_result/practice_result_detail_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/widgets/practice_mode_toggle.dart';
 
 import 'music_sheet_web_view.dart';
 import 'midi_file_duration_calculator.dart';
@@ -24,7 +29,23 @@ import 'sight_reading_note_matcher.dart';
 import 'sight_reading_performance_tracker.dart';
 import 'sight_reading_progress_service.dart';
 
-enum SightReadingSource { composition, musicSheet }
+enum SightReadingSource { composition, musicSheet, lesson }
+
+class SightReadingLessonAssets {
+  const SightReadingLessonAssets({
+    required this.stageNumber,
+    required this.title,
+    required this.scoreAssetPath,
+    required this.midiAssetPath,
+    this.pdfAssetPath,
+  });
+
+  final int stageNumber;
+  final String title;
+  final String scoreAssetPath;
+  final String midiAssetPath;
+  final String? pdfAssetPath;
+}
 
 class MusicSheetReadingScreen extends StatefulWidget {
   const MusicSheetReadingScreen({
@@ -33,12 +54,25 @@ class MusicSheetReadingScreen extends StatefulWidget {
     required this.source,
     required this.colors,
     this.challengeItemId,
-  });
+  }) : lesson = null,
+       restoreOrientations = null;
+
+  MusicSheetReadingScreen.lesson({
+    super.key,
+    required SightReadingLessonAssets lesson,
+    required this.colors,
+    this.restoreOrientations,
+  }) : scoreDocumentPath = 'lessons/stage_${lesson.stageNumber}',
+       source = SightReadingSource.lesson,
+       challengeItemId = null,
+       lesson = lesson;
 
   final String scoreDocumentPath;
   final SightReadingSource source;
   final AppThemeColors colors;
   final String? challengeItemId;
+  final SightReadingLessonAssets? lesson;
+  final List<DeviceOrientation>? restoreOrientations;
 
   @override
   State<MusicSheetReadingScreen> createState() =>
@@ -131,6 +165,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   @override
   void initState() {
     super.initState();
+
+    if (widget.lesson != null) {
+      performanceModeEnabled = false;
+    }
 
     musicSheetController = MusicSheetWebViewController(
       onExpectedNotesChanged: (notes) {
@@ -399,13 +437,18 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       }
     });
 
-    SystemChrome.setPreferredOrientations([
+    unawaited(loadPerformanceDifficulty());
+    unawaited(loadInitialPieceSource());
+  }
+
+  Future<void> loadInitialPieceSource() async {
+    await SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-
-    unawaited(loadPerformanceDifficulty());
-    loadPieceSource();
+    if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted) await loadPieceSource();
   }
 
   @override
@@ -466,6 +509,14 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                 unawaited(showCurrentPracticeControls());
               },
             ),
+            actions: [
+              if (widget.lesson?.pdfAssetPath != null)
+                IconButton(
+                  tooltip: 'View lesson PDF',
+                  onPressed: () => unawaited(openLessonPdf()),
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                ),
+            ],
           ),
         ),
       ),
@@ -551,50 +602,18 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           ),
         ),
         if (showTitle) const Gap(AppSpacing.sm),
-        SizedBox(
-          height: 38,
-          child: SegmentedButton<bool>(
-            segments: [
-              ButtonSegment<bool>(
-                value: false,
-                label: Text(context.l10n.sightReadingWait),
-              ),
-              ButtonSegment<bool>(
-                value: true,
-                label: Text(context.l10n.sightReadingPerformance),
-              ),
-            ],
-            selected: {performanceModeEnabled},
-            showSelectedIcon: false,
-            style: ButtonStyle(
-              visualDensity: VisualDensity.compact,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              textStyle: const WidgetStatePropertyAll(
-                TextStyle(
-                  fontSize: AppTextSizes.caption,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              foregroundColor: WidgetStateProperty.resolveWith((states) {
-                return states.contains(WidgetState.selected)
-                    ? colors.backgroundColor
-                    : colors.primaryColor;
-              }),
-              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                return states.contains(WidgetState.selected)
-                    ? colors.primaryColor
-                    : Colors.transparent;
-              }),
-              side: WidgetStatePropertyAll(
-                BorderSide(color: colors.borderColor),
-              ),
-            ),
-            onSelectionChanged: canSwitchMode
-                ? (selection) {
-                    unawaited(confirmPracticeModeChange(selection.first));
-                  }
-                : null,
-          ),
+        PracticeModeToggle<bool>(
+          firstValue: false,
+          firstLabel: context.l10n.sightReadingWait,
+          secondValue: true,
+          secondLabel: context.l10n.sightReadingPerformance,
+          selectedValue: performanceModeEnabled,
+          colors: colors,
+          onChanged: canSwitchMode
+              ? (selectedMode) {
+                  unawaited(confirmPracticeModeChange(selectedMode));
+                }
+              : null,
         ),
         const Gap(AppSpacing.sm),
         if (showProgress) Expanded(
@@ -2127,9 +2146,41 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   }
 
   String sourceLabel() {
-    return widget.source == SightReadingSource.composition
-        ? context.l10n.sightReadingComposition
-        : context.l10n.sightReadingMusicSheet;
+    return switch (widget.source) {
+      SightReadingSource.composition =>
+        context.l10n.sightReadingComposition,
+      SightReadingSource.musicSheet => context.l10n.sightReadingMusicSheet,
+      SightReadingSource.lesson => context.l10n.drawerPractice,
+    };
+  }
+
+  Future<void> openLessonPdf() async {
+    final lesson = widget.lesson;
+    final path = lesson?.pdfAssetPath;
+    if (lesson == null || path == null) return;
+    final pdfBytes = rootBundle.load(path);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: Text(lesson.title)),
+          body: FutureBuilder<ByteData>(
+            future: pdfBytes,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Could not load PDF: ${snapshot.error}'));
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return PdfViewer.data(
+                snapshot.data!.buffer.asUint8List(),
+                sourceName: lesson.title,
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   String compactTimeStatus() {
@@ -2868,6 +2919,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     showScoreLoadingDialog();
 
     try {
+      final lesson = widget.lesson;
+      if (lesson != null) {
+        await loadLessonSource(lesson);
+        return;
+      }
+
       final piece = await FirebaseFirestore.instance
           .doc(widget.scoreDocumentPath)
           .get();
@@ -2945,6 +3002,54 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
       showScoreLoadingError(context.l10n.sightReadingScoreLoadFailed);
     }
+  }
+
+  Future<void> loadLessonSource(SightReadingLessonAssets lesson) async {
+    final musicXml = await readLessonMusicXml(lesson.scoreAssetPath);
+    final midiData = await rootBundle.load(lesson.midiAssetPath);
+    final durationResult = MidiFileDurationCalculator.calculate(
+      midiData.buffer.asUint8List(),
+    );
+
+    if (!mounted) return;
+    setState(() {
+      loadedMusicXml = musicXml;
+      scoreAudioUrl = null;
+      pieceTitle = lesson.title;
+      scoreLoadingError = null;
+      performanceTracker.loadTimeline(
+        durationResult.timelineEvents,
+        totalDuration: durationResult.totalDuration,
+      );
+      targetDurationSeconds =
+          (durationResult.totalDuration.inMilliseconds /
+                  Duration.millisecondsPerSecond)
+              .ceil();
+      targetDurationCalculated = true;
+      targetDurationUnavailableReason = durationResult.unavailableReason;
+    });
+    await musicSheetController.loadScore(musicXml);
+  }
+
+  Future<String> readLessonMusicXml(String path) async {
+    if (!path.toLowerCase().endsWith('.mxl')) {
+      return rootBundle.loadString(path);
+    }
+
+    final data = await rootBundle.load(path);
+    final archive = ZipDecoder().decodeBytes(data.buffer.asUint8List());
+    final scoreFile = archive.files
+        .where(
+          (file) =>
+              file.isFile &&
+              file.name.toLowerCase().endsWith('.xml') &&
+              !file.name.toLowerCase().endsWith('meta-inf/container.xml'),
+        )
+        .firstOrNull;
+    if (scoreFile == null) {
+      throw const FormatException('No MusicXML score in lesson asset.');
+    }
+    return utf8.decode(scoreFile.content as List<int>);
   }
 
   Future<void> loadMidiTargetDuration(String? midiUrl) async {
@@ -3042,13 +3147,26 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final retryIsRequired = hintWasShown;
 
     final isPerfect = totalMistakes == 0 && !retryIsRequired;
+    final lessonPassed = widget.lesson != null &&
+        performanceModeEnabled &&
+        performanceTracker.totalEventCount > 0 &&
+        performanceTracker.correctEventCount ==
+            performanceTracker.totalEventCount &&
+        performanceTracker.wrongEventCount == 0 &&
+        performanceTracker.missedEventCount == 0;
     final scoreText = performanceModeEnabled
         ? performanceTracker.scoreText
         : noteMatcher.scoreText;
 
     late final String xpMessage;
 
-    if (!performanceModeEnabled) {
+    if (widget.lesson != null) {
+      xpMessage = lessonPassed
+          ? 'Perfect Performance run. Save your progress to unlock the next stage.'
+          : performanceModeEnabled
+              ? 'A perfect Performance run is required to unlock the next stage.'
+              : 'Wait mode is practice. Complete a perfect Performance run to advance.';
+    } else if (!performanceModeEnabled) {
       xpMessage = context.l10n.sightReadingWaitModeNoXp;
     } else if (widget.challengeItemId == null) {
       xpMessage = context.l10n.sightReadingLessonNoXp;
@@ -3067,7 +3185,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     late final Color accentColor;
     late final IconData icon;
 
-    if (retryIsRequired) {
+    if (widget.lesson != null && !performanceModeEnabled) {
+      title = 'Wait practice complete';
+      message = 'Switch to Performance mode when you are ready to pass this stage.';
+      accentColor = Colors.blue.shade700;
+      icon = Icons.hourglass_empty_rounded;
+    } else if (retryIsRequired) {
       title = context.l10n.sightReadingRetryRequired;
       message = context.l10n.sightReadingRetryRequiredDescription;
 
@@ -3261,6 +3384,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                   id: resultId,
                                   completedAt: DateTime.now(),
                                 ),
+                                lessonPassed: widget.lesson == null
+                                    ? null
+                                    : lessonPassed,
                               ),
                             );
                           },
@@ -3325,7 +3451,9 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                   style: primaryButtonStyle(colors),
                                   onPressed: () {
                                     Navigator.of(dialogContext).pop();
-                                    Navigator.of(context).pop();
+                                    Navigator.of(context).pop(
+                                      widget.lesson == null ? null : lessonPassed,
+                                    );
                                   },
                                   icon: const Icon(Icons.check_rounded),
                                   label: Text(context.l10n.done),
@@ -3348,6 +3476,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
   Future<void> openPracticeResultFromSightReading({
     required PracticeResultSummary result,
+    bool? lessonPassed,
   }) async {
     await SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.portraitUp,
@@ -3369,13 +3498,25 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       );
     } finally {
       if (mounted) {
-        await SystemChrome.setPreferredOrientations(const [
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
-        ]);
+        await SystemChrome.setPreferredOrientations(
+          widget.lesson == null
+              ? const [
+                  DeviceOrientation.landscapeLeft,
+                  DeviceOrientation.landscapeRight,
+                ]
+              : widget.restoreOrientations ??
+                    const [
+                      DeviceOrientation.landscapeLeft,
+                      DeviceOrientation.landscapeRight,
+                    ],
+        );
 
         if (mounted) {
-          await retryExercise();
+          if (widget.lesson != null) {
+            Navigator.of(context).pop(lessonPassed);
+          } else {
+            await retryExercise();
+          }
         }
       }
     }
@@ -3995,7 +4136,11 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     waitHoldTicker?.cancel();
     playingStopwatch.stop();
     unawaited(scoreAudioPlaybackService.dispose());
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setPreferredOrientations(
+      widget.restoreOrientations ?? (widget.lesson == null
+          ? [DeviceOrientation.portraitUp]
+          : [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]),
+    );
 
     super.dispose();
   }

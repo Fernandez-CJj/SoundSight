@@ -51,7 +51,6 @@ dependencies:
   http: ^1.6.0
   camera: ^0.12.1
   opencv_dart: ^2.2.2
-  pitch_detector_dart: ^0.0.7
   buffered_list_stream: ^1.3.0
   flutter_midi_command: ^1.3.0
   webview_flutter: ^4.14.1
@@ -60,6 +59,7 @@ dependencies:
   video_player: ^2.14.0
   midi_util: ^1.0.2
   record: ^7.1.2
+  archive: ^4.5.2
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +90,22 @@ flutter:
     - assets/calibration/
     - assets/audio/piano/
     - assets/audio/piano/cleaned/
+    - assets/practice/stage_1/
+    - assets/practice/stage_2/
+    - assets/practice/stage_3/
+    - assets/practice/stage_4/
+    - assets/practice/stage_5/
+    - assets/practice/stage_6/
+    - assets/practice/stage_7/
+    - assets/practice/stage_8/
+    - assets/practice/stage_9/
+    - assets/practice/stage_10/
+    - assets/practice/stage_11/
+    - assets/practice/stage_12/
+    - assets/practice/stage_13/
+    - assets/practice/stage_14/
+    - assets/practice/stage_15/
+    - assets/practice/stage_16/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

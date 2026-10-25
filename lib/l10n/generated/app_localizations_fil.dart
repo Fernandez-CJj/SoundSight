@@ -730,7 +730,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get assessmentExpiredDescription =>
-      'Permanenteng itinalaga ang antas na Baguhan. Hindi na maaaring ulitin.';
+      'Nag-expire ang pagsusuri at hindi na maaaring ulitin. Mananatili ang iyong naitalang antas; kung wala pa, itatalaga ang Baguhan.';
 
   @override
   String get updatePersonalInformation =>
@@ -3648,6 +3648,9 @@ class AppLocalizationsFil extends AppLocalizations {
   String get practiceResultsMusicSheet => 'Music Sheet';
 
   @override
+  String get practiceResultsLesson => 'Aralin';
+
+  @override
   String get practiceResultsComposition => 'Komposisyon';
 
   @override
@@ -3975,7 +3978,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get assessmentStartWarning =>
-      'Magsisimula agad ang iyong 72-oras na palugit. Isang beses mo lamang maaaring kunin ang pagsusuri, at permanenteng itatalaga ang antas na Beginner kapag nag-expire ito.';
+      'Magsisimula agad ang iyong 72-oras na palugit. Isang beses mo lamang maaaring kunin ang pagsusuri. Kung mag-expire ito, mananatili ang iyong naitalang antas, o itatalaga ang Baguhan kung wala ka pang antas.';
 
   @override
   String get start => 'Simulan';
@@ -4007,7 +4010,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get assessmentExpiredFullDescription =>
-      'Hindi natapos ang pagsusuri sa loob ng 72 oras. Beginner ang iyong SoundSight Level, at hindi na maaaring ulitin ang pagsusuring ito.';
+      'Hindi natapos ang pagsusuri sa loob ng 72 oras at hindi na ito maaaring ulitin. Mananatili ang iyong naitalang antas, o itatalaga ang Baguhan kung wala ka pang antas.';
 
   @override
   String get assessmentViewResults => 'Tingnan ang mga Resulta';
@@ -4075,7 +4078,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get assessmentExpirationExplanation =>
-      'Kapag nag-expire ang pagsusuri bago matapos, itatakda sa Beginner ang iyong SoundSight Level.';
+      'Kung mag-expire ang pagsusuri bago matapos, mananatili ang iyong naitalang antas. Itatalaga ang Baguhan kung wala ka pang antas.';
 
   @override
   String get assessmentLeaveExplanation =>

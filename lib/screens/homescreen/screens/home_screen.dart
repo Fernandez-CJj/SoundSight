@@ -33,9 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String username = '';
   String skillLevel = '';
-  int level = 1;
   int experiencePoints = 0;
-  int experienceToNextLevel = 100;
 
   @override
   void initState() {
@@ -136,9 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
             PlayerProgressContainer(
               colors: colors,
               skillLevel: skillLevel,
-              level: level,
               experiencePoints: experiencePoints,
-              experienceToNextLevel: experienceToNextLevel,
             ),
             const Gap(AppSpacing.md),
             PracticeContainer(
@@ -195,11 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
       isDarkMode = theme == 'dark';
       username = userData?['username'] ?? '';
       skillLevel = userData?['skillLevel'] ?? '';
-      level = (userData?['level'] as num?)?.toInt() ?? 1;
       experiencePoints =
           (userData?['experiencePoints'] as num?)?.toInt() ?? 0;
-      experienceToNextLevel =
-          (userData?['experienceToNextLevel'] as num?)?.toInt() ?? 100;
     });
   }
 

@@ -140,10 +140,23 @@ service cloud.firestore {
                || data.languageCode in ['en', 'fil'];
       }
 
+      function skillRank(level) {
+        return level == 'advanced'
+          ? 3
+          : level == 'intermediate'
+            ? 2
+            : level == 'beginner'
+              ? 1
+              : 0;
+      }
+
       function validAssessmentSkillLevelUpdate() {
         let attempt = getAfter(
           /databases/$(database)/documents/users/$(userId)/assessment/current
         );
+        let previousSkillLevel = resource.data.keys().hasAny(['skillLevel'])
+          ? resource.data.skillLevel
+          : null;
 
         return request.resource.data.diff(resource.data)
                  .affectedKeys()
@@ -159,13 +172,61 @@ service cloud.firestore {
                    && attempt.data.currentSection == 'results'
                    && request.resource.data.skillLevel
                       == attempt.data.finalSkillLevel
+                   && skillRank(request.resource.data.skillLevel)
+                      > skillRank(previousSkillLevel)
                  )
                  ||
                  (
                    attempt.data.status == 'expired'
                    && request.resource.data.skillLevel == 'beginner'
+                   && skillRank(previousSkillLevel) == 0
                  )
                );
+      }
+
+      function validPracticeLevelUpdate() {
+        let previousLevel = resource.data.keys().hasAny(['practiceLevel'])
+          ? resource.data.practiceLevel
+          : 1;
+        let previousExperience = resource.data.keys().hasAny(['experiencePoints'])
+          ? resource.data.experiencePoints
+          : 0;
+        let previousSkillLevel = resource.data.keys().hasAny(['skillLevel'])
+          ? resource.data.skillLevel
+          : null;
+        let expectedSkillLevel = previousLevel == 16
+          ? 'advanced'
+          : previousLevel == 9 && previousSkillLevel != 'advanced'
+            ? 'intermediate'
+            : previousSkillLevel;
+
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasAny(['practiceLevel'])
+               && request.resource.data.diff(resource.data)
+                    .affectedKeys()
+                    .hasOnly([
+                      'practiceLevel',
+                      'skillLevel',
+                      'experiencePoints',
+                      'updatedAt'
+                    ])
+               && previousLevel is int
+               && previousLevel >= 1
+               && previousLevel <= 16
+               && previousExperience is int
+               && previousExperience >= 0
+               && request.resource.data.practiceLevel is int
+               && request.resource.data.practiceLevel == previousLevel + 1
+               && request.resource.data.experiencePoints is int
+               && request.resource.data.experiencePoints
+                    == previousExperience + 50
+               && (
+                 request.resource.data.keys().hasAny(['skillLevel'])
+                   ? request.resource.data.skillLevel
+                   : null
+               ) == expectedSkillLevel
+               && request.resource.data.updatedAt == request.time;
       }
 
       allow create: if ownsUser()
@@ -173,6 +234,14 @@ service cloud.firestore {
                     && (
                       !request.resource.data.keys().hasAny(['skillLevel'])
                       || request.resource.data.skillLevel == null
+                    )
+                    && (
+                      !request.resource.data.keys().hasAny(['practiceLevel'])
+                      || request.resource.data.practiceLevel == 1
+                    )
+                    && (
+                      !request.resource.data.keys().hasAny(['experiencePoints'])
+                      || request.resource.data.experiencePoints == 0
                     );
 
       allow read: if ownsUser() || isAdmin();
@@ -184,7 +253,8 @@ service cloud.firestore {
                     && (
                       !request.resource.data.diff(resource.data)
                         .affectedKeys()
-                        .hasAny(['skillLevel'])
+                        .hasAny(['skillLevel', 'practiceLevel'])
+                      || validPracticeLevelUpdate()
                       || validAssessmentSkillLevelUpdate()
                     );
 
@@ -198,6 +268,18 @@ service cloud.firestore {
           return isVerifiedUser()
                  && request.auth.uid == userId
                  && assessmentId == 'current';
+        }
+
+        function expectedExpiredSkillLevel() {
+          let profile = get(
+            /databases/$(database)/documents/users/$(userId)
+          );
+          let skill = profile.data.keys().hasAny(['skillLevel'])
+            ? profile.data.skillLevel
+            : null;
+          return skill in ['beginner', 'intermediate', 'advanced']
+            ? skill
+            : 'beginner';
         }
 
         function validQuestionnaireAnswers(answers) {
@@ -806,7 +888,7 @@ service cloud.firestore {
                           && request.resource.data.updatedAt == request.time
                           && getAfter(
                                /databases/$(database)/documents/users/$(userId)
-                             ).data.skillLevel == 'beginner'
+                             ).data.skillLevel == expectedExpiredSkillLevel()
                           && getAfter(
                                /databases/$(database)/documents/users/$(userId)
                              ).data.updatedAt == request.time
@@ -894,7 +976,7 @@ service cloud.firestore {
                         ])
                  && data.ownerId == userId
                  && data.scoreDocumentPath is string
-                 && data.source in ['composition', 'musicSheet', 'challenge']
+                 && data.source in ['composition', 'musicSheet', 'challenge', 'lesson']
                  && data.pieceTitle is string
                  && data.pieceTitle.size() > 0
                  && data.pieceTitle.size() <= 200

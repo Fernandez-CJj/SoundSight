@@ -47,6 +47,81 @@ analysis, verification, benchmarking, or formatting instructions below.
   tasks into one small end-to-end batch. The user then validates the complete
   batch on the Android phone before the next batch begins.
 
+## Python-backend rebuild (current implementation path)
+
+The earlier on-phone pitch-detector work below is superseded for recognition.
+Its detector file and unused dependency were removed after the user confirmed
+the live connection worked. Flutter captures PCM; the existing Python backend
+receives it over the same Wi-Fi. Audio is held only in memory.
+
+### Batch 1 — live audio connection
+
+- [x] Keep Android PCM16 mono capture in the microphone feature.
+- [x] Add `/mic/stream` WebSocket with JSON format setup and binary audio.
+- [x] Acknowledge server readiness and cumulative audio receipt to Flutter.
+- [x] Provide an editable computer LAN IP and port on the microphone screen.
+- [x] Stop capture and clear active microphone notes on stop, navigation,
+      backgrounding, or a lost connection.
+- [x] Show microphone and Python connection/audio-received indicators.
+- [x] After phone validation, remove the unused local pitch detector and its
+      dependency.
+- [x] Phone test: connect phone and computer to the same Wi-Fi, start the
+      backend on `0.0.0.0:8000`, enter the computer's Wi-Fi IPv4 address, and start.
+- [x] Phone test: confirm Connected, increasing chunks/bytes, and the Python
+      console's audio-arriving message while playing the piano.
+- [ ] Phone test: stop, leave the screen, and background the app in separate
+      attempts; each time confirm Android's microphone indicator turns off.
+- [ ] Phone test: try an incorrect address or stop the backend and confirm an
+      understandable error and microphone shutdown.
+- [x] User confirms Batch 1 gate before any Batch 2 work.
+
+The user reported "it works" and requested Batch 2. The specific background,
+navigation, and wrong-address checks above were not separately reported, so
+their checkboxes remain open for later confirmation.
+
+### Batch 2 — single notes and ambient noise (coding complete; phone gate open)
+
+- [x] Buffer arbitrary PCM chunks into analysis frames in `backend/mic/`.
+- [x] Add short ambient calibration, pitch/harmonic evidence, attack
+      confirmation, and release hysteresis for C3–C6.
+- [x] Send note-on, note-off, confidence, velocity estimate, capture position,
+      and complete active-note snapshots to Flutter.
+- [x] Prefer a fresh pitch attack over an older ringing pitch while reporting
+      only one active note; suppress false retriggers from a fading note tail.
+- [x] Add a per-session input-sensitivity control (60%, 70%, 100%) with 70%
+      selected by default; lower settings use stronger noise rejection.
+- [ ] Phone test: compare fan-only false notes and soft-key misses at 70%, then
+      60%, with no piano during calibration and the fan in the same state.
+- [ ] Phone test: play the 37 C3–C6 keys one at a time and record any wrong or
+      missing note names, including repeated strikes of the same key.
+- [ ] Phone gate: white/black keys, repeated/soft/loud notes, releases,
+      fan-only audio, wrong/missed notes, false notes, and visible delay.
+
+Current user priority is accurate sequential single-key recognition. If two
+keys truly start simultaneously, there is no acoustic order to report; the
+detector chooses one confirmed pitch. Chord/layer validation remains deferred.
+
+### Batch 3 — chords and layers (not started)
+
+- [ ] Evaluate multiple candidates independently, suppress false harmonics,
+      and retain notes when a new note is layered.
+- [ ] Phone gate: two-note intervals, major/minor triads, inversions,
+      hold-then-add layers, release order, and fan noise.
+
+### Batch 4 — hardening and assessment (not started)
+
+- [ ] Handle network loss, queued audio, interruptions, recalibration, and
+      explicit source switching; connect mic events to assessment first.
+- [ ] Keep duration-sensitive/composition features MIDI-only pending their
+      separate phone validation.
+- [ ] Phone gate: Wi-Fi loss/recovery, backgrounding, screen exit, repeated
+      start/stop, a full practice session, and assessment scoring.
+
+Validation goals for the completed feature: at least 95% clean single-note
+recall, 90% clean triad completion, no more than one fan-only false note per
+minute, and roughly 200–300 ms feedback. These are user-measured targets, not
+claims about Batch 1.
+
 The target is **microphone behavior compatible with SoundSight's expectations**:
 the microphone feature should provide note attacks, active-note snapshots,
 release events, readiness state, and cleanup behavior from audio while leaving
@@ -98,12 +173,12 @@ Apply these rules to every implementation step:
 `MidiInputService` currently owns the connected MIDI device and publishes four
 broadcast streams:
 
-| MIDI output | Meaning | Current consumers |
-| --- | --- | --- |
-| `noteOnStream` | Every received note attack as a MIDI number | Assessment, Synthesia, sight reading, calibration |
-| `noteEventStream` | Note-on and note-off events with velocity | Synthesia, sight reading, composition recording/editor, calibration |
-| `activeNotesStream` | Immutable set of notes currently held | All live piano modes and keyboard highlighting |
-| `connectionStream` | Whether the selected source is usable | All modes that must interrupt safely |
+| MIDI output         | Meaning                                     | Current consumers                                                   |
+| ------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
+| `noteOnStream`      | Every received note attack as a MIDI number | Assessment, Synthesia, sight reading, calibration                   |
+| `noteEventStream`   | Note-on and note-off events with velocity   | Synthesia, sight reading, composition recording/editor, calibration |
+| `activeNotesStream` | Immutable set of notes currently held       | All live piano modes and keyboard highlighting                      |
+| `connectionStream`  | Whether the selected source is usable       | All modes that must interrupt safely                                |
 
 Important MIDI semantics:
 
@@ -125,15 +200,15 @@ Important MIDI semantics:
 
 ### Consumer requirements
 
-| Feature | Attack required | Active set required | Release required | Velocity required | Microphone risk |
-| --- | --- | --- | --- | --- | --- |
-| Assessment | Yes | Display only | No | No | Low |
-| Performance scoring | Yes | Sometimes | Yes for duration | No | Medium |
-| Synthesia wait mode | Yes | Exact chord/layer matching | Yes | No | High |
-| Sight-reading wait mode | Yes | Exact chord/layer matching | Yes | No | High |
-| Piano calibration practice | Yes | Exact chord/layer matching | Yes | No | High |
-| Composition recording | Yes | Stop/held-note logic | Yes | Yes | Very high |
-| Manual composition MIDI step | Yes | Indirectly | Yes | Yes | Very high |
+| Feature                      | Attack required | Active set required        | Release required | Velocity required | Microphone risk |
+| ---------------------------- | --------------- | -------------------------- | ---------------- | ----------------- | --------------- |
+| Assessment                   | Yes             | Display only               | No               | No                | Low             |
+| Performance scoring          | Yes             | Sometimes                  | Yes for duration | No                | Medium          |
+| Synthesia wait mode          | Yes             | Exact chord/layer matching | Yes              | No                | High            |
+| Sight-reading wait mode      | Yes             | Exact chord/layer matching | Yes              | No                | High            |
+| Piano calibration practice   | Yes             | Exact chord/layer matching | Yes              | No                | High            |
+| Composition recording        | Yes             | Stop/held-note logic       | Yes              | Yes               | Very high       |
+| Manual composition MIDI step | Yes             | Indirectly                 | Yes              | Yes               | Very high       |
 
 ## 2. Definition of microphone parity
 
@@ -253,8 +328,8 @@ yet. The first phone test begins with microphone capture in Phase 3.
 
 - [x] Add a maintained Flutter package that provides raw PCM streaming.
 - [x] Capture mono PCM16, initially at 44.1 kHz.
-- [ ] Verify the actual device sample rate instead of assuming the requested
-      rate was honored.
+- [x] Use the sample rate reported by Android when it adjusts the requested
+      rate; otherwise use the requested 44.1 kHz rate.
 - [x] Keep iOS microphone configuration out of scope for this Android-only app.
 - [x] Confirm Android `RECORD_AUDIO` is declared and request it at runtime.
 - [ ] Implement permission denied, permanently denied, and restricted states.
@@ -352,6 +427,10 @@ Start with expected-note verification, not unrestricted transcription.
 
 - [x] Add a monophonic YIN feasibility detector using the existing
       `pitch_detector_dart` dependency.
+- [x] Decode little-endian PCM16 samples directly before passing floating
+      samples to YIN; the package's PCM16 conversion discards sample data.
+- [x] Show the latest analyzed frequency, confidence, input rate, or skipped
+      analysis reason on the microphone screen.
 - [x] Convert detected frequencies to the nearest piano note number.
 - [x] Gate pitch analysis behind calibrated usable-signal quality.
 - [ ] Convert expected MIDI numbers to frequencies using A4 tuning.
@@ -393,6 +472,10 @@ Coding status: the first end-to-end single-note feasibility batch is prepared
 for Android phone testing. Chord and layer recognition are intentionally not
 implemented by this monophonic detector. Codex did not run tests, analysis,
 formatting, builds, or automated verification.
+
+User result: on the first Android run, no key produced a detected note. The
+PCM16 conversion path was corrected and a detector diagnostic was added; the
+single-note validation gate remains open until the user retests on the phone.
 
 ### Single-note tests
 
@@ -622,4 +705,3 @@ Use this phase when the score-aware detector reaches its accuracy ceiling.
   <https://github.com/spotify/basic-pitch>
 - Google Onsets and Frames:
   <https://magenta.tensorflow.org/onsets-frames>
-

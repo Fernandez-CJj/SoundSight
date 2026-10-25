@@ -1,0 +1,31 @@
+// Lesson 2 Practice Quiz - The Grand Staff
+
+Q: Which musical instrument uses a single five-line staff rather than a grand staff?
+A) Piano
+* B) Guitar
+C) Pipe Organ
+D) Harp
+
+Q: What structural feature joins the two staffs together in a grand staff?
+A) A single thin barline
+* B) A curly bracket
+C) A repeat sign
+D) A double thick barline
+
+Q: Which two clefs are most commonly paired together on the grand staff?
+A) Alto clef and Tenor clef
+B) Treble clef and Alto clef
+* C) Treble clef and Bass clef
+D) Bass clef and Tenor clef
+
+Q: Why does piano sheet music require a grand staff instead of a single staff?
+A) None of the below
+B) To make room for lyrics
+* C) A single staff cannot cover the piano's wide 88-key range
+D) To separate the melody from the rhythm
+
+Q: On the grand staff, which clef is typically located on the top staff?
+* A) Treble clef
+B) Bass clef
+C) Alto clef
+D) Tenor clef

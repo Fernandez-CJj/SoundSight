@@ -1,0 +1,55 @@
+// Lesson 7 Practice Quiz - Time Signatures, Note Values, Rests & Subdivisions
+
+Q: What is the constant, steady pulse of music called?
+A) Tempo
+* B) Beat
+C) Measure
+D) Rest
+
+Q: Where is the time signature positioned on a staff?
+A) After the first barline of every measure
+* B) Near the clef at the beginning of a piece
+C) Above the final barline
+D) Below ledger lines
+
+Q: In a 4/4 time signature, what does the top number tell you?
+A) Which note gets one beat
+* B) There are 4 beats in each measure
+C) There are 4 staff lines per measure
+D) The piece must be played for 4 minutes
+
+Q: What does the speed or pace of a musical piece's beat refer to?
+* A) Tempo
+B) Time signature
+C) Staff line
+D) Clef
+
+Q: How many beats does a half note last in standard 4/4 time signature?
+A) 1 beat
+* B) 2 beats
+C) 3 beats
+D) 4 beats
+
+Q: Which symbol indicates a silence lasting for 4 full beats in 4/4 time?
+A) Quarter rest
+B) Half rest
+* C) Whole rest
+D) Eighth rest
+
+Q: How many beats does a single quaver receive in 4/4 time?
+A) 2 beats
+B) 1 beat
+* C) 1/2 of a beat
+D) 1/4 of a beat
+
+Q: Which subdivision splits 1 beat into four equal parts?
+A) Quaver
+* B) Semiquaver
+C) Demisemiquaver
+D) Half note
+
+Q: Why are flags on consecutive quaver or semiquaver notes joined together by a beam?
+* A) To group notes visually into clean beat divisions and make reading easier
+B) To make the notes sound twice as loud
+C) To indicate that the notes should be played with the left hand only
+D) To extend the duration of the notes across barlines

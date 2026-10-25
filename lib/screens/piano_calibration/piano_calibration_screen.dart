@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/widgets/practice_mode_toggle.dart';
 
 import '../midi/models/midi_note_event.dart';
 import '../midi/services/midi_input_service.dart';
@@ -875,60 +876,20 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
             ),
           ],
           const SizedBox(width: AppSpacing.sm),
-          SizedBox(
-            height: 38,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.backgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: SegmentedButton<bool>(
-                segments: [
-                  ButtonSegment<bool>(
-                    value: false,
-                    label: Text(context.l10n.synthesiaWait),
-                  ),
-                  ButtonSegment<bool>(
-                    value: true,
-                    label: Text(context.l10n.synthesiaPerformance),
-                  ),
-                ],
-                selected: <bool>{performanceModeEnabled},
-                showSelectedIcon: false,
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: const WidgetStatePropertyAll(
-                    TextStyle(
-                      fontSize: AppTextSizes.caption,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  foregroundColor: WidgetStateProperty.resolveWith((states) {
-                    return states.contains(WidgetState.selected)
-                        ? colors.backgroundColor
-                        : colors.primaryColor;
-                  }),
-                  backgroundColor: WidgetStateProperty.resolveWith((states) {
-                    return states.contains(WidgetState.selected)
-                        ? colors.primaryColor
-                        : Colors.transparent;
-                  }),
-                  side: WidgetStatePropertyAll(
-                    BorderSide(color: colors.borderColor),
-                  ),
-                ),
-                onSelectionChanged: hasPracticePlaybackStarted
-                    ? null
-                    : (Set<bool> selection) {
-                        bool selectedPerformance = selection.first;
-
-                        if (selectedPerformance != performanceModeEnabled) {
-                          unawaited(togglePracticePlaybackMode());
-                        }
-                      },
-              ),
-            ),
+          PracticeModeToggle<bool>(
+            firstValue: false,
+            firstLabel: context.l10n.synthesiaWait,
+            secondValue: true,
+            secondLabel: context.l10n.synthesiaPerformance,
+            selectedValue: performanceModeEnabled,
+            colors: colors,
+            onChanged: hasPracticePlaybackStarted
+                ? null
+                : (selectedPerformance) {
+                    if (selectedPerformance != performanceModeEnabled) {
+                      unawaited(togglePracticePlaybackMode());
+                    }
+                  },
           ),
           const SizedBox(width: AppSpacing.sm),
           if (showProgress)

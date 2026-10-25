@@ -26,7 +26,7 @@ class AssessmentAttemptService {
   /// The assessment version currently understood by the application.
   static const int _currentAssessmentVersion = 1;
 
-  /// The level assigned when an unfinished assessment reaches its deadline.
+  /// The fallback rank for an expired assessment with no saved rank.
   static const String _expiredSkillLevel = 'beginner';
 
   /// A notation tier is passed by answering at least four of its six items.
@@ -69,7 +69,7 @@ class AssessmentAttemptService {
   /// Loads the current attempt without creating a new one.
   ///
   /// Returns null when the user has never started. If the attempt expired, this
-  /// method permanently marks it expired and assigns Beginner skill level.
+  /// method permanently marks it expired and keeps any higher saved rank.
   Future<AssessmentAttempt?> loadCurrentAttempt() async {
     final user = _requireCurrentUser();
     final reference = _currentAttemptReference(user.uid);
@@ -439,15 +439,20 @@ class AssessmentAttemptService {
     required Map<String, dynamic> attemptUpdates,
   }) async {
     final userReference = _firestore.collection('users').doc(userId);
-    final batch = _firestore.batch();
+    await _firestore.runTransaction<void>((transaction) async {
+      final userDocument = await transaction.get(userReference);
+      if (!userDocument.exists) {
+        throw StateError('The user profile does not exist.');
+      }
 
-    batch.update(attemptReference, attemptUpdates);
-    batch.update(userReference, {
-      'skillLevel': finalSkillLevel.name,
-      'updatedAt': FieldValue.serverTimestamp(),
+      transaction.update(attemptReference, attemptUpdates);
+      if (_assessmentImprovesSkill(userDocument.data(), finalSkillLevel)) {
+        transaction.update(userReference, {
+          'skillLevel': finalSkillLevel.name,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
     });
-
-    await batch.commit();
   }
 
   /// Repairs profiles created by older clients that saved completion first.
@@ -471,23 +476,40 @@ class AssessmentAttemptService {
     required AssessmentSkillLevel finalLevel,
   }) async {
     final userReference = _firestore.collection('users').doc(userId);
-    final userDocument = await userReference.get(
-      const GetOptions(source: Source.server),
-    );
+    await _firestore.runTransaction<void>((transaction) async {
+      final userDocument = await transaction.get(userReference);
+      if (!userDocument.exists) {
+        throw StateError('The user profile does not exist.');
+      }
 
-    if (!userDocument.exists) {
-      throw StateError('The user profile does not exist.');
-    }
-
-    if (userDocument.data()?['skillLevel'] == finalLevel.name) {
-      return;
-    }
-
-    // Firestore Rules verify that this matches the permanent assessment.
-    await userReference.update({
-      'skillLevel': finalLevel.name,
-      'updatedAt': FieldValue.serverTimestamp(),
+      if (_assessmentImprovesSkill(userDocument.data(), finalLevel)) {
+        // Firestore Rules verify that this matches the permanent assessment.
+        transaction.update(userReference, {
+          'skillLevel': finalLevel.name,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
     });
+  }
+
+  bool _assessmentImprovesSkill(
+    Map<String, dynamic>? profile,
+    AssessmentSkillLevel assessmentLevel,
+  ) {
+    return assessmentLevel.index + 1 > _skillRank(profile?['skillLevel']);
+  }
+
+  int _skillRank(dynamic skillLevel) {
+    switch (skillLevel) {
+      case 'advanced':
+        return 3;
+      case 'intermediate':
+        return 2;
+      case 'beginner':
+        return 1;
+      default:
+        return 0;
+    }
   }
 
   /// Creates the fixed `current` document for a first-time user.
@@ -551,11 +573,10 @@ class AssessmentAttemptService {
     return document.reference.get(const GetOptions(source: Source.server));
   }
 
-  /// Permanently expires an unfinished attempt and assigns Beginner level.
+  /// Permanently expires an unfinished attempt without lowering an earned rank.
   ///
-  /// Both documents are written in one atomic batch: either the assessment and
-  /// user profile both change, or neither changes. Firestore rules independently
-  /// check that the server deadline has passed before accepting the batch.
+  /// Both documents are handled in one transaction. Firestore rules check that
+  /// the server deadline has passed before accepting the expiration.
   Future<AssessmentAttempt> _finalizeExpirationIfNeeded({
     required DocumentSnapshot<Map<String, dynamic>> document,
     required String userId,
@@ -578,19 +599,30 @@ class AssessmentAttemptService {
     }
 
     final userReference = _firestore.collection('users').doc(userId);
-    final batch = _firestore.batch();
+    await _firestore.runTransaction<void>((transaction) async {
+      final currentAttempt = await transaction.get(document.reference);
+      final userDocument = await transaction.get(userReference);
+      if (!userDocument.exists) {
+        throw StateError('The user profile does not exist.');
+      }
+      if (currentAttempt.data()?['status'] !=
+          AssessmentAttemptStatus.inProgress.name) {
+        return;
+      }
 
-    batch.update(document.reference, {
-      'status': AssessmentAttemptStatus.expired.name,
-      'updatedAt': FieldValue.serverTimestamp(),
+      transaction.update(document.reference, {
+        'status': AssessmentAttemptStatus.expired.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      final currentSkill = userDocument.data()?['skillLevel'];
+      final profileUpdates = <String, dynamic>{
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      if (_skillRank(currentSkill) == 0) {
+        profileUpdates['skillLevel'] = _expiredSkillLevel;
+      }
+      transaction.update(userReference, profileUpdates);
     });
-
-    batch.set(userReference, {
-      'skillLevel': _expiredSkillLevel,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await batch.commit();
 
     final expiredDocument = await document.reference.get(
       const GetOptions(source: Source.server),

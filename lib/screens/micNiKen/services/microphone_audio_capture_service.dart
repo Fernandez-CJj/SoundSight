@@ -38,6 +38,7 @@ class MicrophoneAudioCaptureService {
   double _calibrationRmsTotal = 0;
   int _calibrationSampleCount = 0;
   double _noiseFloorRms = 0;
+  int _effectiveSampleRate = sampleRate;
   String? _lastError;
   bool _isStarting = false;
   bool _isListening = false;
@@ -58,6 +59,9 @@ class MicrophoneAudioCaptureService {
   /// Returns the average ambient RMS measured during the current calibration.
   double get noiseFloorRms => _noiseFloorRms;
 
+  /// Returns the sample rate reported by Android, or the requested rate.
+  int get effectiveSampleRate => _effectiveSampleRate;
+
   /// Requests permission and starts in-memory mono PCM16 microphone capture.
   Future<bool> start() async {
     if (_isDisposed || _isStarting || _isListening) return _isListening;
@@ -65,6 +69,7 @@ class MicrophoneAudioCaptureService {
     _isStarting = true;
     _lastError = null;
     _resetCalibration();
+    _effectiveSampleRate = sampleRate;
     _noteEventProcessor.updateState(MicrophoneInputState.starting);
     _noteEventProcessor.updateSignalQuality(MicrophoneSignalQuality.unknown);
 
@@ -77,6 +82,7 @@ class MicrophoneAudioCaptureService {
         return false;
       }
 
+      await _recorder.setOnConfigChanged(_handleConfigChanged);
       final audioStream = await _recorder.startStream(
         const RecordConfig(
           encoder: AudioEncoder.pcm16bits,
@@ -110,6 +116,12 @@ class MicrophoneAudioCaptureService {
     } finally {
       _isStarting = false;
     }
+  }
+
+  /// Updates the sample rate when Android adjusts the requested PCM format.
+  void _handleConfigChanged(RecordConfig config) {
+    if (_isDisposed) return;
+    _effectiveSampleRate = config.sampleRate;
   }
 
   /// Stops capture, releases the recorder, and resets microphone input state.

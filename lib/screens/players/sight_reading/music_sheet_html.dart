@@ -72,6 +72,8 @@ String buildMusicSheetHtml(
       let mergedSequentialPartCount = 0;
       let waitCursorTransitionPending = false;
       let waitCursorTransitionHasNext = false;
+      let scoreResizeObserver = null;
+      let scoreLayoutFrame = null;
 
       function getLocalName(element) {
         return element.localName ||
@@ -1283,6 +1285,40 @@ function countPlayablePositions() {
       centeredPadding + "px";
 }
 
+      function scheduleScoreVerticalCentering() {
+        if (scoreLayoutFrame !== null) {
+          cancelAnimationFrame(scoreLayoutFrame);
+        }
+
+        scoreLayoutFrame = requestAnimationFrame(() => {
+          scoreLayoutFrame = null;
+          centerScoreVertically();
+        });
+      }
+
+      function observeScoreViewport() {
+        const viewport = document.getElementById(
+          "sheet-viewport"
+        );
+
+        if (!viewport) {
+          return;
+        }
+
+        if (typeof ResizeObserver !== "undefined") {
+          scoreResizeObserver = new ResizeObserver(
+            scheduleScoreVerticalCentering
+          );
+          scoreResizeObserver.observe(viewport);
+        }
+
+        window.addEventListener(
+          "resize",
+          scheduleScoreVerticalCentering
+        );
+        scheduleScoreVerticalCentering();
+      }
+
       async function renderScore() {
         try {
           if (typeof opensheetmusicdisplay === "undefined") {
@@ -1319,6 +1355,7 @@ function countPlayablePositions() {
           osmd.cursor.show();
           setCursorColor(normalCursorColor);
 osmd.cursor.update();
+observeScoreViewport();
 
 const totalPlayablePositions =
     countPlayablePositions();

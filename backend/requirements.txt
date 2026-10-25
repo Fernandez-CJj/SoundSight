@@ -4,3 +4,5 @@ music21
 firebase-admin
 Pillow
 imageio-ffmpeg
+numpy
+scipy

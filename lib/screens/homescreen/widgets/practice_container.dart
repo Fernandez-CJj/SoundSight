@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
-import 'package:soundsight/screens/practice/practice_screen.dart';
+import 'package:soundsight/screens/lessons/practice.dart';
 
 class PracticeContainer extends StatelessWidget {
   const PracticeContainer({
@@ -70,7 +70,7 @@ class PracticeContainer extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(
                       context,
-                    ).push(MaterialPageRoute(builder: (_) => PracticeScreen()));
+                    ).push(MaterialPageRoute(builder: (_) => const FundamentalsScreen()));
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,

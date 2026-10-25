@@ -1,0 +1,67 @@
+// Lesson 4 Practice Quiz - Notes, Ledger Lines & Landmarks
+
+Q: Starting from the landmark on the middle of the treble clef symbol, which higher note comes after with an interval of 7th
+* A) F5
+B) G5
+C) B4
+D) B5
+
+Q: What are the short horizontal lines added above or below a staff to extend its pitch range?
+A) Barlines
+* B) Ledger lines
+C) Stems
+D) Extras
+
+Q: In the treble clef, which mnemonic is commonly used to memorize the notes on the FIVE LINES?
+A) FACE
+* B) Every Good Boy Does Fine
+C) All Cows Eat Grass
+D) Greedy Big Dog Fell Asleep
+
+Q: In the treble clef, what word do the notes in the FOUR SPACES spell from bottom to top?
+A) FAME
+B) FAST
+* C) FACE
+D) FATE
+
+Q: Which note is written on the first ledger line above the bass clef staff?
+A) B3
+* B) C4 (Middle C)
+C) D4
+D) A3
+
+Q: In the bass clef, which mnemonic is commonly used to memorize the notes in the FOUR SPACES?
+A) Every Good Boy Does Fine
+B) Fine All Cows Eat
+* C) All Cows Eat Grass
+D) Always Count Every Group
+
+Q: Using the "Landmark Notes" method, which two notes are aligned in the middle of each clef symbol?
+A) Treble F and Bass B
+* B) Treble G (G4) and Bass F (F3)
+C) Treble C and Bass A
+D) Treble E and Bass G
+
+Q: What is the musical distance difference between two notes called?
+A) Measure
+B) Clef
+* C) Interval
+D) Ledger line
+
+Q: In the bass clef, which mnemonic is commonly used to memorize the notes on the FIVE LINES?
+* A) Greedy Big Dog Fell Asleep
+B) Every Good Boy Does Fine
+C) All Cows Eat Grass
+D) Green Bus Drives Fast Always
+
+Q: Which note is written on the first ledger line below the treble clef staff?
+A) D4
+* B) C4
+C) B3
+D) E4
+
+Q: How does reading notes by "intervals" help you read sheet music faster than naming individual notes?
+* A) It allows you to recognize distance and direction (stepping or skipping) between notes
+B) It eliminates the need to use the bass clef entirely
+C) It automatically transposes the music into another key
+D) It converts the notes directly into piano key numbers
