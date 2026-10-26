@@ -22,7 +22,8 @@ class MusicSheetOmrException implements Exception {
 }
 
 class MusicSheetOmrService {
-  static const String backendUrl = 'http://192.168.0.104:8000';
+  static const String backendUrl =
+      'https://cindy-unsigned-quit-gerald.trycloudflare.com';
 
   Future<OmrConversionResult> recognizeMusicSheet({
     required String sheetId,
@@ -50,10 +51,7 @@ class MusicSheetOmrService {
 
     try {
       response = await http
-          .post(
-            url,
-            headers: {'Authorization': 'Bearer $idToken'},
-          )
+          .post(url, headers: {'Authorization': 'Bearer $idToken'})
           .timeout(const Duration(minutes: 15));
     } on TimeoutException {
       throw const MusicSheetOmrException(MusicSheetOmrFailure.timedOut);
@@ -66,9 +64,7 @@ class MusicSheetOmrService {
     }
 
     if (response.statusCode == 403) {
-      throw const MusicSheetOmrException(
-        MusicSheetOmrFailure.emailNotVerified,
-      );
+      throw const MusicSheetOmrException(MusicSheetOmrFailure.emailNotVerified);
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {

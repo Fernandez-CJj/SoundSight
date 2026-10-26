@@ -68,7 +68,8 @@ class CompositionPublication {
 }
 
 class CompositionPublishService {
-  static const String backendUrl = 'http://192.168.0.104:8000';
+  static const String backendUrl =
+      'https://cindy-unsigned-quit-gerald.trycloudflare.com';
 
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -113,9 +114,7 @@ class CompositionPublishService {
   }
 
   Future<String> publishComposition(Composition composition) async {
-    final uri = Uri.parse(
-      '$backendUrl/compositions/${composition.id}/publish',
-    );
+    final uri = Uri.parse('$backendUrl/compositions/${composition.id}/publish');
     final response = await sendAuthenticatedRequest(
       (idToken) => http
           .post(uri, headers: {'Authorization': 'Bearer $idToken'})
@@ -137,12 +136,8 @@ class CompositionPublishService {
     return responseData['postId'] as String? ?? composition.id;
   }
 
-  Future<void> unpublishComposition({
-    required String compositionId,
-  }) async {
-    final uri = Uri.parse(
-      '$backendUrl/compositions/$compositionId/publish',
-    );
+  Future<void> unpublishComposition({required String compositionId}) async {
+    final uri = Uri.parse('$backendUrl/compositions/$compositionId/publish');
     final response = await sendAuthenticatedRequest(
       (idToken) => http
           .delete(uri, headers: {'Authorization': 'Bearer $idToken'})

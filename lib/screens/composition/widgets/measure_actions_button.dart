@@ -39,10 +39,40 @@ class MeasureActionsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final actionLabels = [
+      context.l10n.addMeasureAfter,
+      context.l10n.insertMeasureBefore,
+      context.l10n.duplicateMeasure,
+      context.l10n.moveMeasureLeft,
+      context.l10n.moveMeasureRight,
+      isOnlyMeasure ? context.l10n.clearMeasure : context.l10n.deleteMeasure,
+    ];
+    final availableMenuWidth =
+        MediaQuery.sizeOf(context).width - (AppSpacing.md * 2);
+    final widestLabelWidth = actionLabels.fold<double>(0, (width, label) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(fontSize: AppTextSizes.label),
+        ),
+        maxLines: 1,
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout();
+
+      return textPainter.width > width ? textPainter.width : width;
+    });
+    final desiredMenuWidth =
+        widestLabelWidth + AppIconSizes.sm + AppSpacing.sm + (AppSpacing.lg * 2);
+    final menuWidth = desiredMenuWidth
+        .clamp(200.0, availableMenuWidth.clamp(200.0, 360.0))
+        .toDouble();
+
     return PopupMenuButton<MeasureAction>(
       tooltip: context.l10n.measureActions,
       enabled: enabled,
       color: colors.surfaceColor,
+      constraints: BoxConstraints.tightFor(width: menuWidth),
       onSelected: onSelected,
       itemBuilder: (context) {
         return [
@@ -148,6 +178,7 @@ class MeasureActionsButton extends StatelessWidget {
     return PopupMenuItem<MeasureAction>(
       value: action,
       enabled: enabled,
+      height: 56,
       child: Row(
         children: [
           Icon(
@@ -156,11 +187,16 @@ class MeasureActionsButton extends StatelessWidget {
             color: enabled ? foreground : colors.secondaryTextColor,
           ),
           const SizedBox(width: AppSpacing.sm),
-          Text(
-            label,
-            style: TextStyle(
-              color: enabled ? foreground : colors.secondaryTextColor,
-              fontSize: AppTextSizes.label,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              softWrap: true,
+              style: TextStyle(
+                color: enabled ? foreground : colors.secondaryTextColor,
+                fontSize: AppTextSizes.label,
+                height: 1.2,
+              ),
             ),
           ),
         ],

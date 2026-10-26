@@ -6,7 +6,8 @@ import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
 
 class CompositionGenerationService {
-  static const String backendUrl = 'http://192.168.0.104:8000';
+  static const String backendUrl =
+      'https://cindy-unsigned-quit-gerald.trycloudflare.com';
 
   final CompositionService compositionService = CompositionService();
 
