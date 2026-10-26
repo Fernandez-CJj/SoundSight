@@ -59,7 +59,7 @@ class QuickActions extends StatelessWidget {
       ),
       _QuickAction(
         context.l10n.drawerSavedSheets,
-        Icons.folder_open,
+        Icons.bookmark_rounded,
         const Color(0xFF8B5CF6),
         onSavedSheets,
       ),

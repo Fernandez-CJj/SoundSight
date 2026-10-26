@@ -58,7 +58,7 @@ The current quick-action grid contains:
 - **Music Sheets** - opens the user's music-sheet library;
 - **Upload Sheet** - opens Capture/Upload Sheet with Upload selected initially;
 - **Capture Sheet** - opens Capture/Upload Sheet with Capture selected initially;
-- **Saved Sheets** - currently has no action connected;
+- **Saved Compositions** - opens the user's saved compositions;
 - **Composition** - opens My Compositions; and
 - **Practice Results** - currently has no action connected.
 
@@ -88,7 +88,7 @@ The Home drawer provides navigation to:
 - Practice;
 - MIDI;
 - Flyaway;
-- Saved Sheets;
+- Saved Compositions;
 - Composition;
 - Published Compositions; and
 - Profile.

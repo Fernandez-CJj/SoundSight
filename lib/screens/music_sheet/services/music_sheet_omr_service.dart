@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart';
 
 enum MusicSheetOmrFailure {
   missingSheetId,
-  missingOwnerId,
+  notSignedIn,
+  emailNotVerified,
   timedOut,
   connection,
   rejected,
@@ -24,14 +26,19 @@ class MusicSheetOmrService {
 
   Future<OmrConversionResult> recognizeMusicSheet({
     required String sheetId,
-    required String ownerId,
   }) async {
     if (sheetId.isEmpty) {
       throw const MusicSheetOmrException(MusicSheetOmrFailure.missingSheetId);
     }
 
-    if (ownerId.isEmpty) {
-      throw const MusicSheetOmrException(MusicSheetOmrFailure.missingOwnerId);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const MusicSheetOmrException(MusicSheetOmrFailure.notSignedIn);
+    }
+
+    final idToken = await user.getIdToken(true);
+    if (idToken == null || idToken.isEmpty) {
+      throw const MusicSheetOmrException(MusicSheetOmrFailure.notSignedIn);
     }
 
     final url = Uri.parse(
@@ -45,14 +52,23 @@ class MusicSheetOmrService {
       response = await http
           .post(
             url,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'ownerId': ownerId}),
+            headers: {'Authorization': 'Bearer $idToken'},
           )
           .timeout(const Duration(minutes: 15));
     } on TimeoutException {
       throw const MusicSheetOmrException(MusicSheetOmrFailure.timedOut);
     } on http.ClientException {
       throw const MusicSheetOmrException(MusicSheetOmrFailure.connection);
+    }
+
+    if (response.statusCode == 401) {
+      throw const MusicSheetOmrException(MusicSheetOmrFailure.notSignedIn);
+    }
+
+    if (response.statusCode == 403) {
+      throw const MusicSheetOmrException(
+        MusicSheetOmrFailure.emailNotVerified,
+      );
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {

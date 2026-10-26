@@ -57,7 +57,7 @@ After the calibration passes the range check:
 1. Computer-vision frame processing stops, but the live camera preview remains.
 2. The app prepares the falling-note animation with a four-second approach period before the first score note.
 3. The user connects a MIDI device. The current connection action uses the first device returned by the MIDI service.
-4. The user starts playback.
+4. The user taps **Start Performance** or **Start Wait Mode** to start the falling-note animation directly, including its four-second approach period.
 5. Falling blocks travel toward a perspective-aware hit line above the piano keys.
 6. MIDI Note On messages are compared with the expected score groups.
 

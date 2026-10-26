@@ -993,7 +993,6 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     try {
       result = await omrService.recognizeMusicSheet(
         sheetId: widget.sheetId,
-        ownerId: widget.ownerId,
       );
     } catch (error) {
       conversionError = error;
@@ -1039,8 +1038,11 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       MusicSheetOmrFailure.rejected => context.l10n.translationRejected,
       MusicSheetOmrFailure.invalidResponse =>
         context.l10n.translationInvalidResponse,
-      MusicSheetOmrFailure.missingSheetId ||
-      MusicSheetOmrFailure.missingOwnerId =>
+      MusicSheetOmrFailure.notSignedIn =>
+        context.l10n.translationSignInAgain,
+      MusicSheetOmrFailure.emailNotVerified =>
+        context.l10n.translationVerifyEmail,
+      MusicSheetOmrFailure.missingSheetId =>
         context.l10n.translationGenericError,
     };
   }

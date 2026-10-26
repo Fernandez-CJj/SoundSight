@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:soundsight/achievements/achievement_badge.dart';
+import 'package:soundsight/achievements/achievement_repository.dart';
 
 /// Stores the highest unlocked lesson stage on the signed-in user's profile.
 class PracticeProgressService {
   static const int stageCompletionXp = 50;
 
   PracticeProgressService({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -29,6 +31,10 @@ class PracticeProgressService {
       throw RangeError.range(stageNumber, 1, 16, 'stageNumber');
     }
     final profile = _profile;
+    final badge = AchievementBadge.forCompletedStage(stageNumber);
+    final badgeReference = badge == null
+        ? null
+        : profile.collection('achievements').doc(badge.id);
     return _firestore.runTransaction<int>((transaction) async {
       final snapshot = await transaction.get(profile);
       if (!snapshot.exists) throw StateError('User profile not found.');
@@ -37,6 +43,9 @@ class PracticeProgressService {
       if (stageNumber != currentLevel) {
         throw StateError('Complete the current stage first.');
       }
+      final badgeSnapshot = badgeReference == null
+          ? null
+          : await transaction.get(badgeReference);
       final nextLevel = stageNumber + 1;
       final currentSkillLevel = snapshot.data()?['skillLevel'];
       final promotion = _promotionAfterPass(stageNumber, currentSkillLevel);
@@ -49,6 +58,9 @@ class PracticeProgressService {
         updates['skillLevel'] = promotion;
       }
       transaction.update(profile, updates);
+      if (badgeReference != null && badgeSnapshot?.exists == false) {
+        transaction.set(badgeReference, AchievementRepository.awardData());
+      }
       return nextLevel;
     });
   }

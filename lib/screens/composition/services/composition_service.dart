@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:soundsight/achievements/achievement_badge.dart';
+import 'package:soundsight/achievements/achievement_repository.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/models/composition_note.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';
@@ -75,12 +77,20 @@ class CompositionService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    final batch = firestore.batch();
-    batch.set(document, compositionData);
-    batch.update(firestore.collection('users').doc(composition.ownerId), {
-      'hasCreatedComposition': true,
+    final profile = firestore.collection('users').doc(composition.ownerId);
+    final badge = profile
+        .collection('achievements')
+        .doc(AchievementBadge.firstComposer.id);
+    await firestore.runTransaction<void>((transaction) async {
+      final badgeDocument = await transaction.get(badge);
+      transaction.set(document, compositionData);
+      if (!badgeDocument.exists) {
+        transaction.set(
+          badge,
+          AchievementRepository.awardData(sourceId: document.id),
+        );
+      }
     });
-    await batch.commit();
 
     return document.id;
   }

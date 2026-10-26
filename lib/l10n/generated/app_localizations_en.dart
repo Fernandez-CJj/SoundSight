@@ -69,13 +69,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get drawerMidi => 'MIDI';
 
   @override
-  String get drawerMic => 'Mic';
-
-  @override
   String get drawerFlyaway => 'Flyaway';
 
   @override
-  String get drawerSavedSheets => 'Saved Sheets';
+  String get drawerSavedSheets => 'Saved Compositions';
 
   @override
   String get drawerComposition => 'Composition';
@@ -410,6 +407,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'SoundSight could not read this music sheet. Try using a clearer image or PDF.';
 
   @override
+  String get translationSignInAgain =>
+      'Your sign-in could not be verified. Restart the app and sign in again.';
+
+  @override
+  String get translationVerifyEmail =>
+      'Verify your email before converting a music sheet.';
+
+  @override
   String get translationInvalidResponse =>
       'Something went wrong while converting the music sheet. Please try again.';
 
@@ -709,6 +714,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get achievements => 'Achievements';
+
+  @override
+  String get achievementsLoadError =>
+      'Some badges could not be loaded. Reopen Profile to try again.';
 
   @override
   String get viewAchievementDetails => 'View details';
@@ -1888,17 +1897,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get signInForSavedSheets => 'Sign in to view saved sheets.';
+  String get signInForSavedSheets => 'Sign in to view saved compositions.';
 
   @override
   String get savedSheetsSignedOutDescription =>
       'Your saved composition versions will appear here.';
 
   @override
-  String get savedSheetsLoadFailed => 'Saved sheets could not be loaded.';
+  String get savedSheetsLoadFailed => 'Saved compositions could not be loaded.';
 
   @override
-  String get noSavedSheets => 'No saved sheets yet';
+  String get noSavedSheets => 'No saved compositions yet';
 
   @override
   String get noSavedSheetsDescription =>
@@ -1950,19 +1959,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'The saved composition could not be updated.';
 
   @override
-  String get removeSavedSheetQuestion => 'Remove saved sheet?';
+  String get removeSavedSheetQuestion => 'Remove saved composition?';
 
   @override
-  String get saveSheetQuestion => 'Save this sheet?';
+  String get saveSheetQuestion => 'Save this composition?';
 
   @override
   String removeSavedSheetDescription(String title, int version) {
-    return 'Remove \"$title\" version $version from Saved Sheets?';
+    return 'Remove \"$title\" version $version from Saved Compositions?';
   }
 
   @override
   String saveSheetDescription(String title, int version) {
-    return 'Save \"$title\" version $version so you can find it later in Saved Sheets?';
+    return 'Save \"$title\" version $version so you can find it later in Saved Compositions?';
   }
 
   @override
@@ -3564,19 +3573,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Stop returns to the ready screen so you can change modes. This unfinished attempt will not be saved.';
 
   @override
-  String get arPracticeChooseNotation => 'Choose notation';
-
-  @override
-  String get arPracticeChooseNotationDescription =>
-      'Select how you want the music to appear during practice.';
-
-  @override
-  String get arPracticeNotes => 'Notes';
-
-  @override
-  String get arPracticeNumberNotation => 'Number notation';
-
-  @override
   String get arPracticeDisconnectedDescription =>
       'Practice has stopped so disconnected time and missed notes will not count against you.';
 
@@ -3626,10 +3622,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get arPracticeResultNotSaved =>
       'The AR performance result was not saved.';
-
-  @override
-  String get arPracticeNumberNotationVideoFailed =>
-      'The number notation video could not be opened.';
 
   @override
   String get practiceResultsTitle => 'Practice Results';

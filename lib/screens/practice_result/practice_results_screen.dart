@@ -593,6 +593,9 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                                 Navigator.of(sheetContext).pop();
                                 clearResultsFilters();
                               },
+                              style: TextButton.styleFrom(
+                                foregroundColor: colors.primaryColor,
+                              ),
                               child: Text(
                                 context.l10n.practiceResultsClearAll,
                                 textAlign: TextAlign.center,

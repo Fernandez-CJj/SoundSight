@@ -108,10 +108,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             AchievementsContainer(
               colors: colors,
               userId: FirebaseAuth.instance.currentUser?.uid,
-              assessmentCompleted: isAssessmentLoading || assessmentLoadFailed
-                  ? null
-                  : assessmentAttempt?.effectiveStatus ==
-                        AssessmentAttemptStatus.completed,
             ),
             Gap(AppSpacing.md),
             AssessmentContainer(

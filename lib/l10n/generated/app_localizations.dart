@@ -212,12 +212,6 @@ abstract class AppLocalizations {
   /// **'MIDI'**
   String get drawerMidi;
 
-  /// No description provided for @drawerMic.
-  ///
-  /// In en, this message translates to:
-  /// **'Mic'**
-  String get drawerMic;
-
   /// No description provided for @drawerFlyaway.
   ///
   /// In en, this message translates to:
@@ -227,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @drawerSavedSheets.
   ///
   /// In en, this message translates to:
-  /// **'Saved Sheets'**
+  /// **'Saved Compositions'**
   String get drawerSavedSheets;
 
   /// No description provided for @drawerComposition.
@@ -758,6 +752,18 @@ abstract class AppLocalizations {
   /// **'SoundSight could not read this music sheet. Try using a clearer image or PDF.'**
   String get translationRejected;
 
+  /// No description provided for @translationSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sign-in could not be verified. Restart the app and sign in again.'**
+  String get translationSignInAgain;
+
+  /// No description provided for @translationVerifyEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email before converting a music sheet.'**
+  String get translationVerifyEmail;
+
   /// No description provided for @translationInvalidResponse.
   ///
   /// In en, this message translates to:
@@ -1255,6 +1261,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Achievements'**
   String get achievements;
+
+  /// No description provided for @achievementsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Some badges could not be loaded. Reopen Profile to try again.'**
+  String get achievementsLoadError;
 
   /// No description provided for @viewAchievementDetails.
   ///
@@ -3256,7 +3268,7 @@ abstract class AppLocalizations {
   /// No description provided for @signInForSavedSheets.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to view saved sheets.'**
+  /// **'Sign in to view saved compositions.'**
   String get signInForSavedSheets;
 
   /// No description provided for @savedSheetsSignedOutDescription.
@@ -3268,13 +3280,13 @@ abstract class AppLocalizations {
   /// No description provided for @savedSheetsLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Saved sheets could not be loaded.'**
+  /// **'Saved compositions could not be loaded.'**
   String get savedSheetsLoadFailed;
 
   /// No description provided for @noSavedSheets.
   ///
   /// In en, this message translates to:
-  /// **'No saved sheets yet'**
+  /// **'No saved compositions yet'**
   String get noSavedSheets;
 
   /// No description provided for @noSavedSheetsDescription.
@@ -3334,25 +3346,25 @@ abstract class AppLocalizations {
   /// No description provided for @removeSavedSheetQuestion.
   ///
   /// In en, this message translates to:
-  /// **'Remove saved sheet?'**
+  /// **'Remove saved composition?'**
   String get removeSavedSheetQuestion;
 
   /// No description provided for @saveSheetQuestion.
   ///
   /// In en, this message translates to:
-  /// **'Save this sheet?'**
+  /// **'Save this composition?'**
   String get saveSheetQuestion;
 
   /// No description provided for @removeSavedSheetDescription.
   ///
   /// In en, this message translates to:
-  /// **'Remove \"{title}\" version {version} from Saved Sheets?'**
+  /// **'Remove \"{title}\" version {version} from Saved Compositions?'**
   String removeSavedSheetDescription(String title, int version);
 
   /// No description provided for @saveSheetDescription.
   ///
   /// In en, this message translates to:
-  /// **'Save \"{title}\" version {version} so you can find it later in Saved Sheets?'**
+  /// **'Save \"{title}\" version {version} so you can find it later in Saved Compositions?'**
   String saveSheetDescription(String title, int version);
 
   /// No description provided for @recentlyPublished.
@@ -5931,30 +5943,6 @@ abstract class AppLocalizations {
   /// **'Stop returns to the ready screen so you can change modes. This unfinished attempt will not be saved.'**
   String get arPracticeStopWarning;
 
-  /// No description provided for @arPracticeChooseNotation.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose notation'**
-  String get arPracticeChooseNotation;
-
-  /// No description provided for @arPracticeChooseNotationDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Select how you want the music to appear during practice.'**
-  String get arPracticeChooseNotationDescription;
-
-  /// No description provided for @arPracticeNotes.
-  ///
-  /// In en, this message translates to:
-  /// **'Notes'**
-  String get arPracticeNotes;
-
-  /// No description provided for @arPracticeNumberNotation.
-  ///
-  /// In en, this message translates to:
-  /// **'Number notation'**
-  String get arPracticeNumberNotation;
-
   /// No description provided for @arPracticeDisconnectedDescription.
   ///
   /// In en, this message translates to:
@@ -6038,12 +6026,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The AR performance result was not saved.'**
   String get arPracticeResultNotSaved;
-
-  /// No description provided for @arPracticeNumberNotationVideoFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'The number notation video could not be opened.'**
-  String get arPracticeNumberNotationVideoFailed;
 
   /// No description provided for @practiceResultsTitle.
   ///

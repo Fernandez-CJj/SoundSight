@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:soundsight/achievements/achievement_badge.dart';
+import 'package:soundsight/achievements/achievement_repository.dart';
 
 import '../models/assessment_attempt.dart';
 import '../models/assessment_notation_question.dart';
@@ -439,13 +441,20 @@ class AssessmentAttemptService {
     required Map<String, dynamic> attemptUpdates,
   }) async {
     final userReference = _firestore.collection('users').doc(userId);
+    final badgeReference = userReference
+        .collection('achievements')
+        .doc(AchievementBadge.firstMeasure.id);
     await _firestore.runTransaction<void>((transaction) async {
       final userDocument = await transaction.get(userReference);
+      final badgeDocument = await transaction.get(badgeReference);
       if (!userDocument.exists) {
         throw StateError('The user profile does not exist.');
       }
 
       transaction.update(attemptReference, attemptUpdates);
+      if (!badgeDocument.exists) {
+        transaction.set(badgeReference, AchievementRepository.awardData());
+      }
       if (_assessmentImprovesSkill(userDocument.data(), finalSkillLevel)) {
         transaction.update(userReference, {
           'skillLevel': finalSkillLevel.name,

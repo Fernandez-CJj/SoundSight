@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:soundsight/achievements/achievement_badge.dart';
+import 'package:soundsight/achievements/achievement_repository.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 
 class MusicSheetUploadService {
@@ -79,8 +81,13 @@ class MusicSheetUploadService {
       final isPdf =
           files.length == 1 && files.first.extension?.toLowerCase() == 'pdf';
 
-      final batch = FirebaseFirestore.instance.batch();
-      batch.set(sheetDocument, {
+      final profile = FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerId);
+      final badge = profile
+          .collection('achievements')
+          .doc(AchievementBadge.sheetCollector.id);
+      final sheetData = <String, dynamic>{
         'ownerId': ownerId,
         'title': title,
         'type': isPdf ? 'pdf' : 'images',
@@ -88,12 +95,19 @@ class MusicSheetUploadService {
         'files': uploadedFiles,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await FirebaseFirestore.instance.runTransaction<void>((
+        transaction,
+      ) async {
+        final badgeDocument = await transaction.get(badge);
+        transaction.set(sheetDocument, sheetData);
+        if (!badgeDocument.exists) {
+          transaction.set(
+            badge,
+            AchievementRepository.awardData(sourceId: sheetDocument.id),
+          );
+        }
       });
-      batch.update(
-        FirebaseFirestore.instance.collection('users').doc(ownerId),
-        {'hasUploadedMusicSheet': true},
-      );
-      await batch.commit();
 
       return sheetDocument.id;
     } catch (error, stackTrace) {

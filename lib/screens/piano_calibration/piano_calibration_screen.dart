@@ -45,7 +45,6 @@ import '../players/ar/models/ar_wait_note_occurrence.dart';
 import '../players/ar/services/ar_practice_performance_tracker.dart';
 import '../players/ar/utils/midi_note_utils.dart';
 import '../players/ar/widgets/ar_falling_notes_overlay.dart';
-import '../players/ar/number_notation_video_screen.dart';
 import '../players/sight_reading/practice_result_models.dart';
 import '../players/sight_reading/practice_result_service.dart';
 import '../practice_result/practice_result_detail_screen.dart';
@@ -733,7 +732,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                       ? FilledButton.icon(
                           onPressed: currentAnimationController == null
                               ? null
-                              : choosePracticeDisplayMode,
+                              : startPracticePlayback,
                           style: practicePrimaryButtonStyle(),
                           icon: const Icon(Icons.play_arrow_rounded),
                           label: Text(
@@ -1436,9 +1435,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                       onPressed: canStart
                                           ? () {
                                               Navigator.of(sheetContext).pop();
-                                              unawaited(
-                                                choosePracticeDisplayMode(),
-                                              );
+                                              startPracticePlayback();
                                             }
                                           : null,
                                       style: practicePrimaryButtonStyle(),
@@ -1468,67 +1465,6 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       );
     } finally {
       isPracticeControlsSheetOpen = false;
-    }
-  }
-
-  /// Lets the user choose the visual notation shown during AR practice.
-  Future<void> choosePracticeDisplayMode() async {
-    String? selectedMode = await showDialog<String>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        AppThemeColors colors = widget.colors;
-
-        return AlertDialog(
-          backgroundColor: colors.surfaceColor,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          icon: buildCalibrationDialogIcon(Icons.visibility_outlined),
-          title: Text(
-            context.l10n.arPracticeChooseNotation,
-            textAlign: TextAlign.center,
-            style: calibrationDialogTitleStyle(),
-          ),
-          content: Text(
-            context.l10n.arPracticeChooseNotationDescription,
-            textAlign: TextAlign.center,
-            style: calibrationDialogBodyStyle(),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            0,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          actions: [
-            buildCalibrationDialogActions(
-              secondaryLabel: context.l10n.arPracticeNotes,
-              onSecondary: () {
-                Navigator.of(dialogContext).pop('notes');
-              },
-              primaryLabel: context.l10n.arPracticeNumberNotation,
-              onPrimary: () {
-                Navigator.of(dialogContext).pop('numbers');
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    if (!mounted || selectedMode == null) {
-      return;
-    }
-
-    if (selectedMode == 'notes') {
-      startPracticePlayback();
-    } else if (selectedMode == 'numbers') {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => const NumberNotationVideoScreen(),
-        ),
-      );
     }
   }
 

@@ -72,13 +72,10 @@ class AppLocalizationsFil extends AppLocalizations {
   String get drawerMidi => 'MIDI';
 
   @override
-  String get drawerMic => 'Mikropono';
-
-  @override
   String get drawerFlyaway => 'Flyaway';
 
   @override
-  String get drawerSavedSheets => 'Mga Naka-save na Sheet';
+  String get drawerSavedSheets => 'Mga Naka-save na Komposisyon';
 
   @override
   String get drawerComposition => 'Komposisyon';
@@ -412,6 +409,14 @@ class AppLocalizationsFil extends AppLocalizations {
       'Hindi mabasa ng SoundSight ang music sheet na ito. Gumamit ng mas malinaw na larawan o PDF.';
 
   @override
+  String get translationSignInAgain =>
+      'Hindi ma-verify ang iyong pag-sign in. I-restart ang app at mag-sign in muli.';
+
+  @override
+  String get translationVerifyEmail =>
+      'I-verify muna ang iyong email bago mag-convert ng music sheet.';
+
+  @override
   String get translationInvalidResponse =>
       'Nagkaproblema habang kino-convert ang music sheet. Subukan muli.';
 
@@ -717,6 +722,10 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get achievements => 'Mga Nakamit';
+
+  @override
+  String get achievementsLoadError =>
+      'Hindi ma-load ang ilang badge. Buksan muli ang Profile upang subukan ulit.';
 
   @override
   String get viewAchievementDetails => 'Tingnan ang detalye';
@@ -1914,7 +1923,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get signInForSavedSheets =>
-      'Mag-sign in upang makita ang mga naka-save na sheet.';
+      'Mag-sign in upang makita ang mga naka-save na komposisyon.';
 
   @override
   String get savedSheetsSignedOutDescription =>
@@ -1922,10 +1931,10 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get savedSheetsLoadFailed =>
-      'Hindi ma-load ang mga naka-save na sheet.';
+      'Hindi ma-load ang mga naka-save na komposisyon.';
 
   @override
-  String get noSavedSheets => 'Wala pang naka-save na sheet';
+  String get noSavedSheets => 'Wala pang naka-save na komposisyon';
 
   @override
   String get noSavedSheetsDescription =>
@@ -1977,19 +1986,19 @@ class AppLocalizationsFil extends AppLocalizations {
       'Hindi ma-update ang naka-save na komposisyon.';
 
   @override
-  String get removeSavedSheetQuestion => 'Alisin ang naka-save na sheet?';
+  String get removeSavedSheetQuestion => 'Alisin ang naka-save na komposisyon?';
 
   @override
-  String get saveSheetQuestion => 'I-save ang sheet na ito?';
+  String get saveSheetQuestion => 'I-save ang komposisyong ito?';
 
   @override
   String removeSavedSheetDescription(String title, int version) {
-    return 'Alisin ang bersyon $version ng \"$title\" mula sa Mga Naka-save na Sheet?';
+    return 'Alisin ang bersyon $version ng \"$title\" mula sa Mga Naka-save na Komposisyon?';
   }
 
   @override
   String saveSheetDescription(String title, int version) {
-    return 'I-save ang bersyon $version ng \"$title\" upang makita mo ito sa Mga Naka-save na Sheet sa susunod?';
+    return 'I-save ang bersyon $version ng \"$title\" upang makita mo ito sa Mga Naka-save na Komposisyon sa susunod?';
   }
 
   @override
@@ -3612,19 +3621,6 @@ class AppLocalizationsFil extends AppLocalizations {
       'Kapag pinili ang Ihinto, babalik ka sa screen ng paghahanda upang makapagpalit ng mode. Hindi mase-save ang hindi natapos na pagsubok na ito.';
 
   @override
-  String get arPracticeChooseNotation => 'Pumili ng notasyon';
-
-  @override
-  String get arPracticeChooseNotationDescription =>
-      'Piliin kung paano mo gustong lumitaw ang musika habang nagsasanay.';
-
-  @override
-  String get arPracticeNotes => 'Mga nota';
-
-  @override
-  String get arPracticeNumberNotation => 'Notasyong numero';
-
-  @override
   String get arPracticeDisconnectedDescription =>
       'Huminto ang pagsasanay upang hindi maisama sa resulta ang oras na walang koneksyon at mga notang hindi natugtog.';
 
@@ -3675,10 +3671,6 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get arPracticeResultNotSaved =>
       'Hindi na-save ang resulta ng AR performance.';
-
-  @override
-  String get arPracticeNumberNotationVideoFailed =>
-      'Hindi mabuksan ang video ng notasyong numero.';
 
   @override
   String get practiceResultsTitle => 'Mga Resulta ng Pagsasanay';

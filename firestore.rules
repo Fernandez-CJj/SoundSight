@@ -258,6 +258,85 @@ service cloud.firestore {
                       || validAssessmentSkillLevelUpdate()
                     );
 
+      match /achievements/{badgeId} {
+        function validEarnedBadge() {
+          let data = request.resource.data;
+          let profile = getAfter(
+            /databases/$(database)/documents/users/$(userId)
+          ).data;
+
+          return (
+            badgeId == 'first_measure'
+            && getAfter(
+              /databases/$(database)/documents/users/$(userId)/assessment/current
+            ).data.status == 'completed'
+          ) || (
+            badgeId == 'sheet_collector'
+            && 'sourceId' in data
+            && data.sourceId is string
+            && getAfter(
+              /databases/$(database)/documents/users/$(userId)/musicSheets/$(data.sourceId)
+            ).data.ownerId == userId
+          ) || (
+            badgeId == 'first_composer'
+            && 'sourceId' in data
+            && data.sourceId is string
+            && getAfter(
+              /databases/$(database)/documents/users/$(userId)/compositions/$(data.sourceId)
+            ).data.ownerId == userId
+          ) || (
+            profile.practiceLevel is int
+            && (
+              (badgeId == 'middle_c' && profile.practiceLevel > 3)
+              || (badgeId == 'first_melody' && profile.practiceLevel > 6)
+              || (badgeId == 'growing_musician' && profile.practiceLevel > 9)
+              || (badgeId == 'chord_builder' && profile.practiceLevel > 12)
+              || (badgeId == 'music_navigator' && profile.practiceLevel > 15)
+              || (badgeId == 'soundsight_master' && profile.practiceLevel > 16)
+            )
+          );
+        }
+
+        allow read: if ownsUser() || isAdmin();
+
+        allow create: if ownsUser()
+                      && badgeId in [
+                        'first_measure',
+                        'sheet_collector',
+                        'first_composer',
+                        'middle_c',
+                        'first_melody',
+                        'growing_musician',
+                        'chord_builder',
+                        'music_navigator',
+                        'soundsight_master'
+                      ]
+                      && request.resource.data.keys().hasOnly([
+                        'earnedAt',
+                        'source',
+                        'sourceId'
+                      ])
+                      && request.resource.data.keys().hasAll([
+                        'earnedAt',
+                        'source'
+                      ])
+                      && request.resource.data.earnedAt == request.time
+                      && (
+                        (
+                          request.resource.data.source == 'earned'
+                          && validEarnedBadge()
+                        )
+                        || (
+                          request.resource.data.source == 'migration'
+                          && getAfter(
+                            /databases/$(database)/documents/users/$(userId)
+                          ).data.achievementsMigrated == true
+                        )
+                      );
+
+        allow update, delete: if false;
+      }
+
       match /pianoCalibrations/{calibrationId} {
         allow create, read, update, delete: if isVerifiedUser()
                                             && request.auth.uid == userId;
@@ -1105,10 +1184,71 @@ service cloud.firestore {
     }
 
     match /users/{userId}/musicSheets/{sheetId} {
+      function validImageSource(file, index) {
+        let parts = file.storagePath.split('/');
+        let pageNames = [
+          'page_01', 'page_02', 'page_03', 'page_04', 'page_05',
+          'page_06', 'page_07', 'page_08', 'page_09', 'page_10',
+          'page_11', 'page_12', 'page_13', 'page_14', 'page_15',
+          'page_16', 'page_17', 'page_18', 'page_19', 'page_20'
+        ];
+        return file is map
+               && file.pageNumber == index + 1
+               && file.storagePath is string
+               && parts.size() == 4
+               && parts[0] == 'musicSheets'
+               && parts[1] == userId
+               && parts[2] == sheetId
+               && parts[3].matches(
+                 pageNames[index] + '[.](jpg|jpeg|png|heic|webp)'
+               );
+      }
+
+      function validImageSourceIfPresent(data, index) {
+        return data.files.size() <= index
+               || validImageSource(data.files[index], index);
+      }
+
+      function validSheetSourcePaths(data) {
+        return (
+          data.type == 'pdf'
+          && data.files[0] is map
+          && data.files[0].storagePath ==
+             'musicSheets/' + userId + '/' + sheetId + '/sheet.pdf'
+        ) || (
+          data.type == 'images'
+          && validImageSourceIfPresent(data, 0)
+          && validImageSourceIfPresent(data, 1)
+          && validImageSourceIfPresent(data, 2)
+          && validImageSourceIfPresent(data, 3)
+          && validImageSourceIfPresent(data, 4)
+          && validImageSourceIfPresent(data, 5)
+          && validImageSourceIfPresent(data, 6)
+          && validImageSourceIfPresent(data, 7)
+          && validImageSourceIfPresent(data, 8)
+          && validImageSourceIfPresent(data, 9)
+          && validImageSourceIfPresent(data, 10)
+          && validImageSourceIfPresent(data, 11)
+          && validImageSourceIfPresent(data, 12)
+          && validImageSourceIfPresent(data, 13)
+          && validImageSourceIfPresent(data, 14)
+          && validImageSourceIfPresent(data, 15)
+          && validImageSourceIfPresent(data, 16)
+          && validImageSourceIfPresent(data, 17)
+          && validImageSourceIfPresent(data, 18)
+          && validImageSourceIfPresent(data, 19)
+        );
+      }
+
       allow create: if isVerifiedUser()
                     && request.auth.uid == userId
                     && request.resource.data.ownerId == userId
-                    && validMusicSheet(request.resource.data);
+                    && request.resource.data.keys().hasOnly([
+                      'ownerId', 'title', 'type', 'pageCount', 'files',
+                      'createdAt', 'updatedAt'
+                    ])
+                    && validMusicSheet(request.resource.data)
+                    && validSheetSourcePaths(request.resource.data);
 
       allow read: if isVerifiedUser()
                   && request.auth.uid == userId;
@@ -1121,6 +1261,9 @@ service cloud.firestore {
                     && request.auth.uid == userId
                     && resource.data.ownerId == userId
                     && request.resource.data.ownerId == userId
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly(['title', 'updatedAt'])
                     && validMusicSheet(request.resource.data);
     }
 

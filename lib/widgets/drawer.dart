@@ -11,10 +11,7 @@ import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_scr
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
-import 'package:soundsight/screens/flyaway/flyaway_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
-import 'package:soundsight/screens/micNiKen/microphone_screen.dart';
-import 'package:soundsight/screens/midi/midi/midi_note_identifier_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
 import 'package:soundsight/screens/lessons/practice.dart';
 import 'package:soundsight/screens/practice_result/practice_results_screen.dart';
@@ -29,7 +26,6 @@ enum DrawerItem {
   practice,
   practiceResults,
   midi,
-  mic,
   flyaway,
   savedSheets,
   composition,
@@ -214,7 +210,7 @@ class AppDrawer extends StatelessWidget {
             _DrawerTile(
               colors: colors,
               active: activeItem == DrawerItem.savedSheets,
-              icon: Icons.bookmark_border,
+              icon: Icons.bookmark_rounded,
               title: l10n.drawerSavedSheets,
               onTap: () {
                 Navigator.pop(context);
@@ -225,50 +221,6 @@ class AppDrawer extends StatelessWidget {
                       builder: (_) =>
                           SavedCompositionsScreen(isDarkMode: isDarkMode),
                     ),
-                  );
-                }
-              },
-            ),
-            Divider(color: colors.borderColor),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.midi,
-              icon: Icons.usb_outlined,
-              title: l10n.drawerMidi,
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const MidiNoteIdentifierScreen(),
-                  ),
-                );
-              },
-            ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.mic,
-              icon: Icons.mic_none_outlined,
-              title: l10n.drawerMic,
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MicrophoneScreen()),
-                );
-              },
-            ),
-            _DrawerTile(
-              colors: colors,
-              active: activeItem == DrawerItem.flyaway,
-              icon: Icons.back_hand_outlined,
-              title: l10n.drawerFlyaway,
-              onTap: () {
-                Navigator.pop(context);
-
-                if (activeItem != DrawerItem.flyaway) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const FlyawayScreen()),
                   );
                 }
               },

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:soundsight/achievements/achievement_badge.dart';
+import 'package:soundsight/achievements/achievement_repository.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -11,80 +13,40 @@ class AchievementsContainer extends StatefulWidget {
     super.key,
     required this.colors,
     required this.userId,
-    required this.assessmentCompleted,
   });
 
   final AppThemeColors colors;
   final String? userId;
-  final bool? assessmentCompleted;
 
   @override
   State<AchievementsContainer> createState() => _AchievementsContainerState();
 }
 
 class _AchievementsContainerState extends State<AchievementsContainer> {
-  late Future<({bool sheet, bool composition})> _existingItems;
+  final AchievementRepository _repository = AchievementRepository();
+  Future<void>? _migration;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _badges;
 
   @override
   void initState() {
     super.initState();
-    _existingItems = _checkExistingItems();
+    _connect();
   }
 
   @override
   void didUpdateWidget(covariant AchievementsContainer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.userId != widget.userId) {
-      _existingItems = _checkExistingItems();
+      _connect();
     }
   }
 
-  // Older accounts can already have sheets or compositions without the new
-  // permanent flags. Recognize them and record the flags for future visits.
-  Future<({bool sheet, bool composition})> _checkExistingItems() async {
+  void _connect() {
     final userId = widget.userId;
-    if (userId == null) return (sheet: false, composition: false);
-
-    final profile = FirebaseFirestore.instance.collection('users').doc(userId);
-    Map<String, dynamic>? savedFlags;
-    try {
-      savedFlags = (await profile.get()).data();
-    } catch (_) {
-      // The collection checks below can still find older achievements.
-    }
-
-    Future<bool> check(
-      String collection,
-      String flag,
-      String backfillFlag,
-    ) async {
-      if (savedFlags?[flag] == true) return true;
-      try {
-        final existing = await profile.collection(collection).limit(1).get();
-        if (existing.docs.isEmpty) return false;
-        try {
-          await profile.set({
-            flag: true,
-            backfillFlag: true,
-          }, SetOptions(merge: true));
-        } catch (_) {
-          // The existing item still counts during this visit.
-        }
-        return true;
-      } catch (_) {
-        return false;
-      }
-    }
-
-    final results = await Future.wait([
-      check('musicSheets', 'hasUploadedMusicSheet', 'sheetBadgeBackfilled'),
-      check(
-        'compositions',
-        'hasCreatedComposition',
-        'compositionBadgeBackfilled',
-      ),
-    ]);
-    return (sheet: results[0], composition: results[1]);
+    _badges = userId == null ? null : _repository.forUser(userId).snapshots();
+    _migration = userId == null
+        ? null
+        : _repository.migrateExistingProgress(userId);
   }
 
   @override
@@ -93,89 +55,21 @@ class _AchievementsContainerState extends State<AchievementsContainer> {
     final userId = widget.userId;
     if (userId == null) return const SizedBox.shrink();
 
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .snapshots(),
-      builder: (context, profileSnapshot) {
-        return FutureBuilder<({bool sheet, bool composition})>(
-          future: _existingItems,
-          builder: (context, existingSnapshot) {
-            final profile = profileSnapshot.data?.data();
-            final practiceLevel = profile?['practiceLevel'] is int
-                ? profile!['practiceLevel'] as int
-                : profileSnapshot.hasData
-                ? 1
-                : null;
-            final existing = existingSnapshot.data;
-            final sheetEarned =
-                profile?['hasUploadedMusicSheet'] == true ||
-                existing?.sheet == true;
-            final compositionEarned =
-                profile?['hasCreatedComposition'] == true ||
-                existing?.composition == true;
-            final sheetKnown =
-                profile?['hasUploadedMusicSheet'] == true ||
-                existingSnapshot.connectionState == ConnectionState.done;
-            final compositionKnown =
-                profile?['hasCreatedComposition'] == true ||
-                existingSnapshot.connectionState == ConnectionState.done;
+    return FutureBuilder<void>(
+      future: _migration,
+      builder: (context, migrationSnapshot) {
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: _badges,
+          builder: (context, snapshot) {
+            final earnedIds = snapshot.data?.docs.map((doc) => doc.id).toSet();
             final badges = <_Badge>[
-              _Badge(
-                context.l10n.badgeFirstMeasure,
-                context.l10n.badgeFirstMeasureDescription,
-                'first_measure.png',
-                widget.assessmentCompleted,
-              ),
-              _Badge(
-                context.l10n.badgeSheetCollector,
-                context.l10n.badgeSheetCollectorDescription,
-                'sheet_collector.png',
-                sheetKnown ? sheetEarned : null,
-              ),
-              _Badge(
-                context.l10n.badgeFirstComposer,
-                context.l10n.badgeFirstComposerDescription,
-                'first_composer.png',
-                compositionKnown ? compositionEarned : null,
-              ),
-              _Badge(
-                context.l10n.badgeMiddleC,
-                context.l10n.badgeMiddleCDescription,
-                'middle_c.png',
-                practiceLevel == null ? null : practiceLevel > 3,
-              ),
-              _Badge(
-                context.l10n.badgeFirstMelody,
-                context.l10n.badgeFirstMelodyDescription,
-                'first_melody.png',
-                practiceLevel == null ? null : practiceLevel > 6,
-              ),
-              _Badge(
-                context.l10n.badgeGrowingMusician,
-                context.l10n.badgeGrowingMusicianDescription,
-                'growing_musician.png',
-                practiceLevel == null ? null : practiceLevel > 9,
-              ),
-              _Badge(
-                context.l10n.badgeChordBuilder,
-                context.l10n.badgeChordBuilderDescription,
-                'chord_builder.png',
-                practiceLevel == null ? null : practiceLevel > 12,
-              ),
-              _Badge(
-                context.l10n.badgeMusicNavigator,
-                context.l10n.badgeMusicNavigatorDescription,
-                'music_navigator.png',
-                practiceLevel == null ? null : practiceLevel > 15,
-              ),
-              _Badge(
-                context.l10n.badgeSoundSightMaster,
-                context.l10n.badgeSoundSightMasterDescription,
-                'soundsight_master.png',
-                practiceLevel == null ? null : practiceLevel > 16,
-              ),
+              for (final badge in AchievementBadge.values)
+                _Badge(
+                  badge.title(context.l10n),
+                  badge.description(context.l10n),
+                  '${badge.id}.png',
+                  earnedIds?.contains(badge.id),
+                ),
             ];
             final earned = badges.where((badge) => badge.earned == true).length;
 
@@ -205,6 +99,16 @@ class _AchievementsContainerState extends State<AchievementsContainer> {
                   ],
                 ),
                 const Gap(AppSpacing.sm),
+                if (migrationSnapshot.connectionState != ConnectionState.done)
+                  LinearProgressIndicator(color: colors.completedStageColor),
+                if (migrationSnapshot.hasError || snapshot.hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: Text(
+                      context.l10n.achievementsLoadError,
+                      style: TextStyle(color: colors.secondaryTextColor),
+                    ),
+                  ),
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(

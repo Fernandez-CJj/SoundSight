@@ -4,36 +4,9 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/achievements/achievement_badge.dart';
 import 'package:soundsight/l10n/generated/app_localizations.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
-
-enum AchievementBadge {
-  firstMeasure('first_measure.png'),
-  sheetCollector('sheet_collector.png'),
-  firstComposer('first_composer.png'),
-  middleC('middle_c.png'),
-  firstMelody('first_melody.png'),
-  growingMusician('growing_musician.png'),
-  chordBuilder('chord_builder.png'),
-  musicNavigator('music_navigator.png'),
-  soundSightMaster('soundsight_master.png');
-
-  const AchievementBadge(this.filename);
-
-  final String filename;
-
-  String title(AppLocalizations l10n) => switch (this) {
-    firstMeasure => l10n.badgeFirstMeasure,
-    sheetCollector => l10n.badgeSheetCollector,
-    firstComposer => l10n.badgeFirstComposer,
-    middleC => l10n.badgeMiddleC,
-    firstMelody => l10n.badgeFirstMelody,
-    growingMusician => l10n.badgeGrowingMusician,
-    chordBuilder => l10n.badgeChordBuilder,
-    musicNavigator => l10n.badgeMusicNavigator,
-    soundSightMaster => l10n.badgeSoundSightMaster,
-  };
-}
 
 /// Keeps badge announcements from appearing behind dialogs and bottom sheets.
 class AchievementPopupObserver extends NavigatorObserver with ChangeNotifier {
@@ -90,15 +63,11 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
   _profileSubscription;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-  _assessmentSubscription;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _badgesSubscription;
   final Queue<AchievementBadge> _pending = Queue<AchievementBadge>();
   final Set<AchievementBadge> _announced = {};
   String? _observedUserId;
-  Map<String, dynamic>? _previousProfile;
-  String? _previousAssessmentStatus;
-  bool _hasProfileBaseline = false;
-  bool _hasAssessmentBaseline = false;
+  Set<String>? _previousBadgeIds;
   bool _isDarkMode = false;
   bool _showing = false;
   bool _showScheduled = false;
@@ -116,7 +85,7 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
   void dispose() {
     _authSubscription?.cancel();
     _profileSubscription?.cancel();
-    _assessmentSubscription?.cancel();
+    _badgesSubscription?.cancel();
     widget.popupObserver.removeListener(_onPopupChanged);
     super.dispose();
   }
@@ -126,12 +95,9 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
     if (userId == _observedUserId) return;
 
     _profileSubscription?.cancel();
-    _assessmentSubscription?.cancel();
+    _badgesSubscription?.cancel();
     _observedUserId = userId;
-    _previousProfile = null;
-    _previousAssessmentStatus = null;
-    _hasProfileBaseline = false;
-    _hasAssessmentBaseline = false;
+    _previousBadgeIds = null;
     _pending.clear();
     _announced.clear();
     _activeBadge = null;
@@ -139,70 +105,35 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
     if (userId == null) return;
 
     final profile = FirebaseFirestore.instance.collection('users').doc(userId);
-    _profileSubscription = profile
+    _profileSubscription = profile.snapshots().listen((snapshot) {
+      if (_observedUserId == userId) {
+        _isDarkMode = snapshot.data()?['theme'] == 'dark';
+      }
+    }, onError: (Object _) {});
+    _badgesSubscription = profile
+        .collection('achievements')
         .snapshots(includeMetadataChanges: true)
         .listen((snapshot) {
-          if (_observedUserId == userId) _onProfile(snapshot);
-        }, onError: (Object _) {});
-    _assessmentSubscription = profile
-        .collection('assessment')
-        .doc('current')
-        .snapshots(includeMetadataChanges: true)
-        .listen((snapshot) {
-          if (_observedUserId == userId) _onAssessment(snapshot);
+          if (_observedUserId == userId) _onBadges(snapshot);
         }, onError: (Object _) {});
   }
 
-  void _onProfile(DocumentSnapshot<Map<String, dynamic>> snapshot) {
+  void _onBadges(QuerySnapshot<Map<String, dynamic>> snapshot) {
     if (snapshot.metadata.hasPendingWrites) return;
-    final current = snapshot.data();
-    if (current == null) return;
-    _isDarkMode = current['theme'] == 'dark';
-    if (!_hasProfileBaseline) {
-      _previousProfile = current;
-      _hasProfileBaseline = true;
+    final ids = snapshot.docs.map((doc) => doc.id).toSet();
+    final previous = _previousBadgeIds;
+    _previousBadgeIds = ids;
+    if (previous == null) {
       return;
     }
-
-    final previous = _previousProfile ?? const <String, dynamic>{};
-    _previousProfile = current;
-    if (previous['hasUploadedMusicSheet'] != true &&
-        current['hasUploadedMusicSheet'] == true &&
-        current['sheetBadgeBackfilled'] != true) {
-      _enqueue(AchievementBadge.sheetCollector);
+    for (final document in snapshot.docs) {
+      if (previous.contains(document.id) ||
+          document.data()['source'] == 'migration') {
+        continue;
+      }
+      final badge = AchievementBadge.fromId(document.id);
+      if (badge != null) _enqueue(badge);
     }
-    if (previous['hasCreatedComposition'] != true &&
-        current['hasCreatedComposition'] == true &&
-        current['compositionBadgeBackfilled'] != true) {
-      _enqueue(AchievementBadge.firstComposer);
-    }
-
-    final oldLevel = (previous['practiceLevel'] as num?)?.toInt() ?? 1;
-    final newLevel = (current['practiceLevel'] as num?)?.toInt() ?? 1;
-    for (final (threshold, badge) in const [
-      (3, AchievementBadge.middleC),
-      (6, AchievementBadge.firstMelody),
-      (9, AchievementBadge.growingMusician),
-      (12, AchievementBadge.chordBuilder),
-      (15, AchievementBadge.musicNavigator),
-      (16, AchievementBadge.soundSightMaster),
-    ]) {
-      if (oldLevel <= threshold && newLevel > threshold) _enqueue(badge);
-    }
-  }
-
-  void _onAssessment(DocumentSnapshot<Map<String, dynamic>> snapshot) {
-    if (snapshot.metadata.hasPendingWrites) return;
-    final status = snapshot.data()?['status'] as String?;
-    if (!_hasAssessmentBaseline) {
-      _previousAssessmentStatus = status;
-      _hasAssessmentBaseline = true;
-      return;
-    }
-    if (_previousAssessmentStatus != 'completed' && status == 'completed') {
-      _enqueue(AchievementBadge.firstMeasure);
-    }
-    _previousAssessmentStatus = status;
   }
 
   void _enqueue(AchievementBadge badge) {
@@ -269,7 +200,7 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
             child: Row(
               children: [
                 Image.asset(
-                  'assets/badge/${badge.filename}',
+                  badge.assetPath,
                   width: 54,
                   height: 54,
                   excludeFromSemantics: true,
