@@ -25,10 +25,8 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
 /.dart-tool/
-/.tmp/
 /.flutter
 /.flutter_tool_state
 .flutter-plugins-dependencies
@@ -37,6 +35,7 @@ migrate_working_dir/
 /build/
 /coverage/
 /backend/venv/
+/backend/transkun_venv/
 
 
 # Backend processing artifacts

@@ -187,6 +187,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
           title: title,
           type: type,
           pageCount: pageCount,
+          durationMs: (data['durationMs'] as num?)?.toInt() ?? 0,
           dateText: formatDate(data['createdAt'] as Timestamp?),
           isDeleting: deletingSheetIds.contains(sheet.id),
           onView: () => openMusicSheet(colors, sheet.id, title, type, data),
@@ -382,6 +383,10 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     String title,
     Map<String, dynamic> data,
   ) async {
+    if (data['transcriptionStatus'] == 'processing') {
+      showMessage(context.l10n.audioWaitBeforeDelete);
+      return;
+    }
     if (data['omrStatus'] == 'processing') {
       showMessage(context.l10n.waitForTranslationBeforeDelete);
       return;
@@ -399,6 +404,12 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     });
 
     try {
+      final latestSheet = await sheet.reference.get();
+      if (!mounted) return;
+      if (latestSheet.data()?['transcriptionStatus'] == 'processing') {
+        showMessage(context.l10n.audioWaitBeforeDelete);
+        return;
+      }
       await deleteService.deleteMusicSheet(
         sheetReference: sheet.reference,
         sheetData: data,

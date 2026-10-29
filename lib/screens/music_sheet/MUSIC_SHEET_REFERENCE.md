@@ -84,7 +84,7 @@ The initial status is treated as `notStarted` when `omrStatus` is missing.
 
 The app waits up to 15 minutes for the HTTP request. Audiveris itself has a 30-minute process timeout, while MuseScore's MP3 export has a 10-minute process timeout.
 
-The current backend address in the app is `http://127.0.0.1:8000`.
+The backend address for the app is configured in `lib/constants/backend_config.dart` and defaults to the PC's current LAN IPv4 address on port 8000.
 
 ### Translation status
 
@@ -98,6 +98,15 @@ The status card displays:
 After success, the button becomes **Reconvert**. Reconvert runs the same flow and overwrites the current `recognized.musicxml`, `recognized.mid`, `recognized.pdf`, and `preview.mp3` files rather than creating numbered versions.
 
 After failure, the button becomes **Retry**.
+
+### Converting a saved recording
+
+A saved MP3 opens with its original audio preview and a **Convert recording**
+card. After a successful conversion, the card offers **Convert Again** with a
+confirmation dialog. The backend saves the new MIDI at a fresh Storage path,
+updates `midiStoragePath`, and removes the prior MIDI after the update succeeds.
+If reconversion fails, the previous MIDI remains current and the card still
+offers **Convert Again**. The source MP3 remains available throughout.
 
 ### Audio preview
 

@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi import Depends
 from fastapi import HTTPException
 
+from audio.transcription_service import TranscriptionConflict
+from audio.transcription_service import TranscriptionUnavailable
+from audio.transcription_service import transcribe_audio
 from composition.post_service import getNextPublishedVersion
 from composition.post_service import saveCompositionPost
 from composition.public_profile_service import getPublicProfile
@@ -24,7 +27,7 @@ app = FastAPI(
     title="SoundSight API",
     description=(
         "Converts compositions into music sheets "
-        "and recognizes uploaded music sheets."
+        "recognizes uploaded music sheets, and transcribes piano MP3s."
     ),
     version="1.0.0",
 )
@@ -83,6 +86,30 @@ def recognize_music_sheet(
             detail=(
                 "The music sheet could not be converted."
             ),
+        ) from error
+
+
+@app.post("/music-sheets/{sheetId}/transcribe-audio")
+def transcribe_music_sheet_audio(
+    sheetId: str,
+    authenticatedUserId: str = Depends(requireVerifiedFirebaseUser),
+):
+    try:
+        return transcribe_audio(sheetId, authenticatedUserId)
+    except TranscriptionUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    except TranscriptionConflict as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except PermissionError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail="The MP3 could not be converted.",
         ) from error
 
 

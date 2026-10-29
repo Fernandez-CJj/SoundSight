@@ -273,11 +273,13 @@ class SheetSaveResultDialog extends StatelessWidget {
     required this.colors,
     required this.isSuccessful,
     this.sheetTitle,
+    this.isAudio = false,
   });
 
   final AppThemeColors colors;
   final bool isSuccessful;
   final String? sheetTitle;
+  final bool isAudio;
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +307,9 @@ class SheetSaveResultDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        isSuccessful ? context.l10n.sheetSaved : context.l10n.unableToSave,
+        isSuccessful
+            ? (isAudio ? context.l10n.audioSaved : context.l10n.sheetSaved)
+            : context.l10n.unableToSave,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -315,7 +319,9 @@ class SheetSaveResultDialog extends StatelessWidget {
       ),
       content: Text(
         isSuccessful
-            ? context.l10n.sheetSavedDescription(sheetTitle ?? '')
+            ? (isAudio
+                  ? context.l10n.audioSavedDescription
+                  : context.l10n.sheetSavedDescription(sheetTitle ?? ''))
             : context.l10n.sheetSaveFailedDescription,
         textAlign: TextAlign.center,
         style: TextStyle(
@@ -332,6 +338,7 @@ class SheetSaveResultDialog extends StatelessWidget {
             backgroundColor: statusColor,
             foregroundColor: Colors.white,
             elevation: 0,
+            minimumSize: const Size(180, 48),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),

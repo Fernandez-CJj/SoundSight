@@ -31,6 +31,7 @@ class MusicSheetAudioPreview extends StatefulWidget {
     this.pausedText,
     this.idleText,
     this.controller,
+    this.streamFromStorage = false,
   });
 
   final AppThemeColors colors;
@@ -41,6 +42,7 @@ class MusicSheetAudioPreview extends StatefulWidget {
   final String? pausedText;
   final String? idleText;
   final MusicSheetAudioPreviewController? controller;
+  final bool streamFromStorage;
 
   @override
   State<MusicSheetAudioPreview> createState() => _MusicSheetAudioPreviewState();
@@ -57,6 +59,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
   StreamSubscription<void>? completionSubscription;
 
   Uint8List? audioBytes;
+  bool sourceReady = false;
   PlayerState playerState = PlayerState.stopped;
   Duration position = Duration.zero;
   Duration duration = Duration.zero;
@@ -134,6 +137,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
 
     if (oldWidget.storagePath != widget.storagePath) {
       audioBytes = null;
+      sourceReady = false;
       position = Duration.zero;
       duration = Duration.zero;
       playerState = PlayerState.stopped;
@@ -327,7 +331,7 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
     }
 
     try {
-      if (audioBytes == null) {
+      if (!sourceReady) {
         setState(() {
           isLoading = true;
         });
@@ -338,14 +342,18 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
         final reference = uri != null && uri.hasScheme
             ? storage.refFromURL(location)
             : storage.ref(location);
-        final downloadedBytes = await reference.getData(maximumAudioSize);
-
-        if (downloadedBytes == null || downloadedBytes.isEmpty) {
-          throw StateError('empty-audio-preview');
+        if (widget.streamFromStorage) {
+          final downloadUrl = await reference.getDownloadURL();
+          await audioPlayer.setSource(UrlSource(downloadUrl));
+        } else {
+          final downloadedBytes = await reference.getData(maximumAudioSize);
+          if (downloadedBytes == null || downloadedBytes.isEmpty) {
+            throw StateError('empty-audio-preview');
+          }
+          audioBytes = downloadedBytes;
+          await audioPlayer.setSource(BytesSource(downloadedBytes));
         }
-
-        audioBytes = downloadedBytes;
-        await audioPlayer.setSource(BytesSource(downloadedBytes));
+        sourceReady = true;
       } else if (playerState == PlayerState.completed) {
         await audioPlayer.seek(Duration.zero);
       }

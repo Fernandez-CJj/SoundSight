@@ -18,18 +18,30 @@ service cloud.firestore {
       return data.title is string
              && data.title.size() > 0
              && data.title.size() <= 80
-             && data.type is string
              && data.pageCount is int
-             && data.pageCount > 0
              && data.pageCount <= 20
              && data.files is list
-             && data.files.size() > 0
-             && data.files.size() <= 20
              && (
-               (data.type == 'pdf' && data.files.size() == 1)
+               (data.type == 'pdf'
+                 && data.files.size() == 1
+                 && data.pageCount > 0)
                ||
                (data.type == 'images'
+                 && data.pageCount > 0
                  && data.files.size() == data.pageCount)
+               ||
+               (data.type == 'audio'
+                 && data.pageCount == 0
+                 && data.durationMs is int
+                 && data.durationMs > 0
+                 && data.durationMs <= 300000
+                 && data.files.size() == 1
+                 && data.files[0] is map
+                 && data.files[0].storagePath is string
+                 && data.files[0].sizeBytes is int
+                 && data.files[0].sizeBytes > 0
+                 && data.files[0].sizeBytes <= 95000000
+                 && data.files[0].contentType == 'audio/mpeg')
              );
     }
 
@@ -1237,6 +1249,10 @@ service cloud.firestore {
           && validImageSourceIfPresent(data, 17)
           && validImageSourceIfPresent(data, 18)
           && validImageSourceIfPresent(data, 19)
+        ) || (
+          data.type == 'audio'
+          && data.files[0].storagePath ==
+             'musicSheets/' + userId + '/' + sheetId + '/source.mp3'
         );
       }
 
@@ -1244,7 +1260,7 @@ service cloud.firestore {
                     && request.auth.uid == userId
                     && request.resource.data.ownerId == userId
                     && request.resource.data.keys().hasOnly([
-                      'ownerId', 'title', 'type', 'pageCount', 'files',
+                      'ownerId', 'title', 'type', 'pageCount', 'durationMs', 'files',
                       'createdAt', 'updatedAt'
                     ])
                     && validMusicSheet(request.resource.data)

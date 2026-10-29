@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:soundsight/constants/backend_config.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
 
 class CompositionGenerationService {
-  static const String backendUrl =
-      'https://cindy-unsigned-quit-gerald.trycloudflare.com';
+  static const String backendUrl = BackendConfig.baseUrl;
 
   final CompositionService compositionService = CompositionService();
 

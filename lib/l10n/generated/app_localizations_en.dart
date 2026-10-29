@@ -408,7 +408,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get translationSignInAgain =>
-      'Your sign-in could not be verified. Restart the app and sign in again.';
+      'SoundSight could not confirm your sign-in. Please try again in a moment.';
 
   @override
   String get translationVerifyEmail =>
@@ -453,14 +453,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addSheetDescription =>
-      'Upload one PDF or capture clear photos of a printed sheet.';
+      'Add sheet music from a PDF, captured pages, or an MP3 recording. MP4 upload is coming soon.';
 
   @override
   String get chooseOneMethod => 'Choose one method per sheet';
 
   @override
   String get sheetMethodLimits =>
-      '1 PDF (20 MB, 20 pages) or up to 20 captured images (5 MB each). They cannot be combined.';
+      '1 PDF (20 MB, 20 pages), up to 20 photos (5 MB each), or 1 MP3 (95 MB, 5 minutes).';
+
+  @override
+  String get swipeToSwitchMethod =>
+      'Swipe right to remove selected files before switching methods.';
 
   @override
   String get openingPdf => 'Opening PDF...';
@@ -1222,11 +1226,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get compositionPublishFailed =>
-      'The composition could not be published. Make sure the backend is running.';
+      'Your composition could not be shared right now. Please try again.';
 
   @override
   String get compositionPublishUnauthorized =>
-      'Your publishing session could not be verified. Please sign out, sign in again, and retry.';
+      'SoundSight could not confirm your sign-in. Please try again in a moment.';
 
   @override
   String get updatedCompositionLoadFailed =>
@@ -1237,7 +1241,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Prepare the latest music files before starting AR Practice.';
 
   @override
-  String get generatedMidiMissing => 'The generated MIDI file is missing.';
+  String get generatedMidiMissing =>
+      'The notes needed for this practice mode are not ready.';
 
   @override
   String get prepareLatestFilesBeforeSightReading =>
@@ -1245,7 +1250,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get generatedPracticeFilesMissing =>
-      'The generated MusicXML, MIDI, or MP3 file is missing.';
+      'The files needed for practice are not ready.';
 
   @override
   String publishUpdateQuestion(String title) {
@@ -1841,11 +1846,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retrySave => 'Retry Save';
 
   @override
-  String get filesNotGenerated => 'Files were not generated';
+  String get filesNotGenerated => 'Music not ready';
 
   @override
   String get filesNotGeneratedDescription =>
-      'The composition was saved, but its PDF, MIDI, MusicXML, and MP3 could not be created.';
+      'Your composition was saved, but its sheet music and playback are not ready. You can try again.';
 
   @override
   String get finish => 'Finish';
@@ -1885,7 +1890,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkConnectionFirestorePermissions =>
-      'Check your connection and Firestore permissions.';
+      'Check your connection and try again.';
 
   @override
   String get signInForPublishedCompositions =>
@@ -1994,14 +1999,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get publishedArFileUnavailable =>
-      'The MIDI file for AR Practice is unavailable. Ask the owner to publish the composition again.';
+      'This composition is not ready for AR Practice. Ask its creator to publish it again.';
 
   @override
   String get publishedSheetLoadFailed => 'The music sheet could not be loaded.';
 
   @override
   String get checkConnectionStoragePermissions =>
-      'Check your connection and Firebase Storage permissions.';
+      'Check your connection and try again.';
 
   @override
   String commentsVersion(int version) {
@@ -2662,11 +2667,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Connection restored—play this part again.';
 
   @override
-  String get synthesiaNoMp3Preview => 'This score has no MP3 audio preview.';
+  String get synthesiaNoMp3Preview => 'This score has no audio preview.';
 
   @override
   String get synthesiaMp3PlaybackFailed =>
-      'The MP3 preview could not be played.';
+      'The audio preview could not be played.';
 
   @override
   String get synthesiaTryAgainHoldFullLength =>
@@ -3044,7 +3049,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sightReadingPerformanceDetailEvaluation =>
-      'Your notes and timing are evaluated against the MIDI timeline.';
+      'SoundSight checks the notes you play and when you play them.';
 
   @override
   String get sightReadingPerformanceDetailFirstKey =>
@@ -3215,32 +3220,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sightReadingNotConnected => 'Not connected';
 
   @override
-  String get sightReadingNoMp3Preview => 'The score has no MP3 audio preview.';
+  String get sightReadingNoMp3Preview => 'This score has no audio preview.';
 
   @override
   String get sightReadingPlaybackFailed =>
       'The score preview could not be played.';
 
   @override
-  String get sightReadingMusicXmlMissing => 'The MusicXML file is missing.';
+  String get sightReadingMusicXmlMissing =>
+      'The sheet music for this exercise is not available.';
 
   @override
   String get sightReadingMusicXmlDownloadFailed =>
-      'The MusicXML file could not be downloaded.';
+      'The sheet music could not be loaded. Please try again.';
 
   @override
   String get sightReadingScoreLoadFailed => 'The score could not be loaded.';
 
   @override
   String get sightReadingScorePreparationFailed =>
-      'The MusicXML could not be prepared for Sight Reading.';
+      'This sight-reading exercise could not be prepared.';
 
   @override
-  String get sightReadingMidiFileMissing => 'The challenge has no MIDI file.';
+  String get sightReadingMidiFileMissing =>
+      'The notes for this challenge are not available.';
 
   @override
   String get sightReadingMidiTimelineUnavailable =>
-      'The MIDI timeline could not be loaded.';
+      'The notes for this challenge could not be loaded.';
 
   @override
   String get sightReadingUntitledScore => 'Untitled score';
@@ -3249,7 +3256,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sightReadingReady => 'Ready';
 
   @override
-  String get sightReadingWaitingForMidi => 'Waiting for MIDI file';
+  String get sightReadingWaitingForMidi => 'Preparing notes';
 
   @override
   String get sightReadingPlayOnTime => 'Play on time';
@@ -4913,7 +4920,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lessonSheetMusic => 'Sheet music';
 
   @override
-  String get lessonCompressedMusicXmlScore => 'Compressed MusicXML score';
+  String get lessonCompressedMusicXmlScore => 'Practice sheet';
 
   @override
   String get lessonSightReadingScore => 'Sight-reading score';
@@ -4944,7 +4951,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lessonSightReadingFilesRequired =>
-      'Sight reading requires a matching MIDI and MusicXML pair.';
+      'The music for this sight-reading lesson is not available.';
 
   @override
   String get lessonFileEmpty => 'This lesson file is empty.';
@@ -5003,4 +5010,122 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lessonViewPdf => 'View PDF';
+
+  @override
+  String get uploadAudio => 'Upload MP3';
+
+  @override
+  String get uploadAudioDescription =>
+      'Choose one MP3 recording to preview and save.';
+
+  @override
+  String get uploadVideo => 'Upload MP4';
+
+  @override
+  String get uploadVideoComingSoon => 'MP4 upload is coming soon.';
+
+  @override
+  String get recordingNoiseReminder =>
+      'Use a clear piano recording with little background noise. Noisy MP3 or MP4 files may produce missing or incorrect notes in the converted sheet.';
+
+  @override
+  String get selectedAudioFile => 'Selected audio · 1 file';
+
+  @override
+  String get audioOnlyPreviewNote => 'Swipe right to remove this MP3.';
+
+  @override
+  String get saveAudio => 'Save Audio';
+
+  @override
+  String get audioSaved => 'Audio saved';
+
+  @override
+  String get audioSavedDescription =>
+      'Your recording is saved in Music Sheets and ready to play.';
+
+  @override
+  String get audioUnsupported => 'Choose an MP3 file.';
+
+  @override
+  String get audioEmpty => 'The selected file is empty.';
+
+  @override
+  String get audioTooLarge => 'Choose a file of 95 MB or less.';
+
+  @override
+  String get audioTooLong => 'Choose a recording no longer than 5 minutes.';
+
+  @override
+  String get audioUnreadable =>
+      'This recording could not be opened. Try another file.';
+
+  @override
+  String get audioSaveFailed =>
+      'The recording could not be saved. Please try again.';
+
+  @override
+  String get removeAudioBeforeOtherSource =>
+      'Remove the audio file before choosing PDF or photos.';
+
+  @override
+  String get removeSheetsBeforeAudio =>
+      'Remove the PDF or photos before choosing audio.';
+
+  @override
+  String get audioFileType => 'Audio';
+
+  @override
+  String get audioNoScoreYet =>
+      'This recording has no generated sheet music yet.';
+
+  @override
+  String get audioConvertToMidi => 'Convert recording';
+
+  @override
+  String get audioMidiReady => 'Recording converted';
+
+  @override
+  String get audioMidiProcessing => 'Converting recording';
+
+  @override
+  String get audioMidiFailed => 'Could not convert recording';
+
+  @override
+  String get audioMidiStartDescription =>
+      'SoundSight will turn this piano recording into playable sheet music.';
+
+  @override
+  String get audioMidiReadyDescription =>
+      'Your sheet music is ready to view and play.';
+
+  @override
+  String get audioMidiFailedDescription =>
+      'The recording could not be converted. You can try again.';
+
+  @override
+  String get audioMidiQuestion => 'Convert this recording?';
+
+  @override
+  String get audioReconvertQuestion => 'Convert this recording again?';
+
+  @override
+  String get audioReconvertDescription =>
+      'SoundSight will make a new sheet from this recording. This may take a few minutes.';
+
+  @override
+  String get audioMidiConfirmDescription =>
+      'SoundSight will turn this piano recording into playable sheet music. This may take a few minutes.';
+
+  @override
+  String get audioMidiLoadingDescription =>
+      'Keep this screen open while SoundSight reads the recording.';
+
+  @override
+  String get audioMidiSuccessDescription =>
+      'Your sheet music is ready to view and play.';
+
+  @override
+  String get audioWaitBeforeDelete =>
+      'Wait for the recording to finish converting before deleting it.';
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:soundsight/constants/backend_config.dart';
 
 import 'package:soundsight/screens/composition/models/composition.dart';
 
@@ -68,8 +69,7 @@ class CompositionPublication {
 }
 
 class CompositionPublishService {
-  static const String backendUrl =
-      'https://cindy-unsigned-quit-gerald.trycloudflare.com';
+  static const String backendUrl = BackendConfig.baseUrl;
 
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 

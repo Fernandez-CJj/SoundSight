@@ -21,7 +21,7 @@ The Python packages are listed in `requirements.txt`:
 - Firebase Admin;
 - Pillow.
 
-The Flutter clients currently call `http://127.0.0.1:8000`.
+The Flutter app uses the LAN address configured in `lib/constants/backend_config.dart`. Start Uvicorn with `--host 0.0.0.0 --port 8000` so a phone on the same network can connect.
 
 ## Available routes
 
@@ -86,6 +86,18 @@ Unpublishes a composition. The request body contains `ownerId`.
 9. The MusicXML, PDF, MIDI, and MP3 are uploaded to Firebase Storage.
 10. The sheet document becomes `completed` and stores the results.
 11. Temporary job files are deleted.
+
+### Saved MP3 transcription
+
+The authenticated `POST /music-sheets/{sheetId}/transcribe-audio` route uses
+the Python 3.11 Transkun worker described in [TRANSKUN_SETUP.md](TRANSKUN_SETUP.md).
+The Python 3.14 FastAPI environment downloads the saved MP3, decodes it to a
+temporary WAV, and invokes the worker as a separate process. The worker
+transcribes and applies a conservative piano timing correction. The backend
+uploads `recognized.mid` on the first conversion and a versioned MIDI path on
+reconversion. It records a separate transcription status and note count in the
+sheet document. A failed reconversion keeps the previous MIDI. This step does
+not create MusicXML, PDF, or rendered MP3 files.
 
 ## Temporary local information
 

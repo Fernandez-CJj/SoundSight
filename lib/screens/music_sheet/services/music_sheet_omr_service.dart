@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:soundsight/constants/backend_config.dart';
 import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart';
 
 enum MusicSheetOmrFailure {
@@ -22,8 +23,7 @@ class MusicSheetOmrException implements Exception {
 }
 
 class MusicSheetOmrService {
-  static const String backendUrl =
-      'https://cindy-unsigned-quit-gerald.trycloudflare.com';
+  static const String backendUrl = BackendConfig.baseUrl;
 
   Future<OmrConversionResult> recognizeMusicSheet({
     required String sheetId,

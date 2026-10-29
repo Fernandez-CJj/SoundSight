@@ -13,6 +13,12 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
     required this.noteCount,
     required this.isConverting,
     required this.onRecognize,
+    this.titleOverride,
+    this.subtitleOverride,
+    this.buttonLabelOverride,
+    this.initialIcon,
+    this.showCompletedAction = true,
+    this.showAction = true,
   });
 
   final AppThemeColors colors;
@@ -21,6 +27,12 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
   final int noteCount;
   final bool isConverting;
   final VoidCallback onRecognize;
+  final String? titleOverride;
+  final String? subtitleOverride;
+  final String? buttonLabelOverride;
+  final IconData? initialIcon;
+  final bool showCompletedAction;
+  final bool showAction;
 
   @override
   Widget build(BuildContext context) {
@@ -37,21 +49,30 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
         ? Icons.check_rounded
         : isFailed
         ? Icons.refresh_rounded
-        : Icons.document_scanner_outlined;
-    final title = isCompleted
+        : initialIcon ?? Icons.document_scanner_outlined;
+    final defaultTitle = isCompleted
         ? l10n.translationReady
         : isFailed
         ? l10n.translationFailed
         : isProcessing
         ? l10n.translatingMusicSheet
         : l10n.translate;
-    final subtitle = isCompleted
+    final defaultSubtitle = isCompleted
         ? l10n.translationSummary(noteCount, partCount)
         : isFailed
         ? l10n.translationFailedDescription
         : isProcessing
         ? l10n.translationProcessingDescription
         : l10n.translationStartDescription;
+
+    final title = titleOverride ?? defaultTitle;
+    final subtitle = subtitleOverride ?? defaultSubtitle;
+    final buttonLabel = buttonLabelOverride ??
+        (isCompleted
+            ? l10n.reconvert
+            : isFailed
+            ? l10n.retry
+            : l10n.translate);
 
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
@@ -105,7 +126,7 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
               ],
             ),
           ),
-          if (!isProcessing) ...[
+          if (showAction && !isProcessing && (!isCompleted || showCompletedAction)) ...[
             Gap(AppSpacing.sm),
             SizedBox(
               height: 42,
@@ -127,13 +148,7 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
-                child: Text(
-                  isCompleted
-                      ? l10n.reconvert
-                      : isFailed
-                      ? l10n.retry
-                      : l10n.translate,
-                ),
+                child: Text(buttonLabel),
               ),
             ),
           ],

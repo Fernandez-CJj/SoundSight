@@ -147,7 +147,7 @@ Publishing is available from the private composition's details screen.
 6. It copies those exact files into immutable public version paths.
 7. The backend creates or updates the public post and creates a numbered version document.
 
-The current backend address in the app is `http://127.0.0.1:8000`. Publishing has a two-minute request timeout.
+The backend address for the app is configured in `lib/constants/backend_config.dart` and defaults to the PC's current LAN IPv4 address on port 8000. Publishing has a two-minute request timeout.
 
 ### Republishing and versions
 

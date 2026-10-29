@@ -57,6 +57,13 @@ service firebase.storage {
                                 && request.resource.size <= 20 * 1024 * 1024
                                 && fileName == 'sheet.pdf'
                               )
+                              ||
+                              (
+                                request.resource.contentType == 'audio/mpeg'
+                                && request.resource.size > 0
+                                && request.resource.size <= 95 * 1000 * 1000
+                                && fileName == 'source.mp3'
+                              )
                             );
 
       allow delete: if isVerifiedUser()

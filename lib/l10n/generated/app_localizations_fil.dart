@@ -410,7 +410,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get translationSignInAgain =>
-      'Hindi ma-verify ang iyong pag-sign in. I-restart ang app at mag-sign in muli.';
+      'Hindi makumpirma ng SoundSight ang iyong pag-sign in. Subukan muli pagkalipas ng ilang sandali.';
 
   @override
   String get translationVerifyEmail =>
@@ -456,14 +456,18 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get addSheetDescription =>
-      'Mag-upload ng isang PDF o kumuha ng malinaw na larawan ng naka-print na sheet.';
+      'Magdagdag ng piyesa mula sa PDF, mga kinuhang larawan, o MP3 recording. Malapit nang maging available ang MP4.';
 
   @override
   String get chooseOneMethod => 'Pumili ng isang paraan para sa bawat sheet';
 
   @override
   String get sheetMethodLimits =>
-      '1 PDF (20 MB, 20 pahina) o hanggang 20 kinuhang larawan (5 MB bawat isa). Hindi maaaring pagsamahin ang mga ito.';
+      '1 PDF (20 MB, 20 pahina), hanggang 20 larawan (5 MB bawat isa), o 1 MP3 (95 MB, 5 minuto).';
+
+  @override
+  String get swipeToSwitchMethod =>
+      'I-swipe pakanan para alisin ang mga napiling file bago pumili ng ibang paraan.';
 
   @override
   String get openingPdf => 'Binubuksan ang PDF...';
@@ -1237,11 +1241,11 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get compositionPublishFailed =>
-      'Hindi mailathala ang komposisyon. Tiyaking tumatakbo ang backend.';
+      'Hindi maibahagi ang iyong komposisyon sa ngayon. Subukan muli.';
 
   @override
   String get compositionPublishUnauthorized =>
-      'Hindi ma-verify ang iyong publishing session. Mag-sign out, mag-sign in muli, at subukan ulit.';
+      'Hindi makumpirma ng SoundSight ang iyong pag-sign in. Subukan muli pagkalipas ng ilang sandali.';
 
   @override
   String get updatedCompositionLoadFailed =>
@@ -1252,7 +1256,8 @@ class AppLocalizationsFil extends AppLocalizations {
       'Ihanda ang pinakabagong mga music file bago simulan ang AR Practice.';
 
   @override
-  String get generatedMidiMissing => 'Nawawala ang nabuong MIDI file.';
+  String get generatedMidiMissing =>
+      'Hindi pa handa ang mga notang kailangan para sa paraang ito ng pagsasanay.';
 
   @override
   String get prepareLatestFilesBeforeSightReading =>
@@ -1260,7 +1265,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get generatedPracticeFilesMissing =>
-      'Nawawala ang nabuong MusicXML, MIDI, o MP3 file.';
+      'Hindi pa handa ang mga file na kailangan para sa pagsasanay.';
 
   @override
   String publishUpdateQuestion(String title) {
@@ -1866,11 +1871,11 @@ class AppLocalizationsFil extends AppLocalizations {
   String get retrySave => 'Subukang I-save Muli';
 
   @override
-  String get filesNotGenerated => 'Hindi nagawa ang mga file';
+  String get filesNotGenerated => 'Hindi pa handa ang musika';
 
   @override
   String get filesNotGeneratedDescription =>
-      'Na-save ang komposisyon, ngunit hindi nagawa ang PDF, MIDI, MusicXML, at MP3 nito.';
+      'Na-save ang iyong komposisyon, ngunit hindi pa handa ang piyesa at audio nito. Maaari mong subukan muli.';
 
   @override
   String get finish => 'Tapusin';
@@ -1910,7 +1915,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get checkConnectionFirestorePermissions =>
-      'Suriin ang iyong koneksyon at mga pahintulot sa Firestore.';
+      'Suriin ang iyong koneksyon at subukan muli.';
 
   @override
   String get signInForPublishedCompositions =>
@@ -2021,14 +2026,14 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get publishedArFileUnavailable =>
-      'Hindi available ang MIDI file para sa AR Practice. Hilingin sa may-ari na ilathala muli ang komposisyon.';
+      'Hindi pa handa ang komposisyong ito para sa AR Practice. Hilingin sa gumawa nito na ilathala itong muli.';
 
   @override
   String get publishedSheetLoadFailed => 'Hindi ma-load ang music sheet.';
 
   @override
   String get checkConnectionStoragePermissions =>
-      'Suriin ang iyong koneksyon at mga pahintulot sa Firebase Storage.';
+      'Suriin ang iyong koneksyon at subukan muli.';
 
   @override
   String commentsVersion(int version) {
@@ -2695,11 +2700,11 @@ class AppLocalizationsFil extends AppLocalizations {
       'Naibalik ang koneksyon—tugtugin muli ang bahaging ito.';
 
   @override
-  String get synthesiaNoMp3Preview =>
-      'Walang MP3 audio preview ang score na ito.';
+  String get synthesiaNoMp3Preview => 'Walang audio preview ang piyesang ito.';
 
   @override
-  String get synthesiaMp3PlaybackFailed => 'Hindi ma-play ang MP3 preview.';
+  String get synthesiaMp3PlaybackFailed =>
+      'Hindi mapatugtog ang audio preview.';
 
   @override
   String get synthesiaTryAgainHoldFullLength =>
@@ -3081,7 +3086,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get sightReadingPerformanceDetailEvaluation =>
-      'Susuriin ang iyong mga nota at timing ayon sa MIDI timeline.';
+      'Susuriin ng SoundSight ang mga notang tinutugtog mo at kung kailan mo tinutugtog ang mga ito.';
 
   @override
   String get sightReadingPerformanceDetailFirstKey =>
@@ -3258,33 +3263,34 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get sightReadingNoMp3Preview =>
-      'Walang MP3 audio preview ang piyesang ito.';
+      'Walang audio preview ang piyesang ito.';
 
   @override
   String get sightReadingPlaybackFailed =>
       'Hindi mapatugtog ang preview ng piyesa.';
 
   @override
-  String get sightReadingMusicXmlMissing => 'Nawawala ang MusicXML file.';
+  String get sightReadingMusicXmlMissing =>
+      'Hindi available ang piyesa para sa pagsasanay na ito.';
 
   @override
   String get sightReadingMusicXmlDownloadFailed =>
-      'Hindi ma-download ang MusicXML file.';
+      'Hindi ma-load ang piyesa. Subukan muli.';
 
   @override
   String get sightReadingScoreLoadFailed => 'Hindi ma-load ang piyesa.';
 
   @override
   String get sightReadingScorePreparationFailed =>
-      'Hindi maihanda ang MusicXML para sa Sight Reading.';
+      'Hindi maihanda ang pagsasanay na ito sa pagbabasa ng piyesa.';
 
   @override
   String get sightReadingMidiFileMissing =>
-      'Walang MIDI file ang hamon na ito.';
+      'Hindi available ang mga nota para sa hamong ito.';
 
   @override
   String get sightReadingMidiTimelineUnavailable =>
-      'Hindi ma-load ang MIDI timeline.';
+      'Hindi ma-load ang mga nota para sa hamong ito.';
 
   @override
   String get sightReadingUntitledScore => 'Piyesang walang pamagat';
@@ -3293,7 +3299,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get sightReadingReady => 'Handa';
 
   @override
-  String get sightReadingWaitingForMidi => 'Naghihintay sa MIDI file';
+  String get sightReadingWaitingForMidi => 'Inihahanda ang mga nota';
 
   @override
   String get sightReadingPlayOnTime => 'Tumugtog sa tamang oras';
@@ -4975,7 +4981,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get lessonSheetMusic => 'Piyesa';
 
   @override
-  String get lessonCompressedMusicXmlScore => 'Naka-compress na MusicXML score';
+  String get lessonCompressedMusicXmlScore => 'Piyesa para sa pagsasanay';
 
   @override
   String get lessonSightReadingScore => 'Piyesa para sa sight reading';
@@ -5007,7 +5013,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get lessonSightReadingFilesRequired =>
-      'Kailangan ng sight reading ang magkatugmang MIDI at MusicXML file.';
+      'Hindi available ang piyesa para sa araling ito sa pagbabasa ng musika.';
 
   @override
   String get lessonFileEmpty => 'Walang laman ang file ng araling ito.';
@@ -5066,4 +5072,124 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get lessonViewPdf => 'Tingnan ang PDF';
+
+  @override
+  String get uploadAudio => 'Mag-upload ng MP3';
+
+  @override
+  String get uploadAudioDescription =>
+      'Pumili ng isang MP3 recording na mapapakinggan bago i-save.';
+
+  @override
+  String get uploadVideo => 'Mag-upload ng MP4';
+
+  @override
+  String get uploadVideoComingSoon =>
+      'Malapit nang maging available ang pag-upload ng MP4.';
+
+  @override
+  String get recordingNoiseReminder =>
+      'Gumamit ng malinaw na piano recording na kaunti ang ingay sa paligid. Ang maingay na MP3 o MP4 ay maaaring magdulot ng kulang o maling mga nota sa na-convert na piyesa.';
+
+  @override
+  String get selectedAudioFile => 'Napiling audio · 1 file';
+
+  @override
+  String get audioOnlyPreviewNote =>
+      'I-swipe pakanan para alisin ang MP3 na ito.';
+
+  @override
+  String get saveAudio => 'I-save ang Audio';
+
+  @override
+  String get audioSaved => 'Na-save ang audio';
+
+  @override
+  String get audioSavedDescription =>
+      'Nasa Music Sheets na ang recording at maaari nang pakinggan.';
+
+  @override
+  String get audioUnsupported => 'Pumili ng MP3 file.';
+
+  @override
+  String get audioEmpty => 'Walang laman ang napiling file.';
+
+  @override
+  String get audioTooLarge => 'Pumili ng file na hanggang 95 MB lamang.';
+
+  @override
+  String get audioTooLong =>
+      'Pumili ng recording na hindi hihigit sa 5 minuto.';
+
+  @override
+  String get audioUnreadable =>
+      'Hindi mabuksan ang recording na ito. Subukan ang ibang file.';
+
+  @override
+  String get audioSaveFailed => 'Hindi ma-save ang recording. Subukan muli.';
+
+  @override
+  String get removeAudioBeforeOtherSource =>
+      'Alisin muna ang audio bago pumili ng PDF o mga larawan.';
+
+  @override
+  String get removeSheetsBeforeAudio =>
+      'Alisin muna ang PDF o mga larawan bago pumili ng audio.';
+
+  @override
+  String get audioFileType => 'Audio';
+
+  @override
+  String get audioNoScoreYet =>
+      'Wala pang nabuong piyesa mula sa recording na ito.';
+
+  @override
+  String get audioConvertToMidi => 'I-convert ang recording';
+
+  @override
+  String get audioMidiReady => 'Na-convert ang recording';
+
+  @override
+  String get audioMidiProcessing => 'Kino-convert ang recording';
+
+  @override
+  String get audioMidiFailed => 'Hindi ma-convert ang recording';
+
+  @override
+  String get audioMidiStartDescription =>
+      'Gagawing piyesang maaaring patugtugin ng SoundSight ang piano recording na ito.';
+
+  @override
+  String get audioMidiReadyDescription =>
+      'Handa nang tingnan at patugtugin ang iyong piyesa.';
+
+  @override
+  String get audioMidiFailedDescription =>
+      'Hindi ma-convert ang recording. Maaari mong subukan muli.';
+
+  @override
+  String get audioMidiQuestion => 'I-convert ang recording na ito?';
+
+  @override
+  String get audioReconvertQuestion => 'I-convert muli ang recording na ito?';
+
+  @override
+  String get audioReconvertDescription =>
+      'Gagawa ang SoundSight ng bagong piyesa mula sa recording na ito. Maaaring abutin ito ng ilang minuto.';
+
+  @override
+  String get audioMidiConfirmDescription =>
+      'Gagawing piyesang maaaring patugtugin ng SoundSight ang piano recording na ito. Maaaring abutin ito ng ilang minuto.';
+
+  @override
+  String get audioMidiLoadingDescription =>
+      'Panatilihing bukas ang screen habang binabasa ng SoundSight ang recording.';
+
+  @override
+  String get audioMidiSuccessDescription =>
+      'Handa nang tingnan at patugtugin ang iyong piyesa.';
+
+  @override
+  String get audioWaitBeforeDelete =>
+      'Hintaying matapos ang pag-convert ng recording bago ito burahin.';
 }

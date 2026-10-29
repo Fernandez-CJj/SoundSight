@@ -207,7 +207,9 @@ class SynthesiaScoreLoader {
       );
     }
 
-    if (requireCompletedOmr && data['omrStatus'] != 'completed') {
+    if (requireCompletedOmr &&
+        data['omrStatus'] != 'completed' &&
+        data['transcriptionStatus'] != 'completed') {
       throw const SynthesiaScoreLoadException(
         'Translate the music sheet before starting Synthesia.',
       );

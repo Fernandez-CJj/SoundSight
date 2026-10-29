@@ -10,12 +10,14 @@ class SaveSheetContainer extends StatelessWidget {
     required this.isSavingSheet,
     required this.uploadProgress,
     required this.onSave,
+    this.isAudio = false,
   });
 
   final AppThemeColors colors;
   final bool isSavingSheet;
   final double uploadProgress;
   final VoidCallback? onSave;
+  final bool isAudio;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,8 @@ class SaveSheetContainer extends StatelessWidget {
                   ? context.l10n.savingProgress(
                       (uploadProgress * 100).round(),
                     )
+                  : isAudio
+                  ? context.l10n.saveAudio
                   : context.l10n.saveSheet,
               style: TextStyle(fontWeight: FontWeight.w700),
             ),

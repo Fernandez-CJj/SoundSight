@@ -15,6 +15,30 @@ def isMuseScoreInstalled():
     )
 
 
+def exportMusicXml(midiPath):
+    if not isMuseScoreInstalled():
+        raise FileNotFoundError("MuseScore is not installed.")
+    if not os.path.isfile(midiPath):
+        raise FileNotFoundError("The MIDI file was not found.")
+
+    musicXmlPath = os.path.splitext(midiPath)[0] + ".musicxml"
+    try:
+        result = subprocess.run(
+            [MUSESCORE_PATH, "-o", musicXmlPath, midiPath],
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError("MuseScore took longer than 10 minutes.") from error
+
+    if result.returncode != 0 or not os.path.isfile(musicXmlPath):
+        raise RuntimeError("MuseScore could not generate the MusicXML file.")
+    if os.path.getsize(musicXmlPath) == 0:
+        raise RuntimeError("MuseScore created an empty MusicXML file.")
+    return musicXmlPath
+
+
 def exportPdf(musicXmlPath):
     if not isMuseScoreInstalled():
         raise FileNotFoundError(

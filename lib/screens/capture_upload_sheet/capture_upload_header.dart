@@ -9,20 +9,26 @@ class CaptureUploadHeader extends StatelessWidget {
     super.key,
     required this.colors,
     required this.isPickingFiles,
+    required this.isPickingAudio,
     required this.isSavingSheet,
     required this.isUploadLocked,
     required this.isCaptureLocked,
+    required this.isAudioLocked,
     required this.onUpload,
     required this.onCapture,
+    required this.onAudio,
   });
 
   final AppThemeColors colors;
   final bool isPickingFiles;
+  final bool isPickingAudio;
   final bool isSavingSheet;
   final bool isUploadLocked;
   final bool isCaptureLocked;
+  final bool isAudioLocked;
   final VoidCallback onUpload;
   final VoidCallback onCapture;
+  final VoidCallback onAudio;
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +94,29 @@ class CaptureUploadHeader extends StatelessWidget {
                   ),
                 ),
               ),
+              Gap(AppSpacing.sm),
+              Divider(height: 1, color: colors.borderColor),
+              Gap(AppSpacing.sm),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.volume_off_outlined,
+                    color: colors.secondaryTextColor,
+                    size: 16,
+                  ),
+                  Gap(AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      context.l10n.recordingNoiseReminder,
+                      style: TextStyle(
+                        color: colors.secondaryTextColor,
+                        fontSize: AppTextSizes.caption,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -102,13 +131,15 @@ class CaptureUploadHeader extends StatelessWidget {
                   colors: colors,
                   color: const Color(0xFF3B82F6),
                   icon: Icons.upload_file_rounded,
-                  title: isPickingFiles
+                  title: isPickingFiles && !isPickingAudio
                       ? context.l10n.openingPdf
                       : context.l10n.uploadPdf,
                   description: context.l10n.uploadPdfDescription,
-                  isLoading: isPickingFiles,
+                  isLoading: isPickingFiles && !isPickingAudio,
                   isLocked: isUploadLocked,
-                  onTap: isPickingFiles || isSavingSheet ? null : onUpload,
+                  onTap: isPickingFiles || isSavingSheet || isUploadLocked
+                      ? null
+                      : onUpload,
                 ),
               ),
               Gap(AppSpacing.sm),
@@ -120,11 +151,69 @@ class CaptureUploadHeader extends StatelessWidget {
                   title: context.l10n.capturePages,
                   description: context.l10n.capturePagesDescription,
                   isLocked: isCaptureLocked,
-                  onTap: isPickingFiles || isSavingSheet ? null : onCapture,
+                  onTap: isPickingFiles || isSavingSheet || isCaptureLocked
+                      ? null
+                      : onCapture,
                 ),
               ),
             ],
           ),
+        ),
+        Gap(AppSpacing.sm),
+        SizedBox(
+          height: 174,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _SheetActionCard(
+                  colors: colors,
+                  color: colors.synthesiaResultColor,
+                  icon: Icons.audio_file_rounded,
+                  title: context.l10n.uploadAudio,
+                  description: context.l10n.uploadAudioDescription,
+                  isLoading: isPickingAudio,
+                  isLocked: isAudioLocked,
+                  onTap: isPickingFiles || isSavingSheet || isAudioLocked
+                      ? null
+                      : onAudio,
+                ),
+              ),
+              Gap(AppSpacing.sm),
+              Expanded(
+                child: _SheetActionCard(
+                  colors: colors,
+                  color: colors.synthesiaResultColor,
+                  icon: Icons.video_file_rounded,
+                  title: context.l10n.uploadVideo,
+                  description: context.l10n.uploadVideoComingSoon,
+                  isLocked: true,
+                  onTap: null,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Gap(AppSpacing.sm),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.swipe_right_rounded,
+              color: colors.secondaryTextColor,
+              size: 16,
+            ),
+            Gap(AppSpacing.xs),
+            Expanded(
+              child: Text(
+                context.l10n.swipeToSwitchMethod,
+                style: TextStyle(
+                  color: colors.secondaryTextColor,
+                  fontSize: AppTextSizes.caption,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

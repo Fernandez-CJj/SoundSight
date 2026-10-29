@@ -12,6 +12,7 @@ class MusicSheetCard extends StatelessWidget {
     required this.title,
     required this.type,
     required this.pageCount,
+    this.durationMs = 0,
     required this.dateText,
     required this.isDeleting,
     required this.onView,
@@ -24,6 +25,7 @@ class MusicSheetCard extends StatelessWidget {
   final String title;
   final String type;
   final int pageCount;
+  final int durationMs;
   final String dateText;
   final bool isDeleting;
   final VoidCallback onView;
@@ -33,7 +35,13 @@ class MusicSheetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPdf = type == 'pdf';
-    final typeColor = isPdf ? const Color(0xFFDC2626) : const Color(0xFF3B82F6);
+    final isAudio = type == 'audio';
+    final typeColor = isAudio
+        ? colors.synthesiaResultColor
+        : isPdf ? const Color(0xFFDC2626) : const Color(0xFF3B82F6);
+    final duration = Duration(milliseconds: durationMs);
+    final audioDuration = '${duration.inMinutes}:'
+        '${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}';
 
     return Dismissible(
       key: ValueKey(dismissKey),
@@ -78,8 +86,10 @@ class MusicSheetCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  isPdf
+                  child: Icon(
+                    isAudio
+                      ? Icons.audio_file_rounded
+                      : isPdf
                       ? Icons.picture_as_pdf_rounded
                       : Icons.library_music_rounded,
                   color: typeColor,
@@ -103,8 +113,10 @@ class MusicSheetCard extends StatelessWidget {
                     ),
                     Gap(AppSpacing.xs),
                     Text(
-                      '${context.l10n.pageCount(pageCount)} - '
-                      '${isPdf ? context.l10n.pdf : context.l10n.images}',
+                      isAudio
+                          ? '${context.l10n.audioFileType} · $audioDuration'
+                          : '${context.l10n.pageCount(pageCount)} - '
+                            '${isPdf ? context.l10n.pdf : context.l10n.images}',
                       style: TextStyle(
                         color: colors.secondaryTextColor,
                         fontSize: AppTextSizes.caption,

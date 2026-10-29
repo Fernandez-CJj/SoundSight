@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,7 +13,10 @@ import 'package:soundsight/screens/capture_upload_sheet/capture_tips_container.d
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_dialogs.dart';
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_header.dart';
 import 'package:soundsight/screens/capture_upload_sheet/music_sheet_upload_service.dart';
+import 'package:soundsight/screens/capture_upload_sheet/music_sheet_audio_upload_service.dart';
 import 'package:soundsight/screens/capture_upload_sheet/save_sheet_container.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_audio_container.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_audio_file.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_preview_dialog.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheets_container.dart';
@@ -42,19 +47,30 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
   late bool isDarkMode;
   List<SelectedSheetFile> selectedSheets = [];
+  SelectedAudioFile? selectedAudio;
   int? selectedPdfPageCount;
   bool isPickingFiles = false;
+  bool isPickingAudio = false;
   bool isSavingSheet = false;
   double uploadProgress = 0;
 
   final ImagePicker imagePicker = ImagePicker();
   final MusicSheetUploadService uploadService = MusicSheetUploadService();
+  final MusicSheetAudioUploadService audioUploadService =
+      MusicSheetAudioUploadService();
 
   bool get hasSelectedPdf => selectedSheets.any((file) {
     return file.extension?.toLowerCase() == 'pdf';
   });
 
   bool get hasCapturedImages => selectedSheets.isNotEmpty && !hasSelectedPdf;
+
+  @override
+  void dispose() {
+    final audio = selectedAudio;
+    if (audio != null) unawaited(audio.cleanUp());
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -135,12 +151,17 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
               CaptureUploadHeader(
                 colors: colors,
                 isPickingFiles: isPickingFiles,
+                isPickingAudio: isPickingAudio,
                 isSavingSheet: isSavingSheet,
-                isUploadLocked: selectedSheets.isNotEmpty,
+                isUploadLocked: selectedSheets.isNotEmpty || selectedAudio != null,
                 isCaptureLocked:
-                    hasSelectedPdf || selectedSheets.length >= maxSheetPages,
+                    selectedAudio != null || hasSelectedPdf ||
+                    selectedSheets.length >= maxSheetPages,
+                isAudioLocked:
+                    selectedSheets.isNotEmpty || selectedAudio != null,
                 onUpload: handleUploadPressed,
                 onCapture: handleCapturePressed,
+                onAudio: pickAudio,
               ),
               if (selectedSheets.isNotEmpty) ...[
                 Gap(AppSpacing.xl),
@@ -153,20 +174,60 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                   onRemove: removeSelectedSheet,
                 ),
               ],
+              if (selectedAudio != null) ...[
+                Gap(AppSpacing.xl),
+                Dismissible(
+                  key: ValueKey(selectedAudio!.path),
+                  direction: isSavingSheet
+                      ? DismissDirection.none
+                      : DismissDirection.startToEnd,
+                  background: Container(
+                    padding: EdgeInsets.only(left: AppSpacing.md),
+                    alignment: Alignment.centerLeft,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.white,
+                    ),
+                  ),
+                  confirmDismiss: (_) async {
+                    return await showDialog<bool>(
+                          context: context,
+                          builder: (_) => RemoveSelectedSheetDialog(
+                            colors: colors,
+                            fileName: selectedAudio!.name,
+                          ),
+                        ) ??
+                        false;
+                  },
+                  onDismissed: (_) => removeSelectedAudio(),
+                  child: SelectedAudioContainer(
+                    colors: colors,
+                    file: selectedAudio!,
+                    isSaving: isSavingSheet,
+                  ),
+                ),
+              ],
               Gap(AppSpacing.xl),
               CaptureTipsContainer(colors: colors),
             ],
           ),
         ),
-        bottomNavigationBar: selectedSheets.isEmpty
+        bottomNavigationBar: selectedSheets.isEmpty && selectedAudio == null
             ? null
             : SaveSheetContainer(
                 colors: colors,
                 isSavingSheet: isSavingSheet,
                 uploadProgress: uploadProgress,
+                isAudio: selectedAudio != null,
                 onSave: isPickingFiles
                     ? null
-                    : () => saveSelectedSheets(colors),
+                    : () => selectedAudio != null
+                        ? saveSelectedAudio(colors)
+                        : saveSelectedSheets(colors),
               ),
       ),
     );
@@ -286,6 +347,11 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
 
   Future<void> pickSheets() async {
     if (isSavingSheet || isPickingFiles) return;
+
+    if (selectedAudio != null) {
+      showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
+      return;
+    }
 
     if (hasSelectedPdf) {
       showSelectionMessage(
@@ -422,6 +488,11 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   Future<void> captureSheet() async {
     if (isSavingSheet || isPickingFiles) return;
 
+    if (selectedAudio != null) {
+      showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
+      return;
+    }
+
     if (hasSelectedPdf) {
       showSelectionMessage(context.l10n.deletePdfBeforeCapture);
       return;
@@ -465,6 +536,11 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   void handleUploadPressed() {
     if (isSavingSheet || isPickingFiles) return;
 
+    if (selectedAudio != null) {
+      showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
+      return;
+    }
+
     if (hasSelectedPdf) {
       showSelectionMessage(
         context.l10n.onlyOnePdf,
@@ -485,6 +561,11 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   void handleCapturePressed() {
     if (isSavingSheet || isPickingFiles) return;
 
+    if (selectedAudio != null) {
+      showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
+      return;
+    }
+
     if (hasSelectedPdf) {
       showSelectionMessage(context.l10n.deletePdfBeforeCapture);
       return;
@@ -496,6 +577,109 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
 
     captureSheet();
+  }
+
+  Future<void> pickAudio() async {
+    if (isSavingSheet || isPickingFiles) return;
+    if (selectedAudio != null) return;
+    if (selectedSheets.isNotEmpty) {
+      showSelectionMessage(context.l10n.removeSheetsBeforeAudio);
+      return;
+    }
+    setState(() {
+      isPickingFiles = true;
+      isPickingAudio = true;
+    });
+    try {
+      final picked = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: ['mp3'],
+      );
+      if (picked == null) return;
+      final next = await SelectedAudioFile.fromPickedFile(picked);
+      if (!mounted) {
+        await next.cleanUp();
+        return;
+      }
+      setState(() => selectedAudio = next);
+    } on AudioSelectionException catch (error) {
+      if (!mounted) return;
+      final message = switch (error.failure) {
+        AudioSelectionFailure.unsupported => context.l10n.audioUnsupported,
+        AudioSelectionFailure.empty => context.l10n.audioEmpty,
+        AudioSelectionFailure.tooLarge => context.l10n.audioTooLarge,
+        AudioSelectionFailure.tooLong => context.l10n.audioTooLong,
+        AudioSelectionFailure.unreadable => context.l10n.audioUnreadable,
+      };
+      showSelectionMessage(message);
+    } catch (_) {
+      if (mounted) showSelectionMessage(context.l10n.audioUnreadable);
+    } finally {
+      if (mounted) {
+        setState(() {
+          isPickingFiles = false;
+          isPickingAudio = false;
+        });
+      }
+    }
+  }
+
+  void removeSelectedAudio() {
+    final previous = selectedAudio;
+    if (previous == null || isSavingSheet) return;
+    setState(() => selectedAudio = null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(previous.cleanUp());
+    });
+  }
+
+  Future<void> saveSelectedAudio(AppThemeColors colors) async {
+    final file = selectedAudio;
+    if (file == null || isSavingSheet || isPickingFiles) return;
+    final title = await showDialog<String>(
+      context: context,
+      builder: (_) => SheetTitleDialog(colors: colors),
+    );
+    if (title == null || !mounted) return;
+    setState(() {
+      isSavingSheet = true;
+      uploadProgress = 0;
+    });
+    try {
+      await audioUploadService.saveAudio(
+        title: title,
+        file: file,
+        onProgress: (progress) {
+          if (mounted) setState(() => uploadProgress = progress);
+        },
+      );
+      if (!mounted) return;
+      setState(() {
+        selectedAudio = null;
+        isSavingSheet = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(file.cleanUp());
+      });
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => SheetSaveResultDialog(
+          colors: colors,
+          isSuccessful: true,
+          sheetTitle: title,
+          isAudio: true,
+        ),
+      );
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        isSavingSheet = false;
+        uploadProgress = 0;
+      });
+      showSelectionMessage(context.l10n.audioSaveFailed);
+    }
   }
 
   void showSelectionMessage(String message) {

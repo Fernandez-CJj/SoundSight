@@ -11,11 +11,17 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
     required this.colors,
     required this.title,
     required this.isReconversion,
+    this.headingOverride,
+    this.descriptionOverride,
+    this.actionLabelOverride,
   });
 
   final AppThemeColors colors;
   final String title;
   final bool isReconversion;
+  final String? headingOverride;
+  final String? descriptionOverride;
+  final String? actionLabelOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +32,9 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       title: Text(
-        isReconversion
+        headingOverride ?? (isReconversion
             ? context.l10n.translateSheetAgainQuestion
-            : context.l10n.translateMusicSheetQuestion,
+            : context.l10n.translateMusicSheetQuestion),
         style: TextStyle(
           color: colors.primaryColor,
           fontSize: AppTextSizes.sectionTitle,
@@ -36,9 +42,9 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        isReconversion
+        descriptionOverride ?? (isReconversion
             ? context.l10n.retranslateDescription(title)
-            : context.l10n.translateDescription(title),
+            : context.l10n.translateDescription(title)),
         style: TextStyle(
           color: colors.secondaryTextColor,
           fontSize: AppTextSizes.body,
@@ -85,9 +91,9 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    isReconversion
+                    actionLabelOverride ?? (isReconversion
                         ? context.l10n.continueAction
-                        : context.l10n.translate,
+                        : context.l10n.translate),
                   ),
                 ),
               ),
@@ -100,9 +106,16 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
 }
 
 class MusicSheetOmrLoadingDialog extends StatelessWidget {
-  const MusicSheetOmrLoadingDialog({super.key, required this.colors});
+  const MusicSheetOmrLoadingDialog({
+    super.key,
+    required this.colors,
+    this.headingOverride,
+    this.descriptionOverride,
+  });
 
   final AppThemeColors colors;
+  final String? headingOverride;
+  final String? descriptionOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +142,7 @@ class MusicSheetOmrLoadingDialog extends StatelessWidget {
               ),
               Gap(AppSpacing.lg),
               Text(
-                context.l10n.translatingMusicSheet,
+                headingOverride ?? context.l10n.translatingMusicSheet,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.primaryColor,
@@ -139,7 +152,7 @@ class MusicSheetOmrLoadingDialog extends StatelessWidget {
               ),
               Gap(AppSpacing.xs),
               Text(
-                context.l10n.translationLoadingDescription,
+                descriptionOverride ?? context.l10n.translationLoadingDescription,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.secondaryTextColor,
@@ -159,11 +172,15 @@ class MusicSheetOmrSuccessDialog extends StatelessWidget {
   const MusicSheetOmrSuccessDialog({
     super.key,
     required this.colors,
-    required this.result,
+    this.result,
+    this.headingOverride,
+    this.descriptionOverride,
   });
 
   final AppThemeColors colors;
-  final OmrConversionResult result;
+  final OmrConversionResult? result;
+  final String? headingOverride;
+  final String? descriptionOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +204,7 @@ class MusicSheetOmrSuccessDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        context.l10n.translationComplete,
+        headingOverride ?? context.l10n.translationComplete,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,
@@ -196,7 +213,8 @@ class MusicSheetOmrSuccessDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        context.l10n.translationResult(result.noteCount, result.partCount),
+        descriptionOverride ??
+            context.l10n.translationResult(result!.noteCount, result!.partCount),
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.secondaryTextColor,
@@ -237,10 +255,12 @@ class MusicSheetOmrErrorDialog extends StatelessWidget {
     super.key,
     required this.colors,
     required this.message,
+    this.headingOverride,
   });
 
   final AppThemeColors colors;
   final String message;
+  final String? headingOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -264,7 +284,7 @@ class MusicSheetOmrErrorDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        context.l10n.translationFailed,
+        headingOverride ?? context.l10n.translationFailed,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colors.primaryColor,

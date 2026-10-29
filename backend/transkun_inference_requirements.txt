@@ -1,0 +1,11 @@
+# Inference-only dependencies. Install transkun==2.0.1 separately with --no-deps.
+torch
+torchaudio
+numpy
+pretty-midi
+scipy
+moduleconf
+pydub
+soxr
+mir-eval
+setuptools<81

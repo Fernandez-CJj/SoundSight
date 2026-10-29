@@ -755,7 +755,7 @@ abstract class AppLocalizations {
   /// No description provided for @translationSignInAgain.
   ///
   /// In en, this message translates to:
-  /// **'Your sign-in could not be verified. Restart the app and sign in again.'**
+  /// **'SoundSight could not confirm your sign-in. Please try again in a moment.'**
   String get translationSignInAgain;
 
   /// No description provided for @translationVerifyEmail.
@@ -839,7 +839,7 @@ abstract class AppLocalizations {
   /// No description provided for @addSheetDescription.
   ///
   /// In en, this message translates to:
-  /// **'Upload one PDF or capture clear photos of a printed sheet.'**
+  /// **'Add sheet music from a PDF, captured pages, or an MP3 recording. MP4 upload is coming soon.'**
   String get addSheetDescription;
 
   /// No description provided for @chooseOneMethod.
@@ -851,8 +851,14 @@ abstract class AppLocalizations {
   /// No description provided for @sheetMethodLimits.
   ///
   /// In en, this message translates to:
-  /// **'1 PDF (20 MB, 20 pages) or up to 20 captured images (5 MB each). They cannot be combined.'**
+  /// **'1 PDF (20 MB, 20 pages), up to 20 photos (5 MB each), or 1 MP3 (95 MB, 5 minutes).'**
   String get sheetMethodLimits;
+
+  /// No description provided for @swipeToSwitchMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe right to remove selected files before switching methods.'**
+  String get swipeToSwitchMethod;
 
   /// No description provided for @openingPdf.
   ///
@@ -2141,13 +2147,13 @@ abstract class AppLocalizations {
   /// No description provided for @compositionPublishFailed.
   ///
   /// In en, this message translates to:
-  /// **'The composition could not be published. Make sure the backend is running.'**
+  /// **'Your composition could not be shared right now. Please try again.'**
   String get compositionPublishFailed;
 
   /// No description provided for @compositionPublishUnauthorized.
   ///
   /// In en, this message translates to:
-  /// **'Your publishing session could not be verified. Please sign out, sign in again, and retry.'**
+  /// **'SoundSight could not confirm your sign-in. Please try again in a moment.'**
   String get compositionPublishUnauthorized;
 
   /// No description provided for @updatedCompositionLoadFailed.
@@ -2165,7 +2171,7 @@ abstract class AppLocalizations {
   /// No description provided for @generatedMidiMissing.
   ///
   /// In en, this message translates to:
-  /// **'The generated MIDI file is missing.'**
+  /// **'The notes needed for this practice mode are not ready.'**
   String get generatedMidiMissing;
 
   /// No description provided for @prepareLatestFilesBeforeSightReading.
@@ -2177,7 +2183,7 @@ abstract class AppLocalizations {
   /// No description provided for @generatedPracticeFilesMissing.
   ///
   /// In en, this message translates to:
-  /// **'The generated MusicXML, MIDI, or MP3 file is missing.'**
+  /// **'The files needed for practice are not ready.'**
   String get generatedPracticeFilesMissing;
 
   /// No description provided for @publishUpdateQuestion.
@@ -3172,13 +3178,13 @@ abstract class AppLocalizations {
   /// No description provided for @filesNotGenerated.
   ///
   /// In en, this message translates to:
-  /// **'Files were not generated'**
+  /// **'Music not ready'**
   String get filesNotGenerated;
 
   /// No description provided for @filesNotGeneratedDescription.
   ///
   /// In en, this message translates to:
-  /// **'The composition was saved, but its PDF, MIDI, MusicXML, and MP3 could not be created.'**
+  /// **'Your composition was saved, but its sheet music and playback are not ready. You can try again.'**
   String get filesNotGeneratedDescription;
 
   /// No description provided for @finish.
@@ -3250,7 +3256,7 @@ abstract class AppLocalizations {
   /// No description provided for @checkConnectionFirestorePermissions.
   ///
   /// In en, this message translates to:
-  /// **'Check your connection and Firestore permissions.'**
+  /// **'Check your connection and try again.'**
   String get checkConnectionFirestorePermissions;
 
   /// No description provided for @signInForPublishedCompositions.
@@ -3400,7 +3406,7 @@ abstract class AppLocalizations {
   /// No description provided for @publishedArFileUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'The MIDI file for AR Practice is unavailable. Ask the owner to publish the composition again.'**
+  /// **'This composition is not ready for AR Practice. Ask its creator to publish it again.'**
   String get publishedArFileUnavailable;
 
   /// No description provided for @publishedSheetLoadFailed.
@@ -3412,7 +3418,7 @@ abstract class AppLocalizations {
   /// No description provided for @checkConnectionStoragePermissions.
   ///
   /// In en, this message translates to:
-  /// **'Check your connection and Firebase Storage permissions.'**
+  /// **'Check your connection and try again.'**
   String get checkConnectionStoragePermissions;
 
   /// No description provided for @commentsVersion.
@@ -4490,13 +4496,13 @@ abstract class AppLocalizations {
   /// No description provided for @synthesiaNoMp3Preview.
   ///
   /// In en, this message translates to:
-  /// **'This score has no MP3 audio preview.'**
+  /// **'This score has no audio preview.'**
   String get synthesiaNoMp3Preview;
 
   /// No description provided for @synthesiaMp3PlaybackFailed.
   ///
   /// In en, this message translates to:
-  /// **'The MP3 preview could not be played.'**
+  /// **'The audio preview could not be played.'**
   String get synthesiaMp3PlaybackFailed;
 
   /// No description provided for @synthesiaTryAgainHoldFullLength.
@@ -5102,7 +5108,7 @@ abstract class AppLocalizations {
   /// No description provided for @sightReadingPerformanceDetailEvaluation.
   ///
   /// In en, this message translates to:
-  /// **'Your notes and timing are evaluated against the MIDI timeline.'**
+  /// **'SoundSight checks the notes you play and when you play them.'**
   String get sightReadingPerformanceDetailEvaluation;
 
   /// No description provided for @sightReadingPerformanceDetailFirstKey.
@@ -5396,7 +5402,7 @@ abstract class AppLocalizations {
   /// No description provided for @sightReadingNoMp3Preview.
   ///
   /// In en, this message translates to:
-  /// **'The score has no MP3 audio preview.'**
+  /// **'This score has no audio preview.'**
   String get sightReadingNoMp3Preview;
 
   /// No description provided for @sightReadingPlaybackFailed.
@@ -5408,13 +5414,13 @@ abstract class AppLocalizations {
   /// No description provided for @sightReadingMusicXmlMissing.
   ///
   /// In en, this message translates to:
-  /// **'The MusicXML file is missing.'**
+  /// **'The sheet music for this exercise is not available.'**
   String get sightReadingMusicXmlMissing;
 
   /// No description provided for @sightReadingMusicXmlDownloadFailed.
   ///
   /// In en, this message translates to:
-  /// **'The MusicXML file could not be downloaded.'**
+  /// **'The sheet music could not be loaded. Please try again.'**
   String get sightReadingMusicXmlDownloadFailed;
 
   /// No description provided for @sightReadingScoreLoadFailed.
@@ -5426,19 +5432,19 @@ abstract class AppLocalizations {
   /// No description provided for @sightReadingScorePreparationFailed.
   ///
   /// In en, this message translates to:
-  /// **'The MusicXML could not be prepared for Sight Reading.'**
+  /// **'This sight-reading exercise could not be prepared.'**
   String get sightReadingScorePreparationFailed;
 
   /// No description provided for @sightReadingMidiFileMissing.
   ///
   /// In en, this message translates to:
-  /// **'The challenge has no MIDI file.'**
+  /// **'The notes for this challenge are not available.'**
   String get sightReadingMidiFileMissing;
 
   /// No description provided for @sightReadingMidiTimelineUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'The MIDI timeline could not be loaded.'**
+  /// **'The notes for this challenge could not be loaded.'**
   String get sightReadingMidiTimelineUnavailable;
 
   /// No description provided for @sightReadingUntitledScore.
@@ -5456,7 +5462,7 @@ abstract class AppLocalizations {
   /// No description provided for @sightReadingWaitingForMidi.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for MIDI file'**
+  /// **'Preparing notes'**
   String get sightReadingWaitingForMidi;
 
   /// No description provided for @sightReadingPlayOnTime.
@@ -8115,7 +8121,7 @@ abstract class AppLocalizations {
   /// No description provided for @lessonCompressedMusicXmlScore.
   ///
   /// In en, this message translates to:
-  /// **'Compressed MusicXML score'**
+  /// **'Practice sheet'**
   String get lessonCompressedMusicXmlScore;
 
   /// No description provided for @lessonSightReadingScore.
@@ -8169,7 +8175,7 @@ abstract class AppLocalizations {
   /// No description provided for @lessonSightReadingFilesRequired.
   ///
   /// In en, this message translates to:
-  /// **'Sight reading requires a matching MIDI and MusicXML pair.'**
+  /// **'The music for this sight-reading lesson is not available.'**
   String get lessonSightReadingFilesRequired;
 
   /// No description provided for @lessonFileEmpty.
@@ -8267,6 +8273,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View PDF'**
   String get lessonViewPdf;
+
+  /// No description provided for @uploadAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload MP3'**
+  String get uploadAudio;
+
+  /// No description provided for @uploadAudioDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one MP3 recording to preview and save.'**
+  String get uploadAudioDescription;
+
+  /// No description provided for @uploadVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload MP4'**
+  String get uploadVideo;
+
+  /// No description provided for @uploadVideoComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'MP4 upload is coming soon.'**
+  String get uploadVideoComingSoon;
+
+  /// No description provided for @recordingNoiseReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a clear piano recording with little background noise. Noisy MP3 or MP4 files may produce missing or incorrect notes in the converted sheet.'**
+  String get recordingNoiseReminder;
+
+  /// No description provided for @selectedAudioFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected audio · 1 file'**
+  String get selectedAudioFile;
+
+  /// No description provided for @audioOnlyPreviewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe right to remove this MP3.'**
+  String get audioOnlyPreviewNote;
+
+  /// No description provided for @saveAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Audio'**
+  String get saveAudio;
+
+  /// No description provided for @audioSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio saved'**
+  String get audioSaved;
+
+  /// No description provided for @audioSavedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your recording is saved in Music Sheets and ready to play.'**
+  String get audioSavedDescription;
+
+  /// No description provided for @audioUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an MP3 file.'**
+  String get audioUnsupported;
+
+  /// No description provided for @audioEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected file is empty.'**
+  String get audioEmpty;
+
+  /// No description provided for @audioTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a file of 95 MB or less.'**
+  String get audioTooLarge;
+
+  /// No description provided for @audioTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a recording no longer than 5 minutes.'**
+  String get audioTooLong;
+
+  /// No description provided for @audioUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This recording could not be opened. Try another file.'**
+  String get audioUnreadable;
+
+  /// No description provided for @audioSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording could not be saved. Please try again.'**
+  String get audioSaveFailed;
+
+  /// No description provided for @removeAudioBeforeOtherSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the audio file before choosing PDF or photos.'**
+  String get removeAudioBeforeOtherSource;
+
+  /// No description provided for @removeSheetsBeforeAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the PDF or photos before choosing audio.'**
+  String get removeSheetsBeforeAudio;
+
+  /// No description provided for @audioFileType.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get audioFileType;
+
+  /// No description provided for @audioNoScoreYet.
+  ///
+  /// In en, this message translates to:
+  /// **'This recording has no generated sheet music yet.'**
+  String get audioNoScoreYet;
+
+  /// No description provided for @audioConvertToMidi.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert recording'**
+  String get audioConvertToMidi;
+
+  /// No description provided for @audioMidiReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording converted'**
+  String get audioMidiReady;
+
+  /// No description provided for @audioMidiProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Converting recording'**
+  String get audioMidiProcessing;
+
+  /// No description provided for @audioMidiFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not convert recording'**
+  String get audioMidiFailed;
+
+  /// No description provided for @audioMidiStartDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'SoundSight will turn this piano recording into playable sheet music.'**
+  String get audioMidiStartDescription;
+
+  /// No description provided for @audioMidiReadyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sheet music is ready to view and play.'**
+  String get audioMidiReadyDescription;
+
+  /// No description provided for @audioMidiFailedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording could not be converted. You can try again.'**
+  String get audioMidiFailedDescription;
+
+  /// No description provided for @audioMidiQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert this recording?'**
+  String get audioMidiQuestion;
+
+  /// No description provided for @audioReconvertQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert this recording again?'**
+  String get audioReconvertQuestion;
+
+  /// No description provided for @audioReconvertDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'SoundSight will make a new sheet from this recording. This may take a few minutes.'**
+  String get audioReconvertDescription;
+
+  /// No description provided for @audioMidiConfirmDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'SoundSight will turn this piano recording into playable sheet music. This may take a few minutes.'**
+  String get audioMidiConfirmDescription;
+
+  /// No description provided for @audioMidiLoadingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this screen open while SoundSight reads the recording.'**
+  String get audioMidiLoadingDescription;
+
+  /// No description provided for @audioMidiSuccessDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sheet music is ready to view and play.'**
+  String get audioMidiSuccessDescription;
+
+  /// No description provided for @audioWaitBeforeDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait for the recording to finish converting before deleting it.'**
+  String get audioWaitBeforeDelete;
 }
 
 class _AppLocalizationsDelegate
