@@ -675,7 +675,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            level == 17
+            level > practiceStages.length
                 ? context.l10n.lessonAllStagesCompleteMessage
                 : context.l10n.lessonStageUnlocked(level),
           ),

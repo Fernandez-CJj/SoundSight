@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -10,6 +8,7 @@ import 'package:soundsight/theme/app_theme_colors.dart';
 import 'lesson_localization.dart';
 import 'models/practice_stage.dart';
 import 'video_lesson_screen.dart';
+import 'nashville_chord_callout_screen.dart';
 
 /// Opens a stage's primary activity directly, falling back to its file list.
 Future<bool> openPracticeStage(
@@ -33,10 +32,7 @@ Future<bool> openPracticeStage(
         .where((path) => path.toLowerCase().endsWith('.pdf'))
         .firstOrNull;
     final videoPath = videoPaths.first;
-    final videoName = localizedPracticeStageTitle(
-      context.l10n,
-      stage.number,
-    );
+    final videoName = localizedPracticeStageTitle(context.l10n, stage.number);
 
     final passed = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -90,6 +86,9 @@ Future<bool> openPracticeStage(
         (path) => RegExp(r'\.(mid|midi)$', caseSensitive: false).hasMatch(path),
       )
       .firstOrNull;
+  final calloutPath = stage.assets
+      .where((path) => path.toLowerCase().endsWith('.txt'))
+      .firstOrNull;
   final scorePath = stage.assets
       .where(
         (path) => RegExp(
@@ -98,6 +97,19 @@ Future<bool> openPracticeStage(
         ).hasMatch(path),
       )
       .firstOrNull;
+  if (midiPath != null && scorePath == null && calloutPath != null) {
+    final passed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => NashvilleChordCalloutScreen(
+          title: localizedPracticeStageTitle(context.l10n, stage.number),
+          midiAssetPath: midiPath,
+          calloutAssetPath: calloutPath,
+          colors: colors,
+        ),
+      ),
+    );
+    return passed == true;
+  }
   if (midiPath != null && scorePath != null) {
     final pdfPath = stage.assets
         .where((path) => path.toLowerCase().endsWith('.pdf'))
@@ -171,10 +183,7 @@ class PracticeStageCard extends StatelessWidget {
     final statusColor = isCompleted ? colors.completedStageColor : foreground;
     final title = localizedPracticeStageShortTitle(context.l10n, stage.number);
     final activityType = practiceStageActivity(stage);
-    final activity = localizedPracticeStageActivity(
-      context.l10n,
-      activityType,
-    );
+    final activity = localizedPracticeStageActivity(context.l10n, activityType);
     final activityIcon = activityType == PracticeStageActivity.videoQuiz
         ? Icons.play_circle_outline_rounded
         : Icons.piano_rounded;
@@ -295,60 +304,64 @@ class PracticeStageCard extends StatelessWidget {
               width: horizontal ? 250 : null,
               height: horizontal ? (compact ? 118 : 140) : null,
               child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: compact ? 8 : horizontal ? 12 : 16,
-              ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: compact
+                      ? 8
+                      : horizontal
+                      ? 12
+                      : 16,
+                ),
                 child: horizontal
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            numberBadge,
-                            const Spacer(),
-                            statusLabel,
-                            const SizedBox(width: 5),
-                            Icon(statusIcon, color: statusColor, size: 22),
-                          ],
-                        ),
-                        SizedBox(height: compact ? 4 : 6),
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.bottomLeft,
-                            child: titleText,
-                          ),
-                        ),
-                        SizedBox(height: compact ? 3 : 5),
-                        activityRow,
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        numberBadge,
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              titleText,
-                              const SizedBox(height: 6),
-                              activityRow,
+                              numberBadge,
+                              const Spacer(),
+                              statusLabel,
+                              const SizedBox(width: 5),
+                              Icon(statusIcon, color: statusColor, size: 22),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(statusIcon, color: statusColor, size: 22),
-                            const SizedBox(height: 2),
-                            statusLabel,
-                          ],
-                        ),
-                      ],
-                    ),
+                          SizedBox(height: compact ? 4 : 6),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.bottomLeft,
+                              child: titleText,
+                            ),
+                          ),
+                          SizedBox(height: compact ? 3 : 5),
+                          activityRow,
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          numberBadge,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                titleText,
+                                const SizedBox(height: 6),
+                                activityRow,
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(statusIcon, color: statusColor, size: 22),
+                              const SizedBox(height: 2),
+                              statusLabel,
+                            ],
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -542,10 +555,7 @@ class _AssetTile extends StatelessWidget {
       'mp4' => (Icons.play_circle, context.l10n.lessonVideoLesson),
       'txt' => (Icons.quiz_outlined, context.l10n.lessonQuestions),
       'pdf' => (Icons.picture_as_pdf_outlined, context.l10n.lessonSheetMusic),
-      'mxl' => (
-        Icons.music_note,
-        context.l10n.lessonCompressedMusicXmlScore,
-      ),
+      'mxl' => (Icons.music_note, context.l10n.lessonCompressedMusicXmlScore),
       'mid' ||
       'midi' ||
       'xml' ||
@@ -677,9 +687,7 @@ class _AssetContentScreenState extends State<AssetContentScreen> {
             return PdfViewer.data(snapshot.data!, sourceName: widget.title);
           },
         ),
-        _ => _message(
-          context.l10n.lessonSightReadingFilesRequired,
-        ),
+        _ => _message(context.l10n.lessonSightReadingFilesRequired),
       },
     );
   }
@@ -695,16 +703,11 @@ class _AssetContentScreenState extends State<AssetContentScreen> {
       ),
     ),
   );
-
 }
 
 /// Displays one question at a time from a stage's plain-text quiz file.
 class LessonQuizScreen extends StatefulWidget {
-  const LessonQuizScreen({
-    super.key,
-    required this.text,
-    required this.colors,
-  });
+  const LessonQuizScreen({super.key, required this.text, required this.colors});
 
   final String text;
   final AppThemeColors colors;
@@ -795,9 +798,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                           question.options[index],
                           style: TextStyle(color: widget.colors.primaryColor),
                         ),
-                        onTap: () => setState(
-                          () => _answers[_questionIndex] = index,
-                        ),
+                        onTap: () =>
+                            setState(() => _answers[_questionIndex] = index),
                       ),
                     );
                   }),
@@ -900,9 +902,10 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
       return;
     }
 
-    final correctAnswers = List<int>.generate(questions.length, (index) => index)
-        .where((index) => _answers[index] == questions[index].answer)
-        .length;
+    final correctAnswers = List<int>.generate(
+      questions.length,
+      (index) => index,
+    ).where((index) => _answers[index] == questions[index].answer).length;
     final passed = correctAnswers == questions.length;
     final retry = await showDialog<bool>(
       context: context,
@@ -920,10 +923,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              context.l10n.lessonQuizScore(
-                correctAnswers,
-                questions.length,
-              ),
+              context.l10n.lessonQuizScore(correctAnswers, questions.length),
               style: TextStyle(
                 color: widget.colors.primaryColor,
                 fontWeight: FontWeight.bold,
@@ -984,8 +984,10 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
     if (questions.length < 2) return;
     final previousOrder = List<_Question>.of(questions);
     questions.shuffle();
-    final sameOrder = List<int>.generate(questions.length, (index) => index)
-        .every((index) => identical(questions[index], previousOrder[index]));
+    final sameOrder = List<int>.generate(
+      questions.length,
+      (index) => index,
+    ).every((index) => identical(questions[index], previousOrder[index]));
     if (sameOrder) {
       questions.add(questions.removeAt(0));
     }
@@ -1104,4 +1106,3 @@ List<_Question> _parseQuestions(String source) {
   finish();
   return invalid ? const [] : result;
 }
-

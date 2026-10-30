@@ -42,6 +42,7 @@ String localizedPracticeStageShortTitle(
     14 => l10n.lessonStage14ShortTitle,
     15 => l10n.lessonStage15ShortTitle,
     16 => l10n.lessonStage16ShortTitle,
+    17 => 'Chord Callouts',
     _ => l10n.lessonStageLabel(stageNumber),
   };
 }
@@ -83,6 +84,7 @@ String localizedPracticeStageDescription(
     11 => l10n.lessonPlayWithMovingCursor,
     12 => l10n.lessonWatchViewPdfAndQuiz,
     14 || 16 => l10n.lessonConnectAndPlayScore,
+    17 => 'Connect your piano and play each called-out chord in order.',
     _ => '',
   };
 }
@@ -94,7 +96,7 @@ String localizedLessonResultTitle(
 ) {
   final match = RegExp(r'^lessons/stage_(\d+)$').firstMatch(scoreDocumentPath);
   final stageNumber = int.tryParse(match?.group(1) ?? '');
-  if (stageNumber == null || stageNumber < 1 || stageNumber > 16) {
+  if (stageNumber == null || stageNumber < 1 || stageNumber > 17) {
     return fallback;
   }
   return localizedPracticeStageTitle(l10n, stageNumber);

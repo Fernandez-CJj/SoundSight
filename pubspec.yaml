@@ -107,6 +107,7 @@ flutter:
     - assets/practice/stage_14/
     - assets/practice/stage_15/
     - assets/practice/stage_16/
+    - assets/practice/stage_17/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
