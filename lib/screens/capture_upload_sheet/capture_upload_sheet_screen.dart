@@ -14,9 +14,12 @@ import 'package:soundsight/screens/capture_upload_sheet/capture_upload_dialogs.d
 import 'package:soundsight/screens/capture_upload_sheet/capture_upload_header.dart';
 import 'package:soundsight/screens/capture_upload_sheet/music_sheet_upload_service.dart';
 import 'package:soundsight/screens/capture_upload_sheet/music_sheet_audio_upload_service.dart';
+import 'package:soundsight/screens/capture_upload_sheet/music_sheet_video_audio_service.dart';
 import 'package:soundsight/screens/capture_upload_sheet/save_sheet_container.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_audio_container.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_audio_file.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_video_container.dart';
+import 'package:soundsight/screens/capture_upload_sheet/selected_video_file.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_file.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheet_preview_dialog.dart';
 import 'package:soundsight/screens/capture_upload_sheet/selected_sheets_container.dart';
@@ -48,16 +51,21 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   late bool isDarkMode;
   List<SelectedSheetFile> selectedSheets = [];
   SelectedAudioFile? selectedAudio;
+  SelectedVideoFile? selectedVideo;
   int? selectedPdfPageCount;
   bool isPickingFiles = false;
   bool isPickingAudio = false;
+  bool isPickingVideo = false;
   bool isSavingSheet = false;
+  bool isPreparingAudio = false;
   double uploadProgress = 0;
 
   final ImagePicker imagePicker = ImagePicker();
   final MusicSheetUploadService uploadService = MusicSheetUploadService();
   final MusicSheetAudioUploadService audioUploadService =
       MusicSheetAudioUploadService();
+  final MusicSheetVideoAudioService videoAudioService =
+      MusicSheetVideoAudioService();
 
   bool get hasSelectedPdf => selectedSheets.any((file) {
     return file.extension?.toLowerCase() == 'pdf';
@@ -69,6 +77,8 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   void dispose() {
     final audio = selectedAudio;
     if (audio != null) unawaited(audio.cleanUp());
+    final video = selectedVideo;
+    if (video != null) unawaited(video.cleanUp());
     super.dispose();
   }
 
@@ -152,16 +162,24 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                 colors: colors,
                 isPickingFiles: isPickingFiles,
                 isPickingAudio: isPickingAudio,
+                isPickingVideo: isPickingVideo,
                 isSavingSheet: isSavingSheet,
-                isUploadLocked: selectedSheets.isNotEmpty || selectedAudio != null,
+                isUploadLocked: selectedSheets.isNotEmpty ||
+                    selectedAudio != null || selectedVideo != null,
                 isCaptureLocked:
-                    selectedAudio != null || hasSelectedPdf ||
+                    selectedAudio != null || selectedVideo != null ||
+                    hasSelectedPdf ||
                     selectedSheets.length >= maxSheetPages,
                 isAudioLocked:
-                    selectedSheets.isNotEmpty || selectedAudio != null,
+                    selectedSheets.isNotEmpty || selectedAudio != null ||
+                    selectedVideo != null,
+                isVideoLocked:
+                    selectedSheets.isNotEmpty || selectedAudio != null ||
+                    selectedVideo != null,
                 onUpload: handleUploadPressed,
                 onCapture: handleCapturePressed,
                 onAudio: pickAudio,
+                onVideo: pickVideo,
               ),
               if (selectedSheets.isNotEmpty) ...[
                 Gap(AppSpacing.xl),
@@ -211,21 +229,62 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                   ),
                 ),
               ],
+              if (selectedVideo != null) ...[
+                Gap(AppSpacing.xl),
+                Dismissible(
+                  key: ValueKey(selectedVideo!.path),
+                  direction: isSavingSheet
+                      ? DismissDirection.none
+                      : DismissDirection.startToEnd,
+                  background: Container(
+                    padding: EdgeInsets.only(left: AppSpacing.md),
+                    alignment: Alignment.centerLeft,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.white,
+                    ),
+                  ),
+                  confirmDismiss: (_) async {
+                    return await showDialog<bool>(
+                          context: context,
+                          builder: (_) => RemoveSelectedSheetDialog(
+                            colors: colors,
+                            fileName: selectedVideo!.name,
+                          ),
+                        ) ??
+                        false;
+                  },
+                  onDismissed: (_) => removeSelectedVideo(),
+                  child: SelectedVideoContainer(
+                    colors: colors,
+                    file: selectedVideo!,
+                    isSaving: isSavingSheet,
+                  ),
+                ),
+              ],
               Gap(AppSpacing.xl),
               CaptureTipsContainer(colors: colors),
             ],
           ),
         ),
-        bottomNavigationBar: selectedSheets.isEmpty && selectedAudio == null
+        bottomNavigationBar: selectedSheets.isEmpty &&
+                selectedAudio == null && selectedVideo == null
             ? null
             : SaveSheetContainer(
                 colors: colors,
                 isSavingSheet: isSavingSheet,
                 uploadProgress: uploadProgress,
-                isAudio: selectedAudio != null,
+                isAudio: selectedAudio != null || selectedVideo != null,
+                isPreparingAudio: isPreparingAudio,
                 onSave: isPickingFiles
                     ? null
-                    : () => selectedAudio != null
+                    : () => selectedVideo != null
+                        ? saveSelectedVideo(colors)
+                        : selectedAudio != null
                         ? saveSelectedAudio(colors)
                         : saveSelectedSheets(colors),
               ),
@@ -348,6 +407,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   Future<void> pickSheets() async {
     if (isSavingSheet || isPickingFiles) return;
 
+    if (selectedVideo != null) {
+      showSelectionMessage(context.l10n.removeSelectedFileBeforeSwitch);
+      return;
+    }
     if (selectedAudio != null) {
       showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
       return;
@@ -488,6 +551,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   Future<void> captureSheet() async {
     if (isSavingSheet || isPickingFiles) return;
 
+    if (selectedVideo != null) {
+      showSelectionMessage(context.l10n.removeSelectedFileBeforeSwitch);
+      return;
+    }
     if (selectedAudio != null) {
       showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
       return;
@@ -536,6 +603,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   void handleUploadPressed() {
     if (isSavingSheet || isPickingFiles) return;
 
+    if (selectedVideo != null) {
+      showSelectionMessage(context.l10n.removeSelectedFileBeforeSwitch);
+      return;
+    }
     if (selectedAudio != null) {
       showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
       return;
@@ -561,6 +632,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   void handleCapturePressed() {
     if (isSavingSheet || isPickingFiles) return;
 
+    if (selectedVideo != null) {
+      showSelectionMessage(context.l10n.removeSelectedFileBeforeSwitch);
+      return;
+    }
     if (selectedAudio != null) {
       showSelectionMessage(context.l10n.removeAudioBeforeOtherSource);
       return;
@@ -582,6 +657,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
   Future<void> pickAudio() async {
     if (isSavingSheet || isPickingFiles) return;
     if (selectedAudio != null) return;
+    if (selectedVideo != null) {
+      showSelectionMessage(context.l10n.removeSelectedFileBeforeSwitch);
+      return;
+    }
     if (selectedSheets.isNotEmpty) {
       showSelectionMessage(context.l10n.removeSheetsBeforeAudio);
       return;
@@ -624,10 +703,64 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
   }
 
+  Future<void> pickVideo() async {
+    if (isSavingSheet || isPickingFiles || selectedVideo != null) return;
+    if (selectedSheets.isNotEmpty || selectedAudio != null) {
+      showSelectionMessage(context.l10n.removeSelectedFileBeforeSwitch);
+      return;
+    }
+    setState(() {
+      isPickingFiles = true;
+      isPickingVideo = true;
+    });
+    try {
+      final picked = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: ['mp4'],
+      );
+      if (picked == null) return;
+      final next = await SelectedVideoFile.fromPickedFile(picked);
+      if (!mounted) {
+        await next.cleanUp();
+        return;
+      }
+      setState(() => selectedVideo = next);
+    } on VideoSelectionException catch (error) {
+      if (!mounted) return;
+      final message = switch (error.failure) {
+        VideoSelectionFailure.unsupported => context.l10n.videoUnsupported,
+        VideoSelectionFailure.empty => context.l10n.videoEmpty,
+        VideoSelectionFailure.tooLarge => context.l10n.videoTooLarge,
+        VideoSelectionFailure.tooLong => context.l10n.videoTooLong,
+        VideoSelectionFailure.noAudio => context.l10n.videoNoAudio,
+        VideoSelectionFailure.unreadable => context.l10n.videoUnreadable,
+      };
+      showSelectionMessage(message);
+    } catch (_) {
+      if (mounted) showSelectionMessage(context.l10n.videoUnreadable);
+    } finally {
+      if (mounted) {
+        setState(() {
+          isPickingFiles = false;
+          isPickingVideo = false;
+        });
+      }
+    }
+  }
+
   void removeSelectedAudio() {
     final previous = selectedAudio;
     if (previous == null || isSavingSheet) return;
     setState(() => selectedAudio = null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(previous.cleanUp());
+    });
+  }
+
+  void removeSelectedVideo() {
+    final previous = selectedVideo;
+    if (previous == null || isSavingSheet) return;
+    setState(() => selectedVideo = null);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(previous.cleanUp());
     });
@@ -680,6 +813,76 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
       });
       showSelectionMessage(context.l10n.audioSaveFailed);
     }
+  }
+
+  Future<void> saveSelectedVideo(AppThemeColors colors) async {
+    final video = selectedVideo;
+    if (video == null || isSavingSheet || isPickingFiles) return;
+    final title = await showDialog<String>(
+      context: context,
+      builder: (_) => SheetTitleDialog(colors: colors),
+    );
+    if (title == null || !mounted) return;
+
+    setState(() {
+      isSavingSheet = true;
+      isPreparingAudio = true;
+      uploadProgress = 0;
+    });
+
+    SelectedAudioFile? preparedAudio;
+    var uploading = false;
+    try {
+      preparedAudio = await videoAudioService.prepareAudio(video);
+      if (!mounted) return;
+      setState(() => isPreparingAudio = false);
+      uploading = true;
+      await audioUploadService.saveAudio(
+        title: title,
+        file: preparedAudio,
+        onProgress: (progress) {
+          if (mounted) setState(() => uploadProgress = progress);
+        },
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        isSavingSheet = false;
+        isPreparingAudio = false;
+        uploadProgress = 0;
+      });
+      showSelectionMessage(
+        uploading ? context.l10n.audioSaveFailed : context.l10n.videoPreparationFailed,
+      );
+      return;
+    } finally {
+      if (preparedAudio != null) {
+        try {
+          await preparedAudio.cleanUp();
+        } catch (_) {}
+      }
+    }
+
+    if (!mounted) return;
+    setState(() {
+      selectedVideo = null;
+      isSavingSheet = false;
+      uploadProgress = 0;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(video.cleanUp());
+    });
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => SheetSaveResultDialog(
+        colors: colors,
+        isSuccessful: true,
+        sheetTitle: title,
+        isAudio: true,
+      ),
+    );
+    if (mounted) Navigator.of(context).pop(true);
   }
 
   void showSelectionMessage(String message) {

@@ -5,6 +5,32 @@ from bisect import bisect_left, bisect_right
 import numpy as np
 
 
+_ONSET_SNAP_WINDOW_SECONDS = 0.010
+
+
+def _align_near_simultaneous_onsets(notes):
+    """Give near-simultaneous pitches the same start time for chords."""
+    adjusted = 0
+    index = 0
+    while index < len(notes):
+        onset = notes[index].start
+        end = index + 1
+        while (end < len(notes) and
+               notes[end].start - onset <= _ONSET_SNAP_WINDOW_SECONDS):
+            end += 1
+
+        group = notes[index:end]
+        # Repeated pitches may be separate attacks. Keep every note valid.
+        if (len({note.pitch for note in group}) == len(group) and
+                all(note.end > onset for note in group)):
+            for note in group[1:]:
+                if note.start != onset:
+                    note.start = onset
+                    adjusted += 1
+        index = end
+    return adjusted
+
+
 def _infer_grid(notes):
     starts = np.array([note.start for note in notes])
     if len(starts) < 25:
@@ -26,7 +52,7 @@ def correct_note_timing(midi):
     )
     grid, phase = _infer_grid(notes)
     if grid is None:
-        return 0
+        return _align_near_simultaneous_onsets(notes)
 
     starts = [note.start for note in notes]
     durations = np.array([note.end - note.start for note in notes])
@@ -93,4 +119,4 @@ def correct_note_timing(midi):
             for event in instrument.pitch_bends:
                 event.time = max(0.0, event.time - delay)
 
-    return adjusted
+    return adjusted + _align_near_simultaneous_onsets(notes)

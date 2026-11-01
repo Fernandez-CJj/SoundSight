@@ -10,25 +10,31 @@ class CaptureUploadHeader extends StatelessWidget {
     required this.colors,
     required this.isPickingFiles,
     required this.isPickingAudio,
+    required this.isPickingVideo,
     required this.isSavingSheet,
     required this.isUploadLocked,
     required this.isCaptureLocked,
     required this.isAudioLocked,
+    required this.isVideoLocked,
     required this.onUpload,
     required this.onCapture,
     required this.onAudio,
+    required this.onVideo,
   });
 
   final AppThemeColors colors;
   final bool isPickingFiles;
   final bool isPickingAudio;
+  final bool isPickingVideo;
   final bool isSavingSheet;
   final bool isUploadLocked;
   final bool isCaptureLocked;
   final bool isAudioLocked;
+  final bool isVideoLocked;
   final VoidCallback onUpload;
   final VoidCallback onCapture;
   final VoidCallback onAudio;
+  final VoidCallback onVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -132,10 +138,13 @@ class CaptureUploadHeader extends StatelessWidget {
                   color: const Color(0xFF3B82F6),
                   icon: Icons.upload_file_rounded,
                   title: isPickingFiles && !isPickingAudio
+                          && !isPickingVideo
                       ? context.l10n.openingPdf
                       : context.l10n.uploadPdf,
                   description: context.l10n.uploadPdfDescription,
-                  isLoading: isPickingFiles && !isPickingAudio,
+                  isLoading: isPickingFiles &&
+                      !isPickingAudio &&
+                      !isPickingVideo,
                   isLocked: isUploadLocked,
                   onTap: isPickingFiles || isSavingSheet || isUploadLocked
                       ? null
@@ -186,9 +195,12 @@ class CaptureUploadHeader extends StatelessWidget {
                   color: colors.synthesiaResultColor,
                   icon: Icons.video_file_rounded,
                   title: context.l10n.uploadVideo,
-                  description: context.l10n.uploadVideoComingSoon,
-                  isLocked: true,
-                  onTap: null,
+                  description: context.l10n.uploadVideoDescription,
+                  isLoading: isPickingVideo,
+                  isLocked: isVideoLocked,
+                  onTap: isPickingFiles || isSavingSheet || isVideoLocked
+                      ? null
+                      : onVideo,
                 ),
               ),
             ],

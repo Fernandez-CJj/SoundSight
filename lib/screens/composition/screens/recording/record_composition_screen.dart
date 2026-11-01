@@ -149,7 +149,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       newController = CameraController(
         camera,
         ResolutionPreset.high,
-        enableAudio: false,
+        enableAudio: true,
       );
       await newController.initialize();
       if (!mounted) {
@@ -166,7 +166,9 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       if (!mounted) return;
       setState(() {
         isInitializingCamera = false;
-        cameraError = error.description ?? context.l10n.cameraOpenFailed;
+        cameraError = error.code.startsWith('AudioAccessDenied')
+            ? context.l10n.recordingMicrophonePermissionRequired
+            : error.description ?? context.l10n.cameraOpenFailed;
       });
     } catch (_) {
       await newController?.dispose();

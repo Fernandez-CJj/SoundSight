@@ -485,8 +485,9 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   bool get _leadInActive {
     final controller = timelineController;
     if (controller == null || controller.duration == null) return false;
-    return controller.duration!.inMicroseconds * controller.value <
-        approachDuration.inMicroseconds;
+    final animationUs =
+        (controller.duration!.inMicroseconds * controller.value).round();
+    return animationUs < approachDuration.inMicroseconds;
   }
 
   void _startOrResume() {

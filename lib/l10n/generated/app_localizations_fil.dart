@@ -249,6 +249,10 @@ class AppLocalizationsFil extends AppLocalizations {
       'I-convert muna ang music sheet bago simulan ang AR Practice.';
 
   @override
+  String get convertRecordingBeforeAr =>
+      'I-convert muna ang recording bago simulan ang AR Practice.';
+
+  @override
   String get translatedMidiMissing =>
       'Hindi pa handa ang file na kailangan para sa practice mode na ito.';
 
@@ -260,11 +264,19 @@ class AppLocalizationsFil extends AppLocalizations {
       'I-convert muna ang music sheet bago simulan ang Synthesia.';
 
   @override
+  String get convertRecordingBeforeSynthesia =>
+      'I-convert muna ang recording bago simulan ang Synthesia.';
+
+  @override
   String get openSynthesiaFailed => 'Hindi mabuksan ang Synthesia.';
 
   @override
   String get translateBeforeSightReading =>
       'I-convert muna ang music sheet bago simulan ang Pagbabasa ng Nota.';
+
+  @override
+  String get convertRecordingBeforeSightReading =>
+      'I-convert muna ang recording bago simulan ang Pagbabasa ng Nota.';
 
   @override
   String get translatedPracticeFilesMissing =>
@@ -456,14 +468,14 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get addSheetDescription =>
-      'Magdagdag ng piyesa mula sa PDF, mga kinuhang larawan, o MP3 recording. Malapit nang maging available ang MP4.';
+      'Magdagdag ng piyesa mula sa PDF, mga kinuhang larawan, o MP3 o MP4 recording.';
 
   @override
   String get chooseOneMethod => 'Pumili ng isang paraan para sa bawat sheet';
 
   @override
   String get sheetMethodLimits =>
-      '1 PDF (20 MB, 20 pahina), hanggang 20 larawan (5 MB bawat isa), o 1 MP3 (95 MB, 5 minuto).';
+      '1 PDF (20 MB, 20 pahina), hanggang 20 larawan (5 MB bawat isa), 1 MP3 (95 MB, 5 minuto), o 1 MP4 (150 MB, 5 minuto).';
 
   @override
   String get swipeToSwitchMethod =>
@@ -1815,6 +1827,10 @@ class AppLocalizationsFil extends AppLocalizations {
   String get cameraOpenFailed => 'Hindi mabuksan ang camera.';
 
   @override
+  String get recordingMicrophonePermissionRequired =>
+      'Payagan ang paggamit ng mikropono upang makapag-record ng video na may tunog.';
+
+  @override
   String recordingNoteLimitWarning(int current, int maximum) {
     return 'Nakapagtala ka na ng $current sa limitasyong $maximum nota.';
   }
@@ -1882,6 +1898,23 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get recordingComplete => 'Tapos na ang Pag-record';
+
+  @override
+  String get recordedVideoSaveQuestion => 'I-save ang video sa iyong device?';
+
+  @override
+  String get recordedVideoSaveDescription =>
+      'Nagre-record ang video ng tunog gamit ang mikropono ng iyong telepono. Kailangang marinig ang piano sa paligid. Piliin ngayon kung saan ise-save ang kopya; aalisin ang pansamantalang video kapag nagpatuloy ka.';
+
+  @override
+  String get saveRecordedVideo => 'I-save ang video';
+
+  @override
+  String get recordedVideoSaved => 'Na-save ang video';
+
+  @override
+  String get recordedVideoSaveFailed =>
+      'Hindi ma-save ang video. Pumili ng ibang lokasyon at subukan muli.';
 
   @override
   String get capturedNotes => 'Mga naitalang nota';
@@ -5084,8 +5117,46 @@ class AppLocalizationsFil extends AppLocalizations {
   String get uploadVideo => 'Mag-upload ng MP4';
 
   @override
-  String get uploadVideoComingSoon =>
-      'Malapit nang maging available ang pag-upload ng MP4.';
+  String get uploadVideoDescription =>
+      'Pumili ng isang MP4 na hanggang 150 MB at 5 minuto.';
+
+  @override
+  String get selectedVideoFile => 'Napiling video · 1 file';
+
+  @override
+  String get videoAudioOnlyNote =>
+      'Audio lamang ang ise-save. Mananatili sa iyong telepono ang video. I-swipe pakanan para alisin ito.';
+
+  @override
+  String get videoUnsupported => 'Pumili ng MP4 file.';
+
+  @override
+  String get videoEmpty => 'Walang laman ang napiling video.';
+
+  @override
+  String get videoTooLarge => 'Pumili ng MP4 na hanggang 150 MB lamang.';
+
+  @override
+  String get videoTooLong => 'Pumili ng video na hindi hihigit sa 5 minuto.';
+
+  @override
+  String get videoNoAudio =>
+      'Walang audio ang video na ito na maaaring i-convert.';
+
+  @override
+  String get videoUnreadable =>
+      'Hindi mabuksan ang video na ito. Subukan ang ibang MP4.';
+
+  @override
+  String get videoPreparationFailed =>
+      'Hindi maihanda ang audio mula sa video na ito. Subukan muli.';
+
+  @override
+  String get preparingAudio => 'Inihahanda ang audio...';
+
+  @override
+  String get removeSelectedFileBeforeSwitch =>
+      'Alisin muna ang napiling file bago pumili ng ibang paraan.';
 
   @override
   String get recordingNoiseReminder =>

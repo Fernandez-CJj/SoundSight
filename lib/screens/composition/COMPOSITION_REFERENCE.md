@@ -55,7 +55,7 @@ The backend creates readable MusicXML/PDF notation from those notes and writes a
 
 Tempo is detected between 40 and 200 BPM for readable notation, with an 80 BPM fallback for sparse performances. Detection never moves the captured note times. Measure count is calculated from the detected tempo, selected meter, and trimmed duration.
 
-The silent camera video is temporary review media. It can be played in the completion dialog and is deleted after success, Record Again, finishing a failed generation, or leaving the recorder. It is never uploaded.
+The camera video records microphone audio independently of the MIDI notes. At completion, users can save a copy to a device location they choose. The app's temporary video is deleted after success, Record Again, finishing a failed generation, or leaving the recorder. It is never uploaded. Generated composition audio still comes from the captured MIDI notes.
 
 The recorder warns at 240 notes and at 90 percent of its duration limit. It stops accepting Note On events at 256 notes, waits for held keys to be released, and then stops. Empty performances cannot be generated.
 

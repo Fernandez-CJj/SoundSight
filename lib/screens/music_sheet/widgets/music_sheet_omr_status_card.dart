@@ -148,7 +148,7 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
-                child: Text(buttonLabel),
+                child: Text(buttonLabel, textAlign: TextAlign.center),
               ),
             ),
           ],

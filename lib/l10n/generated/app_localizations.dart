@@ -524,6 +524,12 @@ abstract class AppLocalizations {
   /// **'Convert the music sheet before starting AR Practice.'**
   String get translateBeforeAr;
 
+  /// No description provided for @convertRecordingBeforeAr.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert the recording before starting AR Practice.'**
+  String get convertRecordingBeforeAr;
+
   /// No description provided for @translatedMidiMissing.
   ///
   /// In en, this message translates to:
@@ -542,6 +548,12 @@ abstract class AppLocalizations {
   /// **'Convert the music sheet before starting Synthesia.'**
   String get translateBeforeSynthesia;
 
+  /// No description provided for @convertRecordingBeforeSynthesia.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert the recording before starting Synthesia.'**
+  String get convertRecordingBeforeSynthesia;
+
   /// No description provided for @openSynthesiaFailed.
   ///
   /// In en, this message translates to:
@@ -553,6 +565,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Convert the music sheet before starting Sight Reading.'**
   String get translateBeforeSightReading;
+
+  /// No description provided for @convertRecordingBeforeSightReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert the recording before starting Sight Reading.'**
+  String get convertRecordingBeforeSightReading;
 
   /// No description provided for @translatedPracticeFilesMissing.
   ///
@@ -839,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @addSheetDescription.
   ///
   /// In en, this message translates to:
-  /// **'Add sheet music from a PDF, captured pages, or an MP3 recording. MP4 upload is coming soon.'**
+  /// **'Add sheet music from a PDF, captured pages, or an MP3 or MP4 recording.'**
   String get addSheetDescription;
 
   /// No description provided for @chooseOneMethod.
@@ -851,7 +869,7 @@ abstract class AppLocalizations {
   /// No description provided for @sheetMethodLimits.
   ///
   /// In en, this message translates to:
-  /// **'1 PDF (20 MB, 20 pages), up to 20 photos (5 MB each), or 1 MP3 (95 MB, 5 minutes).'**
+  /// **'1 PDF (20 MB, 20 pages), up to 20 photos (5 MB each), 1 MP3 (95 MB, 5 minutes), or 1 MP4 (150 MB, 5 minutes).'**
   String get sheetMethodLimits;
 
   /// No description provided for @swipeToSwitchMethod.
@@ -3085,6 +3103,12 @@ abstract class AppLocalizations {
   /// **'The camera could not be opened.'**
   String get cameraOpenFailed;
 
+  /// No description provided for @recordingMicrophonePermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access to record video with sound.'**
+  String get recordingMicrophonePermissionRequired;
+
   /// No description provided for @recordingNoteLimitWarning.
   ///
   /// In en, this message translates to:
@@ -3198,6 +3222,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recording Complete'**
   String get recordingComplete;
+
+  /// No description provided for @recordedVideoSaveQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this video to your device?'**
+  String get recordedVideoSaveQuestion;
+
+  /// No description provided for @recordedVideoSaveDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The video records sound through your phone\'s microphone. Your piano must be audible nearby. Choose where to save a copy now; the temporary video will be removed when you continue.'**
+  String get recordedVideoSaveDescription;
+
+  /// No description provided for @saveRecordedVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Save video'**
+  String get saveRecordedVideo;
+
+  /// No description provided for @recordedVideoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Video saved'**
+  String get recordedVideoSaved;
+
+  /// No description provided for @recordedVideoSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the video. Choose another location and try again.'**
+  String get recordedVideoSaveFailed;
 
   /// No description provided for @capturedNotes.
   ///
@@ -8292,11 +8346,77 @@ abstract class AppLocalizations {
   /// **'Upload MP4'**
   String get uploadVideo;
 
-  /// No description provided for @uploadVideoComingSoon.
+  /// No description provided for @uploadVideoDescription.
   ///
   /// In en, this message translates to:
-  /// **'MP4 upload is coming soon.'**
-  String get uploadVideoComingSoon;
+  /// **'Choose one MP4, up to 150 MB and 5 minutes.'**
+  String get uploadVideoDescription;
+
+  /// No description provided for @selectedVideoFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected video · 1 file'**
+  String get selectedVideoFile;
+
+  /// No description provided for @videoAudioOnlyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the audio will be saved. The video stays on your phone. Swipe right to remove it.'**
+  String get videoAudioOnlyNote;
+
+  /// No description provided for @videoUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an MP4 file.'**
+  String get videoUnsupported;
+
+  /// No description provided for @videoEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected video is empty.'**
+  String get videoEmpty;
+
+  /// No description provided for @videoTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an MP4 of 150 MB or less.'**
+  String get videoTooLarge;
+
+  /// No description provided for @videoTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a video no longer than 5 minutes.'**
+  String get videoTooLong;
+
+  /// No description provided for @videoNoAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'This video has no audio to convert.'**
+  String get videoNoAudio;
+
+  /// No description provided for @videoUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This video could not be opened. Try another MP4.'**
+  String get videoUnreadable;
+
+  /// No description provided for @videoPreparationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The audio could not be prepared from this video. Please try again.'**
+  String get videoPreparationFailed;
+
+  /// No description provided for @preparingAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing audio...'**
+  String get preparingAudio;
+
+  /// No description provided for @removeSelectedFileBeforeSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the selected file before choosing another method.'**
+  String get removeSelectedFileBeforeSwitch;
 
   /// No description provided for @recordingNoiseReminder.
   ///

@@ -4,6 +4,7 @@ import 'package:soundsight/screens/auth/login/login_screen.dart';
 import 'package:soundsight/screens/auth/email_verification/email_verification_screen.dart';
 import 'package:soundsight/screens/auth/services/registration_profile_service.dart';
 import 'package:soundsight/screens/auth/widgets/auth_loading_screen.dart';
+import 'package:soundsight/screens/auth/widgets/auth_connection_error_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -213,33 +214,10 @@ class _AuthenticationGateState extends State<AuthenticationGate> {
         }
 
         if (snapshot.hasError) {
-          return Scaffold(
-            body: SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "We couldn't verify your account status. Check your "
-                        'connection and try again.',
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _retry,
-                        child: const Text('Try Again'),
-                      ),
-                      TextButton(
-                        onPressed: _signOut,
-                        child: const Text('Sign Out'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          return AuthConnectionErrorScreen(
+            isDarkMode: _isDarkMode,
+            onRetry: _retry,
+            onSignOut: _signOut,
           );
         }
 

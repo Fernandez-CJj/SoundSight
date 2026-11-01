@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:soundsight/l10n/generated/app_localizations.dart';
+import 'package:soundsight/theme/app_colors.dart';
 
 /// Shown while the saved session and the user's destination are being checked.
 class AuthLoadingScreen extends StatefulWidget {
@@ -42,13 +43,8 @@ class _AuthLoadingScreenState extends State<AuthLoadingScreen>
 
   @override
   Widget build(BuildContext context) {
-    const foreground = Color(0xFF171A20);
-    const accent = Color(0xFFB47B36);
-    const muted = Color(0xFF6F737B);
-    const halo = Color(0xFFF2E8D8);
-
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.lightBackground,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -74,13 +70,11 @@ class _AuthLoadingScreenState extends State<AuthLoadingScreen>
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: halo.withValues(
+                              color: AppColors.lightSurface.withValues(
                                 alpha: 0.55 + 0.25 * pulse,
                               ),
                               border: Border.all(
-                                color: accent.withValues(
-                                  alpha: 0.16 + 0.18 * pulse,
-                                ),
+                                color: AppColors.lightBorder,
                               ),
                             ),
                             child: Container(
@@ -89,10 +83,12 @@ class _AuthLoadingScreenState extends State<AuthLoadingScreen>
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white,
+                                color: AppColors.lightSurface,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.06),
+                                    color: AppColors.lightPrimary.withValues(
+                                      alpha: 0.06,
+                                    ),
                                     blurRadius: 28,
                                     offset: const Offset(0, 12),
                                   ),
@@ -114,7 +110,7 @@ class _AuthLoadingScreenState extends State<AuthLoadingScreen>
                     Text(
                       'SoundSight',
                       style: TextStyle(
-                        color: foreground,
+                        color: AppColors.lightPrimary,
                         fontSize: compact ? 29 : 34,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -1.2,
@@ -125,7 +121,7 @@ class _AuthLoadingScreenState extends State<AuthLoadingScreen>
                       'See the music. Play with confidence',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: muted,
+                        color: AppColors.lightSecondaryText,
                         fontSize: 14,
                         letterSpacing: 0.1,
                       ),
@@ -152,7 +148,7 @@ class _AuthLoadingScreenState extends State<AuthLoadingScreen>
                                     horizontal: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: accent,
+                                    color: AppColors.lightPrimary,
                                     borderRadius: BorderRadius.circular(3),
                                   ),
                                 );
@@ -166,7 +162,7 @@ class _AuthLoadingScreenState extends State<AuthLoadingScreen>
                     Text(
                       AppLocalizations.of(context).loading,
                       style: TextStyle(
-                        color: muted,
+                        color: AppColors.lightSecondaryText,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 1.1,

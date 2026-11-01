@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi import Depends
 from fastapi import HTTPException
@@ -22,6 +24,8 @@ from composition.private_composition_service import (
     saveGeneratedFilePaths,
     saveGenerationStatus,
 )
+
+logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(
     title="SoundSight API",
@@ -185,6 +189,7 @@ def publish_composition(
             deleteStoragePaths(publishedStoragePaths.values())
         raise HTTPException(status_code=400, detail=str(error)) from error
     except Exception as error:
+        logger.exception("Composition publishing failed: %s", compositionId)
         if publishedStoragePaths is not None:
             deleteStoragePaths(publishedStoragePaths.values())
         raise HTTPException(
@@ -297,6 +302,7 @@ def generatePrivateCompositionFiles(
             detail=str(error),
         ) from error
     except (FileNotFoundError, RuntimeError) as error:
+        logger.exception("Composition file generation failed: %s", compositionId)
         saveGenerationStatus(
             composition.id,
             authenticatedUserId,
@@ -307,6 +313,7 @@ def generatePrivateCompositionFiles(
             detail=str(error),
         ) from error
     except Exception as error:
+        logger.exception("Composition file generation failed: %s", compositionId)
         saveGenerationStatus(
             composition.id,
             authenticatedUserId,

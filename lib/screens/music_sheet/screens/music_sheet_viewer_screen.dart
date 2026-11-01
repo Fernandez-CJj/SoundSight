@@ -120,15 +120,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: widget.type == 'audio'
-          ? StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              stream: sheetReference.snapshots(),
-              builder: (context, snapshot) =>
-                  hasPlayableAudioScore(snapshot.data?.data())
-                      ? buildPlayButton(colors)
-                      : const SizedBox.shrink(),
-            )
-          : buildPlayButton(colors),
+      floatingActionButton: buildPlayButton(colors),
       body: widget.type == 'audio' ? buildSavedAudioViewer() : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: sheetReference.snapshots(),
           builder: (context, snapshot) {
@@ -185,8 +177,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         return SafeArea(
           child: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.md, AppSpacing.md,
-              hasScore ? 96 : AppSpacing.md,
+              AppSpacing.md, AppSpacing.md, AppSpacing.md, 96,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -432,7 +423,11 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            SnackBar(content: Text(context.l10n.translateBeforeSynthesia)),
+            SnackBar(
+              content: Text(widget.type == 'audio'
+                  ? context.l10n.convertRecordingBeforeSynthesia
+                  : context.l10n.translateBeforeSynthesia),
+            ),
           );
         return;
       }
@@ -479,7 +474,11 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
       if (!hasConvertedScore(sheetData)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.translateBeforeAr)),
+          SnackBar(
+            content: Text(widget.type == 'audio'
+                ? context.l10n.convertRecordingBeforeAr
+                : context.l10n.translateBeforeAr),
+          ),
         );
         return;
       }
@@ -525,7 +524,11 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
       if (!hasConvertedScore(sheetData)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.translateBeforeSightReading)),
+          SnackBar(
+            content: Text(widget.type == 'audio'
+                ? context.l10n.convertRecordingBeforeSightReading
+                : context.l10n.translateBeforeSightReading),
+          ),
         );
 
         return;

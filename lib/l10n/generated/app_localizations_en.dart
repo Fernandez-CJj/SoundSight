@@ -245,6 +245,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Convert the music sheet before starting AR Practice.';
 
   @override
+  String get convertRecordingBeforeAr =>
+      'Convert the recording before starting AR Practice.';
+
+  @override
   String get translatedMidiMissing =>
       'The file needed for this practice mode is not ready.';
 
@@ -256,11 +260,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Convert the music sheet before starting Synthesia.';
 
   @override
+  String get convertRecordingBeforeSynthesia =>
+      'Convert the recording before starting Synthesia.';
+
+  @override
   String get openSynthesiaFailed => 'Could not open Synthesia.';
 
   @override
   String get translateBeforeSightReading =>
       'Convert the music sheet before starting Sight Reading.';
+
+  @override
+  String get convertRecordingBeforeSightReading =>
+      'Convert the recording before starting Sight Reading.';
 
   @override
   String get translatedPracticeFilesMissing =>
@@ -453,14 +465,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addSheetDescription =>
-      'Add sheet music from a PDF, captured pages, or an MP3 recording. MP4 upload is coming soon.';
+      'Add sheet music from a PDF, captured pages, or an MP3 or MP4 recording.';
 
   @override
   String get chooseOneMethod => 'Choose one method per sheet';
 
   @override
   String get sheetMethodLimits =>
-      '1 PDF (20 MB, 20 pages), up to 20 photos (5 MB each), or 1 MP3 (95 MB, 5 minutes).';
+      '1 PDF (20 MB, 20 pages), up to 20 photos (5 MB each), 1 MP3 (95 MB, 5 minutes), or 1 MP4 (150 MB, 5 minutes).';
 
   @override
   String get swipeToSwitchMethod =>
@@ -1791,6 +1803,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraOpenFailed => 'The camera could not be opened.';
 
   @override
+  String get recordingMicrophonePermissionRequired =>
+      'Allow microphone access to record video with sound.';
+
+  @override
   String recordingNoteLimitWarning(int current, int maximum) {
     return 'You have captured $current of the $maximum-note limit.';
   }
@@ -1857,6 +1873,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordingComplete => 'Recording Complete';
+
+  @override
+  String get recordedVideoSaveQuestion => 'Save this video to your device?';
+
+  @override
+  String get recordedVideoSaveDescription =>
+      'The video records sound through your phone\'s microphone. Your piano must be audible nearby. Choose where to save a copy now; the temporary video will be removed when you continue.';
+
+  @override
+  String get saveRecordedVideo => 'Save video';
+
+  @override
+  String get recordedVideoSaved => 'Video saved';
+
+  @override
+  String get recordedVideoSaveFailed =>
+      'Could not save the video. Choose another location and try again.';
 
   @override
   String get capturedNotes => 'Captured notes';
@@ -5022,7 +5055,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uploadVideo => 'Upload MP4';
 
   @override
-  String get uploadVideoComingSoon => 'MP4 upload is coming soon.';
+  String get uploadVideoDescription =>
+      'Choose one MP4, up to 150 MB and 5 minutes.';
+
+  @override
+  String get selectedVideoFile => 'Selected video · 1 file';
+
+  @override
+  String get videoAudioOnlyNote =>
+      'Only the audio will be saved. The video stays on your phone. Swipe right to remove it.';
+
+  @override
+  String get videoUnsupported => 'Choose an MP4 file.';
+
+  @override
+  String get videoEmpty => 'The selected video is empty.';
+
+  @override
+  String get videoTooLarge => 'Choose an MP4 of 150 MB or less.';
+
+  @override
+  String get videoTooLong => 'Choose a video no longer than 5 minutes.';
+
+  @override
+  String get videoNoAudio => 'This video has no audio to convert.';
+
+  @override
+  String get videoUnreadable =>
+      'This video could not be opened. Try another MP4.';
+
+  @override
+  String get videoPreparationFailed =>
+      'The audio could not be prepared from this video. Please try again.';
+
+  @override
+  String get preparingAudio => 'Preparing audio...';
+
+  @override
+  String get removeSelectedFileBeforeSwitch =>
+      'Remove the selected file before choosing another method.';
 
   @override
   String get recordingNoiseReminder =>

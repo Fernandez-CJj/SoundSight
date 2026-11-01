@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../ar/models/ar_note_event.dart';
 import '../../ar/models/ar_score_timeline.dart';
 import '../../ar/services/ar_practice_performance_tracker.dart';
 import '../models/synthesia_wait_note_occurrence.dart';
@@ -82,6 +83,19 @@ class _SynthesiaFallingNotesPainter extends CustomPainter {
     for (int index = 0; index < groupStarts.length; index++) {
       groupIndexByStartMicroseconds[groupStarts[index]] = index;
     }
+
+    final previousByPitch = <int, ArNoteEvent>{};
+    for (final note in timeline.noteEvents) {
+      final previous = previousByPitch[note.midiNote];
+      if (previous != null &&
+          (note.startTime.inMicroseconds - previous.endTime.inMicroseconds)
+                  .abs() <=
+              30000) {
+        insetAtEnd.add(previous);
+        insetAtStart.add(note);
+      }
+      previousByPitch[note.midiNote] = note;
+    }
   }
 
   final ArScoreTimeline timeline;
@@ -96,6 +110,8 @@ class _SynthesiaFallingNotesPainter extends CustomPainter {
   final Set<SynthesiaWaitNoteOccurrence> hiddenWaitOccurrences;
   final int maximumNoteDurationUs;
   final Map<int, int> groupIndexByStartMicroseconds = <int, int>{};
+  final Set<ArNoteEvent> insetAtStart = <ArNoteEvent>{};
+  final Set<ArNoteEvent> insetAtEnd = <ArNoteEvent>{};
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -155,7 +171,7 @@ class _SynthesiaFallingNotesPainter extends CustomPainter {
       if (timeUntilHit > approachUs) break;
       final noteBottom = size.height * (1 - (timeUntilHit / approachUs));
       final noteHeight = math.max(
-        20.0,
+        1.0,
         size.height * note.duration.inMicroseconds / approachUs,
       );
       final noteTop = noteBottom - noteHeight;
@@ -163,12 +179,18 @@ class _SynthesiaFallingNotesPainter extends CustomPainter {
       if (noteBottom < 0 || noteTop > size.height) continue;
 
       double visibleTop = math.max(0.0, noteTop);
-      final visibleBottom = math.min(size.height, noteBottom);
+      var visibleBottom = math.min(size.height - 4.0, noteBottom);
       if (holdProgress != null) {
         double safeProgress = holdProgress.clamp(0.0, 1.0).toDouble();
         visibleTop = math.max(visibleTop, noteTop + noteHeight * safeProgress);
         if (safeProgress >= 1) continue;
       }
+      if (visibleBottom <= visibleTop) continue;
+
+      // Give adjacent repeats of the same key separate, complete outlines.
+      final inset = math.min(3.0, noteHeight * 0.2);
+      if (insetAtEnd.contains(note)) visibleTop += inset;
+      if (insetAtStart.contains(note)) visibleBottom -= inset;
       if (visibleBottom <= visibleTop) continue;
 
       final lane = geometry.fallingLane(
@@ -192,14 +214,14 @@ class _SynthesiaFallingNotesPainter extends CustomPainter {
       };
       final rounded = RRect.fromRectAndRadius(
         rect,
-        Radius.circular(math.min(5.0, rect.width / 3)),
+        Radius.circular(math.min(5.0, math.min(rect.width / 3, rect.height / 2))),
       );
       canvas.drawRRect(
         rounded,
         Paint()
           ..color = color.withValues(alpha: 0.28)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 6,
+          ..strokeWidth = rect.height < 18 ? 2 : 6,
       );
       canvas.drawRRect(rounded, Paint()..color = color);
       canvas.drawRRect(
@@ -224,7 +246,7 @@ class _SynthesiaFallingNotesPainter extends CustomPainter {
   void _drawNoteLabel(Canvas canvas, Rect rect, int midiNote) {
     final label = _noteName(midiNote);
     const double horizontalPadding = 2;
-    const double verticalPadding = 2;
+    final verticalPadding = rect.height < 18 ? 1.0 : 2.0;
     final availableWidth = rect.width - horizontalPadding * 2;
     final availableHeight = rect.height - verticalPadding * 2;
 

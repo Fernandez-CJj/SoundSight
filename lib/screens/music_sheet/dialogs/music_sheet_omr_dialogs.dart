@@ -94,6 +94,7 @@ class RecognizeMusicSheetDialog extends StatelessWidget {
                     actionLabelOverride ?? (isReconversion
                         ? context.l10n.continueAction
                         : context.l10n.translate),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),

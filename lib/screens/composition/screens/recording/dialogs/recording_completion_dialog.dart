@@ -1,11 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
-import 'package:video_player/video_player.dart';
 
 enum RecordingCompletionAction { discard, generate }
 
@@ -35,22 +33,34 @@ class RecordingCompletionDialog extends StatefulWidget {
 }
 
 class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
-  late final VideoPlayerController videoController;
-  bool videoReady = false;
+  static const videoChannel = MethodChannel('soundsight/recorded_video');
+  bool isSavingVideo = false;
+  bool videoSaved = false;
+  String? saveError;
 
-  @override
-  void initState() {
-    super.initState();
-    videoController = VideoPlayerController.file(File(widget.videoPath));
-    videoController.initialize().then((_) {
-      if (mounted) setState(() => videoReady = true);
+  Future<void> saveVideo() async {
+    if (isSavingVideo || videoSaved) return;
+    setState(() {
+      isSavingVideo = true;
+      saveError = null;
     });
-  }
-
-  @override
-  void dispose() {
-    videoController.dispose();
-    super.dispose();
+    try {
+      final safeTitle = widget.compositionTitle
+          .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+          .trim();
+      final name = safeTitle.isEmpty ? 'SoundSight recording.mp4' : '$safeTitle.mp4';
+      final saved = await videoChannel.invokeMethod<bool>('saveVideo', {
+        'path': widget.videoPath,
+        'name': name,
+      });
+      if (mounted && saved == true) setState(() => videoSaved = true);
+    } catch (_) {
+      if (mounted) {
+        setState(() => saveError = context.l10n.recordedVideoSaveFailed);
+      }
+    } finally {
+      if (mounted) setState(() => isSavingVideo = false);
+    }
   }
 
   @override
@@ -97,45 +107,52 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        AspectRatio(
-                          aspectRatio: videoReady
-                              ? videoController.value.aspectRatio
-                              : 16 / 9,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            child: ColoredBox(
-                              color: Colors.black,
-                              child: videoReady
-                                  ? Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        VideoPlayer(videoController),
-                                        Center(
-                                          child: IconButton.filled(
-                                            onPressed: () {
-                                              setState(() {
-                                                videoController.value.isPlaying
-                                                    ? videoController.pause()
-                                                    : videoController.play();
-                                              });
-                                            },
-                                            icon: Icon(
-                                              videoController.value.isPlaying
-                                                  ? Icons.pause_rounded
-                                                  : Icons.play_arrow_rounded,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
+                        Text(
+                          context.l10n.recordedVideoSaveQuestion,
+                          style: TextStyle(
+                            color: colors.primaryColor,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
+                        Gap(AppSpacing.xs),
+                        Text(
+                          context.l10n.recordedVideoSaveDescription,
+                          style: TextStyle(color: colors.secondaryTextColor),
+                        ),
+                        Gap(AppSpacing.sm),
+                        OutlinedButton.icon(
+                          onPressed: isSavingVideo || videoSaved ? null : saveVideo,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.primaryColor,
+                            side: BorderSide(color: colors.borderColor),
+                          ),
+                          icon: isSavingVideo
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Icon(
+                                  videoSaved
+                                      ? Icons.check_rounded
+                                      : Icons.download_rounded,
+                                ),
+                          label: Text(
+                            videoSaved
+                                ? context.l10n.recordedVideoSaved
+                                : context.l10n.saveRecordedVideo,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        if (saveError != null) ...[
+                          Gap(AppSpacing.xs),
+                          Text(
+                            saveError!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ],
                         Gap(AppSpacing.md),
                         _informationRow(
                           context.l10n.compositionTitle,
@@ -166,7 +183,7 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(
+                        onPressed: isSavingVideo ? null : () => Navigator.pop(
                           context,
                           RecordingCompletionAction.discard,
                         ),
@@ -174,18 +191,23 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                           foregroundColor: colors.primaryColor,
                           side: BorderSide(color: colors.borderColor),
                         ),
-                        child: Text(context.l10n.recordAgain),
+                        child: Text(
+                          context.l10n.recordAgain,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                     Gap(AppSpacing.sm),
                     Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.pop(
+                      child: ElevatedButton(
+                        onPressed: isSavingVideo ? null : () => Navigator.pop(
                           context,
                           RecordingCompletionAction.generate,
                         ),
-                        icon: const Icon(Icons.auto_awesome_rounded),
-                        label: Text(context.l10n.generate),
+                        child: Text(
+                          context.l10n.generate,
+                          textAlign: TextAlign.center,
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primaryColor,
                           foregroundColor: colors.backgroundColor,

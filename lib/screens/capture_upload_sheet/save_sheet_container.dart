@@ -11,6 +11,7 @@ class SaveSheetContainer extends StatelessWidget {
     required this.uploadProgress,
     required this.onSave,
     this.isAudio = false,
+    this.isPreparingAudio = false,
   });
 
   final AppThemeColors colors;
@@ -18,6 +19,7 @@ class SaveSheetContainer extends StatelessWidget {
   final double uploadProgress;
   final VoidCallback? onSave;
   final bool isAudio;
+  final bool isPreparingAudio;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,9 @@ class SaveSheetContainer extends StatelessWidget {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                      value: uploadProgress == 0 ? null : uploadProgress,
+                      value: isPreparingAudio || uploadProgress == 0
+                          ? null
+                          : uploadProgress,
                       strokeWidth: 2.5,
                       color: colors.backgroundColor,
                     ),
@@ -50,9 +54,11 @@ class SaveSheetContainer extends StatelessWidget {
                 : Icon(Icons.cloud_upload_outlined, size: 21),
             label: Text(
               isSavingSheet
-                  ? context.l10n.savingProgress(
-                      (uploadProgress * 100).round(),
-                    )
+                  ? isPreparingAudio
+                      ? context.l10n.preparingAudio
+                      : context.l10n.savingProgress(
+                          (uploadProgress * 100).round(),
+                        )
                   : isAudio
                   ? context.l10n.saveAudio
                   : context.l10n.saveSheet,

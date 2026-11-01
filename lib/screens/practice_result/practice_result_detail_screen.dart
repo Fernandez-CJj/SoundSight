@@ -391,6 +391,7 @@ class PracticeResultDetailScreen extends StatelessWidget {
     final timing = friendlyTiming(context, event.timingOffsetMs);
 
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.md,
         0,
