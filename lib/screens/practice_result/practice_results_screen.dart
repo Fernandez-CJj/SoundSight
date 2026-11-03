@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/delete_swipe_background.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:soundsight/constants/constant.dart';
@@ -163,9 +165,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                   );
                 }
 
-                final filteredResults = filterAndSortResults(
-                  availableResults,
-                );
+                final filteredResults = filterAndSortResults(availableResults);
 
                 return Column(
                   children: [
@@ -198,10 +198,8 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                                           deletingResultInProgress
                                       ? DismissDirection.none
                                       : DismissDirection.startToEnd,
-                                  confirmDismiss: (_) => confirmDeleteResult(
-                                    colors,
-                                    result,
-                                  ),
+                                  confirmDismiss: (_) =>
+                                      confirmDeleteResult(colors, result),
                                   onDismissed: (_) {
                                     dismissResult(result);
                                   },
@@ -290,10 +288,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                borderSide: BorderSide(
-                  color: colors.primaryColor,
-                  width: 1.5,
-                ),
+                borderSide: BorderSide(color: colors.primaryColor, width: 1.5),
               ),
             ),
           ),
@@ -304,36 +299,40 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: typeOptions.map((type) {
-                      final selected = selectedPracticeType == type;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: AppSpacing.xs),
-                        child: ChoiceChip(
-                          selected: selected,
-                          showCheckmark: false,
-                          label: Text(
-                            type == null
-                                ? context.l10n.practiceResultsAll
-                                : practiceTypeLabel(type),
-                          ),
-                          onSelected: (_) {
-                            setState(() {
-                              selectedPracticeType = type;
-                            });
-                          },
-                          selectedColor: colors.primaryColor,
-                          backgroundColor: colors.surfaceColor,
-                          side: BorderSide(color: colors.borderColor),
-                          labelStyle: TextStyle(
-                            color: selected
-                                ? colors.backgroundColor
-                                : colors.primaryColor,
-                            fontSize: AppTextSizes.caption,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      );
-                    }).toList(growable: false),
+                    children: typeOptions
+                        .map((type) {
+                          final selected = selectedPracticeType == type;
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              right: AppSpacing.xs,
+                            ),
+                            child: ChoiceChip(
+                              selected: selected,
+                              showCheckmark: false,
+                              label: Text(
+                                type == null
+                                    ? context.l10n.practiceResultsAll
+                                    : practiceTypeLabel(type),
+                              ),
+                              onSelected: (_) {
+                                setState(() {
+                                  selectedPracticeType = type;
+                                });
+                              },
+                              selectedColor: colors.primaryColor,
+                              backgroundColor: colors.surfaceColor,
+                              side: BorderSide(color: colors.borderColor),
+                              labelStyle: TextStyle(
+                                color: selected
+                                    ? colors.backgroundColor
+                                    : colors.primaryColor,
+                                fontSize: AppTextSizes.caption,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          );
+                        })
+                        .toList(growable: false),
                   ),
                 ),
               ),
@@ -434,9 +433,10 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
       final comparison = switch (selectedSort) {
         _ResultSort.newest => resultDate(second).compareTo(resultDate(first)),
         _ResultSort.oldest => resultDate(first).compareTo(resultDate(second)),
-        _ResultSort.highestAccuracy => second.timingAccuracyPercentage.compareTo(
-          first.timingAccuracyPercentage,
-        ),
+        _ResultSort.highestAccuracy =>
+          second.timingAccuracyPercentage.compareTo(
+            first.timingAccuracyPercentage,
+          ),
         _ResultSort.lowestAccuracy => first.timingAccuracyPercentage.compareTo(
           second.timingAccuracyPercentage,
         ),
@@ -603,8 +603,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                             ),
                             IconButton(
                               tooltip: context.l10n.practiceResultsCloseFilters,
-                              onPressed: () =>
-                                  Navigator.of(sheetContext).pop(),
+                              onPressed: () => Navigator.of(sheetContext).pop(),
                               icon: const Icon(Icons.close_rounded),
                               color: colors.primaryColor,
                             ),
@@ -631,9 +630,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                                 },
                               ),
                               const Gap(AppSpacing.lg),
-                              buildFilterChoiceSection<
-                                _ResultAccuracyFilter
-                              >(
+                              buildFilterChoiceSection<_ResultAccuracyFilter>(
                                 colors: colors,
                                 title: context.l10n.practiceResultsAccuracy,
                                 options: _ResultAccuracyFilter.values,
@@ -769,24 +766,26 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
-          children: options.map((option) {
-            final selected = option == selectedValue;
-            return ChoiceChip(
-              selected: selected,
-              showCheckmark: false,
-              label: Text(labelFor(option)),
-              onSelected: (_) => onChanged(option),
-              selectedColor: colors.primaryColor,
-              backgroundColor: colors.backgroundColor,
-              side: BorderSide(color: colors.borderColor),
-              labelStyle: TextStyle(
-                color: selected
-                    ? colors.backgroundColor
-                    : colors.primaryColor,
-                fontWeight: FontWeight.w700,
-              ),
-            );
-          }).toList(growable: false),
+          children: options
+              .map((option) {
+                final selected = option == selectedValue;
+                return ChoiceChip(
+                  selected: selected,
+                  showCheckmark: false,
+                  label: Text(labelFor(option)),
+                  onSelected: (_) => onChanged(option),
+                  selectedColor: colors.primaryColor,
+                  backgroundColor: colors.backgroundColor,
+                  side: BorderSide(color: colors.borderColor),
+                  labelStyle: TextStyle(
+                    color: selected
+                        ? colors.backgroundColor
+                        : colors.primaryColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                );
+              })
+              .toList(growable: false),
         ),
       ],
     );
@@ -806,7 +805,8 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
       _ResultAccuracyFilter.all => context.l10n.practiceResultsAllScores,
       _ResultAccuracyFilter.excellent => '90–100%',
       _ResultAccuracyFilter.good => '75–89%',
-      _ResultAccuracyFilter.needsPractice => context.l10n.practiceResultsBelow75,
+      _ResultAccuracyFilter.needsPractice =>
+        context.l10n.practiceResultsBelow75,
     };
   }
 
@@ -828,8 +828,7 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
       _ResultSort.oldest => context.l10n.practiceResultsOldestFirst,
       _ResultSort.highestAccuracy =>
         context.l10n.practiceResultsHighestAccuracy,
-      _ResultSort.lowestAccuracy =>
-        context.l10n.practiceResultsLowestAccuracy,
+      _ResultSort.lowestAccuracy => context.l10n.practiceResultsLowestAccuracy,
     };
   }
 
@@ -1095,30 +1094,8 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
     );
   }
 
-  Widget buildDeleteBackground(AppThemeColors colors) {
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: const Color(0xFFDC2626),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.delete_outline_rounded, color: Colors.white),
-          const Gap(AppSpacing.xs),
-          Text(
-            context.l10n.delete,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget buildDeleteBackground(AppThemeColors colors) =>
+      DeleteSwipeBackground(colors: colors, radius: AppRadius.lg);
 
   Future<bool> confirmDeleteResult(
     AppThemeColors colors,
@@ -1194,9 +1171,11 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
         deletingResultIds.remove(resultId);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.practiceResultsDeleteFailed),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: AppThemeColors.fromDarkMode(isDarkMode),
+          message: context.l10n.practiceResultsDeleteFailed,
+          type: AppSnackBarType.error,
         ),
       );
     } finally {
@@ -1267,17 +1246,23 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
         deletingResultIds.clear();
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.practiceResultsDeleteAllSuccess)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: AppThemeColors.fromDarkMode(isDarkMode),
+          message: context.l10n.practiceResultsDeleteAllSuccess,
+          type: AppSnackBarType.success,
+        ),
       );
     } catch (_) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.practiceResultsDeleteAllFailed),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: AppThemeColors.fromDarkMode(isDarkMode),
+          message: context.l10n.practiceResultsDeleteAllFailed,
+          type: AppSnackBarType.error,
         ),
       );
     } finally {
@@ -1352,10 +1337,11 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
   }
 
   String localizedResultSuggestion(PracticeResultSummary result) {
-    final difficultNotes = result.noteBreakdown
-        .where((item) => item.errorCount > 0)
-        .toList()
-      ..sort((first, second) => second.errorCount.compareTo(first.errorCount));
+    final difficultNotes =
+        result.noteBreakdown.where((item) => item.errorCount > 0).toList()
+          ..sort(
+            (first, second) => second.errorCount.compareTo(first.errorCount),
+          );
     final difficultNote = difficultNotes.isEmpty
         ? null
         : midiNoteName(difficultNotes.first.midiNote);

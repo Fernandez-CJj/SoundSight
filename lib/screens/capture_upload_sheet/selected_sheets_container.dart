@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/delete_swipe_background.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -54,10 +55,7 @@ class SelectedSheetsContainer extends StatelessWidget {
               ),
               child: Text(
                 selectedPdfPageCount == null
-                    ? context.l10n.selectedImageLimit(
-                        selectedSheets.length,
-                        20,
-                      )
+                    ? context.l10n.selectedImageLimit(selectedSheets.length, 20)
                     : context.l10n.onePdf,
                 style: TextStyle(
                   color: colors.backgroundColor,
@@ -89,15 +87,10 @@ class SelectedSheetsContainer extends StatelessWidget {
             direction: isSavingSheet
                 ? DismissDirection.none
                 : DismissDirection.startToEnd,
-            background: Container(
-              margin: EdgeInsets.only(bottom: AppSpacing.sm),
-              padding: EdgeInsets.only(left: AppSpacing.md),
-              alignment: Alignment.centerLeft,
-              decoration: BoxDecoration(
-                color: const Color(0xFFDC2626),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Icon(Icons.delete_outline, color: Colors.white),
+            background: DeleteSwipeBackground(
+              colors: colors,
+              label: context.l10n.remove,
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
             ),
             confirmDismiss: (_) async {
               return await showDialog<bool>(

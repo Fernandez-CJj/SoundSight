@@ -9,6 +9,8 @@ class AppThemeColors {
     required this.primaryColor,
     required this.secondaryTextColor,
     required this.borderColor,
+    required this.destructiveColor,
+    required this.onDestructiveColor,
     required this.completedStageColor,
     required this.completedStageSurfaceColor,
     required this.sightReadingResultColor,
@@ -23,6 +25,8 @@ class AppThemeColors {
   final Color primaryColor;
   final Color secondaryTextColor;
   final Color borderColor;
+  final Color destructiveColor;
+  final Color onDestructiveColor;
   final Color completedStageColor;
   final Color completedStageSurfaceColor;
   final Color sightReadingResultColor;
@@ -39,6 +43,8 @@ class AppThemeColors {
             primaryColor: AppColors.darkPrimary,
             secondaryTextColor: AppColors.darkSecondaryText,
             borderColor: AppColors.darkBorder,
+            destructiveColor: AppColors.destructive,
+            onDestructiveColor: AppColors.onDestructive,
             completedStageColor: AppColors.darkCompletedStage,
             completedStageSurfaceColor: AppColors.darkCompletedStageSurface,
             sightReadingResultColor: AppColors.darkSightReadingResult,
@@ -53,6 +59,8 @@ class AppThemeColors {
             primaryColor: AppColors.lightPrimary,
             secondaryTextColor: AppColors.lightSecondaryText,
             borderColor: AppColors.lightBorder,
+            destructiveColor: AppColors.destructive,
+            onDestructiveColor: AppColors.onDestructive,
             completedStageColor: AppColors.lightCompletedStage,
             completedStageSurfaceColor: AppColors.lightCompletedStageSurface,
             sightReadingResultColor: AppColors.sightReadingResult,

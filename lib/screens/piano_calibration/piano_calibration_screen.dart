@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -4947,8 +4948,12 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       ArScoreTimeline? timeline = widget.scoreTimeline;
 
       if (timeline == null || timeline.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.songStillLoading)),
+        ScaffoldMessenger.of(context).showLatestSnackBar(
+          appSnackBar(
+            colors: widget.colors,
+            message: context.l10n.songStillLoading,
+            type: AppSnackBarType.warning,
+          ),
         );
 
         return;
@@ -5184,8 +5189,12 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     ArScoreTimeline? timeline = widget.scoreTimeline;
 
     if (timeline == null || timeline.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.songStillLoading)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.songStillLoading,
+          type: AppSnackBarType.warning,
+        ),
       );
       return;
     }

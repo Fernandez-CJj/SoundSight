@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -602,12 +603,16 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
     }
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.error,
+  }) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      .showLatestSnackBar(
+        appSnackBar(colors: widget.colors, message: message, type: type),
+      );
   }
 
   String formatPublishedDate(DateTime? date) {

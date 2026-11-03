@@ -1,5 +1,12 @@
 # MP3-to-MIDI worker setup on Windows
 
+**Background jobs:** the API now accepts conversion requests with HTTP 202.
+Run the separate shared worker with `python -m jobs.worker` from `backend` as
+well as FastAPI. Follow [JOBS_SETUP.md](JOBS_SETUP.md) for startup, Android
+notifications, cancellation, limits, and restart recovery. The queue owns
+recovery; legacy synchronous lease descriptions below no longer control the
+Android conversion flow.
+
 The FastAPI backend remains in its existing Python 3.14 `backend/venv`.
 Transkun runs as a separate Python 3.11 process. Uploading and previewing MP3s
 does not require that process; converting a saved MP3 does.

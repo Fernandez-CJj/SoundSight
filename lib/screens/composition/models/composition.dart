@@ -31,6 +31,8 @@ class Composition {
     this.midiStoragePath,
     this.mp3StoragePath,
     this.generationStatus,
+    this.activeJobId,
+    this.lastJobStatus,
     this.generatedFilesVersion,
     this.filesGeneratedAt,
     this.createdAt,
@@ -58,6 +60,9 @@ class Composition {
   final String? midiStoragePath;
   final String? mp3StoragePath;
 
+  final String? activeJobId;
+  final String? lastJobStatus;
+  bool get hasActiveJob => activeJobId != null;
   final String? generationStatus;
   final int? generatedFilesVersion;
   final DateTime? filesGeneratedAt;
@@ -158,6 +163,8 @@ class Composition {
       midiStoragePath: midiStoragePath ?? this.midiStoragePath,
       mp3StoragePath: mp3StoragePath ?? this.mp3StoragePath,
       generationStatus: generationStatus ?? this.generationStatus,
+      activeJobId: activeJobId,
+      lastJobStatus: lastJobStatus,
       generatedFilesVersion:
           generatedFilesVersion ?? this.generatedFilesVersion,
       filesGeneratedAt: filesGeneratedAt ?? this.filesGeneratedAt,
@@ -259,6 +266,8 @@ class Composition {
       midiStoragePath: map['midiStoragePath'] as String?,
       mp3StoragePath: map['mp3StoragePath'] as String?,
       generationStatus: map['generationStatus'] as String?,
+      activeJobId: map['activeJobId'] as String?,
+      lastJobStatus: map['lastJobStatus'] as String?,
       generatedFilesVersion: (map['generatedFilesVersion'] as num?)?.toInt(),
       filesGeneratedAt: filesGeneratedAtData is Timestamp
           ? filesGeneratedAtData.toDate()

@@ -653,7 +653,7 @@ abstract class AppLocalizations {
   /// No description provided for @translateDescription.
   ///
   /// In en, this message translates to:
-  /// **'SoundSight will create a playable digital version of \"{title}\". This may take a few minutes.'**
+  /// **'SoundSight will turn \"{title}\" into music you can play and practise with. This may take a few minutes.'**
   String translateDescription(String title);
 
   /// No description provided for @continueAction.
@@ -677,7 +677,7 @@ abstract class AppLocalizations {
   /// No description provided for @translationLoadingDescription.
   ///
   /// In en, this message translates to:
-  /// **'SoundSight is reading the notes. Please wait and keep the app open.'**
+  /// **'SoundSight is reading the notes. You can leave this screen. We will notify you when it finishes.'**
   String get translationLoadingDescription;
 
   /// No description provided for @translationComplete.
@@ -737,7 +737,7 @@ abstract class AppLocalizations {
   /// No description provided for @translationStartDescription.
   ///
   /// In en, this message translates to:
-  /// **'Create a playable digital version for SoundSight\'s practice modes.'**
+  /// **'Turn your sheet into music you can play and practise with in SoundSight.'**
   String get translationStartDescription;
 
   /// No description provided for @reconvert.
@@ -1685,7 +1685,7 @@ abstract class AppLocalizations {
   /// No description provided for @compositionSavedFilesReady.
   ///
   /// In en, this message translates to:
-  /// **'Composition saved and music files are ready.'**
+  /// **'Composition saved and ready to view and play.'**
   String get compositionSavedFilesReady;
 
   /// No description provided for @compositionSavedFilesPending.
@@ -1751,7 +1751,7 @@ abstract class AppLocalizations {
   /// No description provided for @preparingMusicFiles.
   ///
   /// In en, this message translates to:
-  /// **'Preparing your music files'**
+  /// **'Preparing your sheet music and sound'**
   String get preparingMusicFiles;
 
   /// No description provided for @musicFilesNeedUpdating.
@@ -1769,13 +1769,13 @@ abstract class AppLocalizations {
   /// No description provided for @musicFilesOutOfDateDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your changes are saved, but the available files contain an older version.'**
+  /// **'Your changes are saved. Prepare your music again to see and hear them.'**
   String get musicFilesOutOfDateDescription;
 
   /// No description provided for @musicFilesNotReadyDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your sheet music and playback files are not ready yet.'**
+  /// **'Your sheet music and sound are not ready yet.'**
   String get musicFilesNotReadyDescription;
 
   /// No description provided for @view.
@@ -2033,7 +2033,7 @@ abstract class AppLocalizations {
   /// No description provided for @musicFilesReadyDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your sheet music and playback files are ready.'**
+  /// **'Your sheet music is ready to view and play.'**
   String get musicFilesReadyDescription;
 
   /// No description provided for @musicFilesPrepared.
@@ -2045,7 +2045,7 @@ abstract class AppLocalizations {
   /// No description provided for @retryGeneration.
   ///
   /// In en, this message translates to:
-  /// **'Retry Generation'**
+  /// **'Prepare music'**
   String get retryGeneration;
 
   /// No description provided for @checkingPublicationStatus.
@@ -2135,7 +2135,7 @@ abstract class AppLocalizations {
   /// No description provided for @prepareFilesBeforePublishing.
   ///
   /// In en, this message translates to:
-  /// **'Prepare the sheet music and playback files before publishing.'**
+  /// **'Prepare your sheet music and sound before sharing your composition.'**
   String get prepareFilesBeforePublishing;
 
   /// No description provided for @compositionUnpublished.
@@ -2183,7 +2183,7 @@ abstract class AppLocalizations {
   /// No description provided for @prepareLatestFilesBeforeAr.
   ///
   /// In en, this message translates to:
-  /// **'Prepare the latest music files before starting AR Practice.'**
+  /// **'Prepare your updated music before starting AR Practice.'**
   String get prepareLatestFilesBeforeAr;
 
   /// No description provided for @generatedMidiMissing.
@@ -2195,13 +2195,13 @@ abstract class AppLocalizations {
   /// No description provided for @prepareLatestFilesBeforeSightReading.
   ///
   /// In en, this message translates to:
-  /// **'Prepare the latest music files before starting Sight Reading.'**
+  /// **'Prepare your updated music before starting Sight Reading.'**
   String get prepareLatestFilesBeforeSightReading;
 
   /// No description provided for @generatedPracticeFilesMissing.
   ///
   /// In en, this message translates to:
-  /// **'The files needed for practice are not ready.'**
+  /// **'Your music is not ready for practice yet.'**
   String get generatedPracticeFilesMissing;
 
   /// No description provided for @publishUpdateQuestion.
@@ -2219,13 +2219,13 @@ abstract class AppLocalizations {
   /// No description provided for @publishUpdateDescription.
   ///
   /// In en, this message translates to:
-  /// **'A new published version and PDF will be created. Previous versions, likes, comments, and saves will remain.'**
+  /// **'Your updated sheet music will be shared. Earlier versions, likes, comments, and saves will stay.'**
   String get publishUpdateDescription;
 
   /// No description provided for @publishCompositionDescription.
   ///
   /// In en, this message translates to:
-  /// **'A PDF music sheet will be created and shared with other SoundSight users.'**
+  /// **'Your sheet music will be shared with other SoundSight users.'**
   String get publishCompositionDescription;
 
   /// No description provided for @unpublishCompositionQuestion.
@@ -2255,13 +2255,13 @@ abstract class AppLocalizations {
   /// No description provided for @unpublishingCompositionDescription.
   ///
   /// In en, this message translates to:
-  /// **'Removing every published version and PDF. Please wait.'**
+  /// **'Removing your shared sheet music from the community. Please wait.'**
   String get unpublishingCompositionDescription;
 
   /// No description provided for @generatedPreview.
   ///
   /// In en, this message translates to:
-  /// **'Generated preview'**
+  /// **'Music preview'**
   String get generatedPreview;
 
   /// No description provided for @generatedPreviewDescription.
@@ -2291,7 +2291,7 @@ abstract class AppLocalizations {
   /// No description provided for @listenGeneratedComposition.
   ///
   /// In en, this message translates to:
-  /// **'Listen to the generated composition'**
+  /// **'Listen to your composition'**
   String get listenGeneratedComposition;
 
   /// No description provided for @sheetMusic.
@@ -3070,7 +3070,7 @@ abstract class AppLocalizations {
   /// No description provided for @generatingCompositionFiles.
   ///
   /// In en, this message translates to:
-  /// **'Generating composition files...'**
+  /// **'Preparing your sheet music and sound...'**
   String get generatingCompositionFiles;
 
   /// No description provided for @keepScreenOpen.
@@ -3208,7 +3208,7 @@ abstract class AppLocalizations {
   /// No description provided for @filesNotGeneratedDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your composition was saved, but its sheet music and playback are not ready. You can try again.'**
+  /// **'Your composition is saved. We couldn\'t finish preparing its sheet music and sound. You can try again.'**
   String get filesNotGeneratedDescription;
 
   /// No description provided for @finish.
@@ -3274,7 +3274,7 @@ abstract class AppLocalizations {
   /// No description provided for @generate.
   ///
   /// In en, this message translates to:
-  /// **'Generate'**
+  /// **'Prepare music'**
   String get generate;
 
   /// No description provided for @exploreMusic.
@@ -8583,7 +8583,7 @@ abstract class AppLocalizations {
   /// No description provided for @audioMidiLoadingDescription.
   ///
   /// In en, this message translates to:
-  /// **'Keep this screen open while SoundSight reads the recording.'**
+  /// **'You can leave this screen. We will notify you when it finishes.'**
   String get audioMidiLoadingDescription;
 
   /// No description provided for @audioMidiSuccessDescription.
@@ -8597,6 +8597,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wait for the recording to finish converting before deleting it.'**
   String get audioWaitBeforeDelete;
+
+  /// No description provided for @backendServiceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The service is currently unavailable. Please try again later.'**
+  String get backendServiceUnavailable;
+
+  /// No description provided for @jobSubmissionUnconfirmedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t confirm your request'**
+  String get jobSubmissionUnconfirmedTitle;
+
+  /// No description provided for @jobCancellingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling...'**
+  String get jobCancellingTitle;
+
+  /// No description provided for @jobSubmittingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending request'**
+  String get jobSubmittingTitle;
+
+  /// No description provided for @jobSubmittingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending your request. Please wait.'**
+  String get jobSubmittingDescription;
+
+  /// No description provided for @jobQueuedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to start'**
+  String get jobQueuedTitle;
+
+  /// No description provided for @jobProcessingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your music'**
+  String get jobProcessingTitle;
+
+  /// No description provided for @jobFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t finish'**
+  String get jobFailedTitle;
+
+  /// No description provided for @jobFailedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your original music and any earlier results are safe. You can try again.'**
+  String get jobFailedDescription;
+
+  /// No description provided for @jobLeaveScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'You can leave this screen. We will notify you when it finishes.'**
+  String get jobLeaveScreen;
+
+  /// No description provided for @jobCancelQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel before it starts'**
+  String get jobCancelQueued;
+
+  /// No description provided for @jobAlreadyActive.
+  ///
+  /// In en, this message translates to:
+  /// **'This music is already waiting or being prepared. Please wait for it to finish.'**
+  String get jobAlreadyActive;
+
+  /// No description provided for @jobUpdateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Update SoundSight before trying again.'**
+  String get jobUpdateRequired;
+
+  /// No description provided for @jobQueueFull.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'re busy, or you already have two requests in progress. Please try again later.'**
+  String get jobQueueFull;
+
+  /// No description provided for @jobWorkerUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The service is currently unavailable. Your saved music is safe. Please try again later.'**
+  String get jobWorkerUnavailable;
+
+  /// No description provided for @jobSubmissionUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t confirm whether your request started. Check your music before trying again.'**
+  String get jobSubmissionUnconfirmed;
+
+  /// No description provided for @jobSavedNotQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Composition saved. We couldn\'t start preparing your music. Please try again.'**
+  String get jobSavedNotQueued;
+
+  /// No description provided for @jobAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is received. You can keep using the app while you wait.'**
+  String get jobAccepted;
+
+  /// No description provided for @jobCompletedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your result is ready'**
+  String get jobCompletedTitle;
+
+  /// No description provided for @jobFailedNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t finish preparing your music. Open it to try again.'**
+  String get jobFailedNotification;
+
+  /// No description provided for @jobOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get jobOpen;
+
+  /// No description provided for @jobItemUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find this music in your account. It may have been deleted.'**
+  String get jobItemUnavailable;
+
+  /// No description provided for @jobItemLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'You can edit or delete this music after the current request finishes or is cancelled.'**
+  String get jobItemLocked;
 }
 
 class _AppLocalizationsDelegate

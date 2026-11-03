@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,6 +20,11 @@ class CompositionPublicationException implements Exception {
   final String message;
 
   bool get isUnauthorized => statusCode == 401;
+  bool get isServiceUnavailable =>
+      statusCode == 502 ||
+      statusCode == 503 ||
+      statusCode == 504 ||
+      statusCode == 530;
 
   @override
   String toString() => message;
@@ -69,8 +75,6 @@ class CompositionPublication {
 }
 
 class CompositionPublishService {
-  static const String backendUrl = BackendConfig.baseUrl;
-
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   /// Streams each public post together with the private edit timestamp that
@@ -114,11 +118,13 @@ class CompositionPublishService {
   }
 
   Future<String> publishComposition(Composition composition) async {
-    final uri = Uri.parse('$backendUrl/compositions/${composition.id}/publish');
     final response = await sendAuthenticatedRequest(
-      (idToken) => http
-          .post(uri, headers: {'Authorization': 'Bearer $idToken'})
-          .timeout(const Duration(minutes: 2)),
+      (idToken) => BackendConfig.request(
+        '/compositions/${Uri.encodeComponent(composition.id)}/publish',
+        send: (uri) => http
+            .post(uri, headers: {'Authorization': 'Bearer $idToken'})
+            .timeout(const Duration(minutes: 2)),
+      ),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -137,11 +143,13 @@ class CompositionPublishService {
   }
 
   Future<void> unpublishComposition({required String compositionId}) async {
-    final uri = Uri.parse('$backendUrl/compositions/$compositionId/publish');
     final response = await sendAuthenticatedRequest(
-      (idToken) => http
-          .delete(uri, headers: {'Authorization': 'Bearer $idToken'})
-          .timeout(const Duration(minutes: 1)),
+      (idToken) => BackendConfig.request(
+        '/compositions/${Uri.encodeComponent(compositionId)}/publish',
+        send: (uri) => http
+            .delete(uri, headers: {'Authorization': 'Bearer $idToken'})
+            .timeout(const Duration(minutes: 1)),
+      ),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -158,12 +166,29 @@ class CompositionPublishService {
   Future<http.Response> sendAuthenticatedRequest(
     Future<http.Response> Function(String idToken) request,
   ) async {
-    var response = await request(await requireIdToken());
-    if (response.statusCode != 401) return response;
+    try {
+      var response = await request(await requireIdToken());
+      if (response.statusCode != 401) return response;
 
-    await FirebaseAuth.instance.currentUser?.reload();
-    response = await request(await requireIdToken());
-    return response;
+      await FirebaseAuth.instance.currentUser?.reload();
+      response = await request(await requireIdToken());
+      return response;
+    } on BackendUnavailableException {
+      throw const CompositionPublicationException(
+        statusCode: 503,
+        message: 'Publication service unavailable.',
+      );
+    } on http.ClientException {
+      throw const CompositionPublicationException(
+        statusCode: 503,
+        message: 'Publication service unavailable.',
+      );
+    } on TimeoutException {
+      throw const CompositionPublicationException(
+        statusCode: 503,
+        message: 'Publication service unavailable.',
+      );
+    }
   }
 
   String readErrorMessage(http.Response response, String fallback) {

@@ -39,6 +39,7 @@ def createOmrJobFolders():
 def downloadMusicSheetFiles(
     sheetData,
     inputFolder,
+    sourceGenerations=None,
 ):
     bucket = getStorageBucket()
 
@@ -99,7 +100,9 @@ def downloadMusicSheetFiles(
             )
 
         storageFile.download_to_filename(
-            localFilePath
+            localFilePath,
+            if_generation_match=(int(sourceGenerations[storagePath]) if sourceGenerations else None),
+            timeout=120,
         )
 
         downloadedPaths.append(

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -108,8 +109,12 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     final newUsername = editedUsername.trim();
 
     if (newUsername.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.usernameRequired)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.usernameRequired,
+          type: AppSnackBarType.warning,
+        ),
       );
       return;
     }
@@ -160,11 +165,11 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
       if (!mounted) return;
 
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.profileSaveFailed,
-          ),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.profileSaveFailed,
+          type: AppSnackBarType.error,
         ),
       );
     }
@@ -200,9 +205,11 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     if (fileSize > maxFileSize) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.profilePictureSizeLimit),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.profilePictureSizeLimit,
+          type: AppSnackBarType.warning,
         ),
       );
       return;

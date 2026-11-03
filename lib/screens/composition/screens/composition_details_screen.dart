@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:soundsight/services/processing_job_service.dart';
+import 'package:soundsight/widgets/processing_job_card.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -58,16 +62,31 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   CompositionPublicationAction? activePublicationAction;
 
   int playbackRunId = 0;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? jobSubscription;
 
   @override
   void initState() {
     super.initState();
     composition = widget.composition;
     playbackDuration = getCompositionDuration(composition);
+    jobSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(composition.ownerId)
+        .collection('compositions')
+        .doc(composition.id)
+        .snapshots()
+        .listen((snapshot) {
+          if (!mounted || !snapshot.exists) return;
+          setState(() {
+            composition = Composition.fromMap(snapshot.id, snapshot.data()!);
+            playbackDuration = getCompositionDuration(composition);
+          });
+        }, onError: (Object _) {});
   }
 
   @override
   void dispose() {
+    jobSubscription?.cancel();
     unawaited(playbackService.dispose());
     super.dispose();
   }
@@ -97,7 +116,11 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           ),
           actions: [
             PopupMenuButton<String>(
-              enabled: !isDeleting && !isPlaying && !isPublishing,
+              enabled:
+                  !composition.hasActiveJob &&
+                  !isDeleting &&
+                  !isPlaying &&
+                  !isPublishing,
               color: colors.surfaceColor,
               icon: const Icon(Icons.more_vert_rounded),
               onSelected: (value) {
@@ -161,7 +184,6 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               onPressed: showPlayModeDialog,
               backgroundColor: colors.primaryColor,
               foregroundColor: colors.backgroundColor,
-              icon: const Icon(Icons.play_arrow_rounded),
               label: Text(context.l10n.play),
             ),
           ),
@@ -179,6 +201,12 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                     96,
                   ),
                   children: [
+                    ProcessingJobCard(
+                      colors: colors,
+                      status: composition.lastJobStatus,
+                      jobId: composition.activeJobId,
+                      onRetry: retryCompositionGeneration,
+                    ),
                     buildOverviewCard(colors),
                     const Gap(AppSpacing.md),
                     if (composition.generatedFilesAreCurrent)
@@ -297,12 +325,18 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     final midiStoragePath = composition.midiStoragePath?.trim() ?? '';
 
     if (!composition.generatedFilesAreCurrent) {
-      showMessage(context.l10n.prepareLatestFilesBeforeAr);
+      showMessage(
+        context.l10n.prepareLatestFilesBeforeAr,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
     if (midiStoragePath.isEmpty) {
-      showMessage(context.l10n.generatedMidiMissing);
+      showMessage(
+        context.l10n.generatedMidiMissing,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
@@ -326,14 +360,20 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     final mp3StoragePath = composition.mp3StoragePath?.trim() ?? '';
 
     if (!composition.generatedFilesAreCurrent) {
-      showMessage(context.l10n.prepareLatestFilesBeforeSightReading);
+      showMessage(
+        context.l10n.prepareLatestFilesBeforeSightReading,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
     if (musicXmlStoragePath.isEmpty ||
         midiStoragePath.isEmpty ||
         mp3StoragePath.isEmpty) {
-      showMessage(context.l10n.generatedPracticeFilesMissing);
+      showMessage(
+        context.l10n.generatedPracticeFilesMissing,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
@@ -698,9 +738,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 child: buildStatisticCard(
                   colors: colors,
                   icon: Icons.music_note_rounded,
-                  label: context.l10n.noteLabel(
-                    composition.playableNoteCount,
-                  ),
+                  label: context.l10n.noteLabel(composition.playableNoteCount),
                   value: '${composition.playableNoteCount}',
                 ),
               ),
@@ -721,10 +759,12 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Widget buildGeneratedFilesCard(AppThemeColors colors) {
+    if (composition.hasActiveJob) return const SizedBox.shrink();
     final filesAreReady = composition.generatedFilesAreCurrent;
     final filesAreOutOfDate = composition.generatedFilesAreOutOfDate;
     final generationIsRunning =
         isGeneratingFiles ||
+        composition.hasActiveJob ||
         composition.generationStatus == Composition.generatingStatus;
     final statusColor = filesAreReady
         ? const Color(0xFF16A34A)
@@ -806,19 +846,20 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                     height: 1.4,
                   ),
                 ),
-                if (!filesAreReady && !generationIsRunning) ...[
+                if (!filesAreReady &&
+                    !generationIsRunning &&
+                    composition.lastJobStatus != 'failed') ...[
                   const Gap(AppSpacing.sm),
-                  ElevatedButton.icon(
+                  ElevatedButton(
                     onPressed: isDeleting || isPublishing
                         ? null
                         : retryCompositionGeneration,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: Text(context.l10n.retryGeneration),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primaryColor,
                       foregroundColor: colors.backgroundColor,
                       elevation: 0,
                     ),
+                    child: Text(context.l10n.retryGeneration),
                   ),
                 ],
               ],
@@ -903,12 +944,6 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 children: [
                   buildActionRow(
                     colors: colors,
-                    icon: isPublishingUpdate
-                        ? Icons.update_rounded
-                        : publicationAction ==
-                              CompositionPublicationAction.unpublish
-                        ? Icons.public_off_rounded
-                        : Icons.publish_rounded,
                     title: isCheckingPublication
                         ? context.l10n.checkingPublicationStatus
                         : mainActionIsLoading
@@ -940,7 +975,6 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                     Divider(height: 1, color: colors.borderColor),
                     buildActionRow(
                       colors: colors,
-                      icon: Icons.public_off_rounded,
                       title:
                           isPublishing &&
                               activePublicationAction ==
@@ -951,7 +985,11 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                           isPublishing &&
                           activePublicationAction ==
                               CompositionPublicationAction.unpublish,
-                      onTap: isDeleting || isPlaying || isPublishing
+                      onTap:
+                          composition.hasActiveJob ||
+                              isDeleting ||
+                              isPlaying ||
+                              isPublishing
                           ? null
                           : () {
                               changeCompositionPublication(
@@ -969,9 +1007,12 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
             Divider(height: 1, color: colors.borderColor),
             buildActionRow(
               colors: colors,
-              icon: Icons.edit_outlined,
               title: context.l10n.editComposition,
-              onTap: isDeleting || isPlaying || isPublishing
+              onTap:
+                  composition.hasActiveJob ||
+                      isDeleting ||
+                      isPlaying ||
+                      isPublishing
                   ? null
                   : editComposition,
             ),
@@ -979,12 +1020,15 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           Divider(height: 1, color: colors.borderColor),
           buildActionRow(
             colors: colors,
-            icon: Icons.delete_outline_rounded,
             title: isDeleting
                 ? context.l10n.deletingProgress
                 : context.l10n.deleteComposition,
             isLoading: isDeleting,
-            onTap: isDeleting || isPlaying || isPublishing
+            onTap:
+                composition.hasActiveJob ||
+                    isDeleting ||
+                    isPlaying ||
+                    isPublishing
                 ? null
                 : deleteComposition,
           ),
@@ -995,7 +1039,6 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
 
   Widget buildActionRow({
     required AppThemeColors colors,
-    required IconData icon,
     required String title,
     required VoidCallback? onTap,
     bool isLoading = false,
@@ -1013,47 +1056,38 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           ),
           child: Row(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: colors.backgroundColor,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: colors.borderColor),
-                ),
-                child: isLoading
-                    ? Padding(
-                        padding: const EdgeInsets.all(11),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.primaryColor,
-                        ),
-                      )
-                    : Icon(
-                        icon,
+              Expanded(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 42),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      style: TextStyle(
                         color: isEnabled
                             ? colors.primaryColor
                             : colors.secondaryTextColor,
-                        size: AppIconSizes.md,
+                        fontSize: AppTextSizes.body,
+                        fontWeight: FontWeight.w600,
                       ),
-              ),
-              const Gap(AppSpacing.md),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: isEnabled
-                        ? colors.primaryColor
-                        : colors.secondaryTextColor,
-                    fontSize: AppTextSizes.body,
-                    fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: colors.secondaryTextColor,
-              ),
+              if (isLoading)
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.primaryColor,
+                  ),
+                )
+              else
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: colors.secondaryTextColor,
+                ),
             ],
           ),
         ),
@@ -1093,13 +1127,19 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
     }
 
     if (!composition.hasPlayableContent) {
-      showMessage(context.l10n.compositionHasNoNotes);
+      showMessage(
+        context.l10n.compositionHasNoNotes,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
     final validationError = compositionService.validateComposition(composition);
     if (validationError != null) {
-      showMessage(context.l10n.compositionValidationFailed);
+      showMessage(
+        context.l10n.compositionValidationFailed,
+        type: AppSnackBarType.error,
+      );
       return;
     }
 
@@ -1139,7 +1179,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       completed = true;
     } catch (_) {
       if (mounted && currentRunId == playbackRunId) {
-        showMessage(context.l10n.compositionPlaybackFailed);
+        showMessage(
+          context.l10n.compositionPlaybackFailed,
+          type: AppSnackBarType.error,
+        );
       }
     } finally {
       if (mounted && currentRunId == playbackRunId) {
@@ -1184,7 +1227,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
 
   Future<void> restartComposition() async {
     if (!composition.hasPlayableContent) {
-      showMessage(context.l10n.compositionHasNoNotes);
+      showMessage(
+        context.l10n.compositionHasNoNotes,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
@@ -1230,12 +1276,18 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         action == CompositionPublicationAction.publishUpdate;
 
     if (!isUnpublishing && !composition.hasPlayableContent) {
-      showMessage(context.l10n.addNoteBeforePublishing);
+      showMessage(
+        context.l10n.addNoteBeforePublishing,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
     if (!isUnpublishing && !composition.generatedFilesAreCurrent) {
-      showMessage(context.l10n.prepareFilesBeforePublishing);
+      showMessage(
+        context.l10n.prepareFilesBeforePublishing,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
@@ -1281,6 +1333,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
             : isPublishingUpdate
             ? context.l10n.compositionUpdatePublished
             : context.l10n.compositionPublished,
+        type: AppSnackBarType.success,
       );
     } catch (error) {
       if (!mounted) return;
@@ -1295,9 +1348,13 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       showMessage(
         error is CompositionPublicationException && error.isUnauthorized
             ? context.l10n.compositionPublishUnauthorized
+            : error is CompositionPublicationException &&
+                  error.isServiceUnavailable
+            ? context.l10n.backendServiceUnavailable
             : isUnpublishing
             ? context.l10n.compositionUnpublishFailed
             : context.l10n.compositionPublishFailed,
+        type: AppSnackBarType.error,
       );
     } finally {
       if (mounted) {
@@ -1310,7 +1367,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Future<void> retryCompositionGeneration() async {
-    if (isGeneratingFiles || isDeleting || isPublishing) {
+    if (composition.hasActiveJob ||
+        isGeneratingFiles ||
+        isDeleting ||
+        isPublishing) {
       return;
     }
 
@@ -1337,21 +1397,15 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         });
       }
 
-      showMessage(context.l10n.compositionMusicFilesReady);
-    } catch (_) {
+      showMessage(context.l10n.jobAccepted);
+    } catch (error) {
       if (!mounted) return;
-
-      final updatedComposition = await getLatestCompositionSafely();
-
-      if (!mounted) return;
-
-      if (updatedComposition != null) {
-        setState(() {
-          composition = updatedComposition;
-        });
-      }
-
-      showMessage(context.l10n.compositionMusicFilesFailed);
+      showMessage(
+        error is ProcessingJobException
+            ? error.message(context)
+            : context.l10n.jobSavedNotQueued,
+        type: AppSnackBarType.warning,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -1373,6 +1427,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Future<void> editComposition() async {
+    if (composition.hasActiveJob) return;
     if (composition.creationMethod == Composition.recordingCreationMethod ||
         isPlaying ||
         isPublishing) {
@@ -1403,7 +1458,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       if (!mounted) return;
 
       if (updatedComposition == null) {
-        showMessage(context.l10n.updatedCompositionLoadFailed);
+        showMessage(
+          context.l10n.updatedCompositionLoadFailed,
+          type: AppSnackBarType.error,
+        );
         return;
       }
 
@@ -1414,7 +1472,10 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
       });
     } catch (_) {
       if (mounted) {
-        showMessage(context.l10n.updatedCompositionLoadFailed);
+        showMessage(
+          context.l10n.updatedCompositionLoadFailed,
+          type: AppSnackBarType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -1426,6 +1487,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Future<void> deleteComposition() async {
+    if (composition.hasActiveJob) return;
     if (isPlaying || isPublishing) return;
 
     final shouldDelete = await showDialog<bool>(
@@ -1464,15 +1526,21 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         isDeleting = false;
       });
 
-      showMessage(context.l10n.compositionDeleteFailed);
+      showMessage(
+        context.l10n.compositionDeleteFailed,
+        type: AppSnackBarType.error,
+      );
     }
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(colors: widget.colors, message: message, type: type),
+    );
   }
 }

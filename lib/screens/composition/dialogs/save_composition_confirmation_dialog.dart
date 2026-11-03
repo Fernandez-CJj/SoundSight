@@ -49,10 +49,8 @@ class SaveCompositionConfirmationDialog extends StatelessWidget {
           ),
           child: Text(context.l10n.keepEditing),
         ),
-        FilledButton.icon(
+        FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          icon: const Icon(Icons.save_outlined),
-          label: Text(context.l10n.save),
           style: FilledButton.styleFrom(
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
@@ -60,6 +58,7 @@ class SaveCompositionConfirmationDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
+          child: Text(context.l10n.save),
         ),
       ],
     );

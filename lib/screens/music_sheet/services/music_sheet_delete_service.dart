@@ -6,6 +6,10 @@ class MusicSheetDeleteService {
     required DocumentReference<Map<String, dynamic>> sheetReference,
     required Map<String, dynamic> sheetData,
   }) async {
+    final latest = await sheetReference.get();
+    if (latest.data()?['activeJobId'] != null) {
+      throw StateError('This sheet has an unfinished task.');
+    }
     final storagePaths = <String>{};
     final files = sheetData['files'];
 

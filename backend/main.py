@@ -4,9 +4,6 @@ from fastapi import FastAPI
 from fastapi import Depends
 from fastapi import HTTPException
 
-from audio.transcription_service import TranscriptionConflict
-from audio.transcription_service import TranscriptionUnavailable
-from audio.transcription_service import transcribe_audio
 from composition.post_service import getNextPublishedVersion
 from composition.post_service import saveCompositionPost
 from composition.public_profile_service import getPublicProfile
@@ -15,15 +12,14 @@ from composition.storage_service import deleteStoragePaths
 from composition.unpublish_service import unpublishComposition
 from core.auth_service import requireVerifiedFirebaseUser
 from omr.audiveris_service import isAudiverisInstalled
-from omr.omr_conversion_service import convertMusicSheet
-from composition.generation_service import generateCompositionFiles
 from composition.private_composition_service import (
     generatedFilesAreCurrent,
     getOwnedCompositionReference,
     loadOwnedComposition,
-    saveGeneratedFilePaths,
-    saveGenerationStatus,
 )
+
+from jobs.api import router as jobsRouter
+from jobs.store import Store
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -35,6 +31,9 @@ app = FastAPI(
     ),
     version="1.0.0",
 )
+
+
+app.include_router(jobsRouter)
 
 
 @app.get("/")
@@ -49,72 +48,9 @@ def health():
     return {
         "status": "ok",
         "audiverisInstalled": isAudiverisInstalled(),
+        **Store().health(),
+        "jobProtocol": 1,
     }
-
-
-@app.post(
-    "/music-sheets/{sheetId}/recognize"
-)
-def recognize_music_sheet(
-    sheetId: str,
-    authenticatedUserId: str = Depends(requireVerifiedFirebaseUser),
-):
-    try:
-        return convertMusicSheet(
-            sheetId,
-            authenticatedUserId,
-        )
-    except FileNotFoundError as error:
-        raise HTTPException(
-            status_code=404,
-            detail=str(error),
-        ) from error
-    except PermissionError as error:
-        raise HTTPException(
-            status_code=403,
-            detail=str(error),
-        ) from error
-    except ValueError as error:
-        raise HTTPException(
-            status_code=400,
-            detail=str(error),
-        ) from error
-    except RuntimeError as error:
-        raise HTTPException(
-            status_code=500,
-            detail=str(error),
-        ) from error
-    except Exception as error:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                "The music sheet could not be converted."
-            ),
-        ) from error
-
-
-@app.post("/music-sheets/{sheetId}/transcribe-audio")
-def transcribe_music_sheet_audio(
-    sheetId: str,
-    authenticatedUserId: str = Depends(requireVerifiedFirebaseUser),
-):
-    try:
-        return transcribe_audio(sheetId, authenticatedUserId)
-    except TranscriptionUnavailable as error:
-        raise HTTPException(status_code=503, detail=str(error)) from error
-    except TranscriptionConflict as error:
-        raise HTTPException(status_code=409, detail=str(error)) from error
-    except FileNotFoundError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-    except PermissionError as error:
-        raise HTTPException(status_code=403, detail=str(error)) from error
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-    except Exception as error:
-        raise HTTPException(
-            status_code=500,
-            detail="The MP3 could not be converted.",
-        ) from error
 
 
 @app.post("/compositions/{compositionId}/publish")
@@ -229,117 +165,4 @@ def unpublish_composition(
             "Composition unpublished successfully."
         ),
         "compositionId": compositionId,
-    }
-
-@app.post("/compositions/{compositionId}/generate")
-def generatePrivateCompositionFiles(
-    compositionId: str,
-    authenticatedUserId: str = Depends(
-        requireVerifiedFirebaseUser
-    ),
-):
-    try:
-        composition = loadOwnedComposition(
-            compositionId,
-            authenticatedUserId,
-        )
-    except FileNotFoundError as error:
-        raise HTTPException(
-            status_code=404,
-            detail=str(error),
-        ) from error
-    except PermissionError as error:
-        raise HTTPException(
-            status_code=403,
-            detail=str(error),
-        ) from error
-    except ValueError as error:
-        raise HTTPException(
-            status_code=400,
-            detail=str(error),
-        ) from error
-
-    saveGenerationStatus(
-        composition.id,
-        authenticatedUserId,
-        "generating",
-    )
-
-    try:
-        publicProfile = getPublicProfile(
-            composition.ownerId
-        )
-
-        storagePaths = generateCompositionFiles(
-            composition,
-            publicProfile["username"],
-        )
-
-        saveGeneratedFilePaths(
-            composition.id,
-            authenticatedUserId,
-            storagePaths,
-            composition,
-        )
-    except PermissionError as error:
-        saveGenerationStatus(
-            composition.id,
-            authenticatedUserId,
-            "failed",
-        )
-        raise HTTPException(
-            status_code=403,
-            detail=str(error),
-        ) from error
-    except ValueError as error:
-        saveGenerationStatus(
-            composition.id,
-            authenticatedUserId,
-            "failed",
-        )
-        raise HTTPException(
-            status_code=400,
-            detail=str(error),
-        ) from error
-    except (FileNotFoundError, RuntimeError) as error:
-        logger.exception("Composition file generation failed: %s", compositionId)
-        saveGenerationStatus(
-            composition.id,
-            authenticatedUserId,
-            "failed",
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=str(error),
-        ) from error
-    except Exception as error:
-        logger.exception("Composition file generation failed: %s", compositionId)
-        saveGenerationStatus(
-            composition.id,
-            authenticatedUserId,
-            "failed",
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                "The composition files could not be generated."
-            ),
-        ) from error
-    return {
-        "message": (
-            "Composition files generated successfully."
-        ),
-        "compositionId": composition.id,
-        "pdfStoragePath": (
-            storagePaths["pdfStoragePath"]
-        ),
-        "musicXmlStoragePath": (
-            storagePaths["musicXmlStoragePath"]
-        ),
-        "midiStoragePath": (
-            storagePaths["midiStoragePath"]
-        ),
-        "mp3StoragePath": (
-            storagePaths["mp3StoragePath"]
-        ),
     }

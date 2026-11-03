@@ -131,10 +131,9 @@ class _CompositionGeneratedPreviewState
 
   Widget buildSheetMusicPreview() {
     final colors = widget.colors;
-    final previewHeight = (MediaQuery.sizeOf(context).height * 0.55).clamp(
-      360.0,
-      580.0,
-    ).toDouble();
+    final previewHeight = (MediaQuery.sizeOf(context).height * 0.55)
+        .clamp(360.0, 580.0)
+        .toDouble();
 
     return FutureBuilder<Uint8List?>(
       future: pdfFuture,
@@ -172,15 +171,14 @@ class _CompositionGeneratedPreviewState
                     ),
                   ),
                 ),
-                TextButton.icon(
+                TextButton(
                   onPressed: () {
                     openFullScreenPreview(pdfBytes);
                   },
                   style: TextButton.styleFrom(
                     foregroundColor: colors.primaryColor,
                   ),
-                  icon: const Icon(Icons.open_in_full_rounded),
-                  label: Text(context.l10n.fullScreen),
+                  child: Text(context.l10n.fullScreen),
                 ),
               ],
             ),
@@ -254,10 +252,9 @@ class _CompositionGeneratedPreviewState
             ),
           ),
           const Gap(AppSpacing.md),
-          OutlinedButton.icon(
+          OutlinedButton(
             onPressed: retryLoading,
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(context.l10n.tryAgain),
+            child: Text(context.l10n.tryAgain),
           ),
         ],
       ),
@@ -312,11 +309,7 @@ class _CompositionPdfPreviewScreen extends StatelessWidget {
         backgroundColor: colors.backgroundColor,
         foregroundColor: colors.primaryColor,
         surfaceTintColor: Colors.transparent,
-        title: Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),

@@ -1,6 +1,8 @@
+import 'package:soundsight/services/processing_announcements.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/app_language.dart';
@@ -147,7 +149,9 @@ class AppDrawer extends StatelessWidget {
 
                 if (activeItem != DrawerItem.practice) {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const FundamentalsScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const FundamentalsScreen(),
+                    ),
                   );
                 }
               },
@@ -285,6 +289,7 @@ class AppDrawer extends StatelessWidget {
 
                 if (!context.mounted || !shouldLogout) return;
 
+                await ProcessingAnnouncements.unregisterDevice();
                 await FirebaseAuth.instance.signOut();
 
                 if (context.mounted) {
@@ -384,9 +389,12 @@ class AppDrawer extends StatelessWidget {
       controller.setLanguage(previous);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(context.l10n.languageSaveFailed)),
+        .showLatestSnackBar(
+          appSnackBar(
+            colors: AppThemeColors.fromDarkMode(isDarkMode),
+            message: context.l10n.languageSaveFailed,
+            type: AppSnackBarType.error,
+          ),
         );
     }
   }

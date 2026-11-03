@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -265,8 +266,12 @@ class _MusicLibraryPieceScreenState extends State<MusicLibraryPieceScreen> {
     if (midiLocation.isEmpty ||
         (selectedMode == 'sightReading' &&
             (musicXmlLocation.isEmpty || mp3Location.isEmpty))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.libraryPracticeFilesMissing)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.libraryPracticeFilesMissing,
+          type: AppSnackBarType.warning,
+        ),
       );
       return;
     }
@@ -276,17 +281,17 @@ class _MusicLibraryPieceScreenState extends State<MusicLibraryPieceScreen> {
 
     final screen = switch (selectedMode) {
       'sightReading' => MusicSheetReadingScreen(
-          scoreDocumentPath: _documentPath,
-          source: SightReadingSource.musicLibrary,
-          colors: widget.colors,
-        ),
+        scoreDocumentPath: _documentPath,
+        source: SightReadingSource.musicLibrary,
+        colors: widget.colors,
+      ),
       'synthesia' => SynthesiaScreen(
-          colors: widget.colors,
-          source: SynthesiaLibraryPieceSource(
-            documentPath: _documentPath,
-            fallbackTitle: title,
-          ),
+        colors: widget.colors,
+        source: SynthesiaLibraryPieceSource(
+          documentPath: _documentPath,
+          fallbackTitle: title,
         ),
+      ),
       _ => ArPracticeScreen(
           colors: widget.colors,
           scoreDocumentPath: _documentPath,

@@ -1,6 +1,8 @@
+import 'package:soundsight/services/processing_job_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -143,9 +145,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           colors: colors,
           composition: composition,
           isDeleting: deletingCompositionIds.contains(composition.id),
-          isGeneratingFiles: generatingCompositionIds.contains(
-            composition.id,
-          ),
+          isGeneratingFiles: generatingCompositionIds.contains(composition.id),
           onOpen: () {
             openCompositionDetails(colors, composition);
           },
@@ -212,13 +212,8 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
         SizedBox(
           width: double.infinity,
           height: 50,
-          child: ElevatedButton.icon(
+          child: ElevatedButton(
             onPressed: openNewComposition,
-            icon: const Icon(Icons.add_rounded),
-            label: Text(
-              context.l10n.newComposition,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primaryColor,
               foregroundColor: colors.backgroundColor,
@@ -226,6 +221,10 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
+            ),
+            child: Text(
+              context.l10n.newComposition,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ),
@@ -275,10 +274,8 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
               ),
             ),
             const Gap(AppSpacing.lg),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: openNewComposition,
-              icon: const Icon(Icons.add_rounded),
-              label: Text(context.l10n.newComposition),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primaryColor,
                 foregroundColor: colors.backgroundColor,
@@ -291,6 +288,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
+              child: Text(context.l10n.newComposition),
             ),
           ],
         ),
@@ -382,13 +380,30 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
       if (!mounted) return;
 
       if (savedComposition?.generatedFilesAreCurrent == true) {
-        showMessage(context.l10n.compositionSavedFilesReady);
+        showMessage(
+          context.l10n.compositionSavedFilesReady,
+          type: AppSnackBarType.success,
+        );
+      } else if (savedComposition?.hasActiveJob == true) {
+        showMessage(context.l10n.jobAccepted);
       } else {
-        showMessage(context.l10n.compositionSavedFilesPending);
+        final submissionError = ProcessingJobService.lastSubmissionError(
+          userId!,
+          '/compositions/${Uri.encodeComponent(savedCompositionId)}/generate',
+        );
+        showMessage(
+          submissionError == null
+              ? context.l10n.jobSavedNotQueued
+              : '${context.l10n.compositionSaved} ${submissionError.message(context)}',
+          type: AppSnackBarType.warning,
+        );
       }
     } catch (_) {
       if (mounted) {
-        showMessage(context.l10n.compositionSaved);
+        showMessage(
+          context.l10n.compositionSaved,
+          type: AppSnackBarType.success,
+        );
       }
     }
   }
@@ -406,11 +421,15 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
     if (!mounted || wasDeleted != true) return;
 
-    showMessage(context.l10n.compositionDeleted(composition.title));
+    showMessage(
+      context.l10n.compositionDeleted(composition.title),
+      type: AppSnackBarType.success,
+    );
   }
 
   Future<void> retryCompositionGeneration(Composition composition) async {
-    if (generatingCompositionIds.contains(composition.id)) {
+    if (composition.hasActiveJob ||
+        generatingCompositionIds.contains(composition.id)) {
       return;
     }
 
@@ -423,11 +442,15 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
       if (!mounted) return;
 
-      showMessage(context.l10n.compositionMusicFilesReady);
-    } catch (_) {
+      showMessage(context.l10n.jobAccepted);
+    } catch (error) {
       if (!mounted) return;
-
-      showMessage(context.l10n.compositionMusicFilesFailed);
+      showMessage(
+        error is ProcessingJobException
+            ? error.message(context)
+            : context.l10n.jobSavedNotQueued,
+        type: AppSnackBarType.warning,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -465,10 +488,16 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
       if (!mounted) return;
 
-      showMessage(context.l10n.compositionDeleted(composition.title));
+      showMessage(
+        context.l10n.compositionDeleted(composition.title),
+        type: AppSnackBarType.success,
+      );
     } catch (_) {
       if (mounted) {
-        showMessage(context.l10n.compositionDeleteFailed);
+        showMessage(
+          context.l10n.compositionDeleteFailed,
+          type: AppSnackBarType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -479,11 +508,18 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
     }
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(
+        colors: AppThemeColors.fromDarkMode(isDarkMode),
+        message: message,
+        type: type,
+      ),
+    );
   }
 }

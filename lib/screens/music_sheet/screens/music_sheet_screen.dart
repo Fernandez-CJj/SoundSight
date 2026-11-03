@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -188,6 +189,8 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
           type: type,
           pageCount: pageCount,
           durationMs: (data['durationMs'] as num?)?.toInt() ?? 0,
+          jobId: data['activeJobId'] as String?,
+          jobStatus: data['lastJobStatus'] as String?,
           dateText: formatDate(data['createdAt'] as Timestamp?),
           isDeleting: deletingSheetIds.contains(sheet.id),
           onView: () => openMusicSheet(colors, sheet.id, title, type, data),
@@ -239,10 +242,8 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
               ),
             ),
             Gap(AppSpacing.lg),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: openAddSheetScreen,
-              icon: Icon(Icons.add_rounded),
-              label: Text(context.l10n.addMusicSheet),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primaryColor,
                 foregroundColor: colors.backgroundColor,
@@ -255,6 +256,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
+              child: Text(context.l10n.addMusicSheet),
             ),
           ],
         ),
@@ -371,9 +373,15 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      showMessage(context.l10n.musicSheetRenamed);
+      showMessage(
+        context.l10n.musicSheetRenamed,
+        type: AppSnackBarType.success,
+      );
     } catch (_) {
-      showMessage(context.l10n.musicSheetRenameFailed);
+      showMessage(
+        context.l10n.musicSheetRenameFailed,
+        type: AppSnackBarType.error,
+      );
     }
   }
 
@@ -384,11 +392,17 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     Map<String, dynamic> data,
   ) async {
     if (data['transcriptionStatus'] == 'processing') {
-      showMessage(context.l10n.audioWaitBeforeDelete);
+      showMessage(
+        context.l10n.audioWaitBeforeDelete,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
     if (data['omrStatus'] == 'processing') {
-      showMessage(context.l10n.waitForTranslationBeforeDelete);
+      showMessage(
+        context.l10n.waitForTranslationBeforeDelete,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
@@ -407,16 +421,25 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
       final latestSheet = await sheet.reference.get();
       if (!mounted) return;
       if (latestSheet.data()?['transcriptionStatus'] == 'processing') {
-        showMessage(context.l10n.audioWaitBeforeDelete);
+        showMessage(
+          context.l10n.audioWaitBeforeDelete,
+          type: AppSnackBarType.warning,
+        );
         return;
       }
       await deleteService.deleteMusicSheet(
         sheetReference: sheet.reference,
         sheetData: data,
       );
-      showMessage(context.l10n.musicSheetDeleted(title));
+      showMessage(
+        context.l10n.musicSheetDeleted(title),
+        type: AppSnackBarType.success,
+      );
     } catch (_) {
-      showMessage(context.l10n.musicSheetDeleteFailed);
+      showMessage(
+        context.l10n.musicSheetDeleteFailed,
+        type: AppSnackBarType.error,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -452,17 +475,24 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     if (timestamp == null) return '';
 
     final date = timestamp.toDate();
-    final localizedDate = MaterialLocalizations.of(context).formatMediumDate(
-      date,
-    );
+    final localizedDate = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(date);
     return context.l10n.addedDate(localizedDate);
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(
+        colors: AppThemeColors.fromDarkMode(isDarkMode),
+        message: message,
+        type: type,
+      ),
+    );
   }
 }

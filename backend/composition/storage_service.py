@@ -127,6 +127,7 @@ def uploadCompositionFiles(
     mp3Path,
     ownerId,
     compositionId,
+    fileSuffix="",
 ):
     generatedFiles = [
         {
@@ -192,7 +193,7 @@ def uploadCompositionFiles(
 
             storagePath = (
                 baseStoragePath
-                + "/score."
+                + "/score" + fileSuffix + "."
                 + generatedFile["extension"]
             )
 

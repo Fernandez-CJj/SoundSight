@@ -1,4 +1,6 @@
+import 'package:soundsight/widgets/processing_job_card.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/delete_swipe_background.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -34,50 +36,33 @@ class CompositionCard extends StatelessWidget {
     final filesAreOutOfDate = composition.generatedFilesAreOutOfDate;
     final generationIsRunning =
         isGeneratingFiles ||
+        composition.hasActiveJob ||
         composition.generationStatus == Composition.generatingStatus;
     final generationColor = generationIsRunning
         ? colors.primaryColor
         : filesAreOutOfDate
-        ? const Color(0xFFF59E0B)
-        : const Color(0xFFDC2626);
+        ? colors.primaryColor
+        : colors.primaryColor;
     final creationMethodColor = isRecording
-        ? (colors.isDarkMode
-              ? const Color(0xFFFF8A80)
-              : const Color(0xFFB3261E))
-        : (colors.isDarkMode
-              ? const Color(0xFF8AB4F8)
-              : const Color(0xFF245E9C));
+        ? colors.synthesiaResultColor
+        : colors.sightReadingResultColor;
 
     return Dismissible(
       key: ValueKey(composition.id),
-      direction: isDeleting
+      direction: isDeleting || composition.hasActiveJob
           ? DismissDirection.none
           : DismissDirection.startToEnd,
       confirmDismiss: (_) async {
         await onDelete();
         return false;
       },
-      background: Container(
-        padding: EdgeInsets.only(left: AppSpacing.lg),
-        alignment: Alignment.centerLeft,
-        decoration: BoxDecoration(
-          color: const Color(0xFFDC2626),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: const Icon(
-          Icons.delete_outline_rounded,
-          color: Colors.white,
-          size: 26,
-        ),
-      ),
+      background: DeleteSwipeBackground(colors: colors),
       child: Container(
         decoration: BoxDecoration(
           color: colors.surfaceColor,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: filesNeedAttention
-                ? generationColor
-                : colors.borderColor,
+            color: filesNeedAttention ? generationColor : colors.borderColor,
           ),
         ),
         child: Column(
@@ -96,9 +81,7 @@ class CompositionCard extends StatelessWidget {
                   ),
                 ),
                 child: Icon(
-                  isRecording
-                      ? Icons.mic_rounded
-                      : Icons.edit_note_rounded,
+                  isRecording ? Icons.mic_rounded : Icons.edit_note_rounded,
                   color: creationMethodColor,
                   size: AppIconSizes.lg,
                 ),
@@ -154,7 +137,23 @@ class CompositionCard extends StatelessWidget {
                     )
                   : null,
             ),
-            if (filesNeedAttention) ...[
+            if (ProcessingJobCard.isVisible(composition.lastJobStatus))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                ),
+                child: ProcessingJobCard(
+                  colors: colors,
+                  embedded: true,
+                  status: composition.lastJobStatus,
+                  jobId: composition.activeJobId,
+                  onRetry: onRetryGeneration,
+                ),
+              ),
+            if (filesNeedAttention && !composition.hasActiveJob) ...[
               Divider(height: 1, color: colors.borderColor),
               Container(
                 width: double.infinity,
@@ -209,7 +208,8 @@ class CompositionCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (!generationIsRunning) ...[
+                    if (!generationIsRunning &&
+                        composition.lastJobStatus != 'failed') ...[
                       Gap(AppSpacing.sm),
                       TextButton(
                         onPressed: isDeleting ? null : onRetryGeneration,
@@ -226,13 +226,8 @@ class CompositionCard extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 height: 44,
-                child: ElevatedButton.icon(
+                child: ElevatedButton(
                   onPressed: isDeleting ? null : onOpen,
-                  icon: const Icon(
-                    Icons.visibility_outlined,
-                    size: AppIconSizes.sm,
-                  ),
-                  label: Text(context.l10n.view),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primaryColor,
                     foregroundColor: colors.backgroundColor,
@@ -243,6 +238,7 @@ class CompositionCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                   ),
+                  child: Text(context.l10n.view),
                 ),
               ),
             ),
@@ -291,9 +287,9 @@ class CompositionCard extends StatelessWidget {
       return context.l10n.notSavedYet;
     }
 
-    final localizedDate = MaterialLocalizations.of(context).formatMediumDate(
-      date,
-    );
+    final localizedDate = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(date);
     return context.l10n.lastEdited(localizedDate);
   }
 }

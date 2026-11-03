@@ -1,3 +1,6 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:soundsight/services/processing_announcements.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/screens/auth/login/login_screen.dart';
@@ -24,6 +27,9 @@ void main() async {
 
   await Firebase.initializeApp();
 
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    FirebaseMessaging.onBackgroundMessage(processingMessageBackground);
+  }
   runApp(const SoundSight());
 }
 
@@ -35,6 +41,7 @@ class SoundSight extends StatefulWidget {
 }
 
 class _SoundSightState extends State<SoundSight> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final AppLocaleController localeController = AppLocaleController();
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
       GlobalKey<ScaffoldMessengerState>();
@@ -62,12 +69,18 @@ class _SoundSightState extends State<SoundSight> {
         animation: localeController,
         builder: (context, _) {
           return MaterialApp(
+            navigatorKey: _navigatorKey,
             scaffoldMessengerKey: _messengerKey,
             navigatorObservers: [_achievementPopupObserver],
-            builder: (context, child) => AchievementAnnouncements(
+            builder: (context, child) => ProcessingAnnouncements(
+              navigatorKey: _navigatorKey,
               messengerKey: _messengerKey,
-              popupObserver: _achievementPopupObserver,
-              child: child ?? const SizedBox.shrink(),
+              popupIsOpen: () => _achievementPopupObserver.hasPopup,
+              child: AchievementAnnouncements(
+                messengerKey: _messengerKey,
+                popupObserver: _achievementPopupObserver,
+                child: child ?? const SizedBox.shrink(),
+              ),
             ),
             locale: localeController.locale,
             localizationsDelegates: AppLocalizations.localizationsDelegates,

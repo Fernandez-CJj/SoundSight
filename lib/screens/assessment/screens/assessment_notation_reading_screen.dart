@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
+import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../../constants/constant.dart';
 import '../../../localization/localization_extension.dart';
@@ -134,12 +136,11 @@ class _AssessmentNotationReadingScreenState
       });
 
       ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n.assessmentPleaseAnswerEveryNotationQuestion,
-            ),
+        .showLatestSnackBar(
+          appSnackBar(
+            colors: AppThemeColors.fromDarkMode(widget.isDarkMode),
+            message: context.l10n.assessmentPleaseAnswerEveryNotationQuestion,
+            type: AppSnackBarType.warning,
           ),
         );
 
@@ -194,122 +195,123 @@ class _AssessmentNotationReadingScreenState
             ),
             body: AssessmentPageBody(
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                _buildProgress(),
-                const SizedBox(height: AppSpacing.lg),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          localizedNotationPrompt(
-                            themedContext.l10n,
-                            question,
-                          ),
-                          style: const TextStyle(
-                            fontSize: AppTextSizes.sectionTitle,
-                            fontWeight: FontWeight.w700,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.sm),
-                          decoration: BoxDecoration(
-                            color: Theme.of(themedContext).colorScheme.surface,
-                            border: Border.all(
-                              color: Theme.of(
-                                themedContext,
-                              ).colorScheme.outlineVariant,
-                            ),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: AssessmentNotationView(question: question),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        RadioGroup<String>(
-                          groupValue: selectedOptionId,
-                          onChanged: _selectAnswer,
-                          child: Column(
-                            children: question.options.map((option) {
-                              return RadioListTile<String>(
-                                value: option.id,
-                                enabled: !_isSubmitting,
-                                title: Text(
-                                  localizedNotationOption(
-                                    themedContext.l10n,
-                                    option,
-                                  ),
-                                ),
-                                contentPadding: EdgeInsets.zero,
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        if (_submissionError != null) ...[
-                          const SizedBox(height: AppSpacing.sm),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildProgress(),
+                  const SizedBox(height: AppSpacing.lg),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           Text(
-                            _submissionError!,
-                            style: TextStyle(
-                              color: Theme.of(
-                                themedContext,
-                              ).colorScheme.error,
-                              fontSize: AppTextSizes.body,
+                            localizedNotationPrompt(
+                              themedContext.l10n,
+                              question,
+                            ),
+                            style: const TextStyle(
+                              fontSize: AppTextSizes.sectionTitle,
+                              fontWeight: FontWeight.w700,
+                              height: 1.3,
                             ),
                           ),
+                          const SizedBox(height: AppSpacing.md),
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.sm),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                themedContext,
+                              ).colorScheme.surface,
+                              border: Border.all(
+                                color: Theme.of(
+                                  themedContext,
+                                ).colorScheme.outlineVariant,
+                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            child: AssessmentNotationView(question: question),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          RadioGroup<String>(
+                            groupValue: selectedOptionId,
+                            onChanged: _selectAnswer,
+                            child: Column(
+                              children: question.options.map((option) {
+                                return RadioListTile<String>(
+                                  value: option.id,
+                                  enabled: !_isSubmitting,
+                                  title: Text(
+                                    localizedNotationOption(
+                                      themedContext.l10n,
+                                      option,
+                                    ),
+                                  ),
+                                  contentPadding: EdgeInsets.zero,
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          if (_submissionError != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              _submissionError!,
+                              style: TextStyle(
+                                color: Theme.of(
+                                  themedContext,
+                                ).colorScheme.error,
+                                fontSize: AppTextSizes.body,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed:
-                            _currentQuestionIndex == 0 || _isSubmitting
-                            ? null
-                            : _showPreviousQuestion,
-                        child: Text(
-                          themedContext.l10n.previous,
-                          textAlign: TextAlign.center,
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _currentQuestionIndex == 0 || _isSubmitting
+                              ? null
+                              : _showPreviousQuestion,
+                          child: Text(
+                            themedContext.l10n.previous,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting
-                            ? null
-                            : isLastQuestion
-                            ? _submitAnswers
-                            : _showNextQuestion,
-                        child: _isSubmitting
-                            ? SizedBox(
-                                width: AppIconSizes.md,
-                                height: AppIconSizes.md,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Theme.of(
-                                    themedContext,
-                                  ).colorScheme.onPrimary,
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : isLastQuestion
+                              ? _submitAnswers
+                              : _showNextQuestion,
+                          child: _isSubmitting
+                              ? SizedBox(
+                                  width: AppIconSizes.md,
+                                  height: AppIconSizes.md,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Theme.of(
+                                      themedContext,
+                                    ).colorScheme.onPrimary,
+                                  ),
+                                )
+                              : Text(
+                                  isLastQuestion
+                                      ? themedContext.l10n.submit
+                                      : themedContext.l10n.next,
+                                  textAlign: TextAlign.center,
                                 ),
-                              )
-                            : Text(
-                                isLastQuestion
-                                    ? themedContext.l10n.submit
-                                    : themedContext.l10n.next,
-                                textAlign: TextAlign.center,
-                              ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

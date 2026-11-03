@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
@@ -569,40 +570,41 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
     return Row(
       children: [
-        if (showTitle) SizedBox(
-          width: 132,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  context.l10n.sightReading,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: AppTextSizes.body,
-                    fontWeight: FontWeight.w800,
+        if (showTitle)
+          SizedBox(
+            width: 132,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    context.l10n.sightReading,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: AppTextSizes.body,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${widget.lesson?.displayTitle ?? (pieceTitle == 'Untitled score' ? context.l10n.sightReadingUntitledScore : pieceTitle)} · ${sourceLabel()}',
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: colors.secondaryTextColor,
-                    fontSize: AppTextSizes.caption,
-                    fontWeight: FontWeight.w500,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${widget.lesson?.displayTitle ?? (pieceTitle == 'Untitled score' ? context.l10n.sightReadingUntitledScore : pieceTitle)} · ${sourceLabel()}',
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: colors.secondaryTextColor,
+                      fontSize: AppTextSizes.caption,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         if (showTitle) const Gap(AppSpacing.sm),
         PracticeModeToggle<bool>(
           firstValue: false,
@@ -618,43 +620,46 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               : null,
         ),
         const Gap(AppSpacing.sm),
-        if (showProgress) Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
+        if (showProgress)
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    positionTotal > 0
-                        ? '$completedPositions / $positionTotal · $percentage% · ${compactTimeStatus()}'
-                        : context.l10n.sightReadingPreparingProgress,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: colors.primaryColor,
-                      fontSize: AppTextSizes.caption,
-                      fontWeight: FontWeight.w700,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      positionTotal > 0
+                          ? '$completedPositions / $positionTotal · $percentage% · ${compactTimeStatus()}'
+                          : context.l10n.sightReadingPreparingProgress,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: colors.primaryColor,
+                        fontSize: AppTextSizes.caption,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const Gap(AppSpacing.xs),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 5,
-                  backgroundColor: colors.borderColor,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    colors.primaryColor,
+                const Gap(AppSpacing.xs),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 5,
+                    backgroundColor: colors.borderColor,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      colors.primaryColor,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ) else const Spacer(),
+              ],
+            ),
+          )
+        else
+          const Spacer(),
         const Gap(AppSpacing.sm),
         Tooltip(
           message: feedbackText,
@@ -1410,31 +1415,31 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                 !scorePreviewPreparing &&
                 !scorePreviewPlaying;
 
-            Future<void> runAndRefresh(Future<void> Function() action) async {
-              final actionFuture = action();
-              if (sheetContext.mounted) {
-                refreshControls(() {});
-              }
-
-              await actionFuture;
-
-              if (sheetContext.mounted) {
-                refreshControls(() {});
-              }
-            }
-
-            void refreshDuringPlayback() {
-              Future<void>.delayed(const Duration(milliseconds: 250), () {
-                if (!sheetContext.mounted) {
-                  return;
+              Future<void> runAndRefresh(Future<void> Function() action) async {
+                final actionFuture = action();
+                if (sheetContext.mounted) {
+                  refreshControls(() {});
                 }
 
-                refreshControls(() {});
-                if (scorePreviewPreparing || scorePreviewPlaying) {
-                  refreshDuringPlayback();
+                await actionFuture;
+
+                if (sheetContext.mounted) {
+                  refreshControls(() {});
                 }
-              });
-            }
+              }
+
+              void refreshDuringPlayback() {
+                Future<void>.delayed(const Duration(milliseconds: 250), () {
+                  if (!sheetContext.mounted) {
+                    return;
+                  }
+
+                  refreshControls(() {});
+                  if (scorePreviewPreparing || scorePreviewPlaying) {
+                    refreshDuringPlayback();
+                  }
+                });
+              }
 
               final showMidiReconnectPrompt =
                   midiStatus == 'No device detected' ||
@@ -1442,188 +1447,197 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                   midiStatus == 'Not connected';
 
               return SafeArea(
-              child: SingleChildScrollView(
-              child: Container(
-                margin: const EdgeInsets.all(AppSpacing.sm),
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: colors.surfaceColor,
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  border: Border.all(color: colors.borderColor),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.22),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: feedbackVisual.color.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            feedbackVisual.icon,
-                            color: feedbackVisual.color,
-                            size: AppIconSizes.sm,
-                          ),
-                        ),
-                        const Gap(AppSpacing.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                feedbackText,
-                                style: TextStyle(
-                                  color: colors.primaryColor,
-                                  fontSize: AppTextSizes.label,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              Text(
-                                showExpectedHint
-                                    ? context.l10n.sightReadingPlayedWithHint(
-                                        activeNotesText,
-                                        expectedNotesText,
-                                      )
-                                    : context.l10n.sightReadingPlayed(
-                                        activeNotesText,
-                                      ),
-                                style: TextStyle(
-                                  color: showExpectedHint
-                                      ? const Color(0xFFF59E0B)
-                                      : colors.secondaryTextColor,
-                                  fontSize: AppTextSizes.caption,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        buildMidiStatusChip(colors),
-                        const Gap(AppSpacing.sm),
-                        IconButton(
-                          tooltip: context.l10n.sightReadingCloseControls,
-                          onPressed: () => Navigator.of(sheetContext).pop(),
-                          icon: const Icon(Icons.close_rounded),
-                          color: colors.primaryColor,
+                child: SingleChildScrollView(
+                  child: Container(
+                    margin: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceColor,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      border: Border.all(color: colors.borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    if (showMidiReconnectPrompt) ...[
-                      const Gap(AppSpacing.sm),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
-                          ),
-                        ),
-                        child: Row(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
                           children: [
-                            const Icon(
-                              Icons.warning_amber_rounded,
-                              color: Color(0xFFF59E0B),
-                              size: AppIconSizes.sm,
-                            ),
-                            const Gap(AppSpacing.xs),
-                            Expanded(
-                              child: Text(
-                                context.l10n.sightReadingMidiReconnectPrompt,
-                                style: TextStyle(
-                                  color: colors.primaryColor,
-                                  fontSize: AppTextSizes.caption,
-                                  fontWeight: FontWeight.w600,
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: feedbackVisual.color.withValues(
+                                  alpha: 0.12,
                                 ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                feedbackVisual.icon,
+                                color: feedbackVisual.color,
+                                size: AppIconSizes.sm,
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    feedbackText,
+                                    style: TextStyle(
+                                      color: colors.primaryColor,
+                                      fontSize: AppTextSizes.label,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Text(
+                                    showExpectedHint
+                                        ? context.l10n
+                                              .sightReadingPlayedWithHint(
+                                                activeNotesText,
+                                                expectedNotesText,
+                                              )
+                                        : context.l10n.sightReadingPlayed(
+                                            activeNotesText,
+                                          ),
+                                    style: TextStyle(
+                                      color: showExpectedHint
+                                          ? const Color(0xFFF59E0B)
+                                          : colors.secondaryTextColor,
+                                      fontSize: AppTextSizes.caption,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            buildMidiStatusChip(colors),
+                            const Gap(AppSpacing.sm),
+                            IconButton(
+                              tooltip: context.l10n.sightReadingCloseControls,
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              icon: const Icon(Icons.close_rounded),
+                              color: colors.primaryColor,
+                            ),
+                          ],
+                        ),
+                        if (showMidiReconnectPrompt) ...[
+                          const Gap(AppSpacing.sm),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFFF59E0B,
+                              ).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFFF59E0B,
+                                ).withValues(alpha: 0.45),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Color(0xFFF59E0B),
+                                  size: AppIconSizes.sm,
+                                ),
+                                const Gap(AppSpacing.xs),
+                                Expanded(
+                                  child: Text(
+                                    context
+                                        .l10n
+                                        .sightReadingMidiReconnectPrompt,
+                                    style: TextStyle(
+                                      color: colors.primaryColor,
+                                      fontSize: AppTextSizes.caption,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const Gap(AppSpacing.md),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: sheetCanToggleScorePreview
+                                    ? () {
+                                        unawaited(
+                                          runAndRefresh(toggleScorePreview),
+                                        );
+                                        refreshDuringPlayback();
+                                      }
+                                    : null,
+                                style: secondaryButtonStyle(colors),
+                                icon: scorePreviewPreparing
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Icon(
+                                        scorePreviewPlaying
+                                            ? Icons.stop_rounded
+                                            : Icons.volume_up_rounded,
+                                      ),
+                                label: Text(
+                                  scorePreviewPreparing
+                                      ? context.l10n.loading
+                                      : scorePreviewPlaying
+                                      ? context.l10n.stop
+                                      : context.l10n.sightReadingListen,
+                                ),
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: sheetCanConnectMidi
+                                    ? () {
+                                        unawaited(runAndRefresh(connectToMidi));
+                                      }
+                                    : null,
+                                style: secondaryButtonStyle(colors),
+                                icon: Icon(midiActionIcon()),
+                                label: Text(midiActionLabel()),
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: sheetCanRetry
+                                    ? () {
+                                        unawaited(runAndRefresh(retryExercise));
+                                      }
+                                    : null,
+                                style: secondaryButtonStyle(colors),
+                                icon: const Icon(Icons.replay_rounded),
+                                label: Text(context.l10n.retry),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                    const Gap(AppSpacing.md),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: sheetCanToggleScorePreview
-                                ? () {
-                                    unawaited(
-                                      runAndRefresh(toggleScorePreview),
-                                    );
-                                    refreshDuringPlayback();
-                                  }
-                                : null,
-                            style: secondaryButtonStyle(colors),
-                            icon: scorePreviewPreparing
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Icon(
-                                    scorePreviewPlaying
-                                        ? Icons.stop_rounded
-                                        : Icons.volume_up_rounded,
-                                  ),
-                            label: Text(
-                              scorePreviewPreparing
-                                  ? context.l10n.loading
-                                  : scorePreviewPlaying
-                                  ? context.l10n.stop
-                                  : context.l10n.sightReadingListen,
-                            ),
-                          ),
-                        ),
-                        const Gap(AppSpacing.sm),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: sheetCanConnectMidi
-                                ? () {
-                                    unawaited(runAndRefresh(connectToMidi));
-                                  }
-                                : null,
-                            style: secondaryButtonStyle(colors),
-                            icon: Icon(midiActionIcon()),
-                            label: Text(midiActionLabel()),
-                          ),
-                        ),
-                        const Gap(AppSpacing.sm),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: sheetCanRetry
-                                ? () {
-                                    unawaited(runAndRefresh(retryExercise));
-                                  }
-                                : null,
-                            style: secondaryButtonStyle(colors),
-                            icon: const Icon(Icons.replay_rounded),
-                            label: Text(context.l10n.retry),
-                          ),
-                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              ),
               );
             },
           );
@@ -2391,32 +2405,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
 
     final colors = widget.colors;
-    final backgroundColor = isError
-        ? const Color(0xFFB91C1C)
-        : colors.primaryColor;
-    final foregroundColor = isError ? Colors.white : colors.backgroundColor;
     final messenger = ScaffoldMessenger.of(context);
-
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: backgroundColor,
-        content: Row(
-          children: [
-            Icon(
-              isError
-                  ? Icons.error_outline_rounded
-                  : Icons.info_outline_rounded,
-              color: foregroundColor,
-              size: AppIconSizes.sm,
-            ),
-            const Gap(AppSpacing.sm),
-            Expanded(
-              child: Text(message, style: TextStyle(color: foregroundColor)),
-            ),
-          ],
-        ),
+    messenger.showLatestSnackBar(
+      appSnackBar(
+        colors: colors,
+        message: message,
+        type: isError ? AppSnackBarType.error : AppSnackBarType.info,
       ),
     );
   }

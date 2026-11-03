@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/delete_swipe_background.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -164,17 +166,22 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                 isPickingAudio: isPickingAudio,
                 isPickingVideo: isPickingVideo,
                 isSavingSheet: isSavingSheet,
-                isUploadLocked: selectedSheets.isNotEmpty ||
-                    selectedAudio != null || selectedVideo != null,
+                isUploadLocked:
+                    selectedSheets.isNotEmpty ||
+                    selectedAudio != null ||
+                    selectedVideo != null,
                 isCaptureLocked:
-                    selectedAudio != null || selectedVideo != null ||
+                    selectedAudio != null ||
+                    selectedVideo != null ||
                     hasSelectedPdf ||
                     selectedSheets.length >= maxSheetPages,
                 isAudioLocked:
-                    selectedSheets.isNotEmpty || selectedAudio != null ||
+                    selectedSheets.isNotEmpty ||
+                    selectedAudio != null ||
                     selectedVideo != null,
                 isVideoLocked:
-                    selectedSheets.isNotEmpty || selectedAudio != null ||
+                    selectedSheets.isNotEmpty ||
+                    selectedAudio != null ||
                     selectedVideo != null,
                 onUpload: handleUploadPressed,
                 onCapture: handleCapturePressed,
@@ -199,17 +206,9 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                   direction: isSavingSheet
                       ? DismissDirection.none
                       : DismissDirection.startToEnd,
-                  background: Container(
-                    padding: EdgeInsets.only(left: AppSpacing.md),
-                    alignment: Alignment.centerLeft,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDC2626),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.white,
-                    ),
+                  background: DeleteSwipeBackground(
+                    colors: colors,
+                    label: context.l10n.remove,
                   ),
                   confirmDismiss: (_) async {
                     return await showDialog<bool>(
@@ -236,17 +235,9 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                   direction: isSavingSheet
                       ? DismissDirection.none
                       : DismissDirection.startToEnd,
-                  background: Container(
-                    padding: EdgeInsets.only(left: AppSpacing.md),
-                    alignment: Alignment.centerLeft,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDC2626),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.white,
-                    ),
+                  background: DeleteSwipeBackground(
+                    colors: colors,
+                    label: context.l10n.remove,
                   ),
                   confirmDismiss: (_) async {
                     return await showDialog<bool>(
@@ -271,8 +262,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
             ],
           ),
         ),
-        bottomNavigationBar: selectedSheets.isEmpty &&
-                selectedAudio == null && selectedVideo == null
+        bottomNavigationBar:
+            selectedSheets.isEmpty &&
+                selectedAudio == null &&
+                selectedVideo == null
             ? null
             : SaveSheetContainer(
                 colors: colors,
@@ -283,10 +276,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
                 onSave: isPickingFiles
                     ? null
                     : () => selectedVideo != null
-                        ? saveSelectedVideo(colors)
-                        : selectedAudio != null
-                        ? saveSelectedAudio(colors)
-                        : saveSelectedSheets(colors),
+                          ? saveSelectedVideo(colors)
+                          : selectedAudio != null
+                          ? saveSelectedAudio(colors)
+                          : saveSelectedSheets(colors),
               ),
       ),
     );
@@ -417,16 +410,12 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
 
     if (hasSelectedPdf) {
-      showSelectionMessage(
-        context.l10n.onlyOnePdf,
-      );
+      showSelectionMessage(context.l10n.onlyOnePdf);
       return;
     }
 
     if (hasCapturedImages) {
-      showSelectionMessage(
-        context.l10n.deleteImagesBeforePdf,
-      );
+      showSelectionMessage(context.l10n.deleteImagesBeforePdf);
       return;
     }
 
@@ -515,6 +504,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     } catch (_) {
       showSelectionMessage(
         context.l10n.pdfReadFailed,
+        type: AppSnackBarType.error,
       );
     }
   }
@@ -580,9 +570,7 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     final bytes = await image.readAsBytes();
 
     if (bytes.length > maxImageFileSize) {
-      showSelectionMessage(
-        context.l10n.capturedImageSizeLimit,
-      );
+      showSelectionMessage(context.l10n.capturedImageSizeLimit);
       return;
     }
 
@@ -613,16 +601,12 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     }
 
     if (hasSelectedPdf) {
-      showSelectionMessage(
-        context.l10n.onlyOnePdf,
-      );
+      showSelectionMessage(context.l10n.onlyOnePdf);
       return;
     }
 
     if (hasCapturedImages) {
-      showSelectionMessage(
-        context.l10n.deleteImagesBeforePdf,
-      );
+      showSelectionMessage(context.l10n.deleteImagesBeforePdf);
       return;
     }
 
@@ -692,7 +676,12 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
       };
       showSelectionMessage(message);
     } catch (_) {
-      if (mounted) showSelectionMessage(context.l10n.audioUnreadable);
+      if (mounted) {
+        showSelectionMessage(
+          context.l10n.audioUnreadable,
+          type: AppSnackBarType.error,
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -737,7 +726,12 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
       };
       showSelectionMessage(message);
     } catch (_) {
-      if (mounted) showSelectionMessage(context.l10n.videoUnreadable);
+      if (mounted) {
+        showSelectionMessage(
+          context.l10n.videoUnreadable,
+          type: AppSnackBarType.error,
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -811,7 +805,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
         isSavingSheet = false;
         uploadProgress = 0;
       });
-      showSelectionMessage(context.l10n.audioSaveFailed);
+      showSelectionMessage(
+        context.l10n.audioSaveFailed,
+        type: AppSnackBarType.error,
+      );
     }
   }
 
@@ -852,7 +849,10 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
         uploadProgress = 0;
       });
       showSelectionMessage(
-        uploading ? context.l10n.audioSaveFailed : context.l10n.videoPreparationFailed,
+        uploading
+            ? context.l10n.audioSaveFailed
+            : context.l10n.videoPreparationFailed,
+        type: AppSnackBarType.error,
       );
       return;
     } finally {
@@ -885,11 +885,18 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
     if (mounted) Navigator.of(context).pop(true);
   }
 
-  void showSelectionMessage(String message) {
+  void showSelectionMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.warning,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(
+        colors: AppThemeColors.fromDarkMode(isDarkMode),
+        message: message,
+        type: type,
+      ),
+    );
   }
 }

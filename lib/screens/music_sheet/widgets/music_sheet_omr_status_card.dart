@@ -36,14 +36,16 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isProcessing = status == 'processing' || isConverting;
-    final isCompleted = status == 'completed';
-    final isFailed = status == 'failed';
+    final isProcessing =
+        status == 'processing' ||
+        status == 'queued' ||
+        status == 'submitting' ||
+        isConverting;
+    final isCompleted = !isProcessing && status == 'completed';
+    final isFailed = !isProcessing && status == 'failed';
     final l10n = context.l10n;
     final accentColor = isCompleted
-        ? const Color(0xFF16A34A)
-        : isFailed
-        ? const Color(0xFFDC2626)
+        ? colors.completedStageColor
         : colors.primaryColor;
     final icon = isCompleted
         ? Icons.check_rounded
@@ -65,9 +67,21 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
         ? l10n.translationProcessingDescription
         : l10n.translationStartDescription;
 
-    final title = titleOverride ?? defaultTitle;
-    final subtitle = subtitleOverride ?? defaultSubtitle;
-    final buttonLabel = buttonLabelOverride ??
+    final title = status == 'queued'
+        ? l10n.jobQueuedTitle
+        : status == 'submitting' || (isConverting && status != 'processing')
+        ? l10n.jobSubmittingTitle
+        : isProcessing
+        ? l10n.jobProcessingTitle
+        : titleOverride ?? defaultTitle;
+    final subtitle = isProcessing
+        ? status == 'submitting' ||
+                  (isConverting && status != 'queued' && status != 'processing')
+              ? l10n.jobSubmittingDescription
+              : l10n.jobLeaveScreen
+        : subtitleOverride ?? defaultSubtitle;
+    final buttonLabel =
+        buttonLabelOverride ??
         (isCompleted
             ? l10n.reconvert
             : isFailed
@@ -126,7 +140,9 @@ class MusicSheetOmrStatusCard extends StatelessWidget {
               ],
             ),
           ),
-          if (showAction && !isProcessing && (!isCompleted || showCompletedAction)) ...[
+          if (showAction &&
+              !isProcessing &&
+              (!isCompleted || showCompletedAction)) ...[
             Gap(AppSpacing.sm),
             SizedBox(
               height: 42,

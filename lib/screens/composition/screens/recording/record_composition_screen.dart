@@ -1,8 +1,10 @@
+import 'package:soundsight/services/processing_job_service.dart';
 import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -237,7 +239,10 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
           : 'MIDI piano disconnected';
     });
     if (disconnectedDuringRecording) {
-      showMessage('MIDI disconnected. Stopping recording.');
+      showMessage(
+        'MIDI disconnected. Stopping recording.',
+        type: AppSnackBarType.warning,
+      );
       unawaited(stopRecording(closeHeldNotes: true));
     }
   }
@@ -271,11 +276,17 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       acceptedNoteOnCount++;
       if (acceptedNoteOnCount == 240 && !noteWarningShown) {
         noteWarningShown = true;
-        showMessage(context.l10n.recordingNoteLimitWarning(240, 256));
+        showMessage(
+          context.l10n.recordingNoteLimitWarning(240, 256),
+          type: AppSnackBarType.warning,
+        );
       }
       if (acceptedNoteOnCount == RecordedPerformanceProcessor.maximumNotes) {
         stopWhenHeldKeysAreReleased = true;
-        showMessage(context.l10n.recordingNoteLimitReached(256));
+        showMessage(
+          context.l10n.recordingNoteLimitReached(256),
+          type: AppSnackBarType.warning,
+        );
       }
     }
 
@@ -318,7 +329,10 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       });
       startRecordingTimer();
     } on CameraException catch (error) {
-      showMessage(error.description ?? context.l10n.recordingStartFailed);
+      showMessage(
+        error.description ?? context.l10n.recordingStartFailed,
+        type: AppSnackBarType.error,
+      );
     }
   }
 
@@ -336,10 +350,16 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       setState(() => recordingDuration = elapsed);
       if (!durationWarningShown && elapsed >= warningDuration) {
         durationWarningShown = true;
-        showMessage(context.l10n.recordingLengthWarning);
+        showMessage(
+          context.l10n.recordingLengthWarning,
+          type: AppSnackBarType.warning,
+        );
       }
       if (elapsed >= maximumDuration) {
-        showMessage(context.l10n.recordingLengthReached);
+        showMessage(
+          context.l10n.recordingLengthReached,
+          type: AppSnackBarType.warning,
+        );
         unawaited(
           stopRecording(closeHeldNotes: true, maximumEndTime: maximumDuration),
         );
@@ -549,19 +569,19 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       await deleteTemporaryVideo();
       if (!mounted) return;
       setState(() => isGeneratingComposition = false);
-      showMessage(context.l10n.compositionCreated);
-      await Future<void>.delayed(const Duration(milliseconds: 700));
+      showMessage(context.l10n.jobAccepted);
       if (mounted) Navigator.pop(context, composition.id);
-    } catch (_) {
-      try {
-        await compositionService.markGenerationFailed(
-          composition.ownerId,
-          composition.id,
-        );
-      } catch (_) {}
+    } catch (error) {
+      await deleteTemporaryVideo();
       if (!mounted) return;
       setState(() => isGeneratingComposition = false);
-      await showGenerationFailureDialog(composition.id);
+      showMessage(
+        error is ProcessingJobException
+            ? '${context.l10n.compositionSaved} ${error.message(context)}'
+            : context.l10n.jobSavedNotQueued,
+        type: AppSnackBarType.warning,
+      );
+      Navigator.pop(context, composition.id);
     }
   }
 
@@ -698,13 +718,14 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
         : '$minutes:$seconds';
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(colors: widget.colors, message: message, type: type),
+    );
   }
 
   void showMidiRequiredSnackBar() {
@@ -780,10 +801,9 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
                               style: const TextStyle(color: Colors.white70),
                             ),
                             SizedBox(height: AppSpacing.md),
-                            OutlinedButton.icon(
+                            OutlinedButton(
                               onPressed: initializeCamera,
-                              icon: const Icon(Icons.refresh_rounded),
-                              label: Text(context.l10n.tryAgain),
+                              child: Text(context.l10n.tryAgain),
                             ),
                           ],
                         ),

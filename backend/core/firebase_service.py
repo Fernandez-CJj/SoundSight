@@ -12,10 +12,13 @@ firebaseApp = firebase_admin.initialize_app(
     }
 )
 
-database = firestore.client()
+database = None
 
 
 def getDatabase():
+    global database
+    if database is None:
+        database = firestore.client()
     return database
 
 

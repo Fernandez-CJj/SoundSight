@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -457,7 +458,7 @@ class _PublishedCompositionsScreenState
       _ => context.l10n.communityPlaybackFailed,
     };
 
-    showMessage(localizedMessage);
+    showMessage(localizedMessage, type: AppSnackBarType.error);
   }
 
   void updatePlaybackState() {
@@ -466,11 +467,19 @@ class _PublishedCompositionsScreenState
     }
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      .showLatestSnackBar(
+        appSnackBar(
+          colors: AppThemeColors.fromDarkMode(isDarkMode),
+          message: message,
+          type: type,
+        ),
+      );
   }
 }

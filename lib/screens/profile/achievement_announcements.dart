@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:soundsight/achievements/achievement_badge.dart';
 import 'package:soundsight/l10n/generated/app_localizations.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -64,12 +64,11 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
   _profileSubscription;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _badgesSubscription;
-  final Queue<AchievementBadge> _pending = Queue<AchievementBadge>();
+  AchievementBadge? _pending;
   final Set<AchievementBadge> _announced = {};
   String? _observedUserId;
   Set<String>? _previousBadgeIds;
   bool _isDarkMode = false;
-  bool _showing = false;
   bool _showScheduled = false;
   AchievementBadge? _activeBadge;
   ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _activeController;
@@ -98,7 +97,7 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
     _badgesSubscription?.cancel();
     _observedUserId = userId;
     _previousBadgeIds = null;
-    _pending.clear();
+    _pending = null;
     _announced.clear();
     _activeBadge = null;
     _activeController?.close();
@@ -138,7 +137,7 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
 
   void _enqueue(AchievementBadge badge) {
     if (!_announced.add(badge)) return;
-    _pending.add(badge);
+    _pending = badge;
     _scheduleShow();
   }
 
@@ -146,7 +145,7 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
     if (widget.popupObserver.hasPopup && _activeBadge != null) {
       // A save-result dialog may open just after the badge is earned.
       // Show the same badge again when the dialog closes.
-      _pending.addFirst(_activeBadge!);
+      _pending ??= _activeBadge;
       _activeBadge = null;
       _activeController?.close();
       return;
@@ -164,83 +163,26 @@ class _AchievementAnnouncementsState extends State<AchievementAnnouncements> {
   }
 
   void _showNext() {
-    if (_showing || _pending.isEmpty || widget.popupObserver.hasPopup) return;
+    if (_pending == null || widget.popupObserver.hasPopup) return;
     final messenger = widget.messengerKey.currentState;
     final l10n = AppLocalizations.of(context);
     if (messenger == null) return;
 
-    final badge = _pending.removeFirst();
+    final badge = _pending!;
+    _pending = null;
     final colors = AppThemeColors.fromDarkMode(_isDarkMode);
-    _showing = true;
     _activeBadge = badge;
-    messenger.hideCurrentSnackBar();
-    final controller = messenger.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        padding: EdgeInsets.zero,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        duration: const Duration(seconds: 5),
-        content: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.surfaceColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.borderColor),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 16,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Image.asset(
-                  badge.assetPath,
-                  width: 54,
-                  height: 54,
-                  excludeFromSemantics: true,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        l10n.badgeEarnedAnnouncement,
-                        style: TextStyle(
-                          color: colors.completedStageColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        badge.title(l10n),
-                        style: TextStyle(
-                          color: colors.primaryColor,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.stars_rounded, color: colors.completedStageColor),
-              ],
-            ),
-          ),
-        ),
+    final controller = messenger.showLatestSnackBar(
+      appSnackBar(
+        colors: colors,
+        message: l10n.badgeEarnedAnnouncement,
+        detail: badge.title(l10n),
+        type: AppSnackBarType.success,
+        icon: Icons.stars_rounded,
       ),
     );
     _activeController = controller;
     controller.closed.then((_) {
-      _showing = false;
       if (_activeController == controller) {
         _activeController = null;
         _activeBadge = null;

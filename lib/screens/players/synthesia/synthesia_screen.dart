@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
@@ -452,7 +453,10 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
         isMidiConnected = false;
         midiStatus = context.l10n.synthesiaCouldNotConnectMidiPiano;
       });
-      _showMessage(context.l10n.synthesiaMidiConnectionFailed);
+      _showMessage(
+        context.l10n.synthesiaMidiConnectionFailed,
+        type: AppSnackBarType.error,
+      );
       _scheduleMidiReconnectControls();
     }
   }
@@ -940,7 +944,10 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
 
     final audioUrl = score?.audioUrl?.trim() ?? '';
     if (audioUrl.isEmpty) {
-      _showMessage(context.l10n.synthesiaNoMp3Preview);
+      _showMessage(
+        context.l10n.synthesiaNoMp3Preview,
+        type: AppSnackBarType.error,
+      );
       return;
     }
 
@@ -971,7 +978,10 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
           scorePreviewPreparing = false;
           scorePreviewPlaying = false;
         });
-        _showMessage(context.l10n.synthesiaMp3PlaybackFailed);
+        _showMessage(
+          context.l10n.synthesiaMp3PlaybackFailed,
+          type: AppSnackBarType.error,
+        );
       },
     );
   }
@@ -1832,20 +1842,22 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
             ],
           ),
           const Gap(AppSpacing.xs),
-          ...items.take(3).map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: Text(
-                '• $item',
-                softWrap: true,
-                style: TextStyle(
-                  color: colors.secondaryTextColor,
-                  fontSize: AppTextSizes.caption,
-                  height: 1.25,
+          ...items
+              .take(3)
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                  child: Text(
+                    '• $item',
+                    softWrap: true,
+                    style: TextStyle(
+                      color: colors.secondaryTextColor,
+                      fontSize: AppTextSizes.caption,
+                      height: 1.25,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
         ],
       ),
     );
@@ -2614,266 +2626,267 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
               return SafeArea(
                 child: SingleChildScrollView(
                   child: Container(
-                  margin: const EdgeInsets.all(AppSpacing.sm),
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceColor,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    border: Border.all(color: colors.borderColor),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.22),
-                        blurRadius: 18,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: feedback.color.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              feedback.icon,
-                              color: feedback.color,
-                              size: AppIconSizes.sm,
-                            ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  feedback.text,
-                                  softWrap: true,
-                                  style: TextStyle(
-                                    color: colors.primaryColor,
-                                    fontSize: AppTextSizes.label,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                Text(
-                                  mode == SynthesiaMode.performance
-                                      ? context.l10n.synthesiaPerformanceMode
-                                      : context.l10n.synthesiaWaitMode,
-                                  softWrap: true,
-                                  style: TextStyle(
-                                    color: colors.secondaryTextColor,
-                                    fontSize: AppTextSizes.caption,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 180),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: AppSpacing.xs,
-                              ),
+                    margin: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceColor,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      border: Border.all(color: colors.borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
-                                color: colors.backgroundColor,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.xl,
-                                ),
-                                border: Border.all(color: colors.borderColor),
+                                color: feedback.color.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              child: Icon(
+                                feedback.icon,
+                                color: feedback.color,
+                                size: AppIconSizes.sm,
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    isMidiConnected
-                                        ? Icons.usb_rounded
-                                        : Icons.usb_off_rounded,
-                                    color: colors.primaryColor,
-                                    size: 16,
+                                  Text(
+                                    feedback.text,
+                                    softWrap: true,
+                                    style: TextStyle(
+                                      color: colors.primaryColor,
+                                      fontSize: AppTextSizes.label,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
-                                  const Gap(AppSpacing.xs),
-                                  Flexible(
-                                    child: Text(
-                                      isMidiConnected
-                                          ? midiStatus
-                                          : context.l10n.synthesiaMidiOffline,
-                                      softWrap: true,
-                                      style: TextStyle(
-                                        color: colors.primaryColor,
-                                        fontSize: AppTextSizes.caption,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                  Text(
+                                    mode == SynthesiaMode.performance
+                                        ? context.l10n.synthesiaPerformanceMode
+                                        : context.l10n.synthesiaWaitMode,
+                                    softWrap: true,
+                                    style: TextStyle(
+                                      color: colors.secondaryTextColor,
+                                      fontSize: AppTextSizes.caption,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          IconButton(
-                            tooltip: context.l10n.synthesiaCloseControls,
-                            onPressed: () => Navigator.of(sheetContext).pop(),
-                            color: colors.primaryColor,
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
-                      ),
-                      if (showMidiReconnectPrompt) ...[
-                        const Gap(AppSpacing.sm),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade700.withValues(
-                              alpha: 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: Colors.amber.shade700.withValues(
-                                alpha: 0.45,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.warning_amber_rounded,
-                                color: Colors.amber.shade700,
-                                size: AppIconSizes.sm,
-                              ),
-                              const Gap(AppSpacing.xs),
-                              Expanded(
-                                child: Text(
-                                  context.l10n.synthesiaMidiReconnectPrompt,
-                                  style: TextStyle(
-                                    color: colors.primaryColor,
-                                    fontSize: AppTextSizes.caption,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 180),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                  vertical: AppSpacing.xs,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      const Gap(AppSpacing.md),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: canTogglePreview
-                                  ? () => unawaited(
-                                      runAndRefresh(_toggleScorePreview),
-                                    )
-                                  : null,
-                              style: _secondaryButtonStyle(colors),
-                              icon: scorePreviewPreparing
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Icon(
-                                      scorePreviewPlaying
-                                          ? Icons.stop_rounded
-                                          : Icons.volume_up_rounded,
-                                    ),
-                              label: Text(
-                                scorePreviewPreparing
-                                    ? context.l10n.loading
-                                    : scorePreviewPlaying
-                                    ? context.l10n.stop
-                                    : context.l10n.synthesiaListen,
-                                textAlign: TextAlign.center,
-                                softWrap: true,
-                              ),
-                            ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: canConnectMidi
-                                  ? () => unawaited(runAndRefresh(_connectMidi))
-                                  : null,
-                              style: _secondaryButtonStyle(colors),
-                              icon: isConnectingMidi
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Icon(
+                                decoration: BoxDecoration(
+                                  color: colors.backgroundColor,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xl,
+                                  ),
+                                  border: Border.all(color: colors.borderColor),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
                                       isMidiConnected
                                           ? Icons.usb_rounded
                                           : Icons.usb_off_rounded,
+                                      color: colors.primaryColor,
+                                      size: 16,
                                     ),
-                              label: Text(
-                                isConnectingMidi
-                                    ? context.l10n.connecting
-                                    : isMidiConnected
-                                    ? context.l10n.synthesiaConnected
-                                    : context.l10n.synthesiaConnectMidi,
-                                textAlign: TextAlign.center,
-                                softWrap: true,
+                                    const Gap(AppSpacing.xs),
+                                    Flexible(
+                                      child: Text(
+                                        isMidiConnected
+                                            ? midiStatus
+                                            : context.l10n.synthesiaMidiOffline,
+                                        softWrap: true,
+                                        style: TextStyle(
+                                          color: colors.primaryColor,
+                                          fontSize: AppTextSizes.caption,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
+                            const Gap(AppSpacing.sm),
+                            IconButton(
+                              tooltip: context.l10n.synthesiaCloseControls,
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              color: colors.primaryColor,
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                          ],
+                        ),
+                        if (showMidiReconnectPrompt) ...[
                           const Gap(AppSpacing.sm),
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: canStart
-                                  ? () {
-                                      Navigator.of(sheetContext).pop();
-                                      unawaited(_handleStartPressed());
-                                    }
-                                  : null,
-                              style: _primaryButtonStyle(colors),
-                              icon: const Icon(Icons.play_arrow_rounded),
-                              label: Text(
-                                isPaused
-                                    ? context.l10n.resume
-                                    : context.l10n.synthesiaStart,
-                                textAlign: TextAlign.center,
-                                softWrap: true,
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade700.withValues(
+                                alpha: 0.12,
+                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: Colors.amber.shade700.withValues(
+                                  alpha: 0.45,
+                                ),
                               ),
                             ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: canRestart
-                                  ? () {
-                                      Navigator.of(sheetContext).pop();
-                                      _restart();
-                                    }
-                                  : null,
-                              style: _secondaryButtonStyle(colors),
-                              icon: const Icon(Icons.replay_rounded),
-                              label: Text(
-                                context.l10n.synthesiaRestart,
-                                textAlign: TextAlign.center,
-                                softWrap: true,
-                              ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.amber.shade700,
+                                  size: AppIconSizes.sm,
+                                ),
+                                const Gap(AppSpacing.xs),
+                                Expanded(
+                                  child: Text(
+                                    context.l10n.synthesiaMidiReconnectPrompt,
+                                    style: TextStyle(
+                                      color: colors.primaryColor,
+                                      fontSize: AppTextSizes.caption,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                      ),
-                    ],
-                  ),
+                        const Gap(AppSpacing.md),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: canTogglePreview
+                                    ? () => unawaited(
+                                        runAndRefresh(_toggleScorePreview),
+                                      )
+                                    : null,
+                                style: _secondaryButtonStyle(colors),
+                                icon: scorePreviewPreparing
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Icon(
+                                        scorePreviewPlaying
+                                            ? Icons.stop_rounded
+                                            : Icons.volume_up_rounded,
+                                      ),
+                                label: Text(
+                                  scorePreviewPreparing
+                                      ? context.l10n.loading
+                                      : scorePreviewPlaying
+                                      ? context.l10n.stop
+                                      : context.l10n.synthesiaListen,
+                                  textAlign: TextAlign.center,
+                                  softWrap: true,
+                                ),
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: canConnectMidi
+                                    ? () =>
+                                          unawaited(runAndRefresh(_connectMidi))
+                                    : null,
+                                style: _secondaryButtonStyle(colors),
+                                icon: isConnectingMidi
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Icon(
+                                        isMidiConnected
+                                            ? Icons.usb_rounded
+                                            : Icons.usb_off_rounded,
+                                      ),
+                                label: Text(
+                                  isConnectingMidi
+                                      ? context.l10n.connecting
+                                      : isMidiConnected
+                                      ? context.l10n.synthesiaConnected
+                                      : context.l10n.synthesiaConnectMidi,
+                                  textAlign: TextAlign.center,
+                                  softWrap: true,
+                                ),
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: canStart
+                                    ? () {
+                                        Navigator.of(sheetContext).pop();
+                                        unawaited(_handleStartPressed());
+                                      }
+                                    : null,
+                                style: _primaryButtonStyle(colors),
+                                icon: const Icon(Icons.play_arrow_rounded),
+                                label: Text(
+                                  isPaused
+                                      ? context.l10n.resume
+                                      : context.l10n.synthesiaStart,
+                                  textAlign: TextAlign.center,
+                                  softWrap: true,
+                                ),
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: canRestart
+                                    ? () {
+                                        Navigator.of(sheetContext).pop();
+                                        _restart();
+                                      }
+                                    : null,
+                                style: _secondaryButtonStyle(colors),
+                                icon: const Icon(Icons.replay_rounded),
+                                label: Text(
+                                  context.l10n.synthesiaRestart,
+                                  textAlign: TextAlign.center,
+                                  softWrap: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -3032,10 +3045,13 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     };
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.warning,
+  }) {
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(colors: widget.colors, message: message, type: type),
+    );
   }
 
   @override

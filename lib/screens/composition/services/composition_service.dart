@@ -153,6 +153,10 @@ class CompositionService {
 
     if (!snapshot.exists || compositionData == null) return;
 
+    if (compositionData['activeJobId'] != null) {
+      throw StateError('This composition has an unfinished task.');
+    }
+
     final storagePaths = <String>{};
     addStoragePath(storagePaths, compositionData['pdfStoragePath']);
     addStoragePath(storagePaths, compositionData['musicXmlStoragePath']);

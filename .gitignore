@@ -36,12 +36,12 @@ migrate_working_dir/
 /coverage/
 /backend/venv/
 /backend/transkun_venv/
+/backend/data/
 
 
 # Backend processing artifacts
 /backend/generated_files/
 /backend/omr_jobs/
-/backend/omr_test/
 
 # Symbolication related
 app.*.symbols

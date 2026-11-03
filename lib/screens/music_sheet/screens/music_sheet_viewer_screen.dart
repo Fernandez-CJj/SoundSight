@@ -1,15 +1,17 @@
+import 'package:soundsight/services/processing_job_service.dart';
+import 'package:soundsight/widgets/processing_job_card.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/music_sheet/dialogs/music_sheet_omr_dialogs.dart';
-import 'package:soundsight/screens/music_sheet/models/omr_conversion_result.dart';
 import 'package:soundsight/screens/music_sheet/services/music_sheet_omr_service.dart';
 import 'package:soundsight/screens/music_sheet/services/music_sheet_transcription_service.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_audio_preview.dart';
@@ -48,6 +50,10 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
   late final List<Map<String, dynamic>> files;
   late final DocumentReference<Map<String, dynamic>> sheetReference;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? sheetSubscription;
+  AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> sheetSnapshot =
+      const AsyncSnapshot.waiting();
+  StreamSubscription<void>? jobStateSubscription;
   final Map<String, Future<Uint8List?>> imageFutures = {};
   final MusicSheetOmrService omrService = MusicSheetOmrService();
   final MusicSheetTranscriptionService transcriptionService =
@@ -58,6 +64,8 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
   Future<Uint8List?>? recognizedPdfFuture;
   String? recognizedPdfCacheKey;
   bool isConverting = false;
+  String? submissionError;
+  bool canSubmitConversion = false;
   bool showRecognizedPdf = true;
   Timer? transcriptionStatusTimer;
 
@@ -69,14 +77,41 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         .doc(widget.ownerId)
         .collection('musicSheets')
         .doc(widget.sheetId);
+    sheetSubscription = sheetReference
+        .snapshots(includeMetadataChanges: true)
+        .listen(
+          (snapshot) {
+            if (!mounted) return;
+            setState(() {
+              sheetSnapshot = AsyncSnapshot.withData(
+                ConnectionState.active,
+                snapshot,
+              );
+            });
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            if (!mounted) return;
+            setState(() {
+              sheetSnapshot = sheetSnapshot.hasData
+                  ? sheetSnapshot.inState(ConnectionState.none)
+                  : AsyncSnapshot.withError(
+                      ConnectionState.none,
+                      error,
+                      stackTrace,
+                    );
+            });
+          },
+        );
+    jobStateSubscription = ProcessingJobService.changes.listen((_) {
+      if (mounted) setState(() {});
+    });
     files = List<Map<String, dynamic>>.from(widget.files);
     if (widget.type == 'audio') {
-      transcriptionStatusTimer = Timer.periodic(
-        const Duration(minutes: 1),
-        (_) {
-          if (mounted) setState(() {});
-        },
-      );
+      transcriptionStatusTimer = Timer.periodic(const Duration(minutes: 1), (
+        _,
+      ) {
+        if (mounted) setState(() {});
+      });
     }
     files.sort((first, second) {
       final firstPage = (first['pageNumber'] as num?)?.toInt() ?? 0;
@@ -91,13 +126,77 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
   @override
   void dispose() {
+    sheetSubscription?.cancel();
+    jobStateSubscription?.cancel();
     transcriptionStatusTimer?.cancel();
     super.dispose();
   }
 
+  String get submissionPath =>
+      '/music-sheets/${Uri.encodeComponent(widget.sheetId)}/'
+      '${widget.type == 'audio' ? 'transcribe-audio' : 'recognize'}';
+
+  bool get submissionBusy =>
+      isConverting ||
+      ProcessingJobService.isBusy(widget.ownerId, submissionPath);
+
+  Map<String, dynamic> currentSheetData() {
+    final snapshot = sheetSnapshot;
+    final document = snapshot.data;
+    final data = document?.data() ?? <String, dynamic>{};
+    final status =
+        data[widget.type == 'audio' ? 'transcriptionStatus' : 'omrStatus'];
+    // A newly opened route may first receive an old cached document. Do not
+    // offer another conversion until Firebase confirms the current lock.
+    canSubmitConversion =
+        document != null &&
+        document.exists &&
+        snapshot.connectionState == ConnectionState.active &&
+        !snapshot.hasError &&
+        !document.metadata.isFromCache &&
+        !submissionBusy &&
+        data['activeJobId'] == null &&
+        status != 'queued' &&
+        status != 'processing' &&
+        data['lastJobStatus'] != 'queued' &&
+        data['lastJobStatus'] != 'processing';
+    final job = ProcessingJobService.activeJob(widget.ownerId, submissionPath);
+    if (job == null) {
+      if (submissionBusy && data['activeJobId'] == null) {
+        return {...data, 'lastJobStatus': 'submitting'};
+      }
+      if (submissionError != null &&
+          data['activeJobId'] == null &&
+          status != 'queued' &&
+          status != 'processing') {
+        return {...data, 'lastJobStatus': 'submissionFailed'};
+      }
+      return data;
+    }
+    return {
+      ...data,
+      'activeJobId': job.id,
+      'lastJobStatus': job.status,
+      if (widget.type == 'audio')
+        'transcriptionStatus': job.status
+      else
+        'omrStatus': job.status,
+    };
+  }
+
+  Widget buildSheetLoadingState(bool hasError) => Center(
+    child: hasError
+        ? Text(
+            context.l10n.musicSheetsLoadError,
+            style: TextStyle(color: widget.colors.secondaryTextColor),
+          )
+        : CircularProgressIndicator(color: widget.colors.primaryColor),
+  );
+
   @override
   Widget build(BuildContext context) {
     final colors = widget.colors;
+    final sheetData = currentSheetData();
 
     return Scaffold(
       backgroundColor: colors.backgroundColor,
@@ -121,36 +220,35 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: buildPlayButton(colors),
-      body: widget.type == 'audio' ? buildSavedAudioViewer() : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: sheetReference.snapshots(),
-          builder: (context, snapshot) {
-            final sheetData = snapshot.data?.data() ?? {};
-            final recognizedPdfStoragePath =
-                sheetData['recognizedPdfStoragePath'] as String? ?? '';
-
-            if (files.isEmpty && recognizedPdfStoragePath.isEmpty) {
-              return buildEmptyState();
-            }
-
-            return buildViewerBody(sheetData);
-          },
-        ),
+      body: buildSheetBody(sheetData),
     );
   }
 
+  Widget buildSheetBody(Map<String, dynamic> sheetData) {
+    if (!sheetSnapshot.hasData) {
+      return buildSheetLoadingState(sheetSnapshot.hasError);
+    }
+    if (widget.type == 'audio') return buildSavedAudioViewer(sheetData);
+    final recognizedPdfStoragePath =
+        sheetData['recognizedPdfStoragePath'] as String? ?? '';
+    if (files.isEmpty && recognizedPdfStoragePath.isEmpty) {
+      return buildEmptyState();
+    }
+    return buildViewerBody(sheetData);
+  }
+
   Widget buildPlayButton(AppThemeColors colors) => Padding(
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        child: SizedBox(
-          width: double.infinity,
-          child: FloatingActionButton.extended(
-            onPressed: showPlayModeDialog,
-            backgroundColor: colors.primaryColor,
-            foregroundColor: colors.backgroundColor,
-            icon: const Icon(Icons.play_arrow_rounded),
-            label: Text(context.l10n.play),
-          ),
-        ),
-      );
+    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+    child: SizedBox(
+      width: double.infinity,
+      child: FloatingActionButton.extended(
+        onPressed: showPlayModeDialog,
+        backgroundColor: colors.primaryColor,
+        foregroundColor: colors.backgroundColor,
+        label: Text(context.l10n.play),
+      ),
+    ),
+  );
 
   bool hasPlayableAudioScore(Map<String, dynamic>? sheetData) =>
       sheetData?['transcriptionStatus'] == 'completed' &&
@@ -161,66 +259,79 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
   bool hasConvertedScore(Map<String, dynamic>? sheetData) =>
       widget.type == 'audio'
-          ? hasPlayableAudioScore(sheetData)
-          : sheetData?['omrStatus'] == 'completed';
+      ? hasPlayableAudioScore(sheetData)
+      : sheetData?['omrStatus'] == 'completed';
 
-  Widget buildSavedAudioViewer() {
+  Widget buildSavedAudioViewer(Map<String, dynamic> sheetData) {
     final storagePath = files.isEmpty
         ? ''
         : (files.first['storagePath'] as String? ?? '');
     if (storagePath.isEmpty) return buildEmptyState();
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: sheetReference.snapshots(),
-      builder: (context, snapshot) {
-        final sheetData = snapshot.data?.data() ?? {};
-        final hasScore = hasPlayableAudioScore(sheetData);
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.md, AppSpacing.md, 96,
+    final hasScore = hasPlayableAudioScore(sheetData);
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          96,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ProcessingJobCard(
+              colors: widget.colors,
+              status: sheetData['lastJobStatus'] as String?,
+              errorMessage: sheetData['lastJobStatus'] == 'submissionFailed'
+                  ? submissionError
+                  : null,
+              jobId: sheetData['activeJobId'] as String?,
+              onRetry: canSubmitConversion
+                  ? () => transcribeAudio(
+                      isReconversion: hasPlayableAudioScore(sheetData),
+                    )
+                  : null,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                buildAudioTranscriptionCard(sheetData),
-                Gap(AppSpacing.md),
-                MusicSheetAudioPreview(
-                  colors: widget.colors,
-                  storagePath: storagePath,
-                  streamFromStorage: true,
-                  title: context.l10n.audioFileType,
-                  controller: audioPreviewController,
+            buildAudioTranscriptionCard(sheetData),
+            Gap(AppSpacing.md),
+            MusicSheetAudioPreview(
+              colors: widget.colors,
+              storagePath: storagePath,
+              streamFromStorage: true,
+              title: context.l10n.audioFileType,
+              controller: audioPreviewController,
+            ),
+            Gap(AppSpacing.md),
+            if (hasScore)
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.65,
+                child: buildRecognizedPdfViewer(
+                  sheetData['recognizedPdfStoragePath'] as String,
+                  sheetData['transcriptionProcessedAt'],
                 ),
-                Gap(AppSpacing.md),
-                if (hasScore)
-                  SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.65,
-                    child: buildRecognizedPdfViewer(
-                      sheetData['recognizedPdfStoragePath'] as String,
-                      sheetData['transcriptionProcessedAt'],
-                    ),
-                  )
-                else
-                  Text(
-                    context.l10n.audioNoScoreYet,
-                    style: TextStyle(color: widget.colors.secondaryTextColor),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
+              )
+            else
+              Text(
+                context.l10n.audioNoScoreYet,
+                style: TextStyle(color: widget.colors.secondaryTextColor),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget buildAudioTranscriptionCard(Map<String, dynamic> sheetData) {
+    if (submissionBusy ||
+        sheetData['lastJobStatus'] == 'submissionFailed' ||
+        sheetData['activeJobId'] != null ||
+        sheetData['lastJobStatus'] == 'submitting' ||
+        sheetData['lastJobStatus'] == 'queued' ||
+        sheetData['lastJobStatus'] == 'processing') {
+      return const SizedBox.shrink();
+    }
     final storedStatus = sheetData['transcriptionStatus'] as String? ?? '';
-    final startedAt = sheetData['transcriptionStartedAt'];
-    final isStale = storedStatus == 'processing' &&
-        startedAt is Timestamp &&
-        DateTime.now().difference(startedAt.toDate()) >=
-            const Duration(minutes: 40);
-    final status = isStale ? 'failed' : storedStatus;
+    final status = storedStatus;
     final l10n = context.l10n;
     final title = switch (status) {
       'completed' => l10n.audioMidiReady,
@@ -240,7 +351,8 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       status: status,
       partCount: 0,
       noteCount: (sheetData['transcriptionNoteCount'] as num?)?.toInt() ?? 0,
-      isConverting: isConverting,
+      isConverting: submissionBusy,
+      showAction: canSubmitConversion,
       onRecognize: () => transcribeAudio(isReconversion: status == 'completed'),
       titleOverride: title,
       subtitleOverride: description,
@@ -254,7 +366,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
   }
 
   Future<void> transcribeAudio({bool isReconversion = false}) async {
-    if (isConverting) return;
+    if (submissionBusy || !canSubmitConversion) return;
     final shouldConvert = await showDialog<bool>(
       context: context,
       builder: (_) => RecognizeMusicSheetDialog(
@@ -272,61 +384,64 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
             : context.l10n.translate,
       ),
     );
-    if (shouldConvert != true || !mounted) return;
-
-    setState(() => isConverting = true);
-    unawaited(showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => MusicSheetOmrLoadingDialog(
-        colors: widget.colors,
-        headingOverride: context.l10n.audioMidiProcessing,
-        descriptionOverride: context.l10n.audioMidiLoadingDescription,
-      ),
-    ));
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-
-    Object? failure;
-    try {
-      await transcriptionService.transcribeAudio(sheetId: widget.sheetId);
-    } catch (error) {
-      failure = error;
+    if (shouldConvert != true ||
+        !mounted ||
+        submissionBusy ||
+        !canSubmitConversion) {
+      return;
     }
-    if (!mounted) return;
-    Navigator.of(context, rootNavigator: true).pop();
-    setState(() => isConverting = false);
 
-    final message = failure == null
-        ? context.l10n.audioMidiSuccessDescription
-        : switch (failure) {
-            MusicSheetTranscriptionException(
-              failure: MusicSheetTranscriptionFailure.timedOut,
-            ) => context.l10n.translationTimedOut,
-            MusicSheetTranscriptionException(
-              failure: MusicSheetTranscriptionFailure.connection,
-            ) => context.l10n.translationConnectionError,
-            MusicSheetTranscriptionException(
-              failure: MusicSheetTranscriptionFailure.notSignedIn,
-            ) => context.l10n.translationSignInAgain,
-            MusicSheetTranscriptionException(
-              failure: MusicSheetTranscriptionFailure.emailNotVerified,
-            ) => context.l10n.translationVerifyEmail,
-            _ => context.l10n.audioMidiFailedDescription,
-          };
-    await showDialog<void>(
-      context: context,
-      builder: (_) => failure == null
-          ? MusicSheetOmrSuccessDialog(
-              colors: widget.colors,
-              headingOverride: context.l10n.audioMidiReady,
-              descriptionOverride: message,
-            )
-          : MusicSheetOmrErrorDialog(
-              colors: widget.colors,
-              headingOverride: context.l10n.audioMidiFailed,
-              message: message,
-            ),
+    setState(() {
+      isConverting = true;
+      submissionError = null;
+    });
+    try {
+      final job = await transcriptionService.transcribeAudio(
+        sheetId: widget.sheetId,
+      );
+      if (mounted) {
+        showSubmissionResult(job);
+      }
+    } catch (error) {
+      if (mounted) {
+        showSubmissionError(error);
+      }
+    } finally {
+      if (mounted) setState(() => isConverting = false);
+    }
+  }
+
+  void showJobMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(colors: widget.colors, message: message, type: type),
     );
+  }
+
+  void showSubmissionError(Object error) {
+    final message = error is ProcessingJobException
+        ? error.message(context)
+        : context.l10n.jobSubmissionUnconfirmed;
+    setState(() => submissionError = message);
+    showJobMessage(message, type: AppSnackBarType.error);
+  }
+
+  void showSubmissionResult(ProcessingJob job) {
+    if (job.isActive) {
+      showJobMessage(context.l10n.jobAccepted);
+    } else if (job.status == 'completed') {
+      showJobMessage(
+        context.l10n.jobCompletedTitle,
+        type: AppSnackBarType.success,
+      );
+    } else if (job.status == 'failed') {
+      showJobMessage(
+        context.l10n.jobFailedNotification,
+        type: AppSnackBarType.error,
+      );
+    }
   }
 
   Future<void> showPlayModeDialog() async {
@@ -420,24 +535,26 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       final midiStoragePath = sheetData?['midiStoragePath'] as String? ?? '';
 
       if (!hasConvertedScore(sheetData)) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(widget.type == 'audio'
-                  ? context.l10n.convertRecordingBeforeSynthesia
-                  : context.l10n.translateBeforeSynthesia),
-            ),
-          );
+        ScaffoldMessenger.of(context).showLatestSnackBar(
+          appSnackBar(
+            colors: widget.colors,
+            message: widget.type == 'audio'
+                ? context.l10n.convertRecordingBeforeSynthesia
+                : context.l10n.translateBeforeSynthesia,
+            type: AppSnackBarType.warning,
+          ),
+        );
         return;
       }
 
       if (midiUrl.trim().isEmpty && midiStoragePath.trim().isEmpty) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(context.l10n.translatedMidiMissing)),
-          );
+        ScaffoldMessenger.of(context).showLatestSnackBar(
+          appSnackBar(
+            colors: widget.colors,
+            message: context.l10n.translatedMidiMissing,
+            type: AppSnackBarType.warning,
+          ),
+        );
         return;
       }
 
@@ -454,11 +571,13 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(context.l10n.openSynthesiaFailed)),
-        );
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.openSynthesiaFailed,
+          type: AppSnackBarType.error,
+        ),
+      );
     }
   }
 
@@ -473,19 +592,25 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       final midiStoragePath = sheetData?['midiStoragePath'] as String? ?? '';
 
       if (!hasConvertedScore(sheetData)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.type == 'audio'
+        ScaffoldMessenger.of(context).showLatestSnackBar(
+          appSnackBar(
+            colors: widget.colors,
+            message: widget.type == 'audio'
                 ? context.l10n.convertRecordingBeforeAr
-                : context.l10n.translateBeforeAr),
+                : context.l10n.translateBeforeAr,
+            type: AppSnackBarType.warning,
           ),
         );
         return;
       }
 
       if (midiUrl.trim().isEmpty && midiStoragePath.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.translatedMidiMissing)),
+        ScaffoldMessenger.of(context).showLatestSnackBar(
+          appSnackBar(
+            colors: widget.colors,
+            message: context.l10n.translatedMidiMissing,
+            type: AppSnackBarType.warning,
+          ),
         );
         return;
       }
@@ -500,8 +625,12 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.openArFailed)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.openArFailed,
+          type: AppSnackBarType.error,
+        ),
       );
     }
   }
@@ -523,11 +652,13 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
           sheetData?['previewAudioStoragePath'] as String? ?? '';
 
       if (!hasConvertedScore(sheetData)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.type == 'audio'
+        ScaffoldMessenger.of(context).showLatestSnackBar(
+          appSnackBar(
+            colors: widget.colors,
+            message: widget.type == 'audio'
                 ? context.l10n.convertRecordingBeforeSightReading
-                : context.l10n.translateBeforeSightReading),
+                : context.l10n.translateBeforeSightReading,
+            type: AppSnackBarType.warning,
           ),
         );
 
@@ -537,8 +668,12 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       if (musicXmlStoragePath.isEmpty ||
           midiStoragePath.isEmpty ||
           previewAudioStoragePath.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.translatedPracticeFilesMissing)),
+        ScaffoldMessenger.of(context).showLatestSnackBar(
+          appSnackBar(
+            colors: widget.colors,
+            message: context.l10n.translatedPracticeFilesMissing,
+            type: AppSnackBarType.warning,
+          ),
         );
 
         return;
@@ -558,8 +693,12 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.openSightReadingFailed)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.openSightReadingFailed,
+          type: AppSnackBarType.error,
+        ),
       );
     }
   }
@@ -568,8 +707,8 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     final recognizedPdfStoragePath =
         sheetData['recognizedPdfStoragePath'] as String? ?? '';
     final hasRecognizedPdf = recognizedPdfStoragePath.isNotEmpty;
-    final isPdfPreview = hasRecognizedPdf && showRecognizedPdf ||
-        widget.type == 'pdf';
+    final isPdfPreview =
+        hasRecognizedPdf && showRecognizedPdf || widget.type == 'pdf';
     final sheetViewer = hasRecognizedPdf && showRecognizedPdf
         ? buildRecognizedPdfViewer(
             recognizedPdfStoragePath,
@@ -600,6 +739,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
 
   Widget buildOmrSection(Map<String, dynamic> sheetData) {
     final status = sheetData['omrStatus'] as String? ?? 'notStarted';
+    final jobStatus = sheetData['lastJobStatus'] as String?;
     final partCount = (sheetData['omrPartCount'] as num?)?.toInt() ?? 0;
     final noteCount = (sheetData['omrNoteCount'] as num?)?.toInt() ?? 0;
     final previewAudioStoragePath =
@@ -608,23 +748,52 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-            0,
+        if (ProcessingJobCard.isVisible(jobStatus))
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
+            ),
+            child: ProcessingJobCard(
+              colors: widget.colors,
+              status: jobStatus,
+              errorMessage: jobStatus == 'submissionFailed'
+                  ? submissionError
+                  : null,
+              jobId: sheetData['activeJobId'] as String?,
+              onRetry: canSubmitConversion
+                  ? () => recognizeMusicSheet(
+                      isReconversion: sheetData['omrStatus'] == 'completed',
+                    )
+                  : null,
+            ),
           ),
-          child: MusicSheetOmrStatusCard(
-            colors: widget.colors,
-            status: status,
-            partCount: partCount,
-            noteCount: noteCount,
-            isConverting: isConverting,
-            onRecognize: () =>
-                recognizeMusicSheet(isReconversion: status == 'completed'),
+        if (!submissionBusy &&
+            sheetData['activeJobId'] == null &&
+            jobStatus != 'submitting' &&
+            jobStatus != 'submissionFailed' &&
+            jobStatus != 'queued' &&
+            jobStatus != 'processing')
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
+            ),
+            child: MusicSheetOmrStatusCard(
+              colors: widget.colors,
+              status: status,
+              partCount: partCount,
+              noteCount: noteCount,
+              isConverting: submissionBusy,
+              showAction: canSubmitConversion,
+              onRecognize: () =>
+                  recognizeMusicSheet(isReconversion: status == 'completed'),
+            ),
           ),
-        ),
         if (status != 'processing' && previewAudioStoragePath.isNotEmpty)
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -898,8 +1067,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
               params: PdfViewerParams(
                 margin: AppSpacing.sm,
                 backgroundColor: widget.colors.backgroundColor,
-                sizeDelegateProvider:
-                    const PdfViewerSizeDelegateProviderSmart(
+                sizeDelegateProvider: const PdfViewerSizeDelegateProviderSmart(
                   smartMaxScale: 2,
                   maxPagesVisible: 1,
                 ),
@@ -908,9 +1076,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
           ),
           Material(
             color: Colors.transparent,
-            child: InkWell(
-              onTap: () => showPdfDialog(pdfBytes, sourceName),
-            ),
+            child: InkWell(onTap: () => showPdfDialog(pdfBytes, sourceName)),
           ),
           Positioned(
             top: AppSpacing.sm,
@@ -1000,9 +1166,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                         backgroundColor: widget.colors.backgroundColor,
                         sizeDelegateProvider:
                             const PdfViewerSizeDelegateProviderSmart(
-                          smartMaxScale: 2,
-                          maxPagesVisible: 1,
-                        ),
+                              smartMaxScale: 2,
+                              maxPagesVisible: 1,
+                            ),
                       ),
                     ),
                   ),
@@ -1149,7 +1315,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
   }
 
   Future<void> recognizeMusicSheet({bool isReconversion = false}) async {
-    if (isConverting) return;
+    if (submissionBusy || !canSubmitConversion) return;
 
     final shouldRecognize = await showDialog<bool>(
       context: context,
@@ -1160,79 +1326,28 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
       ),
     );
 
-    if (shouldRecognize != true || !mounted) return;
-
-    setState(() {
-      isConverting = true;
-    });
-
-    unawaited(
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => MusicSheetOmrLoadingDialog(colors: widget.colors),
-      ),
-    );
-
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-
-    OmrConversionResult? result;
-    Object? conversionError;
-
-    try {
-      result = await omrService.recognizeMusicSheet(
-        sheetId: widget.sheetId,
-      );
-    } catch (error) {
-      conversionError = error;
-    }
-
-    if (!mounted) return;
-
-    Navigator.of(context, rootNavigator: true).pop();
-
-    setState(() {
-      isConverting = false;
-    });
-
-    if (result != null) {
-      await showDialog<void>(
-        context: context,
-        builder: (_) =>
-            MusicSheetOmrSuccessDialog(colors: widget.colors, result: result!),
-      );
+    if (shouldRecognize != true ||
+        !mounted ||
+        submissionBusy ||
+        !canSubmitConversion) {
       return;
     }
 
-    final errorMessage = localizedOmrError(conversionError);
-
-    await showDialog<void>(
-      context: context,
-      builder: (_) => MusicSheetOmrErrorDialog(
-        colors: widget.colors,
-        message: errorMessage,
-      ),
-    );
-  }
-
-  String localizedOmrError(Object? error) {
-    if (error is! MusicSheetOmrException) {
-      return context.l10n.translationGenericError;
+    setState(() {
+      isConverting = true;
+      submissionError = null;
+    });
+    try {
+      final job = await omrService.recognizeMusicSheet(sheetId: widget.sheetId);
+      if (mounted) {
+        showSubmissionResult(job);
+      }
+    } catch (error) {
+      if (mounted) {
+        showSubmissionError(error);
+      }
+    } finally {
+      if (mounted) setState(() => isConverting = false);
     }
-
-    return switch (error.failure) {
-      MusicSheetOmrFailure.timedOut => context.l10n.translationTimedOut,
-      MusicSheetOmrFailure.connection =>
-        context.l10n.translationConnectionError,
-      MusicSheetOmrFailure.rejected => context.l10n.translationRejected,
-      MusicSheetOmrFailure.invalidResponse =>
-        context.l10n.translationInvalidResponse,
-      MusicSheetOmrFailure.notSignedIn =>
-        context.l10n.translationSignInAgain,
-      MusicSheetOmrFailure.emailNotVerified =>
-        context.l10n.translationVerifyEmail,
-      MusicSheetOmrFailure.missingSheetId =>
-        context.l10n.translationGenericError,
-    };
   }
 }

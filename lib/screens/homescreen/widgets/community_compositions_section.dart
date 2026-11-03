@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -276,40 +277,40 @@ class _CommunityCompositionsSectionState
                   width: double.infinity,
                   height: 38,
                   child: ElevatedButton.icon(
-                      onPressed: playbackController.isBusy
-                          ? null
-                          : () {
-                              playComposition(composition);
-                            },
-                      icon: isLoading
-                          ? SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colors.backgroundColor,
-                              ),
-                            )
-                          : Icon(
-                              isPlaying
-                                  ? Icons.stop_rounded
-                                  : Icons.play_arrow_rounded,
-                              size: AppIconSizes.sm,
+                    onPressed: playbackController.isBusy
+                        ? null
+                        : () {
+                            playComposition(composition);
+                          },
+                    icon: isLoading
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.backgroundColor,
                             ),
-                      label: Text(
-                        isPlaying ? context.l10n.stop : context.l10n.play,
+                          )
+                        : Icon(
+                            isPlaying
+                                ? Icons.stop_rounded
+                                : Icons.play_arrow_rounded,
+                            size: AppIconSizes.sm,
+                          ),
+                    label: Text(
+                      isPlaying ? context.l10n.stop : context.l10n.play,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primaryColor,
+                      foregroundColor: colors.backgroundColor,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primaryColor,
-                        foregroundColor: colors.backgroundColor,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
+                    ),
                   ),
                 ),
               ],
@@ -381,7 +382,7 @@ class _CommunityCompositionsSectionState
       _ => context.l10n.communityPlaybackFailed,
     };
 
-    showMessage(localizedMessage);
+    showMessage(localizedMessage, type: AppSnackBarType.error);
   }
 
   void updatePlaybackState() {
@@ -390,11 +391,15 @@ class _CommunityCompositionsSectionState
     }
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      .showLatestSnackBar(
+        appSnackBar(colors: widget.colors, message: message, type: type),
+      );
   }
 }

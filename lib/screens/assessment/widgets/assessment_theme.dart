@@ -86,11 +86,6 @@ class AssessmentTheme extends StatelessWidget {
         linearTrackColor: colors.borderColor,
         circularTrackColor: colors.borderColor,
       ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: colors.primaryColor,
-        contentTextStyle: TextStyle(color: colors.backgroundColor),
-        behavior: SnackBarBehavior.floating,
-      ),
     );
   }
 

@@ -33,6 +33,7 @@ def uploadOmrFiles(
     mp3Path,
     ownerId,
     sheetId,
+    fileSuffix="",
 ):
     validateGeneratedFile(
         musicXmlPath,
@@ -71,7 +72,7 @@ def uploadOmrFiles(
         + ownerId
         + "/"
         + sheetId
-        + "/recognized.musicxml"
+        + "/recognized" + fileSuffix + ".musicxml"
     )
 
     midiStoragePath = (
@@ -79,7 +80,7 @@ def uploadOmrFiles(
         + ownerId
         + "/"
         + sheetId
-        + "/recognized.mid"
+        + "/recognized" + fileSuffix + ".mid"
     )
 
     recognizedPdfStoragePath = (
@@ -87,7 +88,7 @@ def uploadOmrFiles(
         + ownerId
         + "/"
         + sheetId
-        + "/recognized.pdf"
+        + "/recognized" + fileSuffix + ".pdf"
     )
 
     previewAudioStoragePath = (
@@ -95,7 +96,7 @@ def uploadOmrFiles(
         + ownerId
         + "/"
         + sheetId
-        + "/preview.mp3"
+        + "/preview" + fileSuffix + ".mp3"
     )
 
     musicXmlFile = bucket.blob(

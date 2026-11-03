@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
@@ -427,26 +428,8 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
             ),
             child: SizedBox(
               height: 52,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: isOpeningEditor ? null : startComposing,
-                icon: isOpeningEditor
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: colors.backgroundColor,
-                        ),
-                      )
-                    : Icon(Icons.edit_note_rounded),
-                label: Text(
-                  isOpeningEditor
-                      ? context.l10n.opening
-                      : selectedMethod == _CompositionMethod.recording
-                      ? context.l10n.openRecorder
-                      : context.l10n.startComposing,
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primaryColor,
                   foregroundColor: colors.backgroundColor,
@@ -456,6 +439,14 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
+                ),
+                child: Text(
+                  isOpeningEditor
+                      ? context.l10n.opening
+                      : selectedMethod == _CompositionMethod.recording
+                      ? context.l10n.openRecorder
+                      : context.l10n.startComposing,
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -521,7 +512,10 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      showMessage(context.l10n.signInBeforeCreatingComposition);
+      showMessage(
+        context.l10n.signInBeforeCreatingComposition,
+        type: AppSnackBarType.warning,
+      );
       return;
     }
 
@@ -594,10 +588,13 @@ class _NewCompositionScreenState extends State<NewCompositionScreen> {
     Navigator.pop(context, savedCompositionId);
   }
 
-  void showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(colors: widget.colors, message: message, type: type),
+    );
   }
 }
 

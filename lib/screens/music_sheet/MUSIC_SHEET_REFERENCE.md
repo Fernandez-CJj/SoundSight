@@ -1,5 +1,10 @@
 # Music Sheet Feature Reference
 
+> Conversion now submits authenticated background jobs and returns immediately
+> after acceptance. The sheet document streams queued/processing/result state;
+> users can leave the screen. See `backend/JOBS_SETUP.md` for current behavior.
+> Older loading-dialog and unauthenticated-OMR descriptions below are historical.
+
 This document describes the Music Sheet library, viewer, translation, audio preview, renaming, and deletion behavior in the current code.
 
 The separate Capture and Upload Sheet feature creates the original sheet record and uploads its source files. Its detailed behavior is documented in `../capture_upload_sheet/CAPTURE_UPLOAD_SHEET_REFERENCE.md`.

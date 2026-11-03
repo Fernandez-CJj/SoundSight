@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
+import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
@@ -183,11 +185,12 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
                   return;
                 }
 
-                ScaffoldMessenger.of(introductionContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      introductionContext.l10n.assessmentUnableToContinue,
-                    ),
+                ScaffoldMessenger.of(introductionContext).showLatestSnackBar(
+                  appSnackBar(
+                    colors: AppThemeColors.fromDarkMode(widget.isDarkMode),
+                    message:
+                        introductionContext.l10n.assessmentUnableToContinue,
+                    type: AppSnackBarType.error,
                   ),
                 );
               }

@@ -1,6 +1,9 @@
+import 'package:soundsight/services/processing_job_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
@@ -56,6 +59,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
   late final CompositionEditorController editorController;
 
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+  activeJobSubscription;
+  bool remoteJobActive = false;
   bool isSaving = false;
   bool isPlaying = false;
   bool isPaused = false;
@@ -101,6 +107,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   }
 
   bool get editorInteractionLocked {
+    if (remoteJobActive) return true;
     return isSaving || isPlaying || midiStepIsBusy;
   }
 
@@ -111,6 +118,21 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.composition.id.isNotEmpty) {
+      activeJobSubscription = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.composition.ownerId)
+          .collection('compositions')
+          .doc(widget.composition.id)
+          .snapshots()
+          .listen((snapshot) {
+            if (mounted) {
+              setState(
+                () => remoteJobActive = snapshot.data()?['activeJobId'] != null,
+              );
+            }
+          }, onError: (Object _) {});
+    }
 
     WidgetsBinding.instance.addObserver(this);
 
@@ -159,6 +181,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       DeviceOrientation.landscapeRight,
     ]);
     unawaited(playbackService.dispose());
+    activeJobSubscription?.cancel();
     super.dispose();
   }
 
@@ -623,28 +646,18 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       );
     }
 
-    return TextButton.icon(
+    return TextButton(
       onPressed: isConnectingMidi || isSaving || isPlaying
           ? null
           : connectToMidi,
-      icon: isConnectingMidi
-          ? SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: colors.primaryColor,
-              ),
-            )
-          : const Icon(Icons.usb_rounded),
-      label: Text(
+      style: TextButton.styleFrom(foregroundColor: colors.primaryColor),
+      child: Text(
         isConnectingMidi
             ? 'Connecting'
             : isLandscape
             ? 'MIDI'
             : 'Connect MIDI',
       ),
-      style: TextButton.styleFrom(foregroundColor: colors.primaryColor),
     );
   }
 
@@ -859,14 +872,12 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         Expanded(
           child: SizedBox(
             height: 50,
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed:
                   editorInteractionLocked ||
                       !editorController.canMoveInsertionCursorBack
                   ? null
                   : moveCursorBack,
-              icon: const Icon(Icons.arrow_back_rounded),
-              label: Text(context.l10n.back),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 side: BorderSide(color: colors.borderColor),
@@ -874,6 +885,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
+              child: Text(context.l10n.back),
             ),
           ),
         ),
@@ -881,7 +893,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         Expanded(
           child: SizedBox(
             height: 50,
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed:
                   editorInteractionLocked ||
                       !editorController.canMoveInsertionCursorForward(
@@ -889,8 +901,6 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                       )
                   ? null
                   : moveCursorForward,
-              icon: const Icon(Icons.arrow_forward_rounded),
-              label: Text(context.l10n.forward),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 side: BorderSide(color: colors.borderColor),
@@ -898,6 +908,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
+              child: Text(context.l10n.forward),
             ),
           ),
         ),
@@ -905,10 +916,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         Expanded(
           child: SizedBox(
             height: 50,
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed: editorInteractionLocked ? null : insertRest,
-              icon: const Icon(Icons.space_bar_rounded),
-              label: Text(context.l10n.insertRest),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 side: BorderSide(color: colors.borderColor),
@@ -916,6 +925,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
+              child: Text(context.l10n.insertRest),
             ),
           ),
         ),
@@ -1065,14 +1075,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                 ),
                 const Gap(2),
                 Text(
-                  '${context.l10n.selectedNotePosition(
-                    note.measureIndex + 1,
-                    formatBeatValue(note.startBeat + 1),
-                    formatBeatValue(note.durationBeats),
-                    note.durationBeats == 1
-                        ? context.l10n.beat
-                        : context.l10n.beats,
-                  )}${note.tieToNext ? ' • ${context.l10n.tied}' : ''}',
+                  '${context.l10n.selectedNotePosition(note.measureIndex + 1, formatBeatValue(note.startBeat + 1), formatBeatValue(note.durationBeats), note.durationBeats == 1 ? context.l10n.beat : context.l10n.beats)}${note.tieToNext ? ' • ${context.l10n.tied}' : ''}',
                   style: TextStyle(
                     color: colors.secondaryTextColor,
                     fontSize: AppTextSizes.caption,
@@ -1103,10 +1106,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         Expanded(
           child: SizedBox(
             height: 50,
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed: editorInteractionLocked ? null : addMeasure,
-              icon: const Icon(Icons.add_rounded),
-              label: Text(context.l10n.addMeasure),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 disabledForegroundColor: colors.secondaryTextColor,
@@ -1115,6 +1116,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
+              child: Text(context.l10n.addMeasure),
             ),
           ),
         ),
@@ -1122,14 +1124,12 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         Expanded(
           child: SizedBox(
             height: 50,
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed:
                   editorController.selectedNoteIds.isEmpty ||
                       editorInteractionLocked
                   ? null
                   : deleteSelectedNotes,
-              icon: const Icon(Icons.delete_outline_rounded),
-              label: Text(context.l10n.deleteSelection),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primaryColor,
                 disabledForegroundColor: colors.secondaryTextColor,
@@ -1138,6 +1138,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
+              child: Text(context.l10n.deleteSelection),
             ),
           ),
         ),
@@ -1160,24 +1161,8 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         ),
         child: SizedBox(
           height: 54,
-          child: ElevatedButton.icon(
+          child: ElevatedButton(
             onPressed: editorInteractionLocked ? null : saveComposition,
-            icon: isSaving
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: colors.backgroundColor,
-                    ),
-                  )
-                : const Icon(Icons.save_outlined),
-            label: Text(
-              isSaving
-                  ? context.l10n.savingEllipsis
-                  : context.l10n.saveComposition,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primaryColor,
               foregroundColor: colors.backgroundColor,
@@ -1187,6 +1172,12 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
+            ),
+            child: Text(
+              isSaving
+                  ? context.l10n.savingEllipsis
+                  : context.l10n.saveComposition,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ),
@@ -1240,7 +1231,10 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         isConnectingMidi = false;
         midiStatus = 'MIDI connection failed';
       });
-      showMessage('The MIDI piano could not be connected.');
+      showMessage(
+        'The MIDI piano could not be connected.',
+        type: AppSnackBarType.error,
+      );
     }
   }
 
@@ -1282,7 +1276,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     }
 
     if (!PianoNote.isValidMidi(event.noteNumber)) {
-    showMessage(context.l10n.unsupportedPianoKey);
+      showMessage(context.l10n.unsupportedPianoKey);
       return;
     }
 
@@ -1290,7 +1284,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       if (isSaving || isPlaying) return;
 
       if (editorController.selectedNoteIds.length > 1) {
-      showMessage(context.l10n.selectSingleNoteBeforePlaying);
+        showMessage(context.l10n.selectSingleNoteBeforePlaying);
         return;
       }
 
@@ -1425,7 +1419,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     });
 
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
   }
@@ -1546,7 +1540,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       allowStacking: isChordMode || isLayerMode,
     );
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
 
@@ -1564,7 +1558,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     final errorMessage = editorController.changeDuration(durationBeats);
 
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
 
@@ -1638,7 +1632,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     );
 
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
 
@@ -1660,7 +1654,10 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       );
     } catch (_) {
       if (mounted) {
-        showMessage(context.l10n.pianoNotePlaybackFailed);
+        showMessage(
+          context.l10n.pianoNotePlaybackFailed,
+          type: AppSnackBarType.error,
+        );
       }
     }
   }
@@ -1691,7 +1688,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       editorController.selectedDuration,
     );
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
     setState(() {});
@@ -1702,7 +1699,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       editorController.selectedDuration,
     );
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
     setState(() {});
@@ -1713,7 +1710,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       editorController.selectedDuration,
     );
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
     setState(() {});
@@ -1755,7 +1752,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     }
 
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
     if (!changed) {
@@ -1798,6 +1795,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     setState(() {});
     showMessage(
       context.l10n.notesCopied(editorController.clipboardNoteCount),
+      type: AppSnackBarType.success,
     );
   }
 
@@ -1839,7 +1837,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
 
   void applyEditorResult(String? errorMessage) {
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
     setState(updateDirtyState);
@@ -1858,7 +1856,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     final changesSavedNotes = editorController.selectedNoteIds.isNotEmpty;
     final errorMessage = editorController.changeVelocity(value);
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
 
@@ -1924,7 +1922,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       beatUnit: settings.beatUnit,
     );
     if (errorMessage != null) {
-      showMessage(errorMessage);
+      showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
 
@@ -2013,7 +2011,10 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       playbackComposition,
     );
     if (validationError != null) {
-      showMessage(context.l10n.compositionValidationFailed);
+      showMessage(
+        context.l10n.compositionValidationFailed,
+        type: AppSnackBarType.error,
+      );
       return;
     }
 
@@ -2063,7 +2064,10 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       );
     } catch (_) {
       if (mounted) {
-        showMessage(context.l10n.compositionPlaybackFailed);
+        showMessage(
+          context.l10n.compositionPlaybackFailed,
+          type: AppSnackBarType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -2141,7 +2145,10 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       updatedComposition,
     );
     if (validationError != null) {
-      showMessage(context.l10n.compositionValidationFailed);
+      showMessage(
+        context.l10n.compositionValidationFailed,
+        type: AppSnackBarType.error,
+      );
       return;
     }
 
@@ -2187,7 +2194,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       });
 
       Navigator.pop(context, compositionId);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
 
       if (compositionWasSaved) {
@@ -2196,11 +2203,18 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           isDirty = false;
         });
 
-        showMessage(context.l10n.compositionSavedFilesPending);
+        showMessage(
+          error is ProcessingJobException
+              ? '${context.l10n.compositionSaved} ${error.message(context)}'
+              : context.l10n.jobSavedNotQueued,
+        );
 
         Navigator.pop(context, compositionId);
       } else {
-        showMessage(context.l10n.compositionSaveFailed);
+        showMessage(
+          context.l10n.compositionSaveFailed,
+          type: AppSnackBarType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -2252,12 +2266,15 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         savedFingerprint == null || currentFingerprint != savedFingerprint;
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.warning,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(colors: widget.colors, message: message, type: type),
+    );
   }
 }
 

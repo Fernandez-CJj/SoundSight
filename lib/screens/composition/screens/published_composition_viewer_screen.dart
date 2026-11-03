@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:soundsight/constants/constant.dart';
@@ -200,6 +201,7 @@ class _PublishedCompositionViewerScreenState
       if (!widget.composition.hasSightReadingFiles) {
         showMessage(
           context.l10n.publishedSightReadingUnavailable,
+          type: AppSnackBarType.warning,
         );
         return;
       }
@@ -236,6 +238,7 @@ class _PublishedCompositionViewerScreenState
           widget.composition.midiStoragePath.trim().isEmpty) {
         showMessage(
           context.l10n.publishedArFileUnavailable,
+          type: AppSnackBarType.warning,
         );
         return;
       }
@@ -440,7 +443,7 @@ class _PublishedCompositionViewerScreenState
       _ => context.l10n.communityPlaybackFailed,
     };
 
-    showMessage(localizedMessage);
+    showMessage(localizedMessage, type: AppSnackBarType.error);
   }
 
   void updatePlaybackState() {
@@ -449,11 +452,15 @@ class _PublishedCompositionViewerScreenState
     }
   }
 
-  void showMessage(String message) {
+  void showMessage(
+    String message, {
+    AppSnackBarType type = AppSnackBarType.info,
+  }) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      .showLatestSnackBar(
+        appSnackBar(colors: widget.colors, message: message, type: type),
+      );
   }
 }

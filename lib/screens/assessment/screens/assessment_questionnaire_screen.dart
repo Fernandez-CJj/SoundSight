@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
+import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/assessment/assessment_localization.dart';
@@ -79,10 +81,11 @@ class _AssessmentQuestionnaireScreenState
       });
 
       ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.assessmentAnswerEveryQuestion),
+        .showLatestSnackBar(
+          appSnackBar(
+            colors: AppThemeColors.fromDarkMode(widget.isDarkMode),
+            message: context.l10n.assessmentAnswerEveryQuestion,
+            type: AppSnackBarType.warning,
           ),
         );
 
@@ -106,10 +109,11 @@ class _AssessmentQuestionnaireScreenState
       }
 
       ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.assessmentSaveAnswersFailed),
+        .showLatestSnackBar(
+          appSnackBar(
+            colors: AppThemeColors.fromDarkMode(widget.isDarkMode),
+            message: context.l10n.assessmentSaveAnswersFailed,
+            type: AppSnackBarType.error,
           ),
         );
     } finally {
@@ -136,77 +140,77 @@ class _AssessmentQuestionnaireScreenState
           ),
           body: AssessmentPageBody(
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: ListView(
-                      children: [
-                    Text(
-                      themedContext.l10n.assessmentExperienceHeading,
-                      style: const TextStyle(
-                        fontSize: AppTextSizes.screenTitle,
-                        fontWeight: FontWeight.w700,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ListView(
+                    children: [
+                      Text(
+                        themedContext.l10n.assessmentExperienceHeading,
+                        style: const TextStyle(
+                          fontSize: AppTextSizes.screenTitle,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      themedContext.l10n.assessmentExperienceDescription,
-                      style: const TextStyle(
-                        fontSize: AppTextSizes.body,
-                        height: 1.4,
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        themedContext.l10n.assessmentExperienceDescription,
+                        style: const TextStyle(
+                          fontSize: AppTextSizes.body,
+                          height: 1.4,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      themedContext.l10n.assessmentDeadlineContinues,
-                      style: const TextStyle(
-                        fontSize: AppTextSizes.label,
-                        height: 1.4,
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        themedContext.l10n.assessmentDeadlineContinues,
+                        style: const TextStyle(
+                          fontSize: AppTextSizes.label,
+                          height: 1.4,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    for (
-                      var questionIndex = 0;
-                      questionIndex < assessmentQuestionnaireQuestions.length;
-                      questionIndex++
-                    ) ...[
-                      _buildQuestion(
-                        themedContext: themedContext,
-                        questionIndex: questionIndex,
-                        question:
-                            assessmentQuestionnaireQuestions[questionIndex],
-                      ),
-                      if (questionIndex <
-                          assessmentQuestionnaireQuestions.length - 1)
-                        const SizedBox(height: AppSpacing.lg),
-                    ],
+                      const SizedBox(height: AppSpacing.lg),
+                      for (
+                        var questionIndex = 0;
+                        questionIndex < assessmentQuestionnaireQuestions.length;
+                        questionIndex++
+                      ) ...[
+                        _buildQuestion(
+                          themedContext: themedContext,
+                          questionIndex: questionIndex,
+                          question:
+                              assessmentQuestionnaireQuestions[questionIndex],
+                        ),
+                        if (questionIndex <
+                            assessmentQuestionnaireQuestions.length - 1)
+                          const SizedBox(height: AppSpacing.lg),
                       ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 52),
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitQuestionnaire,
-                      child: _isSubmitting
-                          ? SizedBox(
-                              width: AppIconSizes.md,
-                              height: AppIconSizes.md,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Theme.of(
-                                  themedContext,
-                                ).colorScheme.onPrimary,
-                              ),
-                            )
-                          : Text(
-                              themedContext.l10n.continueAction,
-                              textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 52),
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitQuestionnaire,
+                    child: _isSubmitting
+                        ? SizedBox(
+                            width: AppIconSizes.md,
+                            height: AppIconSizes.md,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(
+                                themedContext,
+                              ).colorScheme.onPrimary,
                             ),
-                    ),
+                          )
+                        : Text(
+                            themedContext.l10n.continueAction,
+                            textAlign: TextAlign.center,
+                          ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
           ),
         );
       },

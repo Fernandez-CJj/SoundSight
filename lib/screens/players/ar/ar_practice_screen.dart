@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/delete_swipe_background.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -227,8 +229,7 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
 
     bool isLoading = loadingCalibrationId == calibration.documentId;
     bool loadingAnotherCalibration =
-        isOpeningNewCalibration ||
-        (loadingCalibrationId != null && !isLoading);
+        isOpeningNewCalibration || (loadingCalibrationId != null && !isLoading);
 
     bool deletionDisabled =
         loadingCalibrationId != null ||
@@ -357,35 +358,8 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
     );
   }
 
-  /// Matches the red swipe action used by other dismissible lists.
-  Widget buildDeleteBackground(AppThemeColors colors) {
-    Color destructiveColor = colors.isDarkMode
-        ? const Color(0xFFFF8A80)
-        : const Color(0xFFB3261E);
-
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: destructiveColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.delete_outline_rounded, color: Colors.white),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            context.l10n.delete,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget buildDeleteBackground(AppThemeColors colors) =>
+      DeleteSwipeBackground(colors: colors);
 
   /// Confirms permanent deletion of one saved keyboard calibration.
   Future<bool> confirmDeleteCalibration(
@@ -470,9 +444,7 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
   }
 
   /// Deletes a dismissed calibration and restores it when the write fails.
-  Future<void> dismissCalibration(
-    PianoCalibrationSummary calibration,
-  ) async {
+  Future<void> dismissCalibration(PianoCalibrationSummary calibration) async {
     setState(() {
       deletingCalibrationIds.add(calibration.documentId);
       deletingCalibrationInProgress = true;
@@ -485,8 +457,12 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.pianoSetupDeleted(calibration.name))),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.pianoSetupDeleted(calibration.name),
+          type: AppSnackBarType.success,
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -495,8 +471,12 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
         deletingCalibrationIds.remove(calibration.documentId);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.pianoSetupDeleteFailed)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.pianoSetupDeleteFailed,
+          type: AppSnackBarType.error,
+        ),
       );
     } finally {
       if (mounted) {
@@ -599,14 +579,22 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
         deletingCalibrationIds.clear();
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.allPianoSetupsDeleted)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.allPianoSetupsDeleted,
+          type: AppSnackBarType.success,
+        ),
       );
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.somePianoSetupsDeleteFailed)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.somePianoSetupsDeleteFailed,
+          type: AppSnackBarType.error,
+        ),
       );
     } finally {
       if (mounted) {
@@ -819,9 +807,13 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
           ? context.l10n.songPreparationForArFailed
           : context.l10n.selectedPianoSetupLoadFailed;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: errorMessage,
+          type: AppSnackBarType.error,
+        ),
+      );
     }
   }
 
@@ -874,8 +866,12 @@ class ArPracticeScreenState extends State<ArPracticeScreen> {
         isOpeningNewCalibration = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.songPreparationForArFailed)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: context.l10n.songPreparationForArFailed,
+          type: AppSnackBarType.error,
+        ),
       );
     }
   }

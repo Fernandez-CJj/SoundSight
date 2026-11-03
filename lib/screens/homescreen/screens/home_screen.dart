@@ -1,3 +1,4 @@
+import 'package:soundsight/services/processing_announcements.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ProcessingAnnouncements.navigationReady.value = true;
+    });
 
     isDarkMode = widget.isDarkMode ?? false;
 
@@ -204,9 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> openAddSheet() async {
     final wasUploaded = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => CaptureUploadSheetScreen(
-          isDarkMode: isDarkMode,
-        ),
+        builder: (_) => CaptureUploadSheetScreen(isDarkMode: isDarkMode),
       ),
     );
 

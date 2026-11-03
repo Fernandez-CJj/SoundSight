@@ -14,6 +14,7 @@ from core.musescore_service import trimMp3ToDuration
 def generateCompositionFiles(
     composition,
     authorName,
+    fileSuffix="",
 ):
     usesPerformanceRecording = (
         composition.creationMethod == "recording"
@@ -70,6 +71,7 @@ def generateCompositionFiles(
             mp3Path,
             composition.ownerId,
             composition.id,
+            fileSuffix,
         )
 
         return storagePaths

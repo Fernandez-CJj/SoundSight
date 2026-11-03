@@ -48,7 +48,9 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
       final safeTitle = widget.compositionTitle
           .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
           .trim();
-      final name = safeTitle.isEmpty ? 'SoundSight recording.mp4' : '$safeTitle.mp4';
+      final name = safeTitle.isEmpty
+          ? 'SoundSight recording.mp4'
+          : '$safeTitle.mp4';
       final saved = await videoChannel.invokeMethod<bool>('saveVideo', {
         'path': widget.videoPath,
         'name': name,
@@ -120,24 +122,15 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                           style: TextStyle(color: colors.secondaryTextColor),
                         ),
                         Gap(AppSpacing.sm),
-                        OutlinedButton.icon(
-                          onPressed: isSavingVideo || videoSaved ? null : saveVideo,
+                        OutlinedButton(
+                          onPressed: isSavingVideo || videoSaved
+                              ? null
+                              : saveVideo,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: colors.primaryColor,
                             side: BorderSide(color: colors.borderColor),
                           ),
-                          icon: isSavingVideo
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : Icon(
-                                  videoSaved
-                                      ? Icons.check_rounded
-                                      : Icons.download_rounded,
-                                ),
-                          label: Text(
+                          child: Text(
                             videoSaved
                                 ? context.l10n.recordedVideoSaved
                                 : context.l10n.saveRecordedVideo,
@@ -183,10 +176,12 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: isSavingVideo ? null : () => Navigator.pop(
-                          context,
-                          RecordingCompletionAction.discard,
-                        ),
+                        onPressed: isSavingVideo
+                            ? null
+                            : () => Navigator.pop(
+                                context,
+                                RecordingCompletionAction.discard,
+                              ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: colors.primaryColor,
                           side: BorderSide(color: colors.borderColor),
@@ -200,17 +195,19 @@ class _RecordingCompletionDialogState extends State<RecordingCompletionDialog> {
                     Gap(AppSpacing.sm),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: isSavingVideo ? null : () => Navigator.pop(
-                          context,
-                          RecordingCompletionAction.generate,
+                        onPressed: isSavingVideo
+                            ? null
+                            : () => Navigator.pop(
+                                context,
+                                RecordingCompletionAction.generate,
+                              ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primaryColor,
+                          foregroundColor: colors.backgroundColor,
                         ),
                         child: Text(
                           context.l10n.generate,
                           textAlign: TextAlign.center,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primaryColor,
-                          foregroundColor: colors.backgroundColor,
                         ),
                       ),
                     ),

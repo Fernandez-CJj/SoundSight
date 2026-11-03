@@ -1,6 +1,9 @@
 package com.example.soundsight
 
 import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import android.content.Intent
 import java.io.File
 import io.flutter.embedding.android.FlutterActivity
@@ -14,6 +17,11 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel("processing_results", "Processing results", NotificationManager.IMPORTANCE_HIGH)
+            channel.description = "Conversion and composition file results"
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "soundsight/recorded_video")
             .setMethodCallHandler { call, result ->
                 if (call.method != "saveVideo") {

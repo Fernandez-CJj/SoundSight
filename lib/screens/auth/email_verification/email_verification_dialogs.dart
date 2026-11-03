@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
-
-import '../../../constants/constant.dart';
-import '../../../theme/app_colors.dart';
+import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 
 Future<void> showCancellationRequiresLoginDialog(BuildContext context) async {
   await showDialog<void>(
@@ -33,34 +31,13 @@ void showVerificationMessage(
   bool isError = false,
   IconData icon = Icons.info_outline,
 }) {
-  const errorColor = Color(0xFFDC2626);
   final messenger = ScaffoldMessenger.of(context);
-
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          Icon(icon, color: AppColors.lightSurface),
-          const Gap(AppSpacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: AppColors.lightSurface,
-                fontSize: AppTextSizes.label,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: isError ? errorColor : AppColors.lightPrimary,
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.all(AppSpacing.md),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
+  messenger.showLatestSnackBar(
+    appSnackBar(
+      colors: AppThemeColors.fromDarkMode(false),
+      message: message,
+      type: isError ? AppSnackBarType.error : AppSnackBarType.info,
+      icon: isError ? Icons.error_outline_rounded : icon,
     ),
   );
 }

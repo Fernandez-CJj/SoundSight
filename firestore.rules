@@ -14,6 +14,25 @@ service cloud.firestore {
                 ).data.enabled == true;
     }
 
+    function hasActiveJob(data) {
+      return data.get('activeJobId', null) != null;
+    }
+
+    // Apps discover the current address; only trusted Admin SDK code can set it.
+    match /appConfig/backend {
+      allow get: if isVerifiedUser();
+      allow list, create, update, delete: if false;
+    }
+
+    match /users/{userId}/processingJobs/{jobId} {
+      allow read: if isVerifiedUser() && request.auth.uid == userId;
+      allow create, delete: if false;
+      allow update: if isVerifiedUser()
+                    && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seenAt'])
+                    && request.resource.data.seenAt == request.time;
+    }
+
     function validMusicSheet(data) {
       return data.title is string
              && data.title.size() > 0
@@ -66,6 +85,9 @@ service cloud.firestore {
                'generatedFilesVersion',
                'generationStatus',
                'filesGeneratedAt',
+               'activeJobId',
+               'lastJobStatus',
+               'lastJobError',
                'createdAt',
                'updatedAt'
              ])
@@ -132,6 +154,7 @@ service cloud.firestore {
                  || data.generationStatus in [
                       'pending',
                       'generating',
+                      'queued',
                       'completed',
                       'failed'
                     ])
@@ -1269,11 +1292,13 @@ service cloud.firestore {
       allow read: if isVerifiedUser()
                   && request.auth.uid == userId;
 
-      allow delete: if isVerifiedUser()
+      allow delete: if !hasActiveJob(resource.data)
+                    && isVerifiedUser()
                     && request.auth.uid == userId
                     && resource.data.ownerId == userId;
 
-      allow update: if isVerifiedUser()
+      allow update: if !hasActiveJob(resource.data)
+                    && isVerifiedUser()
                     && request.auth.uid == userId
                     && resource.data.ownerId == userId
                     && request.resource.data.ownerId == userId
@@ -1342,12 +1367,14 @@ service cloud.firestore {
       allow read: if isVerifiedUser()
                   && request.auth.uid == userId;
 
-      allow delete: if isVerifiedUser()
+      allow delete: if !hasActiveJob(resource.data)
+                    && isVerifiedUser()
                     && request.auth.uid == userId
                     && resource.data.ownerId == userId
                     && resource.data.ownerId == request.auth.uid;
 
-      allow update: if isVerifiedUser()
+      allow update: if !hasActiveJob(resource.data)
+                    && isVerifiedUser()
                     && request.auth.uid == userId
                     && resource.data.ownerId == userId
                     && resource.data.ownerId == request.auth.uid

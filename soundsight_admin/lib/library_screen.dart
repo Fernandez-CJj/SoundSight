@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'admin_theme.dart';
+import 'admin_snack_bar.dart';
 
 String _fileName(String location) {
   final uri = Uri.tryParse(location);
@@ -278,10 +279,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   int _generation = 0;
   String? _deletingId;
 
-  void _message(String message) {
+  void _message(String message, {bool isError = false}) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showLatestSnackBar(adminSnackBar(context, message, isError: isError));
   }
 
   Future<void> _edit([MusicPiece? piece]) async {
@@ -298,7 +299,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
       context: context,
       builder: (context) => AdminDialogFrame(
         title: 'Delete music piece?',
-        subtitle: 'Its stored files will be removed too. This cannot be undone.',
+        subtitle:
+            'Its stored files will be removed too. This cannot be undone.',
         maxWidth: 520,
         preferredHeight: 300,
         child: Row(
@@ -344,7 +346,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (mounted) _message('Piece and stored files deleted.');
     } catch (_) {
       if (mounted) {
-        _message('Deletion was incomplete. The piece remains so you can retry.');
+        _message(
+          'Deletion was incomplete. The piece remains so you can retry.',
+          isError: true,
+        );
       }
     } finally {
       if (mounted) setState(() => _deletingId = null);
@@ -357,7 +362,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (!await launchUrl(Uri.parse(url)))
         throw StateError('Could not open file');
     } catch (_) {
-      if (mounted) _message('Could not open the ${kind.label} file.');
+      if (mounted) {
+        _message('Could not open the ${kind.label} file.', isError: true);
+      }
     }
   }
 
@@ -488,8 +495,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                   label: Text(kind.label),
                                   onPressed: piece.fileLocation(kind).isEmpty
                                       ? null
-                                      : () =>
-                                            _openFile(kind, piece.fileLocation(kind)),
+                                      : () => _openFile(
+                                          kind,
+                                          piece.fileLocation(kind),
+                                        ),
                                 ),
                             ],
                           ),
@@ -675,8 +684,8 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
     final explanation = _saving
         ? 'Please keep this dialog open while the files are saved to Firebase.'
         : isEditing
-            ? 'Selected replacements are still on your computer until you save.'
-            : 'Selected files are still on your computer. Press Upload piece to store them.';
+        ? 'Selected replacements are still on your computer until you save.'
+        : 'Selected files are still on your computer. Press Upload piece to store them.';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -688,14 +697,19 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_saving ? Icons.cloud_upload_outlined : Icons.info_outline,
-              color: blue),
+          Icon(
+            _saving ? Icons.cloud_upload_outlined : Icons.info_outline,
+            color: blue,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(heading, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  heading,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 4),
                 Text(explanation, style: TextStyle(color: colors.muted)),
                 if (_saving) ...[
@@ -715,7 +729,9 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
     final storedLocation = widget.existing?.fileLocation(kind) ?? '';
     final stored = selected == null && storedLocation.isNotEmpty;
     final transferred = _uploadedInAttempt.contains(kind);
-    final uploading = _saving && !transferred &&
+    final uploading =
+        _saving &&
+        !transferred &&
         (_activity?.startsWith('Uploading ${kind.label}') ?? false);
     final blue = Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFF60A5FA)
@@ -723,27 +739,41 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
     final green = Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFF4ADE80)
         : const Color(0xFF15803D);
-    final accent = stored ? green : selected == null ? colors.muted : blue;
+    final accent = stored
+        ? green
+        : selected == null
+        ? colors.muted
+        : blue;
     late final String status;
     if (transferred) {
       status = 'Transferred · Finishing save';
     } else if (uploading) {
       status = 'Uploading now…';
     } else if (selected != null) {
-      status = _saving ? 'Waiting to upload' : 'Ready to upload · Not saved yet';
+      status = _saving
+          ? 'Waiting to upload'
+          : 'Ready to upload · Not saved yet';
     } else if (stored) {
       status = 'Already stored in library';
     } else {
       status = 'Required · No file selected';
     }
-    final fileName = selected?.name ??
+    final fileName =
+        selected?.name ??
         (stored ? _fileName(storedLocation) : kind.extensions.join(', '));
-    final label = selected != null ? 'Change' : stored ? 'Replace' : 'Choose';
+    final label = selected != null
+        ? 'Change'
+        : stored
+        ? 'Replace'
+        : 'Choose';
     final fileInfo = Row(
       children: [
         Icon(
-          stored ? Icons.check_circle : selected == null
-              ? Icons.upload_file_outlined : Icons.schedule_outlined,
+          stored
+              ? Icons.check_circle
+              : selected == null
+              ? Icons.upload_file_outlined
+              : Icons.schedule_outlined,
           color: accent,
           size: 28,
         ),
@@ -752,16 +782,22 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(kind.label,
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                kind.label,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 2),
-              Text(status,
-                  style: TextStyle(color: accent, fontWeight: FontWeight.w600)),
+              Text(
+                status,
+                style: TextStyle(color: accent, fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 2),
-              Text(fileName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: colors.muted, fontSize: 12)),
+              Text(
+                fileName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: colors.muted, fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -779,18 +815,16 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
             : colors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selected != null || stored ? accent.withAlpha(90) : colors.border,
+          color: selected != null || stored
+              ? accent.withAlpha(90)
+              : colors.border,
         ),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) => constraints.maxWidth < 430
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  fileInfo,
-                  const SizedBox(height: 12),
-                  chooseButton,
-                ],
+                children: [fileInfo, const SizedBox(height: 12), chooseButton],
               )
             : Row(
                 children: [
@@ -814,8 +848,8 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
         title: _cleanupWarning
             ? 'Piece saved'
             : widget.existing == null
-                ? 'Upload complete'
-                : 'Changes saved',
+            ? 'Upload complete'
+            : 'Changes saved',
         subtitle: _cleanupWarning
             ? 'The library entry is saved, but some old files need attention.'
             : 'Your music library is up to date.',
@@ -863,7 +897,9 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
       );
     }
     return AdminDialogFrame(
-      title: widget.existing == null ? 'Upload music piece' : 'Edit music piece',
+      title: widget.existing == null
+          ? 'Upload music piece'
+          : 'Edit music piece',
       subtitle: widget.existing == null
           ? 'Select all four files, then upload them to the library.'
           : 'Stored files are marked in green. New selections are not saved yet.',
@@ -905,12 +941,17 @@ class _PieceFormDialogState extends State<PieceFormDialog> {
         ),
         FilledButton.icon(
           onPressed: _saving ? null : _save,
-          icon: Icon(widget.existing == null
-              ? Icons.cloud_upload_outlined
-              : Icons.save_outlined),
+          icon: Icon(
+            widget.existing == null
+                ? Icons.cloud_upload_outlined
+                : Icons.save_outlined,
+          ),
           label: Text(
-            _saving ? 'Saving…'
-                : widget.existing == null ? 'Upload piece' : 'Save changes',
+            _saving
+                ? 'Saving…'
+                : widget.existing == null
+                ? 'Upload piece'
+                : 'Save changes',
           ),
         ),
       ],

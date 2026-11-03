@@ -1,5 +1,12 @@
 # Backend Reference
 
+> Conversion and composition generation now use durable background jobs.
+> See [JOBS_SETUP.md](JOBS_SETUP.md) for the current HTTP 202 protocol, worker,
+> queue limits, authentication, Android notifications, and rollout instructions.
+> The rendering details below remain useful, but synchronous request/response
+> and unauthenticated-route descriptions are historical. All feature routes
+> require a verified Firebase user. Publishing remains outside the job queue.
+
 ## Purpose
 
 The backend is a FastAPI server that supports two SoundSight features:

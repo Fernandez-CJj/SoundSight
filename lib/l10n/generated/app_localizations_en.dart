@@ -322,7 +322,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String translateDescription(String title) {
-    return 'SoundSight will create a playable digital version of \"$title\". This may take a few minutes.';
+    return 'SoundSight will turn \"$title\" into music you can play and practise with. This may take a few minutes.';
   }
 
   @override
@@ -336,7 +336,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get translationLoadingDescription =>
-      'SoundSight is reading the notes. Please wait and keep the app open.';
+      'SoundSight is reading the notes. You can leave this screen. We will notify you when it finishes.';
 
   @override
   String get translationComplete => 'Conversion complete';
@@ -397,7 +397,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get translationStartDescription =>
-      'Create a playable digital version for SoundSight\'s practice modes.';
+      'Turn your sheet into music you can play and practise with in SoundSight.';
 
   @override
   String get reconvert => 'Convert Again';
@@ -954,7 +954,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get compositionSavedFilesReady =>
-      'Composition saved and music files are ready.';
+      'Composition saved and ready to view and play.';
 
   @override
   String get compositionSavedFilesPending =>
@@ -993,7 +993,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recording => 'Recording';
 
   @override
-  String get preparingMusicFiles => 'Preparing your music files';
+  String get preparingMusicFiles => 'Preparing your sheet music and sound';
 
   @override
   String get musicFilesNeedUpdating => 'Music files need updating';
@@ -1003,11 +1003,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get musicFilesOutOfDateDescription =>
-      'Your changes are saved, but the available files contain an older version.';
+      'Your changes are saved. Prepare your music again to see and hear them.';
 
   @override
   String get musicFilesNotReadyDescription =>
-      'Your sheet music and playback files are not ready yet.';
+      'Your sheet music and sound are not ready yet.';
 
   @override
   String get view => 'View';
@@ -1162,7 +1162,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get musicFilesReadyDescription =>
-      'Your sheet music and playback files are ready.';
+      'Your sheet music is ready to view and play.';
 
   @override
   String musicFilesPrepared(String date) {
@@ -1170,7 +1170,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get retryGeneration => 'Retry Generation';
+  String get retryGeneration => 'Prepare music';
 
   @override
   String get checkingPublicationStatus => 'Checking publication status...';
@@ -1220,7 +1220,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prepareFilesBeforePublishing =>
-      'Prepare the sheet music and playback files before publishing.';
+      'Prepare your sheet music and sound before sharing your composition.';
 
   @override
   String get compositionUnpublished => 'Composition unpublished successfully.';
@@ -1250,7 +1250,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prepareLatestFilesBeforeAr =>
-      'Prepare the latest music files before starting AR Practice.';
+      'Prepare your updated music before starting AR Practice.';
 
   @override
   String get generatedMidiMissing =>
@@ -1258,11 +1258,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prepareLatestFilesBeforeSightReading =>
-      'Prepare the latest music files before starting Sight Reading.';
+      'Prepare your updated music before starting Sight Reading.';
 
   @override
   String get generatedPracticeFilesMissing =>
-      'The files needed for practice are not ready.';
+      'Your music is not ready for practice yet.';
 
   @override
   String publishUpdateQuestion(String title) {
@@ -1276,11 +1276,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get publishUpdateDescription =>
-      'A new published version and PDF will be created. Previous versions, likes, comments, and saves will remain.';
+      'Your updated sheet music will be shared. Earlier versions, likes, comments, and saves will stay.';
 
   @override
   String get publishCompositionDescription =>
-      'A PDF music sheet will be created and shared with other SoundSight users.';
+      'Your sheet music will be shared with other SoundSight users.';
 
   @override
   String get unpublishCompositionQuestion => 'Unpublish composition?';
@@ -1298,10 +1298,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unpublishingCompositionDescription =>
-      'Removing every published version and PDF. Please wait.';
+      'Removing your shared sheet music from the community. Please wait.';
 
   @override
-  String get generatedPreview => 'Generated preview';
+  String get generatedPreview => 'Music preview';
 
   @override
   String get generatedPreviewDescription =>
@@ -1317,8 +1317,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playingComposition => 'Playing your composition';
 
   @override
-  String get listenGeneratedComposition =>
-      'Listen to the generated composition';
+  String get listenGeneratedComposition => 'Listen to your composition';
 
   @override
   String get sheetMusic => 'Sheet music';
@@ -1785,7 +1784,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get switchCamera => 'Switch camera';
 
   @override
-  String get generatingCompositionFiles => 'Generating composition files...';
+  String get generatingCompositionFiles =>
+      'Preparing your sheet music and sound...';
 
   @override
   String get keepScreenOpen => 'Please keep this screen open.';
@@ -1866,7 +1866,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filesNotGeneratedDescription =>
-      'Your composition was saved, but its sheet music and playback are not ready. You can try again.';
+      'Your composition is saved. We couldn\'t finish preparing its sheet music and sound. You can try again.';
 
   @override
   String get finish => 'Finish';
@@ -1901,7 +1901,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calculatedMeasures => 'Calculated measures';
 
   @override
-  String get generate => 'Generate';
+  String get generate => 'Prepare music';
 
   @override
   String get exploreMusic => 'Explore music';
@@ -5190,7 +5190,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get audioMidiLoadingDescription =>
-      'Keep this screen open while SoundSight reads the recording.';
+      'You can leave this screen. We will notify you when it finishes.';
 
   @override
   String get audioMidiSuccessDescription =>
@@ -5199,4 +5199,85 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get audioWaitBeforeDelete =>
       'Wait for the recording to finish converting before deleting it.';
+
+  @override
+  String get backendServiceUnavailable =>
+      'The service is currently unavailable. Please try again later.';
+
+  @override
+  String get jobSubmissionUnconfirmedTitle => 'Couldn\'t confirm your request';
+
+  @override
+  String get jobCancellingTitle => 'Cancelling...';
+
+  @override
+  String get jobSubmittingTitle => 'Sending request';
+
+  @override
+  String get jobSubmittingDescription => 'Sending your request. Please wait.';
+
+  @override
+  String get jobQueuedTitle => 'Waiting to start';
+
+  @override
+  String get jobProcessingTitle => 'Preparing your music';
+
+  @override
+  String get jobFailedTitle => 'Couldn\'t finish';
+
+  @override
+  String get jobFailedDescription =>
+      'Your original music and any earlier results are safe. You can try again.';
+
+  @override
+  String get jobLeaveScreen =>
+      'You can leave this screen. We will notify you when it finishes.';
+
+  @override
+  String get jobCancelQueued => 'Cancel before it starts';
+
+  @override
+  String get jobAlreadyActive =>
+      'This music is already waiting or being prepared. Please wait for it to finish.';
+
+  @override
+  String get jobUpdateRequired => 'Update SoundSight before trying again.';
+
+  @override
+  String get jobQueueFull =>
+      'We\'re busy, or you already have two requests in progress. Please try again later.';
+
+  @override
+  String get jobWorkerUnavailable =>
+      'The service is currently unavailable. Your saved music is safe. Please try again later.';
+
+  @override
+  String get jobSubmissionUnconfirmed =>
+      'We couldn\'t confirm whether your request started. Check your music before trying again.';
+
+  @override
+  String get jobSavedNotQueued =>
+      'Composition saved. We couldn\'t start preparing your music. Please try again.';
+
+  @override
+  String get jobAccepted =>
+      'Your request is received. You can keep using the app while you wait.';
+
+  @override
+  String get jobCompletedTitle => 'Your result is ready';
+
+  @override
+  String get jobFailedNotification =>
+      'We couldn\'t finish preparing your music. Open it to try again.';
+
+  @override
+  String get jobOpen => 'Open';
+
+  @override
+  String get jobItemUnavailable =>
+      'We couldn\'t find this music in your account. It may have been deleted.';
+
+  @override
+  String get jobItemLocked =>
+      'You can edit or delete this music after the current request finishes or is cancelled.';
 }

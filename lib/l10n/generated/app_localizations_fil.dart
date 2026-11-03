@@ -325,7 +325,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String translateDescription(String title) {
-    return 'Gagawa ang SoundSight ng digital na bersyon ng \"$title\" na maaaring patugtugin. Maaaring tumagal ito nang ilang minuto.';
+    return 'Gagawing musikang maaaring patugtugin at gamitin sa pagsasanay ang \"$title\". Maaaring tumagal ito nang ilang minuto.';
   }
 
   @override
@@ -339,7 +339,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get translationLoadingDescription =>
-      'Binabasa ng SoundSight ang mga nota. Mangyaring maghintay at panatilihing bukas ang app.';
+      'Binabasa ng SoundSight ang mga nota. Maaari kang umalis sa screen na ito. Aabisuhan ka kapag natapos na.';
 
   @override
   String get translationComplete => 'Tapos na ang pag-convert';
@@ -400,7 +400,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get translationStartDescription =>
-      'Gumawa ng digital na bersyong maaaring gamitin sa mga practice mode ng SoundSight.';
+      'Gawing musikang maaaring patugtugin at gamitin sa pagsasanay sa SoundSight ang iyong piyesa.';
 
   @override
   String get reconvert => 'I-convert Muli';
@@ -966,7 +966,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get compositionSavedFilesReady =>
-      'Na-save ang komposisyon at handa na ang mga music file.';
+      'Na-save ang komposisyon at handa nang tingnan at patugtugin.';
 
   @override
   String get compositionSavedFilesPending =>
@@ -1005,7 +1005,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get recording => 'Pagre-record';
 
   @override
-  String get preparingMusicFiles => 'Inihahanda ang iyong mga music file';
+  String get preparingMusicFiles => 'Inihahanda ang iyong piyesa at tunog';
 
   @override
   String get musicFilesNeedUpdating => 'Kailangang i-update ang mga music file';
@@ -1015,11 +1015,11 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get musicFilesOutOfDateDescription =>
-      'Na-save ang iyong mga pagbabago, ngunit mas lumang bersyon ang nasa mga available na file.';
+      'Na-save ang iyong mga pagbabago. Ihanda muli ang musika para makita at marinig ang mga ito.';
 
   @override
   String get musicFilesNotReadyDescription =>
-      'Hindi pa handa ang iyong sheet music at mga playback file.';
+      'Hindi pa handa ang iyong piyesa at tunog.';
 
   @override
   String get view => 'Tingnan';
@@ -1175,7 +1175,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get musicFilesReadyDescription =>
-      'Handa na ang iyong sheet music at mga playback file.';
+      'Handa nang tingnan at patugtugin ang iyong piyesa.';
 
   @override
   String musicFilesPrepared(String date) {
@@ -1183,7 +1183,7 @@ class AppLocalizationsFil extends AppLocalizations {
   }
 
   @override
-  String get retryGeneration => 'Subukang Ihanda Muli';
+  String get retryGeneration => 'Ihanda ang musika';
 
   @override
   String get checkingPublicationStatus =>
@@ -1233,7 +1233,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get prepareFilesBeforePublishing =>
-      'Ihanda ang sheet music at mga playback file bago maglathala.';
+      'Ihanda ang iyong piyesa at tunog bago ibahagi ang komposisyon.';
 
   @override
   String get compositionUnpublished =>
@@ -1265,7 +1265,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get prepareLatestFilesBeforeAr =>
-      'Ihanda ang pinakabagong mga music file bago simulan ang AR Practice.';
+      'Ihanda ang iyong binagong musika bago simulan ang AR Practice.';
 
   @override
   String get generatedMidiMissing =>
@@ -1273,11 +1273,11 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get prepareLatestFilesBeforeSightReading =>
-      'Ihanda ang pinakabagong mga music file bago simulan ang Pagbabasa ng Nota.';
+      'Ihanda ang iyong binagong musika bago simulan ang Pagbabasa ng Nota.';
 
   @override
   String get generatedPracticeFilesMissing =>
-      'Hindi pa handa ang mga file na kailangan para sa pagsasanay.';
+      'Hindi pa handa ang iyong musika para sa pagsasanay.';
 
   @override
   String publishUpdateQuestion(String title) {
@@ -1291,11 +1291,11 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get publishUpdateDescription =>
-      'Gagawa ng bagong nailathalang bersyon at PDF. Mananatili ang mga dating bersyon, like, komento, at save.';
+      'Ibabahagi ang iyong binagong piyesa. Mananatili ang mga dating bersyon, like, komento, at save.';
 
   @override
   String get publishCompositionDescription =>
-      'Gagawa ng PDF music sheet at ibabahagi ito sa ibang user ng SoundSight.';
+      'Ibabahagi ang iyong piyesa sa ibang gumagamit ng SoundSight.';
 
   @override
   String get unpublishCompositionQuestion =>
@@ -1315,10 +1315,10 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get unpublishingCompositionDescription =>
-      'Inaalis ang lahat ng nailathalang bersyon at PDF. Mangyaring maghintay.';
+      'Inaalis ang iyong ibinahaging piyesa sa komunidad. Sandali lang.';
 
   @override
-  String get generatedPreview => 'Nabuong preview';
+  String get generatedPreview => 'Tingnan ang musika';
 
   @override
   String get generatedPreviewDescription =>
@@ -1334,7 +1334,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get playingComposition => 'Pinapatugtog ang iyong komposisyon';
 
   @override
-  String get listenGeneratedComposition => 'Pakinggan ang nabuong komposisyon';
+  String get listenGeneratedComposition => 'Pakinggan ang iyong komposisyon';
 
   @override
   String get sheetMusic => 'Sheet music';
@@ -1808,7 +1808,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get generatingCompositionFiles =>
-      'Ginagawa ang mga file ng komposisyon...';
+      'Inihahanda ang iyong piyesa at tunog...';
 
   @override
   String get keepScreenOpen => 'Panatilihing bukas ang screen na ito.';
@@ -1891,7 +1891,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get filesNotGeneratedDescription =>
-      'Na-save ang iyong komposisyon, ngunit hindi pa handa ang piyesa at audio nito. Maaari mong subukan muli.';
+      'Na-save ang iyong komposisyon. Hindi natapos ang paghahanda ng piyesa at tunog nito. Maaari mong subukan muli.';
 
   @override
   String get finish => 'Tapusin';
@@ -1926,7 +1926,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get calculatedMeasures => 'Nakalkulang mga measure';
 
   @override
-  String get generate => 'Gawin';
+  String get generate => 'Ihanda ang musika';
 
   @override
   String get exploreMusic => 'Tuklasin ang musika';
@@ -5254,7 +5254,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get audioMidiLoadingDescription =>
-      'Panatilihing bukas ang screen habang binabasa ng SoundSight ang recording.';
+      'Maaari kang umalis sa screen na ito. Aabisuhan ka kapag natapos na.';
 
   @override
   String get audioMidiSuccessDescription =>
@@ -5263,4 +5263,87 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get audioWaitBeforeDelete =>
       'Hintaying matapos ang pag-convert ng recording bago ito burahin.';
+
+  @override
+  String get backendServiceUnavailable =>
+      'Hindi magagamit ang serbisyo sa ngayon. Pakisubukan ulit mamaya.';
+
+  @override
+  String get jobSubmissionUnconfirmedTitle =>
+      'Hindi makumpirma ang iyong hiling';
+
+  @override
+  String get jobCancellingTitle => 'Kinakansela...';
+
+  @override
+  String get jobSubmittingTitle => 'Ipinapadala ang hiling';
+
+  @override
+  String get jobSubmittingDescription =>
+      'Ipinapadala ang iyong hiling. Sandali lang.';
+
+  @override
+  String get jobQueuedTitle => 'Naghihintay na magsimula';
+
+  @override
+  String get jobProcessingTitle => 'Inihahanda ang iyong musika';
+
+  @override
+  String get jobFailedTitle => 'Hindi natapos';
+
+  @override
+  String get jobFailedDescription =>
+      'Ligtas ang orihinal mong musika at anumang dating resulta. Maaari mong subukan muli.';
+
+  @override
+  String get jobLeaveScreen =>
+      'Maaari kang umalis sa screen na ito. Aabisuhan ka kapag natapos na.';
+
+  @override
+  String get jobCancelQueued => 'Kanselahin bago magsimula';
+
+  @override
+  String get jobAlreadyActive =>
+      'Naghihintay o inihahanda na ang musikang ito. Hintayin itong matapos.';
+
+  @override
+  String get jobUpdateRequired => 'I-update ang SoundSight bago subukang muli.';
+
+  @override
+  String get jobQueueFull =>
+      'Maraming gumagamit ngayon, o mayroon ka nang dalawang hiling na hindi pa tapos. Pakisubukan ulit mamaya.';
+
+  @override
+  String get jobWorkerUnavailable =>
+      'Hindi magagamit ang serbisyo sa ngayon. Ligtas ang na-save mong musika. Pakisubukan ulit mamaya.';
+
+  @override
+  String get jobSubmissionUnconfirmed =>
+      'Hindi namin makumpirma kung nagsimula ang iyong hiling. Tingnan ang iyong musika bago subukang muli.';
+
+  @override
+  String get jobSavedNotQueued =>
+      'Na-save ang komposisyon. Hindi masimulan ang paghahanda ng iyong musika. Pakisubukan muli.';
+
+  @override
+  String get jobAccepted =>
+      'Natanggap ang iyong hiling. Maaari mo nang gamitin ang ibang bahagi ng app habang naghihintay.';
+
+  @override
+  String get jobCompletedTitle => 'Handa na ang resulta';
+
+  @override
+  String get jobFailedNotification =>
+      'Hindi namin natapos ang paghahanda ng iyong musika. Buksan ito para subukang muli.';
+
+  @override
+  String get jobOpen => 'Buksan';
+
+  @override
+  String get jobItemUnavailable =>
+      'Hindi makita ang musikang ito sa iyong account. Maaaring nabura na ito.';
+
+  @override
+  String get jobItemLocked =>
+      'Maaari mong baguhin o burahin ang musikang ito kapag natapos o nakansela na ang kasalukuyang hiling.';
 }

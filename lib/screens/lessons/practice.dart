@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -621,9 +622,11 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
     if (stage.number == _practiceLevel) {
       await _savePassedStage(stage.number);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.lessonStageReplayComplete(stage.number)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: AppThemeColors.fromDarkMode(_isDarkMode),
+          message: context.l10n.lessonStageReplayComplete(stage.number),
+          type: AppSnackBarType.success,
         ),
       );
     }
@@ -672,19 +675,23 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
         _pendingPassedStage = null;
       });
       _scrollToCurrentStage();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            level == 17
-                ? context.l10n.lessonAllStagesCompleteMessage
-                : context.l10n.lessonStageUnlocked(level),
-          ),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: AppThemeColors.fromDarkMode(_isDarkMode),
+          message: level == 17
+              ? context.l10n.lessonAllStagesCompleteMessage
+              : context.l10n.lessonStageUnlocked(level),
+          type: AppSnackBarType.success,
         ),
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.lessonProgressSaveFailed)),
+      ScaffoldMessenger.of(context).showLatestSnackBar(
+        appSnackBar(
+          colors: AppThemeColors.fromDarkMode(_isDarkMode),
+          message: context.l10n.lessonProgressSaveFailed,
+          type: AppSnackBarType.error,
+        ),
       );
     } finally {
       if (mounted) setState(() => _savingProgress = false);

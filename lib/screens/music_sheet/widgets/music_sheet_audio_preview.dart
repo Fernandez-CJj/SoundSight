@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
@@ -408,12 +409,11 @@ class _MusicSheetAudioPreviewState extends State<MusicSheetAudioPreview> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            message.isEmpty ? context.l10n.audioPlaybackError : message,
-          ),
+      .showLatestSnackBar(
+        appSnackBar(
+          colors: widget.colors,
+          message: message.isEmpty ? context.l10n.audioPlaybackError : message,
+          type: AppSnackBarType.error,
         ),
       );
   }

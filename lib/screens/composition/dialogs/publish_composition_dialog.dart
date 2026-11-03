@@ -114,9 +114,7 @@ class PublishCompositionDialog extends StatelessWidget {
                 ),
                 const Gap(AppSpacing.sm),
                 buildInformationRow(
-                  label: context.l10n.noteLabel(
-                    composition.playableNoteCount,
-                  ),
+                  label: context.l10n.noteLabel(composition.playableNoteCount),
                   value: '${composition.playableNoteCount}',
                 ),
               ],
@@ -137,14 +135,10 @@ class PublishCompositionDialog extends StatelessWidget {
             ),
           ),
         ),
-        ElevatedButton.icon(
+        ElevatedButton(
           onPressed: () {
             Navigator.pop(context, true);
           },
-          icon: const Icon(Icons.publish_rounded, size: AppIconSizes.sm),
-          label: Text(
-            isUpdate ? context.l10n.publishUpdate : context.l10n.publish,
-          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
@@ -152,6 +146,9 @@ class PublishCompositionDialog extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
+          ),
+          child: Text(
+            isUpdate ? context.l10n.publishUpdate : context.l10n.publish,
           ),
         ),
       ],

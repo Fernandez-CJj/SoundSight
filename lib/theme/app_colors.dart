@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  // Destructive swipe actions stay red with readable white content in either theme.
+  static const Color destructive = Color(0xFFDC2626);
+  static const Color onDestructive = Color(0xFFFFFFFF);
+
   // Light Option A
   static const Color lightBackground = Color.fromARGB(255, 243, 243, 243);
   static const Color lightSurface = Color(0xFFFFFFFF);

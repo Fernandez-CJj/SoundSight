@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/flyaway_practice_test_screen.dart';
+import 'screens/flyaway_practice_screen.dart';
 
 /// Introduces the standalone Flyaway practice prototype.
 class FlyawayScreen extends StatelessWidget {
@@ -45,7 +45,7 @@ class FlyawayScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const FlyawayPracticeTestScreen(),
+                      builder: (_) => const FlyawayPracticeScreen(),
                     ),
                   );
                 },
