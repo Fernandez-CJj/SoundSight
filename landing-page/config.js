@@ -1,6 +1,6 @@
-// Public download settings for the APK shared through Google Drive.
+// Public download settings for the APK hosted in GitHub Releases.
 window.SOUNDSIGHT_CONFIG = Object.freeze({
-  downloadUrl: "https://drive.google.com/file/d/1olYY1-Qepd5BBajOY9NOo76BDIA_O1ry/view?usp=sharing",
+  downloadUrl: "https://github.com/Fernandez-CJj/SoundSight/releases/download/v1.0.0/app-release.apk",
   version: "1.0.0",
   minimumAndroid: "7.0",
   fileSizeBytes: 376840828,
