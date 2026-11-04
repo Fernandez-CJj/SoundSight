@@ -16,7 +16,7 @@ python -m http.server 4173 --bind 127.0.0.1
 
 - Three always-visible practice-mode cards, side by side on desktop and stacked
   on smaller screens, with every preview visible without clicking.
-- Download panel with version, Android requirement, file size, and checksum.
+- Download panel with version, Android requirement, and file size.
 - Native modal behavior: focus containment, Escape, close button, backdrop click,
   and focus restoration.
 - Installation guide links, section navigation, and native expandable FAQs.

@@ -230,10 +230,6 @@ details[open] .faq-plus::after { transform: rotate(90deg); }
 .dialog-download, .button-disabled { width: 100%; }
 .button-disabled { background: var(--background); color: var(--primary); border-color: var(--input-border); }
 .dialog-guide { width: 100%; justify-content: center; margin-top: 9px; font-size: 12px; }
-.checksum-details { margin-top: 17px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 11px; }
-.checksum-details summary { cursor: pointer; padding-block: 12px; }
-.checksum-details p { color: var(--secondary); margin-bottom: 8px; }
-.checksum-details code { display: block; overflow-wrap: anywhere; line-height: 1.9; }
 .noscript-note { margin: 16px; border: 1px solid var(--primary); padding: 16px; font-size: 14px; }
 @media (min-width: 1500px) { h1 { font-size: 71px; } }
 @media (max-width: 1100px) {

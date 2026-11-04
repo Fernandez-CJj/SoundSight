@@ -10,7 +10,6 @@
   setText("[data-version]", config.version);
   setText("[data-android]", config.minimumAndroid);
   setText("[data-file-size]", `${Math.round(config.fileSizeBytes / 1000000)} MB`);
-  setText("[data-checksum]", config.sha256);
 
   const dialog = document.getElementById("download-dialog");
   let returnFocusTarget;
