@@ -12,48 +12,6 @@
   setText("[data-file-size]", `${Math.round(config.fileSizeBytes / 1000000)} MB`);
   setText("[data-checksum]", config.sha256);
 
-  // Keep the tab orientation and keyboard controls consistent with the layout.
-  const tablist = document.querySelector('[role="tablist"]');
-  const tabs = [...tablist.querySelectorAll('[role="tab"]')];
-  const horizontalTabs = window.matchMedia("(max-width: 800px)");
-  const updateOrientation = () => {
-    tablist.setAttribute("aria-orientation", horizontalTabs.matches ? "horizontal" : "vertical");
-  };
-  updateOrientation();
-  horizontalTabs.addEventListener("change", updateOrientation);
-
-  const selectTab = (selectedTab, moveFocus = false) => {
-    tabs.forEach((tab) => {
-      const isSelected = tab === selectedTab;
-      tab.setAttribute("aria-selected", String(isSelected));
-      tab.tabIndex = isSelected ? 0 : -1;
-      document.getElementById(tab.getAttribute("aria-controls")).hidden = !isSelected;
-    });
-    if (moveFocus) selectedTab.focus();
-  };
-  tabs.forEach((tab, index) => {
-    tab.addEventListener("click", () => selectTab(tab));
-    tab.addEventListener("keydown", (event) => {
-      const previousKey = horizontalTabs.matches ? "ArrowLeft" : "ArrowUp";
-      const nextKey = horizontalTabs.matches ? "ArrowRight" : "ArrowDown";
-      let nextIndex;
-      if (event.key === previousKey) nextIndex = (index + tabs.length - 1) % tabs.length;
-      else if (event.key === nextKey) nextIndex = (index + 1) % tabs.length;
-      else if (event.key === "Home") nextIndex = 0;
-      else if (event.key === "End") nextIndex = tabs.length - 1;
-      else return;
-      event.preventDefault();
-      selectTab(tabs[nextIndex], true);
-    });
-  });
-
-  // Open the native disclosure before following an in-page link to the guide.
-  document.querySelectorAll("[data-open-ar-guide]").forEach((link) => {
-    link.addEventListener("click", () => {
-      document.getElementById("ar-setup").open = true;
-    });
-  });
-
   const dialog = document.getElementById("download-dialog");
   let returnFocusTarget;
   document.querySelectorAll("[data-open-download]").forEach((button) => {
@@ -93,52 +51,6 @@
     pointerStartedOutside = false;
   });
 
-  // Screenshot links still open the original file when JavaScript is unavailable.
-  const screenshotDialog = document.getElementById("screenshot-dialog");
-  const screenshotImage = document.getElementById("screenshot-image");
-  const sourceImages = new Map([...document.querySelectorAll("[data-open-screenshot] img")]
-    .map((image) => [image.getAttribute("src"), image]));
-  let screenshotTrigger;
-  document.querySelectorAll("[data-open-screenshot]").forEach((link) => {
-    if (typeof screenshotDialog.showModal !== "function") return;
-    link.setAttribute("aria-haspopup", "dialog");
-    link.setAttribute("aria-controls", screenshotDialog.id);
-    link.addEventListener("click", (event) => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      event.preventDefault();
-      screenshotTrigger = link;
-      const path = link.getAttribute("href");
-      const original = sourceImages.get(path);
-      document.getElementById("screenshot-title").textContent = link.dataset.previewTitle;
-      screenshotImage.src = path;
-      screenshotImage.alt = original?.alt || link.dataset.previewTitle;
-      screenshotImage.width = Number(original?.getAttribute("width")) || 1080;
-      screenshotImage.height = Number(original?.getAttribute("height")) || 2400;
-      screenshotDialog.showModal();
-      document.body.classList.add("dialog-open");
-    });
-  });
-  document.querySelector("[data-close-screenshot]").addEventListener("click", () => screenshotDialog.close());
-  screenshotDialog.addEventListener("close", () => {
-    document.body.classList.remove("dialog-open");
-    screenshotTrigger?.focus({ preventScroll: true });
-  });
-  let screenshotPointerOutside = false;
-  const isOutsideScreenshot = (event) => {
-    const rect = screenshotDialog.getBoundingClientRect();
-    return event.clientX < rect.left || event.clientX > rect.right ||
-      event.clientY < rect.top || event.clientY > rect.bottom;
-  };
-  screenshotDialog.addEventListener("pointerdown", (event) => {
-    screenshotPointerOutside = event.target === screenshotDialog && isOutsideScreenshot(event);
-  });
-  screenshotDialog.addEventListener("click", (event) => {
-    if (screenshotPointerOutside && event.target === screenshotDialog && isOutsideScreenshot(event)) {
-      screenshotDialog.close();
-    }
-    screenshotPointerOutside = false;
-  });
-
   // Empty URLs deliberately render an honest UI preview, never a broken download.
   // This can be connected later without changing any download button markup.
   let downloadUrl;
@@ -152,7 +64,7 @@
     link.hidden = false;
     document.getElementById("download-unavailable").hidden = true;
     document.getElementById("download-status").textContent =
-      "Download the APK on your Android device, then follow the installation guide. This app is installed outside Google Play.";
+      "Save the app file on your Android phone, then follow the install steps. You install it without Google Play.";
   }
 
   // Indicate the section being read without interfering with native anchor links.
@@ -174,16 +86,57 @@
     sections.forEach((section) => observer.observe(section));
   }
 
+  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  // Native scrolling works without JavaScript; controls add one-card navigation.
+  const testimonials = document.getElementById("testimonials-list");
+  const previousReview = document.querySelector("[data-testimonial-previous]");
+  const nextReview = document.querySelector("[data-testimonial-next]");
+  if (testimonials && previousReview && nextReview) {
+    document.querySelector("[data-testimonial-controls]").hidden = false;
+    const updateReviewControls = () => {
+      const end = Math.max(0, testimonials.scrollWidth - testimonials.clientWidth);
+      previousReview.disabled = testimonials.scrollLeft <= 1;
+      nextReview.disabled = testimonials.scrollLeft >= end - 1;
+    };
+    const scrollReviews = (direction) => {
+      const card = testimonials.firstElementChild;
+      if (!card) return;
+      const gap = parseFloat(window.getComputedStyle(testimonials).columnGap) || 0;
+      testimonials.scrollBy({
+        left: direction * (card.getBoundingClientRect().width + gap),
+        behavior: motionPreference.matches ? "auto" : "smooth",
+      });
+    };
+    previousReview.addEventListener("click", () => scrollReviews(-1));
+    nextReview.addEventListener("click", () => scrollReviews(1));
+    testimonials.addEventListener("scroll", updateReviewControls, { passive: true });
+    testimonials.addEventListener("keydown", (event) => {
+      if (event.target !== testimonials || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        event.preventDefault();
+        scrollReviews(event.key === "ArrowRight" ? 1 : -1);
+      } else if (event.key === "Home" || event.key === "End") {
+        event.preventDefault();
+        testimonials.scrollTo({
+          left: event.key === "Home" ? 0 : testimonials.scrollWidth - testimonials.clientWidth,
+          behavior: motionPreference.matches ? "auto" : "smooth",
+        });
+      }
+    });
+    window.addEventListener("resize", updateReviewControls);
+    updateReviewControls();
+  }
+
   // Add animation only when content enters view. Nothing is hidden while waiting,
   // so the page stays readable without JavaScript or observer support.
-  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const revealed = new WeakSet();
+  const readyToReveal = new WeakSet();
   let revealObserver;
   const revealSelector = [
-    ".hero-screen-card", ".section-heading", ".practice-layout", ".capability", ".steps-grid > li",
-    ".download-card", ".permissions-note", ".faq-section > div:first-child",
-    ".faq-list > details", ".ar-setup-guide > summary", ".ar-guide-intro",
-    ".ar-guide-steps > li", ".ar-guide-finish", ".site-footer",
+    ".hero-phone-preview", ".section-heading", ".lesson-card",
+    ".practice-card", ".testimonials-list", ".steps-grid > li",
+    ".download-card", ".faq-section > div:first-child",
+    ".faq-list > details", ".site-footer",
   ].join(", ");
   const finishReveal = (element) => {
     element.classList.remove("scroll-reveal");
@@ -194,29 +147,36 @@
     if (motionPreference.matches || !("IntersectionObserver" in window)) return;
 
     revealObserver = new IntersectionObserver((entries) => {
-      const entering = entries.filter((entry) => entry.isIntersecting);
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          finishReveal(entry.target);
+          readyToReveal.add(entry.target);
+        }
+      });
+      const entering = entries.filter((entry) => entry.isIntersecting &&
+        entry.intersectionRatio >= 0.12 && readyToReveal.has(entry.target));
       entering.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top ||
         a.boundingClientRect.left - b.boundingClientRect.left);
       entering.forEach((entry, index) => {
         const element = entry.target;
-        revealed.add(element);
-        revealObserver.unobserve(element);
+        readyToReveal.delete(element);
         // Keyboard navigation should never leave a focused control faded out.
         if (motionPreference.matches || element.contains(document.activeElement)) return;
         element.style.setProperty("--reveal-delay", `${Math.min(index, 3) * 75}ms`);
         element.classList.add("scroll-reveal");
       });
-    }, { rootMargin: "0px 0px -32px 0px", threshold: 0.12 });
+    }, { threshold: [0, 0.12] });
 
     document.querySelectorAll(revealSelector).forEach((element) => {
-      if (revealed.has(element)) return;
       const rect = element.getBoundingClientRect();
       // Leave the initial viewport untouched, including restored scroll positions.
       if (rect.height > 0 && rect.top < window.innerHeight && rect.bottom > 0) {
-        revealed.add(element);
+        readyToReveal.delete(element);
       } else {
-        revealObserver.observe(element);
+        readyToReveal.add(element);
       }
+      // Keep watching so each full exit allows another animation on return.
+      revealObserver.observe(element);
     });
   };
   document.addEventListener("animationend", (event) => {

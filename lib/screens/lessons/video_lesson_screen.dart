@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:soundsight/localization/localization_extension.dart';
+import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoLessonScreen extends StatefulWidget {
@@ -10,6 +11,7 @@ class VideoLessonScreen extends StatefulWidget {
     super.key,
     required this.title,
     required this.videoAssetPath,
+    required this.colors,
     this.onStartQuiz,
     this.onViewPdf,
     this.restoreOrientations = const [DeviceOrientation.portraitUp],
@@ -17,6 +19,7 @@ class VideoLessonScreen extends StatefulWidget {
 
   final String title;
   final String videoAssetPath;
+  final AppThemeColors colors;
   final Future<void> Function()? onStartQuiz;
   final Future<void> Function()? onViewPdf;
   final List<DeviceOrientation> restoreOrientations;
@@ -120,7 +123,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = widget.colors;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -210,9 +213,9 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                                   : Icons.play_arrow,
                             ),
                             iconSize: 56,
-                            color: Colors.white,
                             style: IconButton.styleFrom(
-                              backgroundColor: Colors.black54,
+                              foregroundColor: colors.backgroundColor,
+                              backgroundColor: colors.primaryColor,
                             ),
                           );
                         },
@@ -324,8 +327,10 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                   },
                   tooltip: context.l10n.lessonBackToPractice,
                   icon: const Icon(Icons.arrow_back),
-                  color: Colors.white,
-                  style: IconButton.styleFrom(backgroundColor: Colors.black54),
+                  style: IconButton.styleFrom(
+                    foregroundColor: colors.backgroundColor,
+                    backgroundColor: colors.primaryColor,
+                  ),
                 ),
               ),
             ),
@@ -340,11 +345,11 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                 padding: const EdgeInsets.only(top: 12, right: 24),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: colorScheme.primary,
+                    color: colors.primaryColor,
                     borderRadius: BorderRadius.circular(14),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black54,
+                        color: colors.primaryColor.withValues(alpha: 0.3),
                         blurRadius: 14,
                         offset: Offset(0, 4),
                       ),
@@ -358,8 +363,8 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
+                      backgroundColor: colors.primaryColor,
+                      foregroundColor: colors.backgroundColor,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 12,
@@ -367,7 +372,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                         side: BorderSide(
-                          color: colorScheme.onPrimary.withValues(alpha: 0.3),
+                          color: colors.borderColor,
                         ),
                       ),
                     ),
@@ -385,6 +390,10 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
                   onPressed: _openPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(context.l10n.lessonViewPdf),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.primaryColor,
+                    foregroundColor: colors.backgroundColor,
+                  ),
                 ),
               ),
             ),

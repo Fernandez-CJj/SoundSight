@@ -1,19 +1,20 @@
 # SoundSight screenshots
 
-All eight supplied JPG files are connected to the landing page. Original images
-are preserved, displayed without cropping or stretching, and open in a full-size
-viewer when clicked. Without JavaScript, links open the original image file.
+Seven of the ten supplied JPG files are shown on the landing page. Original images
+are preserved; active images use portrait or landscape Android frames without
+stretching. Screenshots have no click action or viewer. Conversion, results, and
+composition captures are kept as unused assets after their section was removed.
 
 | File                     | Size        | Placement                                                     |
 | ------------------------ | ----------- | ------------------------------------------------------------- |
-| `home.jpg`               | 1080 × 2400 | Hero, portrait app preview.                                   |
-| `sight-reading.jpg`      | 2400 × 1080 | Hero and Sight Reading tab.                                   |
-| `synthesia.jpg`          | 2400 × 1080 | Synthesia tab.                                                |
-| `ar-practice.jpg`        | 2400 × 1080 | Hero and AR Practice tab; real piano and falling notes.       |
-| `lessons.jpg`            | 1080 × 2400 | Guided lessons card.                                          |
-| `sheet-conversion.jpg`   | 1080 × 2400 | Conversion card, labeled as music generated from a recording. |
-| `practice-result.jpg`    | 1080 × 2400 | Practice results card.                                        |
-| `composition-editor.jpg` | 2400 × 1080 | Wide composition card.                                        |
+| `home.jpg`               | 1080 × 2400 | Hero, inside the Android phone frame.                        |
+| `sight-reading.jpg`      | 2400 × 1080 | Sight Reading card, always visible in the practice section.   |
+| `synthesia.jpg`          | 2400 × 1080 | Synthesia card, always visible in the practice section.       |
+| `ar-practice.jpg`        | 2400 × 1080 | AR Practice card; real piano and falling notes.               |
+| `lessons.jpg`            | 1080 × 2400 | Dedicated lessons section immediately below the hero.        |
+| `sheet-conversion.jpg`   | 1080 × 2400 | Kept as an unused asset. |
+| `practice-result.jpg`    | 1080 × 2400 | Kept as an unused asset. |
+| `composition-editor.jpg` | 2400 × 1080 | Kept as an unused asset. |
 
 ## Notes for future captures
 
@@ -25,5 +26,16 @@ viewer when clicked. Without JavaScript, links open the original image file.
 - Keep the app in its light theme and natural orientation. Use original-resolution
   PNG or JPG captures; do not stretch landscape screens into portrait frames.
 
-The four existing calibration guide assets are included separately in the
-expandable AR setup guide. No additional captures are needed for this design pass.
+## Lesson section
+
+Exactly three screenshots appear below the hero, all inside Android frames:
+
+| File | Size | What it shows |
+| --- | --- | --- |
+| `lessons.jpg` | 1080 x 2400 | Lesson levels and the next activity. |
+| `video-lesson.jpg` | 2400 x 1080 | A video lesson about staff lines and spaces, with a Start Quiz button. |
+| `lesson-quiz.jpg` | 1080 x 2400 | A Stage 1 quiz question with four answer choices. |
+
+The video stays landscape; levels and quiz stay portrait. The previews are static
+images, not a video player or a working quiz. No performance screenshot is added.
+Detailed calibration instructions remain in the app.

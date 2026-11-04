@@ -43,6 +43,7 @@ Future<bool> openPracticeStage(
         builder: (_) => VideoLessonScreen(
           title: videoName,
           videoAssetPath: videoPath,
+          colors: colors,
           restoreOrientations: const [
             DeviceOrientation.portraitUp,
             DeviceOrientation.landscapeLeft,
@@ -580,6 +581,7 @@ class _AssetTile extends StatelessWidget {
           builder: (_) => VideoLessonScreen(
             title: name,
             videoAssetPath: path,
+            colors: colors,
             restoreOrientations: const [
               DeviceOrientation.portraitUp,
               DeviceOrientation.landscapeLeft,

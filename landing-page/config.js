@@ -1,8 +1,8 @@
-// Public page settings. No APK or network connection is needed for this UI preview.
+// Public download settings for the APK hosted in GitHub Releases.
 window.SOUNDSIGHT_CONFIG = Object.freeze({
-  downloadUrl: "",
+  downloadUrl: "https://github.com/Fernandez-CJj/SoundSight/releases/download/v1.0.0/app-release.apk",
   version: "1.0.0",
   minimumAndroid: "7.0",
-  fileSizeBytes: 376009164,
-  sha256: "5c61bef9db5cb66cc23569e1d0189f628bfdad389ad344cb34cd7dd94d21a9b9",
+  fileSizeBytes: 376840828,
+  sha256: "e4346de77060588ce2d08f052105b554df7878342f976533917b968a6edeedd6",
 });
