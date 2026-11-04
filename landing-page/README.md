@@ -74,26 +74,18 @@ and is not copied into the website folder.
 
 The page makes no external requests, aside from an APK download when configured.
 
-## GitHub Pages and APK release
+## Hosting
 
-1. In `Fernandez-CJj/SoundSight`, open Settings > Pages and select GitHub Actions
-   as the source.
-2. Create a public release with tag `v1.0.0` and title `SoundSight 1.0.0`.
-   Attach the existing `build/app/outputs/flutter-apk/app-release.apk` file.
-   Upload it as a release asset, without committing it to Git or rebuilding it.
-3. After publishing, copy the direct APK link into `config.js` as `downloadUrl`.
-   With the tag and filename above, the expected link is
-   `https://github.com/Fernandez-CJj/SoundSight/releases/download/v1.0.0/app-release.apk`.
-   Verify the actual asset link before using it.
-4. Commit only `landing-page/` and `.github/workflows/deploy-landing-page.yml`,
-   then push to `master`. Keep unrelated app changes out of this deployment commit.
-5. In the Actions tab, wait for "Deploy SoundSight landing page" to succeed.
-   The site is expected at `https://fernandez-cjj.github.io/SoundSight/`.
-6. While signed out, open the site and download the APK. Compare its SHA-256
-   with the original, install it on Android, and check the advertised app flows.
+No automatic deployment workflow is included. The `landing-page/` folder contains
+the static website files for publishing with the next selected host.
 
-The workflow publishes only `landing-page/`. It runs on website/workflow changes
-on `master`, or manually from the Actions tab. No Flutter or backend build runs.
+## APK release details
+
+The APK remains available at
+`https://github.com/Fernandez-CJj/SoundSight/releases/download/v1.0.0/app-release.apk`.
+APK hosting is independent of website hosting. When publishing the website with
+a new host, test the APK download while signed out and compare its SHA-256 with
+the original file.
 
 APK verified locally on 4 November 2026: version 1.0.0, Android 7.0+,
 376,840,828 bytes (377 MB), SHA-256
@@ -103,4 +95,4 @@ Recheck these values if the APK changes before uploading.
 The published `v1.0.0` asset was checked anonymously on 4 November 2026. Its
 size and GitHub SHA-256 digest match the local APK above. The download URL
 returned HTTP 200 with Android APK content type and the matching content length.
-Android installation and the deployed page still need to be checked.
+Android installation and the website on its next host still need to be checked.
