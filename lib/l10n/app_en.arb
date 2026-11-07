@@ -1,5 +1,8 @@
 {
   "@@locale": "en",
+  "publishedSortLabel": "Sort by",
+  "publishedSortMostLiked": "Most liked",
+  "publishedSortNewest": "Newest",
   "drawerHome": "Home",
   "searchMusic": "Search music",
   "musicLibrary": "Music Library",

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
-import 'package:soundsight/screens/composition/services/published_composition_social_service.dart';
+import 'package:soundsight/screens/composition/widgets/published_composition_social_actions.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class PublishedCompositionCard extends StatefulWidget {
   const PublishedCompositionCard({
     super.key,
+    this.compact = false,
     required this.colors,
     required this.composition,
     required this.canUnpublish,
@@ -23,6 +23,7 @@ class PublishedCompositionCard extends StatefulWidget {
   });
 
   final AppThemeColors colors;
+  final bool compact;
   final PublishedComposition composition;
   final bool canUnpublish;
   final bool isUnpublishing;
@@ -39,264 +40,117 @@ class PublishedCompositionCard extends StatefulWidget {
 }
 
 class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
-  final PublishedCompositionSocialService socialService =
-      PublishedCompositionSocialService();
-
   static const Color dangerColor = Color(0xFFDC2626);
-
-  bool isUpdatingLike = false;
-  bool isUpdatingSave = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = widget.colors;
     final composition = widget.composition;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surfaceColor,
+    return Material(
+      color: colors.surfaceColor,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.borderColor),
+        side: BorderSide(color: colors.borderColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: widget.isUnpublishing ? null : widget.onOpen,
+        child: Padding(
+          padding: EdgeInsets.all(widget.compact ? AppSpacing.sm : AppSpacing.md),
+          child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: colors.backgroundColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colors.borderColor),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: composition.authorProfileImageUrl.isEmpty
-                    ? Icon(
-                        Icons.person_rounded,
-                        color: colors.primaryColor,
-                        size: AppIconSizes.lg,
-                      )
-                    : Image.network(
-                        composition.authorProfileImageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) {
-                          return Icon(
-                            Icons.person_rounded,
-                            color: colors.primaryColor,
-                            size: AppIconSizes.lg,
-                          );
-                        },
-                      ),
-              ),
-              const Gap(AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      composition.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.primaryColor,
-                        fontSize: AppTextSizes.body,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Gap(2),
-                    Text(
-                      context.l10n.publishedBy(composition.authorName),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.primaryColor,
-                        fontSize: AppTextSizes.caption,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Gap(AppSpacing.xs),
-                    Text(
-                      formatPublishedDate(composition.publishedAt),
-                      style: TextStyle(
-                        color: colors.secondaryTextColor,
-                        fontSize: AppTextSizes.caption,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          buildAuthorAvatar(),
+          const Gap(AppSpacing.sm),
+          Text(
+            composition.title,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: colors.primaryColor,
+              fontSize: AppTextSizes.body,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const Gap(AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              buildInformationChip(
-                icon: Icons.history_rounded,
-                text: context.l10n.versionLabel(composition.currentVersion),
-              ),
-              buildInformationChip(
-                icon: Icons.music_note_rounded,
-                text: composition.keySignature,
-              ),
-              buildInformationChip(
-                icon: Icons.speed_rounded,
-                text: '${composition.tempo} BPM',
-              ),
-              buildInformationChip(
-                icon: Icons.grid_view_rounded,
-                text: context.l10n.compositionMeasureCount(
-                  composition.measureCount,
-                ),
-              ),
-              buildInformationChip(
-                icon: Icons.notes_rounded,
-                text: context.l10n.compositionNoteCount(composition.noteCount),
-              ),
-            ],
+          const Gap(2),
+          Text(
+            context.l10n.publishedBy(composition.authorName),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: colors.primaryColor,
+              fontSize: AppTextSizes.caption,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          const Gap(AppSpacing.md),
-          buildSocialActions(),
-          const Gap(AppSpacing.md),
+          const Gap(AppSpacing.xs),
+          Text(
+            formatPublishedDate(composition.publishedAt),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: colors.secondaryTextColor,
+              fontSize: AppTextSizes.caption,
+            ),
+          ),
+          const Gap(AppSpacing.sm),
+          PublishedCompositionSocialActions(
+            key: ValueKey('${composition.id}/${composition.currentVersion}'),
+            colors: colors,
+            composition: composition,
+            compact: widget.compact,
+            disabled: widget.isUnpublishing,
+            onComments: widget.onComments,
+          ),
+          const Gap(AppSpacing.sm),
           buildMainActions(),
         ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget buildSocialActions() {
-    final composition = widget.composition;
-
-    return Row(
-      children: [
-        Expanded(
-          child: StreamBuilder<bool>(
-            stream: socialService.isLikedByCurrentUser(
-              composition.id,
-              composition.currentVersion,
-            ),
-            builder: (context, likedSnapshot) {
-              final isLiked = likedSnapshot.data ?? false;
-
-              return StreamBuilder<int>(
-                stream: socialService.getLikeCount(
-                  composition.id,
-                  composition.currentVersion,
-                ),
-                builder: (context, countSnapshot) {
-                  final likeCount = countSnapshot.data ?? 0;
-
-                  return buildSocialButton(
-                    icon: isLiked
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    label: '$likeCount',
-                    selected: isLiked,
-                    loading: isUpdatingLike,
-                    onTap: toggleLike,
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        Expanded(
-          child: StreamBuilder<int>(
-            stream: socialService.getCommentCount(
-              composition.id,
-              composition.currentVersion,
-            ),
-            builder: (context, snapshot) {
-              return buildSocialButton(
-                icon: Icons.chat_bubble_outline_rounded,
-                label: '${snapshot.data ?? 0}',
-                onTap: widget.onComments,
-              );
-            },
-          ),
-        ),
-        const Gap(AppSpacing.sm),
-        Expanded(
-          child: StreamBuilder<bool>(
-            stream: socialService.isSavedByCurrentUser(
-              composition.id,
-              composition.currentVersion,
-            ),
-            builder: (context, snapshot) {
-              final isSaved = snapshot.data ?? false;
-
-              return buildSocialButton(
-                icon: isSaved
-                    ? Icons.bookmark_rounded
-                    : Icons.bookmark_border_rounded,
-                label: isSaved ? context.l10n.saved : context.l10n.save,
-                selected: isSaved,
-                loading: isUpdatingSave,
-                onTap: () {
-                  confirmToggleSave(isSaved);
-                },
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool selected = false,
-    bool loading = false,
-  }) {
+  Widget buildAuthorAvatar() {
     final colors = widget.colors;
-    final disabled = widget.isUnpublishing || loading;
+    final imageUrl = widget.composition.authorProfileImageUrl;
+    final size = widget.compact ? 36.0 : 54.0;
+    final placeholder = Icon(
+      Icons.person_rounded,
+      color: colors.primaryColor,
+      size: widget.compact ? AppIconSizes.md : AppIconSizes.lg,
+    );
 
-    return SizedBox(
-      height: 42,
-      child: OutlinedButton.icon(
-        onPressed: disabled ? null : onTap,
-        icon: loading
-            ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: colors.primaryColor,
-                ),
-              )
-            : Icon(icon, size: AppIconSizes.sm),
-        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: selected
-              ? colors.backgroundColor
-              : colors.primaryColor,
-          backgroundColor: selected ? colors.primaryColor : colors.surfaceColor,
-          side: BorderSide(color: colors.borderColor),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-        ),
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: colors.backgroundColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: colors.borderColor),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl.isEmpty
+          ? placeholder
+          : Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => placeholder,
+            ),
     );
   }
 
   Widget buildMainActions() {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(child: SizedBox(height: 46, child: buildPlayButton())),
-            const Gap(AppSpacing.sm),
-            Expanded(child: SizedBox(height: 46, child: buildViewButton())),
-          ],
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: buildPlayButton(),
         ),
         if (widget.canUnpublish) ...[
           const Gap(AppSpacing.sm),
@@ -332,9 +186,13 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
                       children: [
                         Icon(Icons.public_off_rounded, size: AppIconSizes.sm),
                         Gap(AppSpacing.xs),
-                        Text(
-                          context.l10n.unpublish,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        Flexible(
+                          child: Text(
+                            context.l10n.unpublish,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ],
                     ),
@@ -348,17 +206,17 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
   Widget buildPlayButton() {
     final showLoading = widget.isPlaybackBusy && widget.isPlaying;
 
-    return OutlinedButton.icon(
+    return ElevatedButton.icon(
       onPressed: widget.isUnpublishing || widget.isPlaybackBusy
           ? null
           : widget.onPlay,
       icon: showLoading
-          ? SizedBox(
+          ? const SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: widget.colors.primaryColor,
+                color: Colors.white,
               ),
             )
           : Icon(
@@ -367,252 +225,20 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
             ),
       label: Text(
         widget.isPlaying ? context.l10n.stop : context.l10n.play,
-        style: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: widget.colors.primaryColor,
-        side: BorderSide(color: widget.colors.borderColor),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-      ),
-    );
-  }
-
-  Widget buildViewButton() {
-    return ElevatedButton.icon(
-      onPressed: widget.isUnpublishing ? null : widget.onOpen,
-      icon: const Icon(Icons.picture_as_pdf_outlined, size: AppIconSizes.sm),
-      label: Text(
-        context.l10n.viewSheet,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: widget.colors.primaryColor,
-        foregroundColor: widget.colors.backgroundColor,
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
         elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
     );
-  }
-
-  Widget buildInformationChip({required IconData icon, required String text}) {
-    final colors = widget.colors;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: colors.backgroundColor,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: colors.borderColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: colors.secondaryTextColor, size: AppIconSizes.sm),
-          const Gap(AppSpacing.xs),
-          Text(
-            text,
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.caption,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> toggleLike() async {
-    if (isUpdatingLike || widget.isUnpublishing) return;
-
-    setState(() {
-      isUpdatingLike = true;
-    });
-
-    try {
-      await socialService.toggleLike(
-        widget.composition.id,
-        widget.composition.currentVersion,
-      );
-    } catch (_) {
-      showMessage(context.l10n.likeUpdateFailed);
-    } finally {
-      if (mounted) {
-        setState(() {
-          isUpdatingLike = false;
-        });
-      }
-    }
-  }
-
-  Future<void> toggleSave() async {
-    if (isUpdatingSave || widget.isUnpublishing) return;
-
-    setState(() {
-      isUpdatingSave = true;
-    });
-
-    try {
-      await socialService.toggleSave(
-        widget.composition.id,
-        widget.composition.currentVersion,
-      );
-    } catch (_) {
-      showMessage(context.l10n.savedCompositionUpdateFailed);
-    } finally {
-      if (mounted) {
-        setState(() {
-          isUpdatingSave = false;
-        });
-      }
-    }
-  }
-
-  Future<void> confirmToggleSave(bool isSaved) async {
-    final colors = widget.colors;
-    final actionText = isSaved ? context.l10n.remove : context.l10n.save;
-
-    final shouldContinue = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: colors.surfaceColor,
-          surfaceTintColor: colors.surfaceColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          title: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: colors.backgroundColor,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: colors.borderColor),
-                ),
-                child: Icon(
-                  isSaved
-                      ? Icons.bookmark_remove_outlined
-                      : Icons.bookmark_add_outlined,
-                  color: colors.primaryColor,
-                  size: AppIconSizes.sm,
-                ),
-              ),
-              const Gap(AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  isSaved
-                      ? context.l10n.removeSavedSheetQuestion
-                      : context.l10n.saveSheetQuestion,
-                  style: TextStyle(
-                    color: colors.primaryColor,
-                    fontSize: AppTextSizes.sectionTitle,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            isSaved
-                ? context.l10n.removeSavedSheetDescription(
-                    widget.composition.title,
-                    widget.composition.currentVersion,
-                  )
-                : context.l10n.saveSheetDescription(
-                    widget.composition.title,
-                    widget.composition.currentVersion,
-                  ),
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.body,
-              height: 1.4,
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            0,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 46,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(dialogContext, false);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colors.primaryColor,
-                        side: BorderSide(color: colors.borderColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      child: Text(context.l10n.cancel),
-                    ),
-                  ),
-                ),
-                const Gap(AppSpacing.sm),
-                Expanded(
-                  child: SizedBox(
-                    height: 46,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(dialogContext, true);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isSaved
-                            ? dangerColor
-                            : colors.primaryColor,
-                        foregroundColor: isSaved
-                            ? Colors.white
-                            : colors.backgroundColor,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      child: Text(
-                        actionText,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldContinue == true && mounted) {
-      await toggleSave();
-    }
-  }
-
-  void showMessage(
-    String message, {
-    AppSnackBarType type = AppSnackBarType.error,
-  }) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context)
-      .showLatestSnackBar(
-        appSnackBar(colors: widget.colors, message: message, type: type),
-      );
   }
 
   String formatPublishedDate(DateTime? date) {

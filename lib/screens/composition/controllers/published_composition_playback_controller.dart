@@ -15,16 +15,21 @@ class PublishedCompositionPlaybackController extends ChangeNotifier {
   bool isBusy = false;
   int playbackRequestId = 0;
   bool isDisposed = false;
+  Future<void> _stopQueue = Future<void>.value();
 
   bool isPlaying(PublishedComposition composition) {
     return playingVersionId == getVersionId(composition);
+  }
+
+  bool isBusyFor(PublishedComposition composition) {
+    return isBusy && isPlaying(composition);
   }
 
   Future<String?> togglePlayback(
     PublishedComposition publishedComposition, {
     VoidCallback? onPlaybackStarted,
   }) async {
-    if (isBusy || isDisposed) return null;
+    if (isDisposed || isBusyFor(publishedComposition)) return null;
 
     final versionId = getVersionId(publishedComposition);
     final isStopping = playingVersionId == versionId;
@@ -39,7 +44,11 @@ class PublishedCompositionPlaybackController extends ChangeNotifier {
     notifySafely();
 
     try {
-      await playbackService.stop();
+      // Finish earlier stops before starting the newly selected preview.
+      _stopQueue = _stopQueue.catchError((Object _) {}).then((_) async {
+        if (!isDisposed) await playbackService.stop();
+      });
+      await _stopQueue;
 
       if (isRequestInvalid(currentRequestId)) return null;
 
@@ -67,6 +76,8 @@ class PublishedCompositionPlaybackController extends ChangeNotifier {
         },
       );
     } catch (error, stackTrace) {
+      if (isRequestInvalid(currentRequestId)) return null;
+
       debugPrint('Published composition playback failed: $error');
       debugPrintStack(stackTrace: stackTrace);
 

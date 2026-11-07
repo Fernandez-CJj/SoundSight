@@ -15,10 +15,7 @@ import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
 
 class SavedCompositionsScreen extends StatefulWidget {
-  const SavedCompositionsScreen({
-    super.key,
-    this.isDarkMode,
-  });
+  const SavedCompositionsScreen({super.key, this.isDarkMode});
 
   final bool? isDarkMode;
 
@@ -27,8 +24,7 @@ class SavedCompositionsScreen extends StatefulWidget {
       _SavedCompositionsScreenState();
 }
 
-class _SavedCompositionsScreenState
-    extends State<SavedCompositionsScreen> {
+class _SavedCompositionsScreenState extends State<SavedCompositionsScreen> {
   final PublishedCompositionSocialService socialService =
       PublishedCompositionSocialService();
   final PublishedCompositionPlaybackController playbackController =
@@ -36,12 +32,16 @@ class _SavedCompositionsScreenState
 
   late bool isDarkMode;
   late final String? userId;
+  late final Stream<List<PublishedComposition>>? savedCompositionsStream;
 
   @override
   void initState() {
     super.initState();
     isDarkMode = widget.isDarkMode ?? false;
     userId = FirebaseAuth.instance.currentUser?.uid;
+    savedCompositionsStream = userId == null
+        ? null
+        : socialService.getSavedCompositions(userId!);
     playbackController.addListener(updatePlaybackState);
     loadTheme();
   }
@@ -89,9 +89,10 @@ class _SavedCompositionsScreenState
               message: context.l10n.savedSheetsSignedOutDescription,
             )
           : StreamBuilder<List<PublishedComposition>>(
-              stream: socialService.getSavedCompositions(userId!),
+              stream: savedCompositionsStream,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
                   return Center(
                     child: CircularProgressIndicator(
                       color: colors.primaryColor,
@@ -126,33 +127,64 @@ class _SavedCompositionsScreenState
                     AppSpacing.md,
                     AppSpacing.xl,
                   ),
-                  itemCount: compositions.length,
+                  itemCount: (compositions.length / 2).ceil(),
                   separatorBuilder: (_, _) => const Gap(AppSpacing.sm),
                   itemBuilder: (context, index) {
-                    final composition = compositions[index];
-
-                    return PublishedCompositionCard(
-                      colors: colors,
-                      composition: composition,
-                      canUnpublish: false,
-                      isUnpublishing: false,
-                      isPlaying: playbackController.isPlaying(composition),
-                      isPlaybackBusy: playbackController.isBusy,
-                      onOpen: () {
-                        openComposition(colors, composition);
-                      },
-                      onPlay: () {
-                        playComposition(composition);
-                      },
-                      onComments: () {
-                        openComments(colors, composition);
-                      },
-                      onUnpublish: () {},
+                    final firstIndex = index * 2;
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: buildCompositionCard(
+                            colors,
+                            compositions[firstIndex],
+                          ),
+                        ),
+                        const Gap(AppSpacing.sm),
+                        Expanded(
+                          child: firstIndex + 1 < compositions.length
+                              ? buildCompositionCard(
+                                  colors,
+                                  compositions[firstIndex + 1],
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
                     );
                   },
                 );
               },
             ),
+    );
+  }
+
+  Widget buildCompositionCard(
+    AppThemeColors colors,
+    PublishedComposition composition,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return PublishedCompositionCard(
+          key: ValueKey('${composition.id}/${composition.currentVersion}'),
+          compact: constraints.maxWidth < 300,
+          colors: colors,
+          composition: composition,
+          canUnpublish: false,
+          isUnpublishing: false,
+          isPlaying: playbackController.isPlaying(composition),
+          isPlaybackBusy: playbackController.isBusyFor(composition),
+          onOpen: () {
+            openComposition(colors, composition);
+          },
+          onPlay: () {
+            playComposition(composition);
+          },
+          onComments: () {
+            openComments(colors, composition);
+          },
+          onUnpublish: () {},
+        );
+      },
     );
   }
 
@@ -225,10 +257,7 @@ class _SavedCompositionsScreenState
     );
   }
 
-  void openComments(
-    AppThemeColors colors,
-    PublishedComposition composition,
-  ) {
+  void openComments(AppThemeColors colors, PublishedComposition composition) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PublishedCompositionCommentsScreen(
@@ -239,9 +268,7 @@ class _SavedCompositionsScreenState
     );
   }
 
-  Future<void> playComposition(
-    PublishedComposition composition,
-  ) async {
+  Future<void> playComposition(PublishedComposition composition) async {
     final resultMessage = await playbackController.togglePlayback(
       composition,
       onPlaybackStarted: () {
@@ -273,13 +300,12 @@ class _SavedCompositionsScreenState
   }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      .showLatestSnackBar(
-        appSnackBar(
-          colors: AppThemeColors.fromDarkMode(isDarkMode),
-          message: message,
-          type: type,
-        ),
-      );
+    ScaffoldMessenger.of(context).showLatestSnackBar(
+      appSnackBar(
+        colors: AppThemeColors.fromDarkMode(isDarkMode),
+        message: message,
+        type: type,
+      ),
+    );
   }
 }

@@ -277,7 +277,7 @@ class _CommunityCompositionsSectionState
                   width: double.infinity,
                   height: 38,
                   child: ElevatedButton.icon(
-                    onPressed: playbackController.isBusy
+                    onPressed: isLoading
                         ? null
                         : () {
                             playComposition(composition);

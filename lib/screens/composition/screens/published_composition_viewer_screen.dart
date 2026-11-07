@@ -9,6 +9,8 @@ import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/controllers/published_composition_playback_controller.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
+import 'package:soundsight/screens/composition/screens/published_composition_comments_screen.dart';
+import 'package:soundsight/screens/composition/widgets/published_composition_social_actions.dart';
 import 'package:soundsight/screens/players/ar/ar_practice_screen.dart';
 import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
 import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
@@ -56,9 +58,6 @@ class _PublishedCompositionViewerScreenState
   @override
   Widget build(BuildContext context) {
     final colors = widget.colors;
-    final isLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
-
     return Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
@@ -131,11 +130,36 @@ class _PublishedCompositionViewerScreenState
       ),
       body: Padding(
         padding: const EdgeInsets.only(bottom: 72),
-        child: Column(
-          children: [
-            if (!isLandscape) buildInformationHeader(),
-            Expanded(child: buildPdfViewer()),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Column(
+              children: [
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * 0.4,
+                  ),
+                  child: SingleChildScrollView(child: buildInformationHeader()),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    0,
+                  ),
+                  child: PublishedCompositionSocialActions(
+                    key: ValueKey(
+                      '${widget.composition.id}/${widget.composition.currentVersion}',
+                    ),
+                    colors: colors,
+                    composition: widget.composition,
+                    onComments: openComments,
+                  ),
+                ),
+                Expanded(child: buildPdfViewer()),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -260,6 +284,9 @@ class _PublishedCompositionViewerScreenState
 
   Widget buildInformationHeader() {
     final colors = widget.colors;
+    final composition = widget.composition;
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     return Container(
       width: double.infinity,
@@ -278,54 +305,177 @@ class _PublishedCompositionViewerScreenState
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: colors.borderColor),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            Icons.music_note_rounded,
-            color: colors.primaryColor,
-            size: AppIconSizes.sm,
-          ),
-          const Gap(AppSpacing.xs),
-          Expanded(
-            child: Text(
-              widget.composition.keySignature,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          buildCompositionIdentity(),
+          const Gap(AppSpacing.sm),
+          ExpansionTile(
+            initiallyExpanded: !isLandscape,
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            iconColor: colors.primaryColor,
+            collapsedIconColor: colors.primaryColor,
+            shape: const Border(),
+            collapsedShape: const Border(),
+            title: Text(
+              context.l10n.compositionDetails,
               style: TextStyle(
                 color: colors.primaryColor,
+                fontSize: AppTextSizes.label,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    buildInformationChip(
+                      Icons.history_rounded,
+                      context.l10n.versionLabel(composition.currentVersion),
+                    ),
+                    buildInformationChip(
+                      Icons.music_note_rounded,
+                      composition.keySignature,
+                    ),
+                    buildInformationChip(
+                      Icons.speed_rounded,
+                      '${composition.tempo} BPM',
+                    ),
+                    buildInformationChip(
+                      Icons.music_note_outlined,
+                      '${composition.beatsPerMeasure}/${composition.beatUnit}',
+                    ),
+                    buildInformationChip(
+                      Icons.grid_view_rounded,
+                      context.l10n.compositionMeasureCount(composition.measureCount),
+                    ),
+                    buildInformationChip(
+                      Icons.notes_rounded,
+                      context.l10n.compositionNoteCount(composition.noteCount),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildCompositionIdentity() {
+    final colors = widget.colors;
+    final composition = widget.composition;
+    final publishedAt = composition.publishedAt;
+    final publishedDate = publishedAt == null
+        ? context.l10n.recentlyPublished
+        : context.l10n.publishedOn(
+            MaterialLocalizations.of(context).formatFullDate(publishedAt.toLocal()),
+          );
+    final placeholder = Icon(
+      Icons.person_rounded,
+      color: colors.primaryColor,
+      size: AppIconSizes.lg,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: colors.backgroundColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: colors.borderColor),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: composition.authorProfileImageUrl.isEmpty
+              ? placeholder
+              : Image.network(
+                  composition.authorProfileImageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => placeholder,
+                ),
+        ),
+        const Gap(AppSpacing.sm),
+        Text(
+          composition.title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colors.primaryColor,
+            fontSize: AppTextSizes.sectionTitle,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Gap(AppSpacing.xs),
+        Text(
+          context.l10n.publishedBy(composition.authorName),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colors.primaryColor,
+            fontSize: AppTextSizes.label,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const Gap(AppSpacing.xs),
+        Text(
+          publishedDate,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colors.secondaryTextColor,
+            fontSize: AppTextSizes.caption,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildInformationChip(IconData icon, String text) {
+    final colors = widget.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: colors.backgroundColor,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: colors.borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: colors.secondaryTextColor, size: AppIconSizes.sm),
+          const Gap(AppSpacing.xs),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: colors.secondaryTextColor,
                 fontSize: AppTextSizes.caption,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Text(
-            context.l10n.versionLabel(widget.composition.currentVersion),
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.caption,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-          Text(
-            '${widget.composition.tempo} BPM',
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.caption,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Gap(AppSpacing.sm),
-          Text(
-            '${widget.composition.beatsPerMeasure}/'
-            '${widget.composition.beatUnit}',
-            style: TextStyle(
-              color: colors.secondaryTextColor,
-              fontSize: AppTextSizes.caption,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  void openComments() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PublishedCompositionCommentsScreen(
+          colors: widget.colors,
+          composition: widget.composition,
+        ),
       ),
     );
   }
@@ -350,21 +500,117 @@ class _PublishedCompositionViewerScreenState
           padding: const EdgeInsets.all(AppSpacing.md),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
-            child: PdfViewer.data(
-              snapshot.data!,
-              sourceName: widget.composition.title,
-              params: PdfViewerParams(
-                margin: AppSpacing.sm,
-                backgroundColor: colors.backgroundColor,
-                sizeDelegateProvider: const PdfViewerSizeDelegateProviderSmart(
-                  smartMaxScale: 2,
-                  maxPagesVisible: 1,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                buildPdfDocument(snapshot.data!),
+                Positioned(
+                  top: AppSpacing.sm,
+                  right: AppSpacing.sm,
+                  child: Material(
+                    color: colors.surfaceColor.withValues(alpha: 0.92),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      side: BorderSide(color: colors.borderColor),
+                    ),
+                    child: IconButton(
+                      tooltip: context.l10n.fullScreen,
+                      onPressed: () => showPdfDialog(snapshot.data!),
+                      icon: Icon(
+                        Icons.open_in_full_rounded,
+                        color: colors.primaryColor,
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget buildPdfDocument(Uint8List pdfBytes) {
+    return PdfViewer.data(
+      pdfBytes,
+      sourceName: widget.composition.title,
+      params: PdfViewerParams(
+        margin: AppSpacing.sm,
+        backgroundColor: widget.colors.backgroundColor,
+        sizeDelegateProvider: const PdfViewerSizeDelegateProviderSmart(
+          smartMaxScale: 2,
+          maxPagesVisible: 1,
+        ),
+      ),
+    );
+  }
+
+  Future<void> showPdfDialog(Uint8List pdfBytes) {
+    final colors = widget.colors;
+    final screenSize = MediaQuery.sizeOf(context);
+
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: colors.surfaceColor,
+        insetPadding: const EdgeInsets.all(AppSpacing.sm),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: screenSize.height * 0.9,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.xs,
+                  AppSpacing.sm,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.composition.title,
+                        maxLines: 2,
+                        textAlign: TextAlign.start,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.primaryColor,
+                          fontSize: AppTextSizes.body,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: context.l10n.close,
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: colors.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: colors.borderColor),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: buildPdfDocument(pdfBytes),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

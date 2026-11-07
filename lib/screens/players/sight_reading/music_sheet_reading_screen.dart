@@ -29,6 +29,7 @@ import 'score_audio_playback_service.dart';
 import 'sight_reading_note_matcher.dart';
 import 'sight_reading_performance_tracker.dart';
 import 'sight_reading_progress_service.dart';
+import 'sight_reading_wait_held_note.dart';
 
 enum SightReadingSource { composition, musicSheet, musicLibrary, lesson }
 
@@ -82,25 +83,6 @@ class MusicSheetReadingScreen extends StatefulWidget {
       _MusicSheetReadingScreenState();
 }
 
-class _WaitHeldNoteState {
-  _WaitHeldNoteState({
-    required this.midiNote,
-    required this.originPositionIndex,
-    required this.pressedAt,
-    required this.earliestReleaseAt,
-    required this.expectedReleaseAt,
-    required this.latestReleaseAt,
-  });
-
-  final int midiNote;
-  final int originPositionIndex;
-  final DateTime pressedAt;
-  final DateTime earliestReleaseAt;
-  final DateTime expectedReleaseAt;
-  final DateTime latestReleaseAt;
-  bool wasHeldTooLong = false;
-}
-
 class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   final MidiInputService midiInputService = MidiInputService();
   final SightReadingNoteMatcher noteMatcher = SightReadingNoteMatcher();
@@ -140,7 +122,6 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   Set<int> activeMidiNotes = <int>{};
   Future<void> cursorAdvanceQueue = Future<void>.value();
   int? completedElapsedSeconds;
-  static const double waitMinimumHoldRatio = 0.6;
   Timer? waitHoldTicker;
   bool waitHoldInProgress = false;
   bool waitRetryRequiresRelease = false;
@@ -151,8 +132,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   DateTime? waitSegmentStartedAt;
   Duration waitCursorTravelDuration = Duration.zero;
   final Map<int, DateTime> waitNotePressedAt = <int, DateTime>{};
-  final Map<int, _WaitHeldNoteState> waitHeldNotes =
-      <int, _WaitHeldNoteState>{};
+  final Map<int, SightReadingWaitHeldNote> waitHeldNotes =
+      <int, SightReadingWaitHeldNote>{};
   final Set<int> waitCursorPassedPositions = <int>{};
   final Set<int> waitOverheldMistakePositions = <int>{};
   bool practiceControlsSheetOpen = false;
@@ -2500,25 +2481,21 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final now = DateTime.now();
     final expectedNotes = Set<int>.from(noteMatcher.expectedMidiNotes);
 
+    for (final heldNote in waitHeldNotes.values) {
+      heldNote.resumeAt(now);
+    }
+
     for (final note in expectedNotes) {
       final noteDuration =
           timelineEvent.noteDurations[note] ??
           timelineEvent.longestNoteDuration;
       final pressedAt = waitNotePressedAt[note] ?? now;
-      final minimumHoldMilliseconds =
-          (noteDuration.inMilliseconds * waitMinimumHoldRatio).round();
-
-      waitHeldNotes[note] = _WaitHeldNoteState(
+      waitHeldNotes[note] = SightReadingWaitHeldNote(
         midiNote: note,
         originPositionIndex: waitCursorEventIndex,
         pressedAt: pressedAt,
-        earliestReleaseAt: pressedAt.add(
-          Duration(milliseconds: minimumHoldMilliseconds),
-        ),
-        expectedReleaseAt: pressedAt.add(noteDuration),
-        latestReleaseAt: pressedAt
-            .add(noteDuration)
-            .add(performanceTracker.timingTolerance),
+        noteDuration: noteDuration,
+        overholdTolerance: performanceTracker.timingTolerance,
       );
     }
 
@@ -2573,6 +2550,16 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     });
   }
 
+  DateTime? get waitHoldSegmentEnd {
+    final startedAt = waitSegmentStartedAt;
+    final hasNextEvent =
+        waitHoldPositionIndex + 1 < performanceTracker.timelineEvents.length;
+    if (!waitHoldInProgress || startedAt == null || !hasNextEvent) {
+      return null;
+    }
+    return startedAt.add(waitCursorTravelDuration);
+  }
+
   void updateWaitHoldProgress() {
     if (!mounted ||
         performanceModeEnabled ||
@@ -2581,20 +2568,20 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
 
     final now = DateTime.now();
-    final dueForRelease = <_WaitHeldNoteState>[];
-    final overheldNotes = <_WaitHeldNoteState>[];
+    final segmentEnd = waitHoldSegmentEnd;
+    final dueForRelease = <SightReadingWaitHeldNote>[];
+    final overheldNotes = <SightReadingWaitHeldNote>[];
 
     for (final heldNote in waitHeldNotes.values) {
       if (!activeMidiNotes.contains(heldNote.midiNote)) {
         continue;
       }
 
-      if (!now.isBefore(heldNote.expectedReleaseAt)) {
+      if (heldNote.isDueForReleaseAt(now, segmentEnd: segmentEnd)) {
         dueForRelease.add(heldNote);
       }
 
-      if (now.isAfter(heldNote.latestReleaseAt)) {
-        heldNote.wasHeldTooLong = true;
+      if (heldNote.isOverheldAt(now, segmentEnd: segmentEnd)) {
         overheldNotes.add(heldNote);
 
         if (waitOverheldMistakePositions.add(heldNote.originPositionIndex)) {
@@ -2726,7 +2713,25 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
     final releasedAt = DateTime.now();
 
-    if (releasedAt.isBefore(heldNote.earliestReleaseAt)) {
+    if (heldNote.isOverheldAt(releasedAt, segmentEnd: waitHoldSegmentEnd)) {
+      final noteName = midiToNoteName(midiNote);
+      noteMatcher.recordDurationMistake(
+        positionIndex: heldNote.originPositionIndex,
+        message: '$noteName was held too long',
+      );
+      unawaited(
+        rewindWaitAttempt(
+          positionIndex: heldNote.originPositionIndex,
+          preserveCurrentFeedback: true,
+        ),
+      );
+      return;
+    }
+
+    if (heldNote.isReleasedEarlyAt(
+      releasedAt,
+      segmentEnd: waitHoldSegmentEnd,
+    )) {
       final noteName = midiToNoteName(midiNote);
       noteMatcher.recordDurationMistake(
         positionIndex: heldNote.originPositionIndex,
@@ -2748,7 +2753,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final stillExpired = waitHeldNotes.values.any(
       (note) =>
           activeMidiNotes.contains(note.midiNote) &&
-          !releasedAt.isBefore(note.expectedReleaseAt),
+          note.isDueForReleaseAt(releasedAt, segmentEnd: waitHoldSegmentEnd),
     );
     waitBlockedByExpiredKey = stillExpired;
 
@@ -2775,6 +2780,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
 
     final completedPositionIndex = waitHoldPositionIndex;
+    final segmentEnd = waitHoldSegmentEnd;
+    if (segmentEnd != null) {
+      for (final heldNote in waitHeldNotes.values) {
+        heldNote.pauseAt(segmentEnd);
+      }
+    }
     waitHoldInProgress = false;
     waitCursorHasArrived = false;
     waitSegmentStartedAt = null;
@@ -2818,6 +2829,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     required int positionIndex,
     required bool preserveCurrentFeedback,
   }) async {
+    // A retry clears all holds, so replay any sustained notes it would discard.
+    for (final heldNote in waitHeldNotes.values) {
+      if (heldNote.originPositionIndex < positionIndex) {
+        positionIndex = heldNote.originPositionIndex;
+      }
+    }
     waitHoldInProgress = false;
     waitCursorHasArrived = false;
     waitBlockedByExpiredKey = false;

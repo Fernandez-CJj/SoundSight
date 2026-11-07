@@ -1,5 +1,8 @@
 {
   "@@locale": "fil",
+  "publishedSortLabel": "Ayusin ayon sa",
+  "publishedSortMostLiked": "Pinakamaraming like",
+  "publishedSortNewest": "Pinakabago",
   "drawerHome": "Pangunahing Pahina",
   "searchMusic": "Maghanap ng musika",
   "musicLibrary": "Aklatan ng Musika",

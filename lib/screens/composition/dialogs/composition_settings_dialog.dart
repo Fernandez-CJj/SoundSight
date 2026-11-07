@@ -167,6 +167,9 @@ class _CompositionSettingsDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(160, 40),
+          ),
           child: Text(
             context.l10n.cancel,
             style: TextStyle(color: colors.secondaryTextColor),
@@ -175,6 +178,7 @@ class _CompositionSettingsDialogState
         FilledButton(
           onPressed: save,
           style: FilledButton.styleFrom(
+            minimumSize: const Size(160, 40),
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
           ),

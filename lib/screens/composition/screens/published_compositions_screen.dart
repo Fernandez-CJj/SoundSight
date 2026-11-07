@@ -10,11 +10,13 @@ import 'package:soundsight/screens/composition/services/composition_publish_serv
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/widgets/published_composition_card.dart';
 import 'package:soundsight/screens/composition/screens/published_composition_comments_screen.dart';
-import 'package:soundsight/screens/composition/services/published_composition_service.dart';
+import 'package:soundsight/screens/composition/services/published_composition_feed_service.dart';
 import 'package:soundsight/screens/composition/screens/published_composition_viewer_screen.dart';
 import 'package:soundsight/screens/composition/dialogs/unpublish_composition_dialog.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
+
+enum PublishedCompositionSort { mostLiked, newest }
 
 class PublishedCompositionsScreen extends StatefulWidget {
   const PublishedCompositionsScreen({
@@ -31,8 +33,8 @@ class PublishedCompositionsScreen extends StatefulWidget {
 
 class _PublishedCompositionsScreenState
     extends State<PublishedCompositionsScreen> {
-  final PublishedCompositionService compositionService =
-      PublishedCompositionService();
+  final PublishedCompositionFeedService feedService =
+      PublishedCompositionFeedService();
   final CompositionPublishService publishService =
       CompositionPublishService();
   final PublishedCompositionPlaybackController playbackController =
@@ -43,7 +45,8 @@ class _PublishedCompositionsScreenState
   late bool isDarkMode;
   late final String? userId;
 
-  Stream<List<PublishedComposition>>? compositionsStream;
+  Stream<PublishedCompositionFeed>? compositionsStream;
+  PublishedCompositionSort selectedSort = PublishedCompositionSort.mostLiked;
 
   @override
   void initState() {
@@ -53,7 +56,7 @@ class _PublishedCompositionsScreenState
     userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (userId != null) {
-      compositionsStream = compositionService.getPublishedCompositions();
+      compositionsStream = feedService.watch();
     }
 
     playbackController.addListener(updatePlaybackState);
@@ -100,10 +103,11 @@ class _PublishedCompositionsScreenState
       ),
       body: compositionsStream == null
           ? buildSignedOutState(colors)
-          : StreamBuilder<List<PublishedComposition>>(
+          : StreamBuilder<PublishedCompositionFeed>(
               stream: compositionsStream,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
                   return Center(
                     child: CircularProgressIndicator(
                       color: colors.primaryColor,
@@ -115,7 +119,35 @@ class _PublishedCompositionsScreenState
                   return buildErrorState(colors);
                 }
 
-                final compositions = snapshot.data ?? [];
+                final feed = snapshot.data;
+                final compositions = List<PublishedComposition>.from(
+                  feed?.compositions ?? const <PublishedComposition>[],
+                );
+                if (feed != null) {
+                  compositions.sort((first, second) {
+                    final firstIsOwn = first.ownerId == userId;
+                    final secondIsOwn = second.ownerId == userId;
+                    if (firstIsOwn != secondIsOwn) return firstIsOwn ? -1 : 1;
+
+                    if (!firstIsOwn &&
+                        selectedSort == PublishedCompositionSort.mostLiked) {
+                      final likesOrder = feed.likesFor(second).compareTo(
+                        feed.likesFor(first),
+                      );
+                      if (likesOrder != 0) return likesOrder;
+                    }
+
+                    final firstDate = first.publishedAt;
+                    final secondDate = second.publishedAt;
+                    if (firstDate == null && secondDate != null) return 1;
+                    if (firstDate != null && secondDate == null) return -1;
+                    if (firstDate != null && secondDate != null) {
+                      final dateOrder = secondDate.compareTo(firstDate);
+                      if (dateOrder != 0) return dateOrder;
+                    }
+                    return first.id.compareTo(second.id);
+                  });
+                }
 
                 if (compositions.isEmpty) {
                   return buildEmptyState(colors);
@@ -141,7 +173,7 @@ class _PublishedCompositionsScreenState
         AppSpacing.md,
         AppSpacing.xl,
       ),
-      itemCount: compositions.length + 1,
+      itemCount: (compositions.length / 2).ceil() + 1,
       separatorBuilder: (_, index) {
         return Gap(index == 0 ? AppSpacing.md : AppSpacing.sm);
       },
@@ -153,9 +185,32 @@ class _PublishedCompositionsScreenState
           );
         }
 
-        final composition = compositions[index - 1];
+        final firstIndex = (index - 1) * 2;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: buildCompositionCard(colors, compositions[firstIndex])),
+            const Gap(AppSpacing.sm),
+            Expanded(
+              child: firstIndex + 1 < compositions.length
+                  ? buildCompositionCard(colors, compositions[firstIndex + 1])
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  Widget buildCompositionCard(
+    AppThemeColors colors,
+    PublishedComposition composition,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
         return PublishedCompositionCard(
+          key: ValueKey(composition.id),
+          compact: constraints.maxWidth < 300,
           colors: colors,
           composition: composition,
           canUnpublish: composition.ownerId == userId,
@@ -163,7 +218,7 @@ class _PublishedCompositionsScreenState
             composition.id,
           ),
           isPlaying: playbackController.isPlaying(composition),
-          isPlaybackBusy: playbackController.isBusy,
+          isPlaybackBusy: playbackController.isBusyFor(composition),
           onOpen: () {
             openComposition(colors, composition);
           },
@@ -185,7 +240,10 @@ class _PublishedCompositionsScreenState
     AppThemeColors colors,
     int compositionCount,
   ) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
@@ -230,6 +288,44 @@ class _PublishedCompositionsScreenState
               fontWeight: FontWeight.w700,
             ),
           ),
+        ),
+      ],
+        ),
+        const Gap(AppSpacing.md),
+        DropdownButtonFormField<PublishedCompositionSort>(
+          initialValue: selectedSort,
+          isExpanded: true,
+          dropdownColor: colors.surfaceColor,
+          style: TextStyle(color: colors.primaryColor),
+          decoration: InputDecoration(
+            labelText: context.l10n.publishedSortLabel,
+            labelStyle: TextStyle(color: colors.secondaryTextColor),
+            prefixIcon: Icon(Icons.sort_rounded, color: colors.primaryColor),
+            filled: true,
+            fillColor: colors.surfaceColor,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: colors.borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: colors.primaryColor),
+            ),
+          ),
+          items: [
+            DropdownMenuItem(
+              value: PublishedCompositionSort.mostLiked,
+              child: Text(context.l10n.publishedSortMostLiked),
+            ),
+            DropdownMenuItem(
+              value: PublishedCompositionSort.newest,
+              child: Text(context.l10n.publishedSortNewest),
+            ),
+          ],
+          onChanged: (value) {
+            if (value == null || value == selectedSort) return;
+            setState(() => selectedSort = value);
+          },
         ),
       ],
     );

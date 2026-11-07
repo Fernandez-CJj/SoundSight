@@ -41,6 +41,7 @@ class SaveCompositionConfirmationDialog extends StatelessWidget {
         OutlinedButton(
           onPressed: () => Navigator.pop(context, false),
           style: OutlinedButton.styleFrom(
+            minimumSize: const Size(160, 40),
             foregroundColor: colors.primaryColor,
             side: BorderSide(color: colors.borderColor),
             shape: RoundedRectangleBorder(
@@ -52,6 +53,7 @@ class SaveCompositionConfirmationDialog extends StatelessWidget {
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
           style: FilledButton.styleFrom(
+            minimumSize: const Size(160, 40),
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
             shape: RoundedRectangleBorder(

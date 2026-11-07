@@ -98,6 +98,24 @@ abstract class AppLocalizations {
     Locale('fil'),
   ];
 
+  /// No description provided for @publishedSortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get publishedSortLabel;
+
+  /// No description provided for @publishedSortMostLiked.
+  ///
+  /// In en, this message translates to:
+  /// **'Most liked'**
+  String get publishedSortMostLiked;
+
+  /// No description provided for @publishedSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get publishedSortNewest;
+
   /// No description provided for @drawerHome.
   ///
   /// In en, this message translates to:

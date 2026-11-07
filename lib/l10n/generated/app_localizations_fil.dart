@@ -9,6 +9,15 @@ class AppLocalizationsFil extends AppLocalizations {
   AppLocalizationsFil([String locale = 'fil']) : super(locale);
 
   @override
+  String get publishedSortLabel => 'Ayusin ayon sa';
+
+  @override
+  String get publishedSortMostLiked => 'Pinakamaraming like';
+
+  @override
+  String get publishedSortNewest => 'Pinakabago';
+
+  @override
   String get drawerHome => 'Pangunahing Pahina';
 
   @override
