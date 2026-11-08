@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:soundsight/achievements/achievement_badge.dart';
-import 'package:soundsight/achievements/achievement_repository.dart';
+import 'package:soundsight/achievements/models/achievement_badge.dart';
+import 'package:soundsight/achievements/repositories/achievement_repository.dart';
 
 import '../models/assessment_attempt.dart';
 import '../models/assessment_notation_question.dart';

@@ -6,7 +6,7 @@ import '../../ar/models/ar_note_event.dart';
 import '../../ar/models/ar_score_timeline.dart';
 import '../../ar/services/ar_practice_performance_tracker.dart';
 import '../models/synthesia_wait_note_occurrence.dart';
-import 'synthesia_piano_geometry.dart';
+import '../models/synthesia_piano_geometry.dart';
 
 class SynthesiaFallingNotes extends StatelessWidget {
   const SynthesiaFallingNotes({

@@ -1,9 +1,10 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
-import 'package:soundsight/screens/assessment/assessment_localization.dart';
+import 'package:soundsight/screens/assessment/localization/assessment_localization.dart';
 import 'package:soundsight/screens/assessment/models/assessment_questionnaire.dart';
 import 'package:soundsight/screens/assessment/widgets/assessment_theme.dart';
 
@@ -127,11 +128,12 @@ class _AssessmentQuestionnaireScreenState
 
   @override
   Widget build(BuildContext context) {
-    return AssessmentTheme(
+    return ScreenFeatureTour(featureId: 'assessment_questions', key: ValueKey('assessment_questions'), colors: AppThemeColors.fromDarkMode(widget.isDarkMode), canStart: () => !_isSubmitting, autoStart: false, child: AssessmentTheme(
       isDarkMode: widget.isDarkMode,
       builder: (themedContext) {
         return Scaffold(
           appBar: AppBar(
+            
             title: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -190,7 +192,7 @@ class _AssessmentQuestionnaireScreenState
                 const SizedBox(height: AppSpacing.md),
                 ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 52),
-                  child: ElevatedButton(
+                  child: FeatureTourTarget(id: 'continue', child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitQuestionnaire,
                     child: _isSubmitting
                         ? SizedBox(
@@ -207,14 +209,14 @@ class _AssessmentQuestionnaireScreenState
                             themedContext.l10n.continueAction,
                             textAlign: TextAlign.center,
                           ),
-                  ),
+                  )),
                 ),
               ],
             ),
           ),
         );
       },
-    );
+    ));
   }
 
   /// Builds one question and its mutually exclusive answer options.
@@ -241,7 +243,7 @@ class _AssessmentQuestionnaireScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          FeatureTourTarget(id: 'questions', child: Text(
             '${questionIndex + 1}. '
             '${localizedQuestionnaireQuestion(context.l10n, question)}',
             style: const TextStyle(
@@ -249,7 +251,7 @@ class _AssessmentQuestionnaireScreenState
               fontWeight: FontWeight.w700,
               height: 1.4,
             ),
-          ),
+          )),
           const SizedBox(height: AppSpacing.sm),
           RadioGroup<String>(
             groupValue: _selectedAnswers[question.id],

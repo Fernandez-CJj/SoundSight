@@ -12,12 +12,14 @@ import 'package:soundsight/theme/app_theme_colors.dart';
 class CommunityCompositionsSection extends StatefulWidget {
   const CommunityCompositionsSection({
     super.key,
+    this.headingBuilder,
     required this.colors,
     required this.onSeeAll,
     required this.onOpenComposition,
   });
 
   final AppThemeColors colors;
+  final Widget Function(Widget)? headingBuilder;
   final VoidCallback onSeeAll;
   final ValueChanged<PublishedComposition> onOpenComposition;
 
@@ -58,7 +60,7 @@ class _CommunityCompositionsSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        _buildHeading(Row(
           children: [
             Expanded(
               child: Column(
@@ -104,7 +106,7 @@ class _CommunityCompositionsSectionState
               ),
             ),
           ],
-        ),
+        )),
         const Gap(AppSpacing.sm),
         StreamBuilder<List<PublishedComposition>>(
           stream: compositionsStream,
@@ -145,6 +147,8 @@ class _CommunityCompositionsSectionState
       ],
     );
   }
+
+  Widget _buildHeading(Widget child) => widget.headingBuilder?.call(child) ?? child;
 
   Widget buildCompositionCard(PublishedComposition composition) {
     final colors = widget.colors;

@@ -7,5 +7,6 @@ $ErrorActionPreference = 'Stop'
 $credentialsPath = (Resolve-Path -LiteralPath $FirebaseCredentials).Path
 Set-Location -LiteralPath $PSScriptRoot
 $env:GOOGLE_APPLICATION_CREDENTIALS = $credentialsPath
-& "$PSScriptRoot\venv\Scripts\python.exe" -m uvicorn main:app --host $BindAddress --port $Port --workers 1
+try { $Host.UI.RawUI.WindowTitle = 'SoundSight - API Requests' } catch {}
+& "$PSScriptRoot\venv\Scripts\python.exe" -u -m uvicorn main:app --host $BindAddress --port $Port --workers 1 --no-access-log
 exit $LASTEXITCODE

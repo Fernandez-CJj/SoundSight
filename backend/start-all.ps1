@@ -33,7 +33,7 @@ try {
     foreach ($service in @('start-worker.ps1', 'start-backend.ps1')) {
         $servicePath = Join-Path $PSScriptRoot $service
         $serviceArguments = @(
-            '-NoProfile', '-NoExit', '-ExecutionPolicy', 'Bypass',
+            '-NoLogo', '-NoProfile', '-NoExit', '-ExecutionPolicy', 'Bypass',
             '-File', ('"{0}"' -f $servicePath),
             '-FirebaseCredentials', ('"{0}"' -f $credentialsPath)
         )
@@ -43,7 +43,11 @@ try {
         Start-Process -FilePath $powerShellPath -ArgumentList $serviceArguments `
             -WorkingDirectory $PSScriptRoot -WindowStyle Normal
     }
-    Write-Output 'Worker and API windows opened. Check http://127.0.0.1:8000/health for readiness.'
+    Write-Output 'SoundSight startup requested. Two windows will open:'
+    Write-Output '  API Requests: actions requested by the app and their HTTP responses.'
+    Write-Output '  Processing Worker: queued jobs starting, completing, or failing.'
+    Write-Output 'Wait for the worker to report Ready. Check http://127.0.0.1:8000/health for readiness.'
+    Write-Output 'An HTTP 202 means the job was accepted; completion is reported separately.'
 } catch {
     Write-Host ('SoundSight could not start: ' + $_.Exception.Message) -ForegroundColor Red
     exit 1

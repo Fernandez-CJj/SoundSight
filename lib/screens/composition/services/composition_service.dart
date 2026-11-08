@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:soundsight/achievements/achievement_badge.dart';
-import 'package:soundsight/achievements/achievement_repository.dart';
+import 'package:soundsight/achievements/models/achievement_badge.dart';
+import 'package:soundsight/achievements/repositories/achievement_repository.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/models/composition_note.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';

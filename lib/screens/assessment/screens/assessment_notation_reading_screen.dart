@@ -1,10 +1,11 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../../../constants/constant.dart';
 import '../../../localization/localization_extension.dart';
-import '../assessment_localization.dart';
+import '../localization/assessment_localization.dart';
 import '../models/assessment_notation_question.dart';
 import '../widgets/assessment_notation_view.dart';
 import '../widgets/assessment_theme.dart';
@@ -180,13 +181,14 @@ class _AssessmentNotationReadingScreenState
     final isLastQuestion =
         _currentQuestionIndex == assessmentNotationQuestions.length - 1;
 
-    return AssessmentTheme(
+    return ScreenFeatureTour(featureId: 'assessment_notation', key: ValueKey('assessment_notation'), colors: AppThemeColors.fromDarkMode(widget.isDarkMode), canStart: () => !_isSubmitting, autoStart: false, child: AssessmentTheme(
       isDarkMode: widget.isDarkMode,
       builder: (themedContext) {
         return PopScope(
           canPop: !_isSubmitting,
           child: Scaffold(
             appBar: AppBar(
+            
               title: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
@@ -229,7 +231,7 @@ class _AssessmentNotationReadingScreenState
                               ),
                               borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
-                            child: AssessmentNotationView(question: question),
+                            child: FeatureTourTarget(id: 'notation', child: AssessmentNotationView(question: question)),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           RadioGroup<String>(
@@ -237,7 +239,7 @@ class _AssessmentNotationReadingScreenState
                             onChanged: _selectAnswer,
                             child: Column(
                               children: question.options.map((option) {
-                                return RadioListTile<String>(
+                                return FeatureTourTarget(id: 'answer', child: RadioListTile<String>(
                                   value: option.id,
                                   enabled: !_isSubmitting,
                                   title: Text(
@@ -247,7 +249,7 @@ class _AssessmentNotationReadingScreenState
                                     ),
                                   ),
                                   contentPadding: EdgeInsets.zero,
-                                );
+                                ));
                               }).toList(),
                             ),
                           ),
@@ -283,7 +285,7 @@ class _AssessmentNotationReadingScreenState
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
-                        child: ElevatedButton(
+                        child: FeatureTourTarget(id: 'continue', child: ElevatedButton(
                           onPressed: _isSubmitting
                               ? null
                               : isLastQuestion
@@ -306,7 +308,7 @@ class _AssessmentNotationReadingScreenState
                                       : themedContext.l10n.next,
                                   textAlign: TextAlign.center,
                                 ),
-                        ),
+                        )),
                       ),
                     ],
                   ),
@@ -316,7 +318,7 @@ class _AssessmentNotationReadingScreenState
           ),
         );
       },
-    );
+    ));
   }
 
   /// Shows the current question number and answered-question count.

@@ -8,7 +8,7 @@ import 'package:hand_detection/hand_detection.dart';
 import '../controllers/flyaway_practice_controller.dart';
 import '../models/flyaway_finger.dart';
 import '../services/flyaway_hand_tracking_service.dart';
-import '../widgets/hand_landmark_painter.dart';
+import '../painters/hand_landmark_painter.dart';
 
 /// A standalone practice prototype. It does not open a score or a MIDI device.
 class FlyawayPracticeScreen extends StatefulWidget {

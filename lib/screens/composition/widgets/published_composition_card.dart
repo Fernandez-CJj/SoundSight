@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
@@ -61,7 +62,7 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
           child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          buildAuthorAvatar(),
+          FeatureTourTarget(id: 'card_info', child: buildAuthorAvatar()),
           const Gap(AppSpacing.sm),
           Text(
             composition.title,
@@ -98,14 +99,14 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
             ),
           ),
           const Gap(AppSpacing.sm),
-          PublishedCompositionSocialActions(
+          FeatureTourTarget(id: 'social', child: PublishedCompositionSocialActions(
             key: ValueKey('${composition.id}/${composition.currentVersion}'),
             colors: colors,
             composition: composition,
             compact: widget.compact,
             disabled: widget.isUnpublishing,
             onComments: widget.onComments,
-          ),
+          )),
           const Gap(AppSpacing.sm),
           buildMainActions(),
         ],
@@ -206,7 +207,7 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
   Widget buildPlayButton() {
     final showLoading = widget.isPlaybackBusy && widget.isPlaying;
 
-    return ElevatedButton.icon(
+    return FeatureTourTarget(id: 'play', child: ElevatedButton.icon(
       onPressed: widget.isUnpublishing || widget.isPlaybackBusy
           ? null
           : widget.onPlay,
@@ -238,7 +239,7 @@ class _PublishedCompositionCardState extends State<PublishedCompositionCard> {
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
-    );
+    ));
   }
 
   String formatPublishedDate(DateTime? date) {

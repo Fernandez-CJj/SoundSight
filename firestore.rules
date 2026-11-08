@@ -293,6 +293,57 @@ service cloud.firestore {
                       || validAssessmentSkillLevelUpdate()
                     );
 
+      match /onboarding/{documentId} {
+        function validFeatureFlags(data) {
+          return data.keys().hasOnly([
+            'home_drawer', 'upload_capture', 'music_sheets',
+            'music_sheet_viewer', 'music_library', 'library_piece',
+            'my_compositions', 'manual_composition', 'recording_composition',
+            'composition_details', 'published_compositions', 'published_details',
+            'saved_compositions', 'lessons', 'assessment',
+            'sight_reading', 'synthesia', 'ar_setup',
+            'piano_calibration', 'ar_practice', 'practice_results',
+            'practice_result_details', 'profile', 'assessment_instructions',
+            'assessment_questions', 'assessment_notation', 'assessment_piano',
+            'assessment_results'
+          ])
+                 && data.get('home_drawer', false) is bool
+                 && data.get('upload_capture', false) is bool
+                 && data.get('music_sheets', false) is bool
+                 && data.get('music_sheet_viewer', false) is bool
+                 && data.get('music_library', false) is bool
+                 && data.get('library_piece', false) is bool
+                 && data.get('my_compositions', false) is bool
+                 && data.get('manual_composition', false) is bool
+                 && data.get('recording_composition', false) is bool
+                 && data.get('composition_details', false) is bool
+                 && data.get('published_compositions', false) is bool
+                 && data.get('published_details', false) is bool
+                 && data.get('saved_compositions', false) is bool
+                 && data.get('lessons', false) is bool
+                 && data.get('assessment', false) is bool
+                 && data.get('sight_reading', false) is bool
+                 && data.get('synthesia', false) is bool
+                 && data.get('ar_setup', false) is bool
+                 && data.get('piano_calibration', false) is bool
+                 && data.get('ar_practice', false) is bool
+                 && data.get('practice_results', false) is bool
+                 && data.get('practice_result_details', false) is bool
+                 && data.get('profile', false) is bool
+                 && data.get('assessment_instructions', false) is bool
+                 && data.get('assessment_questions', false) is bool
+                 && data.get('assessment_notation', false) is bool
+                 && data.get('assessment_piano', false) is bool
+                 && data.get('assessment_results', false) is bool;
+        }
+
+        allow get: if ownsUser() && documentId == 'features';
+        allow list, delete: if false;
+        allow create, update: if ownsUser()
+                              && documentId == 'features'
+                              && validFeatureFlags(request.resource.data);
+      }
+
       match /achievements/{badgeId} {
         function validEarnedBadge() {
           let data = request.resource.data;

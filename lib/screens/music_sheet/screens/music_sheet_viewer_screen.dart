@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:soundsight/services/processing_job_service.dart';
 import 'package:soundsight/widgets/processing_job_card.dart';
 import 'dart:async';
@@ -16,9 +17,9 @@ import 'package:soundsight/screens/music_sheet/services/music_sheet_omr_service.
 import 'package:soundsight/screens/music_sheet/services/music_sheet_transcription_service.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_audio_preview.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_omr_status_card.dart';
-import 'package:soundsight/screens/players/ar/ar_practice_screen.dart';
-import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
-import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/players/ar/screens/ar_practice_screen.dart';
+import 'package:soundsight/screens/players/sight_reading/screens/music_sheet_reading_screen.dart';
+import 'package:soundsight/screens/players/synthesia/screens/synthesia_screen.dart';
 import 'package:soundsight/screens/players/synthesia/models/synthesia_score_source.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -67,6 +68,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
   String? submissionError;
   bool canSubmitConversion = false;
   bool showRecognizedPdf = true;
+  bool _tourPdfPending = false;
   Timer? transcriptionStatusTimer;
 
   @override
@@ -197,10 +199,12 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
   Widget build(BuildContext context) {
     final colors = widget.colors;
     final sheetData = currentSheetData();
+    _tourPdfPending = false;
 
-    return Scaffold(
+    return ScreenFeatureTour(featureId: 'music_sheet_viewer', key: ValueKey('music_sheet_viewer'), colors: widget.colors, canStart: () => sheetSnapshot.hasData && !submissionBusy && !_tourPdfPending, child: Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
+            
         backgroundColor: colors.backgroundColor,
         foregroundColor: colors.primaryColor,
         surfaceTintColor: Colors.transparent,
@@ -219,9 +223,9 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: buildPlayButton(colors),
+      floatingActionButton: FeatureTourTarget(id: 'practice', child: buildPlayButton(colors)),
       body: buildSheetBody(sheetData),
-    );
+    ));
   }
 
   Widget buildSheetBody(Map<String, dynamic> sheetData) {
@@ -279,7 +283,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ProcessingJobCard(
+            FeatureTourTarget(id: 'process', child: ProcessingJobCard(
               colors: widget.colors,
               status: sheetData['lastJobStatus'] as String?,
               errorMessage: sheetData['lastJobStatus'] == 'submissionFailed'
@@ -291,16 +295,16 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                       isReconversion: hasPlayableAudioScore(sheetData),
                     )
                   : null,
-            ),
+            )),
             buildAudioTranscriptionCard(sheetData),
             Gap(AppSpacing.md),
-            MusicSheetAudioPreview(
+            FeatureTourTarget(id: 'audio', child: MusicSheetAudioPreview(
               colors: widget.colors,
               storagePath: storagePath,
               streamFromStorage: true,
               title: context.l10n.audioFileType,
               controller: audioPreviewController,
-            ),
+            )),
             Gap(AppSpacing.md),
             if (hasScore)
               SizedBox(
@@ -745,7 +749,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     final previewAudioStoragePath =
         sheetData['previewAudioStoragePath'] as String? ?? '';
 
-    return Column(
+    return FeatureTourTarget(id: 'process', child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (ProcessingJobCard.isVisible(jobStatus))
@@ -802,18 +806,18 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
               AppSpacing.md,
               0,
             ),
-            child: MusicSheetAudioPreview(
+            child: FeatureTourTarget(id: 'audio', child: MusicSheetAudioPreview(
               colors: widget.colors,
               storagePath: previewAudioStoragePath,
               controller: audioPreviewController,
-            ),
+            )),
           ),
       ],
-    );
+    ));
   }
 
   Widget buildSourceToggle() {
-    return Padding(
+    return FeatureTourTarget(id: 'preview', child: Padding(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.md,
         AppSpacing.sm,
@@ -855,7 +859,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget buildSourceToggleSegment({
@@ -939,6 +943,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     return FutureBuilder<Uint8List?>(
       future: recognizedPdfFuture,
       builder: (context, snapshot) {
+        _tourPdfPending = snapshot.connectionState == ConnectionState.waiting;
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
             child: CircularProgressIndicator(color: widget.colors.primaryColor),
@@ -1026,6 +1031,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     return FutureBuilder<Uint8List?>(
       future: pdfFuture,
       builder: (context, snapshot) {
+        _tourPdfPending = snapshot.connectionState == ConnectionState.waiting;
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
             child: CircularProgressIndicator(color: colors.primaryColor),
@@ -1082,7 +1088,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
             top: AppSpacing.sm,
             right: AppSpacing.sm,
             child: IgnorePointer(
-              child: DecoratedBox(
+              child: FeatureTourTarget(id: 'expand', child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: widget.colors.surfaceColor.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1096,7 +1102,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
                     size: 20,
                   ),
                 ),
-              ),
+              )),
             ),
           ),
         ],

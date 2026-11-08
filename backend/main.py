@@ -1,27 +1,13 @@
-import logging
-
+"""SoundSight API entry point. Run with uvicorn main:app from backend/."""
 from fastapi import FastAPI
-from fastapi import Depends
-from fastapi import HTTPException
 
-from composition.post_service import getNextPublishedVersion
-from composition.post_service import saveCompositionPost
-from composition.public_profile_service import getPublicProfile
-from composition.storage_service import copyPublishedCompositionFiles
-from composition.storage_service import deleteStoragePaths
-from composition.unpublish_service import unpublishComposition
-from core.auth_service import requireVerifiedFirebaseUser
-from omr.audiveris_service import isAudiverisInstalled
-from composition.private_composition_service import (
-    generatedFilesAreCurrent,
-    getOwnedCompositionReference,
-    loadOwnedComposition,
-)
+from composition.routes import router as compositionRouter
+from core.routes import router as coreRouter
+from jobs.routes import router as jobsRouter
+from core.logging_setup import configure_logging
+from core.request_logging import RequestLoggingMiddleware
 
-from jobs.api import router as jobsRouter
-from jobs.store import Store
-
-logger = logging.getLogger("uvicorn.error")
+configure_logging("API")
 
 app = FastAPI(
     title="SoundSight API",
@@ -34,135 +20,6 @@ app = FastAPI(
 
 
 app.include_router(jobsRouter)
-
-
-@app.get("/")
-def root():
-    return {
-        "message": "SoundSight backend is running."
-    }
-
-
-@app.get("/health")
-def health():
-    return {
-        "status": "ok",
-        "audiverisInstalled": isAudiverisInstalled(),
-        **Store().health(),
-        "jobProtocol": 1,
-    }
-
-
-@app.post("/compositions/{compositionId}/publish")
-def publish_composition(
-    compositionId: str,
-    authenticatedUserId: str = Depends(
-        requireVerifiedFirebaseUser
-    ),
-):
-    publishedStoragePaths = None
-
-    try:
-        compositionReference = getOwnedCompositionReference(
-            compositionId,
-            authenticatedUserId,
-        )
-        compositionData = (
-            compositionReference.get().to_dict() or {}
-        )
-
-        if not generatedFilesAreCurrent(compositionData):
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Prepare the sheet music and playback "
-                    "files before publishing."
-                ),
-            )
-
-        composition = loadOwnedComposition(
-            compositionId,
-            authenticatedUserId,
-        )
-        publicProfile = getPublicProfile(authenticatedUserId)
-        versionNumber = getNextPublishedVersion(compositionId)
-        publishedStoragePaths = copyPublishedCompositionFiles(
-            compositionData,
-            authenticatedUserId,
-            compositionId,
-            versionNumber,
-        )
-        postId = saveCompositionPost(
-            composition,
-            publishedStoragePaths,
-            publicProfile,
-            versionNumber,
-            compositionData.get("updatedAt"),
-        )
-        return {
-            "message": "Composition published successfully.",
-            "postId": postId,
-            "compositionId": compositionId,
-            "title": composition.title,
-            "authorName": publicProfile["username"],
-            "versionNumber": versionNumber,
-            **publishedStoragePaths,
-        }
-    except HTTPException:
-        if publishedStoragePaths is not None:
-            deleteStoragePaths(publishedStoragePaths.values())
-        raise
-    except FileNotFoundError as error:
-        if publishedStoragePaths is not None:
-            deleteStoragePaths(publishedStoragePaths.values())
-        raise HTTPException(status_code=404, detail=str(error)) from error
-    except PermissionError as error:
-        if publishedStoragePaths is not None:
-            deleteStoragePaths(publishedStoragePaths.values())
-        raise HTTPException(status_code=403, detail=str(error)) from error
-    except ValueError as error:
-        if publishedStoragePaths is not None:
-            deleteStoragePaths(publishedStoragePaths.values())
-        raise HTTPException(status_code=400, detail=str(error)) from error
-    except Exception as error:
-        logger.exception("Composition publishing failed: %s", compositionId)
-        if publishedStoragePaths is not None:
-            deleteStoragePaths(publishedStoragePaths.values())
-        raise HTTPException(
-            status_code=500,
-            detail="The composition could not be published.",
-        ) from error
-
-
-@app.delete("/compositions/{compositionId}/publish")
-def unpublish_composition(
-    compositionId: str,
-    authenticatedUserId: str = Depends(
-        requireVerifiedFirebaseUser
-    ),
-):
-    try:
-        wasDeleted = unpublishComposition(
-            compositionId,
-            authenticatedUserId,
-        )
-    except PermissionError as error:
-        raise HTTPException(
-            status_code=403,
-            detail=str(error),
-        ) from error
-
-    if not wasDeleted:
-        raise HTTPException(
-            status_code=404,
-            detail=(
-                "The published composition was not found."
-            ),
-        )
-
-    return {
-        "message": (
-            "Composition unpublished successfully."
-        ),
-        "compositionId": compositionId,
-    }
+app.include_router(coreRouter)
+app.include_router(compositionRouter)
+app.add_middleware(RequestLoggingMiddleware)

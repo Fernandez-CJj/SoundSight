@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,7 @@ class _SavedCompositionsScreenState extends State<SavedCompositionsScreen> {
   final PublishedCompositionPlaybackController playbackController =
       PublishedCompositionPlaybackController();
 
+  PublishedComposition? _tutorialComposition;
   late bool isDarkMode;
   late final String? userId;
   late final Stream<List<PublishedComposition>>? savedCompositionsStream;
@@ -57,104 +59,130 @@ class _SavedCompositionsScreenState extends State<SavedCompositionsScreen> {
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
 
-    return Scaffold(
-      backgroundColor: colors.backgroundColor,
-      appBar: AppBar(
+    return ScreenFeatureTour(
+      featureId: 'saved_compositions',
+      key: ValueKey('saved_compositions'),
+      colors: colors,
+      canStart: () =>
+          !playbackController.isBusy &&
+          playbackController.playingVersionId == null,
+      openNext: _openTutorialItem,
+      nextScreens: const {'published_details'},
+      canContinue: () => _tutorialComposition != null,
+      child: Scaffold(
         backgroundColor: colors.backgroundColor,
-        foregroundColor: colors.primaryColor,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        title: Text(
-          context.l10n.drawerSavedSheets,
-          style: const TextStyle(
-            fontSize: AppTextSizes.sectionTitle,
-            fontWeight: FontWeight.w600,
+        appBar: AppBar(
+          backgroundColor: colors.backgroundColor,
+          foregroundColor: colors.primaryColor,
+          surfaceTintColor: Colors.transparent,
+          centerTitle: true,
+          title: Text(
+            context.l10n.drawerSavedSheets,
+            style: const TextStyle(
+              fontSize: AppTextSizes.sectionTitle,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-      ),
-      drawer: AppDrawer(
-        isDarkMode: isDarkMode,
-        activeItem: DrawerItem.savedSheets,
-        onDarkModeChanged: (value) {
-          setState(() {
-            isDarkMode = value;
-          });
-        },
-      ),
-      body: userId == null
-          ? buildMessage(
-              colors,
-              icon: Icons.login_rounded,
-              title: context.l10n.signInForSavedSheets,
-              message: context.l10n.savedSheetsSignedOutDescription,
-            )
-          : StreamBuilder<List<PublishedComposition>>(
-              stream: savedCompositionsStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    !snapshot.hasData) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: colors.primaryColor,
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return buildMessage(
-                    colors,
-                    icon: Icons.cloud_off_outlined,
-                    title: context.l10n.savedSheetsLoadFailed,
-                    message: context.l10n.checkConnectionTryAgain,
-                  );
-                }
-
-                final compositions = snapshot.data ?? [];
-
-                if (compositions.isEmpty) {
-                  return buildMessage(
-                    colors,
-                    icon: Icons.bookmark_border_rounded,
-                    title: context.l10n.noSavedSheets,
-                    message: context.l10n.noSavedSheetsDescription,
-                  );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.sm,
-                    AppSpacing.md,
-                    AppSpacing.xl,
-                  ),
-                  itemCount: (compositions.length / 2).ceil(),
-                  separatorBuilder: (_, _) => const Gap(AppSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final firstIndex = index * 2;
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: buildCompositionCard(
-                            colors,
-                            compositions[firstIndex],
-                          ),
-                        ),
-                        const Gap(AppSpacing.sm),
-                        Expanded(
-                          child: firstIndex + 1 < compositions.length
-                              ? buildCompositionCard(
-                                  colors,
-                                  compositions[firstIndex + 1],
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      ],
+        drawer: AppDrawer(
+          isDarkMode: isDarkMode,
+          activeItem: DrawerItem.savedSheets,
+          onDarkModeChanged: (value) {
+            setState(() {
+              isDarkMode = value;
+            });
+          },
+        ),
+        body: userId == null
+            ? buildMessage(
+                colors,
+                icon: Icons.login_rounded,
+                title: context.l10n.signInForSavedSheets,
+                message: context.l10n.savedSheetsSignedOutDescription,
+              )
+            : StreamBuilder<List<PublishedComposition>>(
+                stream: savedCompositionsStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: colors.primaryColor,
+                      ),
                     );
-                  },
-                );
-              },
-            ),
+                  }
+
+                  if (snapshot.hasError) {
+                    return buildMessage(
+                      colors,
+                      icon: Icons.cloud_off_outlined,
+                      title: context.l10n.savedSheetsLoadFailed,
+                      message: context.l10n.checkConnectionTryAgain,
+                    );
+                  }
+
+                  final compositions = snapshot.data ?? [];
+
+                  _tutorialComposition = compositions.isEmpty
+                      ? null
+                      : compositions.first;
+                  if (compositions.isEmpty) {
+                    return buildMessage(
+                      colors,
+                      icon: Icons.bookmark_border_rounded,
+                      title: context.l10n.noSavedSheets,
+                      message: context.l10n.noSavedSheetsDescription,
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                      AppSpacing.md,
+                      AppSpacing.xl,
+                    ),
+                    itemCount: (compositions.length / 2).ceil(),
+                    separatorBuilder: (_, _) => const Gap(AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final firstIndex = index * 2;
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: buildCompositionCard(
+                              colors,
+                              compositions[firstIndex],
+                            ),
+                          ),
+                          const Gap(AppSpacing.sm),
+                          Expanded(
+                            child: firstIndex + 1 < compositions.length
+                                ? buildCompositionCard(
+                                    colors,
+                                    compositions[firstIndex + 1],
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+      ),
+    );
+  }
+
+  Future<Object?> _openTutorialItem() async {
+    final item = _tutorialComposition;
+    if (item == null || !mounted) return null;
+    final colors = AppThemeColors.fromDarkMode(isDarkMode);
+    return Navigator.of(context).push<Object?>(
+      MaterialPageRoute<Object?>(
+        builder: (_) =>
+            PublishedCompositionViewerScreen(colors: colors, composition: item),
+      ),
     );
   }
 
@@ -202,13 +230,17 @@ class _SavedCompositionsScreenState extends State<SavedCompositionsScreen> {
           children: [
             Icon(icon, color: colors.secondaryTextColor, size: AppIconSizes.xl),
             const Gap(AppSpacing.md),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.primaryColor,
-                fontSize: AppTextSizes.body,
-                fontWeight: FontWeight.w700,
+            FeatureTourTarget(
+              id: 'empty',
+              enabled: icon == Icons.bookmark_border_rounded,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.primaryColor,
+                  fontSize: AppTextSizes.body,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const Gap(AppSpacing.xs),

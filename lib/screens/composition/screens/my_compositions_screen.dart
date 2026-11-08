@@ -1,3 +1,5 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
+import 'package:soundsight/screens/onboarding/tours/feature_tour_step_counts.dart';
 import 'package:soundsight/services/processing_job_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +35,8 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   final Set<String> deletingCompositionIds = {};
   final Set<String> generatingCompositionIds = {};
 
+  bool _tourDataReady = false;
+  Composition? _tutorialComposition;
   late bool isDarkMode;
   late final String? userId;
 
@@ -56,7 +60,10 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
 
-    return Scaffold(
+    return ScreenFeatureTour(featureId: 'my_compositions', key: ValueKey('my_compositions'), colors: colors, canStart: () => _tourDataReady && deletingCompositionIds.isEmpty && generatingCompositionIds.isEmpty, openNext: _openTutorialItem, nextScreens: const {'composition_details', 'manual_composition', 'recording_composition'}, canContinue: () => _tourDataReady, remainingStepCount: () {
+      final composition = _tutorialComposition;
+      return composition == null ? null : FeatureTourStepCounts.compositionJourney(composition);
+    }, child: Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
         backgroundColor: colors.backgroundColor,
@@ -74,11 +81,11 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           ),
         ),
         actions: [
-          IconButton(
+          FeatureTourTarget(id: 'create', child: IconButton(
             tooltip: context.l10n.newComposition,
             onPressed: openNewComposition,
             icon: const Icon(Icons.add_rounded, size: AppIconSizes.lg),
-          ),
+          )),
         ],
       ),
       drawer: AppDrawer(
@@ -96,6 +103,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
               stream: compositionsStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
+                  _tourDataReady = false;
                   return Center(
                     child: CircularProgressIndicator(
                       color: colors.primaryColor,
@@ -104,11 +112,14 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                 }
 
                 if (snapshot.hasError) {
+                  _tourDataReady = false;
                   return buildErrorState(colors);
                 }
 
+                _tourDataReady = true;
                 final compositions = snapshot.data ?? [];
 
+                _tutorialComposition = compositions.isEmpty ? null : compositions.first;
                 if (compositions.isEmpty) {
                   return buildEmptyState(colors);
                 }
@@ -116,7 +127,20 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                 return buildCompositionList(colors, compositions);
               },
             ),
-    );
+    ));
+  }
+
+  Future<Object?> _openTutorialItem() async {
+    final item = _tutorialComposition;
+    if (!mounted) return null;
+    if (item == null) {
+      await openNewComposition();
+      return null;
+    }
+    final colors = AppThemeColors.fromDarkMode(isDarkMode);
+    return Navigator.of(context).push<Object?>(MaterialPageRoute<Object?>(
+      builder: (_) => CompositionDetailsScreen(colors: colors, composition: item),
+    ));
   }
 
   Widget buildCompositionList(
@@ -159,7 +183,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   }
 
   Widget buildListHeader(AppThemeColors colors, int compositionCount) {
-    return Column(
+    return FeatureTourTarget(id: 'list', child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -229,7 +253,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           ),
         ),
       ],
-    );
+    ));
   }
 
   Widget buildEmptyState(AppThemeColors colors) {
@@ -254,7 +278,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
               ),
             ),
             const Gap(AppSpacing.lg),
-            Text(
+            FeatureTourTarget(id: 'empty', child: Text(
               context.l10n.noCompositions,
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -262,7 +286,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                 fontSize: AppTextSizes.sectionTitle,
                 fontWeight: FontWeight.w700,
               ),
-            ),
+            )),
             const Gap(AppSpacing.sm),
             Text(
               context.l10n.noCompositionsDescription,

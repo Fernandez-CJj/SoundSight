@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -11,9 +12,9 @@ import 'package:soundsight/screens/composition/models/published_composition.dart
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
 import 'package:soundsight/screens/composition/screens/published_composition_comments_screen.dart';
 import 'package:soundsight/screens/composition/widgets/published_composition_social_actions.dart';
-import 'package:soundsight/screens/players/ar/ar_practice_screen.dart';
-import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
-import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/players/ar/screens/ar_practice_screen.dart';
+import 'package:soundsight/screens/players/sight_reading/screens/music_sheet_reading_screen.dart';
+import 'package:soundsight/screens/players/synthesia/screens/synthesia_screen.dart';
 import 'package:soundsight/screens/players/synthesia/models/synthesia_score_source.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -40,6 +41,7 @@ class _PublishedCompositionViewerScreenState
       PublishedCompositionPlaybackController();
 
   late Future<Uint8List?> pdfFuture;
+  bool _tourPdfPending = true;
 
   @override
   void initState() {
@@ -58,7 +60,7 @@ class _PublishedCompositionViewerScreenState
   @override
   Widget build(BuildContext context) {
     final colors = widget.colors;
-    return Scaffold(
+    return ScreenFeatureTour(featureId: 'published_details', key: ValueKey('published_details'), colors: widget.colors, canStart: () => !playbackController.isBusy && playbackController.playingVersionId == null && !_tourPdfPending, child: Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
         backgroundColor: colors.backgroundColor,
@@ -119,13 +121,13 @@ class _PublishedCompositionViewerScreenState
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: SizedBox(
           width: double.infinity,
-          child: FloatingActionButton.extended(
+          child: FeatureTourTarget(id: 'practice', child: FloatingActionButton.extended(
             onPressed: showPlayModeDialog,
             backgroundColor: colors.primaryColor,
             foregroundColor: colors.backgroundColor,
             icon: const Icon(Icons.play_arrow_rounded),
             label: Text(context.l10n.play),
-          ),
+          )),
         ),
       ),
       body: Padding(
@@ -147,14 +149,14 @@ class _PublishedCompositionViewerScreenState
                     AppSpacing.md,
                     0,
                   ),
-                  child: PublishedCompositionSocialActions(
+                  child: FeatureTourTarget(id: 'social', child: PublishedCompositionSocialActions(
                     key: ValueKey(
                       '${widget.composition.id}/${widget.composition.currentVersion}',
                     ),
                     colors: colors,
                     composition: widget.composition,
                     onComments: openComments,
-                  ),
+                  )),
                 ),
                 Expanded(child: buildPdfViewer()),
               ],
@@ -162,7 +164,7 @@ class _PublishedCompositionViewerScreenState
           },
         ),
       ),
-    );
+    ));
   }
 
   Future<void> showPlayModeDialog() async {
@@ -288,7 +290,7 @@ class _PublishedCompositionViewerScreenState
     final isLandscape =
         MediaQuery.orientationOf(context) == Orientation.landscape;
 
-    return Container(
+    return FeatureTourTarget(id: 'details', child: Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.md,
@@ -365,7 +367,7 @@ class _PublishedCompositionViewerScreenState
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget buildCompositionIdentity() {
@@ -383,7 +385,7 @@ class _PublishedCompositionViewerScreenState
       size: AppIconSizes.lg,
     );
 
-    return Column(
+    return FeatureTourTarget(id: 'identity', child: Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -434,7 +436,7 @@ class _PublishedCompositionViewerScreenState
           ),
         ),
       ],
-    );
+    ));
   }
 
   Widget buildInformationChip(IconData icon, String text) {
@@ -486,6 +488,7 @@ class _PublishedCompositionViewerScreenState
     return FutureBuilder<Uint8List?>(
       future: pdfFuture,
       builder: (context, snapshot) {
+        _tourPdfPending = snapshot.connectionState == ConnectionState.waiting;
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
             child: CircularProgressIndicator(color: colors.primaryColor),
@@ -513,7 +516,7 @@ class _PublishedCompositionViewerScreenState
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       side: BorderSide(color: colors.borderColor),
                     ),
-                    child: IconButton(
+                    child: FeatureTourTarget(id: 'preview', child: IconButton(
                       tooltip: context.l10n.fullScreen,
                       onPressed: () => showPdfDialog(snapshot.data!),
                       icon: Icon(
@@ -521,7 +524,7 @@ class _PublishedCompositionViewerScreenState
                         color: colors.primaryColor,
                         size: 20,
                       ),
-                    ),
+                    )),
                   ),
                 ),
               ],

@@ -1,6 +1,6 @@
 import '../../ar/services/ar_practice_performance_tracker.dart';
 import '../../ar/utils/midi_note_utils.dart';
-import '../../sight_reading/practice_result_models.dart';
+import '../../../practice_result/models/practice_result_models.dart';
 
 class SynthesiaPerformanceReportBuilder {
   const SynthesiaPerformanceReportBuilder();

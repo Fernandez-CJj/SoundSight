@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:soundsight/widgets/processing_job_card.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/widgets/delete_swipe_background.dart';
@@ -47,7 +48,7 @@ class CompositionCard extends StatelessWidget {
         ? colors.synthesiaResultColor
         : colors.sightReadingResultColor;
 
-    return Dismissible(
+    return FeatureTourTarget(id: 'card_info', child: Dismissible(
       key: ValueKey(composition.id),
       direction: isDeleting || composition.hasActiveJob
           ? DismissDirection.none
@@ -245,7 +246,7 @@ class CompositionCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget buildCreationMethodBadge({

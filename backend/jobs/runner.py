@@ -6,7 +6,7 @@ import sys
 def main():
     if sys.stdin.readline().strip() != "run":
         raise SystemExit("The worker did not authorize execution.")
-    from jobs.store import Store
+    from jobs.repositories.store import Store
     from jobs.processors import execute
     store = Store()
     job = store.get(sys.argv[1])

@@ -8,18 +8,19 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/app_language.dart';
 import 'package:soundsight/localization/app_locale_controller.dart';
 import 'package:soundsight/localization/localization_extension.dart';
-import 'package:soundsight/screens/auth/login/login_screen.dart';
-import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
+import 'package:soundsight/screens/auth/screens/login_screen.dart';
+import 'package:soundsight/screens/capture_upload_sheet/screens/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
-import 'package:soundsight/screens/lessons/practice.dart';
-import 'package:soundsight/screens/practice_result/practice_results_screen.dart';
-import 'package:soundsight/screens/profile/profile_screen.dart';
+import 'package:soundsight/screens/lessons/screens/fundamentals_screen.dart';
+import 'package:soundsight/screens/practice_result/screens/practice_results_screen.dart';
+import 'package:soundsight/screens/profile/screens/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer_profile_header.dart';
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 
 enum DrawerItem {
   home,
@@ -41,11 +42,21 @@ class AppDrawer extends StatelessWidget {
     required this.isDarkMode,
     required this.onDarkModeChanged,
     this.activeItem = DrawerItem.home,
+    this.scrollController,
+    this.navigationGuideBuilder,
+    this.preferencesGuideBuilder,
+    this.replayGuideBuilder,
+    this.onReplayTutorial,
   });
 
   final bool isDarkMode;
   final ValueChanged<bool> onDarkModeChanged;
   final DrawerItem activeItem;
+  final ScrollController? scrollController;
+  final Widget Function(Widget)? navigationGuideBuilder;
+  final Widget Function(Widget)? preferencesGuideBuilder;
+  final Widget Function(Widget)? replayGuideBuilder;
+  final VoidCallback? onReplayTutorial;
 
   static const Color _logoutColor = Color(0xFFDC2626);
 
@@ -54,14 +65,27 @@ class AppDrawer extends StatelessWidget {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
     final l10n = context.l10n;
     final selectedLanguage = AppLocaleScope.of(context).language;
+    final screenTour = ScreenFeatureTour.maybeOf(context);
+    final replayTutorial = onReplayTutorial ?? (screenTour == null ? null : () {
+      Scaffold.maybeOf(context)?.closeDrawer();
+      screenTour.replay();
+    });
 
     return Drawer(
       backgroundColor: colors.surfaceColor,
       width: 265,
       child: SafeArea(
-        child: ListView(
+        child: SingleChildScrollView(
+          controller: scrollController,
           padding: const EdgeInsets.all(AppSpacing.md),
-          children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+            _guided(
+              navigationGuideBuilder,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
             DrawerProfileHeader(
               colors: colors,
               onTap: () {
@@ -93,6 +117,9 @@ class AppDrawer extends StatelessWidget {
                   );
                 }
               },
+            ),
+                ],
+              ),
             ),
             _DrawerTile(
               colors: colors,
@@ -230,6 +257,11 @@ class AppDrawer extends StatelessWidget {
               },
             ),
             Divider(color: colors.borderColor),
+            _guided(
+              preferencesGuideBuilder,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               leading: Icon(Icons.language_rounded, color: colors.primaryColor),
@@ -274,6 +306,19 @@ class AppDrawer extends StatelessWidget {
               inactiveTrackColor: colors.borderColor,
               onChanged: _updateTheme,
             ),
+                ],
+              ),
+            ),
+            if (replayTutorial != null)
+              _guided(replayGuideBuilder, ListTile(
+                enabled: screenTour?.canReplay ?? true,
+                leading: Icon(Icons.help_outline_rounded, color: colors.primaryColor),
+                title: Text(
+                  l10n.featureTourReplay,
+                  style: TextStyle(color: colors.primaryColor, fontSize: AppTextSizes.body),
+                ),
+                onTap: replayTutorial,
+              )),
             ListTile(
               leading: const Icon(Icons.logout, color: _logoutColor),
               title: Text(
@@ -305,10 +350,14 @@ class AppDrawer extends StatelessWidget {
               },
             ),
           ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _guided(Widget Function(Widget)? builder, Widget child) =>
+      builder?.call(child) ?? child;
 
   Future<void> _updateTheme(bool value) async {
     onDarkModeChanged(value);

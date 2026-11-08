@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:soundsight/screens/composition/models/recorded_midi_event.dart';
 import 'package:soundsight/screens/composition/models/recorded_performance_note.dart';
 import 'package:soundsight/screens/midi/models/midi_note_event.dart';
+import 'recorded_performance_timing.dart';
 
 class RecordedPerformanceResult {
   const RecordedPerformanceResult({
@@ -73,7 +74,9 @@ class RecordedPerformanceProcessor {
   }
 
   RecordedPerformanceResult process(List<RecordedMidiEvent> events) {
-    final pairedNotes = _pairCompletedNotes(events);
+    final pairedNotes = RecordedPerformanceTiming.alignChordStarts(
+      _pairCompletedNotes(events),
+    );
     if (pairedNotes.isEmpty) {
       return const RecordedPerformanceResult(
         notes: [],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -5,13 +7,17 @@ import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
-import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
+import 'package:soundsight/screens/capture_upload_sheet/screens/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/music_sheet/dialogs/music_sheet_dialogs.dart';
 import 'package:soundsight/screens/music_sheet/services/music_sheet_delete_service.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_viewer_screen.dart';
 import 'package:soundsight/screens/music_sheet/widgets/music_sheet_card.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
+import 'package:soundsight/widgets/processing_job_card.dart';
+import 'package:soundsight/screens/onboarding/tours/music_sheets_tour.dart';
+import 'package:soundsight/screens/onboarding/tours/feature_tour_step_counts.dart';
+import 'package:soundsight/screens/onboarding/widgets/feature_showcase.dart';
 
 class MusicSheetScreen extends StatefulWidget {
   const MusicSheetScreen({super.key, this.isDarkMode});
@@ -25,6 +31,12 @@ class MusicSheetScreen extends StatefulWidget {
 class _MusicSheetScreenState extends State<MusicSheetScreen> {
   late bool isDarkMode;
   late final String? userId;
+  late final MusicSheetsTour sheetTour;
+  bool _tourReady = false;
+  bool _hasSheets = false;
+  bool _hasProcessingStatus = false;
+  bool _tutorialScheduled = false;
+  QueryDocumentSnapshot<Map<String, dynamic>>? _tutorialSheet;
   Stream<QuerySnapshot<Map<String, dynamic>>>? musicSheetsStream;
   final Set<String> deletingSheetIds = {};
   final MusicSheetDeleteService deleteService = MusicSheetDeleteService();
@@ -34,6 +46,23 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     super.initState();
     isDarkMode = widget.isDarkMode ?? false;
     userId = FirebaseAuth.instance.currentUser?.uid;
+    sheetTour = MusicSheetsTour(
+      context: () => context,
+      isMounted: () => mounted,
+      isReady: () => _tourReady && deletingSheetIds.isEmpty,
+      hasSheets: () => _hasSheets,
+      hasProcessingStatus: () => _hasProcessingStatus,
+      openSheet: openTutorialSheet,
+      sheetStepCount: () {
+        final data = _tutorialSheet?.data();
+        if (data == null) return 0;
+        return FeatureTourStepCounts.musicSheetViewer(
+          type: data['type'] as String? ?? 'images',
+          files: getFiles(data),
+          data: data,
+        );
+      },
+    );
 
     if (userId != null) {
       musicSheetsStream = FirebaseFirestore.instance
@@ -47,10 +76,60 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
   }
 
   @override
+  void dispose() {
+    sheetTour.dispose();
+    super.dispose();
+  }
+
+  void scheduleTutorial() {
+    if (_tutorialScheduled || userId == null) return;
+    _tutorialScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_tourReady) {
+        _tutorialScheduled = false;
+        return;
+      }
+      unawaited(sheetTour.controller.start());
+    });
+  }
+
+  Widget guide(int index, String title, String description, Widget child) {
+    return FeatureShowcase(
+      controller: sheetTour.controller,
+      stepIndex: index,
+      title: title,
+      description: description,
+      colors: AppThemeColors.fromDarkMode(isDarkMode),
+      child: child,
+    );
+  }
+
+  Widget libraryGuide(Widget child) => guide(
+    1,
+    context.l10n.yourLibrary,
+    _hasSheets ? context.l10n.featureTourSheetsLibraryBody :
+        context.l10n.featureTourSheetsEmptyBody,
+    child,
+  );
+
+  @override
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
 
-    return Scaffold(
+    return AnimatedBuilder(
+      animation: sheetTour.controller,
+      builder: (context, _) => PopScope(
+      canPop: !sheetTour.controller.isActive,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && sheetTour.controller.isActive) {
+          unawaited(sheetTour.controller.cancel());
+        }
+      },
+      child: Scaffold(
+      key: sheetTour.scaffoldKey,
+      drawerEnableOpenDragGesture: !sheetTour.controller.isActive,
+      onDrawerChanged: sheetTour.onDrawerChanged,
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
         backgroundColor: colors.backgroundColor,
@@ -68,28 +147,38 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
           ),
         ),
         actions: [
+          guide(
+            0, context.l10n.addMusicSheet,
+            context.l10n.featureTourSheetsAddBody,
           IconButton(
             tooltip: context.l10n.addSheetTooltip,
-            onPressed: () => openAddSheetScreen(),
+            onPressed: sheetTour.controller.isActive ? null : openAddSheetScreen,
             icon: Icon(Icons.add_rounded, size: 29),
+          ),
           ),
         ],
       ),
       drawer: AppDrawer(
         isDarkMode: isDarkMode,
         activeItem: DrawerItem.musicSheets,
+        scrollController: sheetTour.drawerScrollController,
+        onReplayTutorial: userId == null ? null :
+            () => unawaited(sheetTour.controller.start(replay: true)),
         onDarkModeChanged: (value) {
           setState(() {
             isDarkMode = value;
           });
         },
       ),
-      body: musicSheetsStream == null
+      body: AbsorbPointer(
+        absorbing: sheetTour.controller.isActive,
+        child: musicSheetsStream == null
           ? buildSignedOutState(colors)
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: musicSheetsStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
+                  _tourReady = false;
                   return Center(
                     child: CircularProgressIndicator(
                       color: colors.primaryColor,
@@ -98,6 +187,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                 }
 
                 if (snapshot.hasError) {
+                  _tourReady = false;
                   return buildErrorState(colors);
                 }
 
@@ -106,6 +196,13 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                       snapshot.data?.docs ?? [],
                     );
                 sheets.sort(sortSheetsByDate);
+                _hasSheets = sheets.isNotEmpty;
+                _tutorialSheet = sheets.isEmpty ? null : sheets.first;
+                _hasProcessingStatus = _hasSheets && ProcessingJobCard.isVisible(
+                  sheets.first.data()['lastJobStatus'] as String?,
+                );
+                _tourReady = true;
+                scheduleTutorial();
 
                 if (sheets.isEmpty) {
                   return buildEmptyState(colors);
@@ -114,6 +211,9 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                 return buildMusicSheetList(colors, sheets);
               },
             ),
+      ),
+    ),
+    ),
     );
   }
 
@@ -122,6 +222,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     List<QueryDocumentSnapshot<Map<String, dynamic>>> sheets,
   ) {
     return ListView.separated(
+      controller: sheetTour.scrollController,
       padding: EdgeInsets.all(AppSpacing.md),
       itemCount: sheets.length + 1,
       separatorBuilder: (_, index) {
@@ -129,7 +230,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
       },
       itemBuilder: (context, index) {
         if (index == 0) {
-          return Row(
+          return libraryGuide(Row(
             children: [
               Expanded(
                 child: Column(
@@ -173,7 +274,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                 ),
               ),
             ],
-          );
+          ));
         }
 
         final sheet = sheets[index - 1];
@@ -196,6 +297,14 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
           onView: () => openMusicSheet(colors, sheet.id, title, type, data),
           onRename: () => renameMusicSheet(colors, sheet, title),
           onDelete: () => deleteMusicSheet(colors, sheet, title, data),
+          infoGuideBuilder: index == 1 ? (child) => guide(
+            3, context.l10n.featureTourSheetsOpenTitle,
+            context.l10n.featureTourSheetsOpenBody, child,
+          ) : null,
+          processingGuideBuilder: index == 1 ? (child) => guide(
+            2, context.l10n.featureTourSheetsStatusTitle,
+            context.l10n.featureTourSheetsStatusBody, child,
+          ) : null,
         );
       },
     );
@@ -204,6 +313,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
   Widget buildEmptyState(AppThemeColors colors) {
     return Center(
       child: SingleChildScrollView(
+        controller: sheetTour.scrollController,
         padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -222,7 +332,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
               ),
             ),
             Gap(AppSpacing.lg),
-            Text(
+            libraryGuide(Text(
               context.l10n.noMusicSheets,
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -230,7 +340,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                 fontSize: AppTextSizes.sectionTitle,
                 fontWeight: FontWeight.w700,
               ),
-            ),
+            )),
             Gap(AppSpacing.sm),
             Text(
               context.l10n.noMusicSheetsDescription,
@@ -331,14 +441,14 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     );
   }
 
-  void openMusicSheet(
+  Future<Object?> openMusicSheet(
     AppThemeColors colors,
     String sheetId,
     String title,
     String type,
     Map<String, dynamic> data,
   ) {
-    Navigator.of(context).push(
+    return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MusicSheetViewerScreen(
           colors: colors,
@@ -349,6 +459,19 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
           files: getFiles(data),
         ),
       ),
+    );
+  }
+
+  Future<Object?> openTutorialSheet() async {
+    final sheet = _tutorialSheet;
+    if (sheet == null || !mounted) return null;
+    final data = sheet.data();
+    return openMusicSheet(
+      AppThemeColors.fromDarkMode(isDarkMode),
+      sheet.id,
+      data['title'] as String? ?? context.l10n.untitledSheet,
+      data['type'] as String? ?? 'images',
+      data,
     );
   }
 
@@ -496,3 +619,4 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     );
   }
 }
+

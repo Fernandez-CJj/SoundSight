@@ -3,5 +3,6 @@ $ErrorActionPreference = 'Stop'
 $credentialsPath = (Resolve-Path -LiteralPath $FirebaseCredentials).Path
 Set-Location -LiteralPath $PSScriptRoot
 $env:GOOGLE_APPLICATION_CREDENTIALS = $credentialsPath
-& "$PSScriptRoot\venv\Scripts\python.exe" -m jobs.worker
+try { $Host.UI.RawUI.WindowTitle = 'SoundSight - Processing Worker' } catch {}
+& "$PSScriptRoot\venv\Scripts\python.exe" -u -m jobs.worker
 exit $LASTEXITCODE

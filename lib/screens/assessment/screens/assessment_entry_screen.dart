@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/widgets/app_snack_bar.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
@@ -656,17 +657,18 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AssessmentTheme(
+    return ScreenFeatureTour(featureId: 'assessment', key: ValueKey('assessment'), colors: AppThemeColors.fromDarkMode(widget.isDarkMode), canStart: () => !_isLoading && !_isSubmitting && _errorMessage == null && _attempt?.effectiveStatus != AssessmentAttemptStatus.inProgress, child: AssessmentTheme(
       isDarkMode: widget.isDarkMode,
       builder: (themedContext) {
         return Scaffold(
-          appBar: AppBar(title: Text(themedContext.l10n.assessment)),
+          appBar: AppBar(
+            title: Text(themedContext.l10n.assessment)),
           body: AssessmentPageBody(
             child: _buildBody(themedContext),
           ),
         );
       },
-    );
+    ));
   }
 
   /// Selects the correct body for loading, error, or loaded state.
@@ -711,13 +713,13 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        FeatureTourTarget(id: 'status', child: Text(
           _statusTitle(status),
           style: const TextStyle(
             fontSize: AppTextSizes.screenTitle,
             fontWeight: FontWeight.w700,
           ),
-        ),
+        )),
         const SizedBox(height: AppSpacing.sm),
         Text(
           _statusDescription(status),
@@ -730,7 +732,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
         const Spacer(),
         ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 52),
-          child: ElevatedButton(
+          child: FeatureTourTarget(id: 'start', child: ElevatedButton(
             onPressed: _primaryButtonAction(status),
             child: _isSubmitting
                 ? SizedBox(
@@ -745,7 +747,7 @@ class _AssessmentEntryScreenState extends State<AssessmentEntryScreen> {
                     _primaryButtonText(status),
                     textAlign: TextAlign.center,
                   ),
-          ),
+          )),
         ),
         if (status == null ||
             status == AssessmentAttemptStatus.inProgress) ...[

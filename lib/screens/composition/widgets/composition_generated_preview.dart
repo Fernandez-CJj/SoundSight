@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -72,7 +73,7 @@ class _CompositionGeneratedPreviewState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          FeatureTourTarget(id: 'preview', child: Row(
             children: [
               Container(
                 width: 42,
@@ -112,18 +113,18 @@ class _CompositionGeneratedPreviewState
                 ),
               ),
             ],
-          ),
+          )),
           const Gap(AppSpacing.md),
           buildSheetMusicPreview(),
           const Gap(AppSpacing.md),
-          MusicSheetAudioPreview(
+          FeatureTourTarget(id: 'playback', child: MusicSheetAudioPreview(
             colors: colors,
             storagePath: widget.mp3StoragePath,
             title: context.l10n.compositionPlayback,
             loadingText: context.l10n.loadingComposition,
             playingText: context.l10n.playingComposition,
             idleText: context.l10n.listenGeneratedComposition,
-          ),
+          )),
         ],
       ),
     );

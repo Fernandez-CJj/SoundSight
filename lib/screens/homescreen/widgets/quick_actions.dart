@@ -7,6 +7,7 @@ import 'package:soundsight/theme/app_theme_colors.dart';
 class QuickActions extends StatelessWidget {
   const QuickActions({
     super.key,
+    this.headingBuilder,
     required this.colors,
     required this.onMusicSheets,
     required this.onUploadSheet,
@@ -17,6 +18,7 @@ class QuickActions extends StatelessWidget {
   });
 
   final AppThemeColors colors;
+  final Widget Function(Widget)? headingBuilder;
   final VoidCallback onMusicSheets;
   final VoidCallback onUploadSheet;
   final VoidCallback onPracticeResults;
@@ -68,14 +70,14 @@ class QuickActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        _buildHeading(Text(
           context.l10n.quickActions,
           style: TextStyle(
             color: colors.primaryColor,
             fontSize: AppTextSizes.label,
             fontWeight: FontWeight.w700,
           ),
-        ),
+        )),
         const Gap(AppSpacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -138,6 +140,8 @@ class QuickActions extends StatelessWidget {
       ],
     );
   }
+  Widget _buildHeading(Widget child) => headingBuilder?.call(child) ?? child;
+
 }
 
 class _QuickAction {

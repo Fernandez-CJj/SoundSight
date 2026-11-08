@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import '../models/ar_score_timeline.dart';
-import '../../sight_reading/practice_result_models.dart';
+import '../../../practice_result/models/practice_result_models.dart';
 
 /// Visual severity used by the immediate feedback banner.
 enum ArPracticeFeedbackKind {

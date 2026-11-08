@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:soundsight/services/processing_announcements.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,21 +7,23 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
-import 'package:soundsight/screens/capture_upload_sheet/capture_upload_sheet_screen.dart';
+import 'package:soundsight/screens/capture_upload_sheet/screens/capture_upload_sheet_screen.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
 import 'package:soundsight/screens/composition/screens/my_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/published_composition_viewer_screen.dart';
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/widgets/community_compositions_section.dart';
-import 'package:soundsight/screens/profile/player_progress_container.dart';
+import 'package:soundsight/screens/profile/widgets/player_progress_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/practice_container.dart';
 import 'package:soundsight/screens/homescreen/widgets/quick_actions.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
-import 'package:soundsight/screens/music_library/music_library_search_screen.dart';
-import 'package:soundsight/screens/practice_result/practice_results_screen.dart';
+import 'package:soundsight/screens/music_library/screens/music_library_search_screen.dart';
+import 'package:soundsight/screens/practice_result/screens/practice_results_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer.dart';
+import 'package:soundsight/screens/onboarding/tours/home_drawer_tour.dart';
+import 'package:soundsight/screens/onboarding/widgets/feature_showcase.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.isDarkMode});
@@ -32,6 +36,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late bool isDarkMode;
+  late final HomeDrawerTour homeTour;
 
   String username = '';
   String skillLevel = '';
@@ -40,13 +45,42 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    homeTour = HomeDrawerTour(context: () => context, isMounted: () => mounted);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) ProcessingAnnouncements.navigationReady.value = true;
     });
 
     isDarkMode = widget.isDarkMode ?? false;
 
-    loadHomeData();
+    unawaited(prepareHomeTutorial());
+  }
+
+  @override
+  void dispose() {
+    homeTour.dispose();
+    super.dispose();
+  }
+
+  Future<void> prepareHomeTutorial() async {
+    try {
+      await loadHomeData();
+    } catch (error) {
+      debugPrint('Could not load the home profile: $error');
+    }
+    if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted) await homeTour.controller.start();
+  }
+
+  Widget guide(int index, String title, String description, Widget child) {
+    return FeatureShowcase(
+      controller: homeTour.controller,
+      stepIndex: index,
+      title: title,
+      description: description,
+      colors: AppThemeColors.fromDarkMode(isDarkMode),
+      child: child,
+    );
   }
 
   @override
@@ -61,7 +95,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final practiceButtonColor = isDarkMode ? Colors.white : Colors.black;
     final practiceButtonTextColor = isDarkMode ? Colors.black : Colors.white;
 
-    return Scaffold(
+    return AnimatedBuilder(
+      animation: homeTour.controller,
+      builder: (context, _) => PopScope(
+        canPop: !homeTour.controller.isActive,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop && homeTour.controller.isActive) {
+            unawaited(homeTour.controller.cancel());
+          }
+        },
+        child: Scaffold(
+      key: homeTour.scaffoldKey,
+      drawerEnableOpenDragGesture: !homeTour.controller.isActive,
+      onDrawerChanged: homeTour.onDrawerChanged,
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
         backgroundColor: colors.backgroundColor,
@@ -71,6 +117,16 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
+        leading: guide(
+          3,
+          context.l10n.featureTourMenuTitle,
+          context.l10n.featureTourMenuBody,
+          IconButton(
+            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+            onPressed: () => homeTour.scaffoldKey.currentState?.openDrawer(),
+            icon: const Icon(Icons.menu_rounded),
+          ),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -92,7 +148,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          IconButton(
+          guide(
+            0,
+            context.l10n.searchMusic,
+            context.l10n.featureTourSearchBody,
+IconButton(
             tooltip: context.l10n.searchMusic,
             onPressed: () {
               Navigator.of(context).push(
@@ -103,12 +163,33 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             icon: const Icon(Icons.search_rounded, size: 30),
+          )
           ),
         ],
       ),
       drawer: AppDrawer(
         isDarkMode: isDarkMode,
         activeItem: DrawerItem.home,
+        scrollController: homeTour.drawerScrollController,
+        navigationGuideBuilder: (child) => guide(
+          4,
+          context.l10n.featureTourNavigationTitle,
+          context.l10n.featureTourNavigationBody,
+          child,
+        ),
+        preferencesGuideBuilder: (child) => guide(
+          5,
+          context.l10n.featureTourPreferencesTitle,
+          context.l10n.featureTourPreferencesBody,
+          child,
+        ),
+        onReplayTutorial: () => unawaited(homeTour.controller.start(replay: true)),
+        replayGuideBuilder: (child) => guide(
+          6,
+          context.l10n.featureTourReplay,
+          context.l10n.featureTourReplayBody,
+          child,
+        ),
         onDarkModeChanged: (value) {
           setState(() {
             isDarkMode = value;
@@ -117,8 +198,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: ListView(
-          children: [
+        child: SingleChildScrollView(
+          controller: homeTour.homeScrollController,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Text(
               context.l10n.homeGreeting(username),
               style: TextStyle(
@@ -153,6 +237,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const Gap(AppSpacing.md),
             QuickActions(
               colors: colors,
+              headingBuilder: (child) => guide(
+                1,
+                context.l10n.quickActions,
+                context.l10n.featureTourQuickActionsBody,
+                child,
+              ),
               onMusicSheets: openMusicSheets,
               onUploadSheet: openAddSheet,
               onPracticeResults: openPracticeResults,
@@ -163,12 +253,21 @@ class _HomeScreenState extends State<HomeScreen> {
             const Gap(AppSpacing.md),
             CommunityCompositionsSection(
               colors: colors,
+              headingBuilder: (child) => guide(
+                2,
+                context.l10n.communityCompositions,
+                context.l10n.featureTourCommunityBody,
+                child,
+              ),
               onSeeAll: openPublishedCompositions,
               onOpenComposition: (composition) {
                 openPublishedComposition(colors, composition);
               },
             ),
           ],
+          ),
+        ),
+      ),
         ),
       ),
     );

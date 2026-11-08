@@ -22,6 +22,8 @@ class MusicSheetCard extends StatelessWidget {
     required this.onView,
     required this.onRename,
     required this.onDelete,
+    this.infoGuideBuilder,
+    this.processingGuideBuilder,
   });
 
   final String? jobId;
@@ -37,6 +39,11 @@ class MusicSheetCard extends StatelessWidget {
   final VoidCallback onView;
   final VoidCallback onRename;
   final Future<void> Function() onDelete;
+  final Widget Function(Widget)? infoGuideBuilder;
+  final Widget Function(Widget)? processingGuideBuilder;
+
+  Widget _guided(Widget Function(Widget)? builder, Widget child) =>
+      builder?.call(child) ?? child;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +83,7 @@ class MusicSheetCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
+                _guided(infoGuideBuilder, Row(
                   children: [
                     Container(
                       width: 48,
@@ -175,15 +182,15 @@ class MusicSheetCard extends StatelessWidget {
                         ],
                       ),
                   ],
-                ),
+                )),
                 if (ProcessingJobCard.isVisible(jobStatus)) ...[
                   const Gap(AppSpacing.sm + AppSpacing.xs),
-                  ProcessingJobCard(
+                  _guided(processingGuideBuilder, ProcessingJobCard(
                     colors: colors,
                     status: jobStatus,
                     jobId: jobId,
                     embedded: true,
-                  ),
+                  )),
                 ],
               ],
             ),

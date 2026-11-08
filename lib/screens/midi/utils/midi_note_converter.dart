@@ -1,4 +1,4 @@
-import '../contants/note_names.dart';
+import '../constants/note_names.dart';
 
 String midiToNoteName(int midi) {
   int noteIndex = midi % 12;

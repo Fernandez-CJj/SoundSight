@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,7 @@ class _PublishedCompositionsScreenState
 
   final Set<String> unpublishingCompositionIds = {};
 
+  PublishedComposition? _tutorialComposition;
   late bool isDarkMode;
   late final String? userId;
 
@@ -74,7 +76,7 @@ class _PublishedCompositionsScreenState
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
 
-    return Scaffold(
+    return ScreenFeatureTour(featureId: 'published_compositions', key: ValueKey('published_compositions'), colors: colors, canStart: () => !playbackController.isBusy && playbackController.playingVersionId == null, openNext: _openTutorialItem, nextScreens: const {'published_details'}, canContinue: () => _tutorialComposition != null, child: Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
         backgroundColor: colors.backgroundColor,
@@ -149,6 +151,7 @@ class _PublishedCompositionsScreenState
                   });
                 }
 
+                _tutorialComposition = compositions.isEmpty ? null : compositions.first;
                 if (compositions.isEmpty) {
                   return buildEmptyState(colors);
                 }
@@ -159,7 +162,16 @@ class _PublishedCompositionsScreenState
                 );
               },
             ),
-    );
+    ));
+  }
+
+  Future<Object?> _openTutorialItem() async {
+    final item = _tutorialComposition;
+    if (item == null || !mounted) return null;
+    final colors = AppThemeColors.fromDarkMode(isDarkMode);
+    return Navigator.of(context).push<Object?>(MaterialPageRoute<Object?>(
+      builder: (_) => PublishedCompositionViewerScreen(colors: colors, composition: item),
+    ));
   }
 
   Widget buildCompositionList(
@@ -292,7 +304,7 @@ class _PublishedCompositionsScreenState
       ],
         ),
         const Gap(AppSpacing.md),
-        DropdownButtonFormField<PublishedCompositionSort>(
+        FeatureTourTarget(id: 'sort', child: DropdownButtonFormField<PublishedCompositionSort>(
           initialValue: selectedSort,
           isExpanded: true,
           dropdownColor: colors.surfaceColor,
@@ -326,7 +338,7 @@ class _PublishedCompositionsScreenState
             if (value == null || value == selectedSort) return;
             setState(() => selectedSort = value);
           },
-        ),
+        )),
       ],
     );
   }
@@ -353,7 +365,7 @@ class _PublishedCompositionsScreenState
               ),
             ),
             const Gap(AppSpacing.lg),
-            Text(
+            FeatureTourTarget(id: 'empty', child: Text(
               context.l10n.noPublishedCompositions,
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -361,7 +373,7 @@ class _PublishedCompositionsScreenState
                 fontSize: AppTextSizes.sectionTitle,
                 fontWeight: FontWeight.w700,
               ),
-            ),
+            )),
             const Gap(AppSpacing.sm),
             Text(
               context.l10n.noPublishedCompositionsDescription,

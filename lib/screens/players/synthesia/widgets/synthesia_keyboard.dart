@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'synthesia_piano_geometry.dart';
+import '../models/synthesia_piano_geometry.dart';
 
 class SynthesiaKeyboard extends StatelessWidget {
   const SynthesiaKeyboard({

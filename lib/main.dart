@@ -1,29 +1,31 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:soundsight/services/processing_announcements.dart';
+import 'package:soundsight/services/system_navigation_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:soundsight/screens/auth/login/login_screen.dart';
-import 'package:soundsight/screens/auth/email_verification/email_verification_screen.dart';
+import 'package:soundsight/screens/auth/screens/login_screen.dart';
+import 'package:soundsight/screens/auth/screens/email_verification_screen.dart';
 import 'package:soundsight/screens/auth/services/registration_profile_service.dart';
-import 'package:soundsight/screens/auth/widgets/auth_loading_screen.dart';
-import 'package:soundsight/screens/auth/widgets/auth_connection_error_screen.dart';
+import 'package:soundsight/screens/auth/screens/auth_loading_screen.dart';
+import 'package:soundsight/screens/auth/screens/auth_connection_error_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:soundsight/l10n/generated/app_localizations.dart';
+import 'package:soundsight/translations/generated/app_localizations.dart';
 import 'package:soundsight/localization/app_locale_controller.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/screens/assessment_entry_screen.dart';
 import 'package:soundsight/screens/assessment/services/assessment_attempt_service.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
-import 'package:soundsight/screens/profile/achievement_announcements.dart';
+import 'package:soundsight/achievements/widgets/achievement_announcements.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  await SystemNavigationService.initialize();
 
   await Firebase.initializeApp();
 

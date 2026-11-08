@@ -1,3 +1,5 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
+import 'package:soundsight/screens/onboarding/tours/feature_tour_step_counts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:soundsight/services/processing_job_service.dart';
 import 'package:soundsight/widgets/processing_job_card.dart';
@@ -10,7 +12,7 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/dialogs/composition_dialogs.dart';
-import 'package:soundsight/screens/composition/screens/manual/composition_editor_screen.dart';
+import 'package:soundsight/screens/composition/screens/composition_editor_screen.dart';
 import 'package:soundsight/screens/composition/services/composition_playback_service.dart';
 import 'package:soundsight/screens/composition/services/composition_generation_service.dart';
 import 'package:soundsight/screens/composition/services/composition_publish_service.dart';
@@ -18,9 +20,9 @@ import 'package:soundsight/screens/composition/services/composition_service.dart
 import 'package:soundsight/screens/composition/dialogs/publish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/dialogs/unpublish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/widgets/composition_generated_preview.dart';
-import 'package:soundsight/screens/players/ar/ar_practice_screen.dart';
-import 'package:soundsight/screens/players/sight_reading/music_sheet_reading_screen.dart';
-import 'package:soundsight/screens/players/synthesia/synthesia_screen.dart';
+import 'package:soundsight/screens/players/ar/screens/ar_practice_screen.dart';
+import 'package:soundsight/screens/players/sight_reading/screens/music_sheet_reading_screen.dart';
+import 'package:soundsight/screens/players/synthesia/screens/synthesia_screen.dart';
 import 'package:soundsight/screens/players/synthesia/models/synthesia_score_source.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
@@ -95,7 +97,14 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   Widget build(BuildContext context) {
     final colors = widget.colors;
 
-    return PopScope(
+    return ScreenFeatureTour(featureId: 'composition_details', key: ValueKey('composition_details'), colors: widget.colors, canStart: () => !isLoading && !isDeleting && !isPublishing && !isPlaying && !isPreparingPlayback, openNext: () async {
+        await editComposition();
+        return null;
+      }, nextScreens: const {'manual_composition'},
+      remainingStepCount: () => FeatureTourStepCounts.compositionEditor(composition),
+      canContinue: () => composition.creationMethod != Composition.recordingCreationMethod &&
+          !composition.hasActiveJob && !isPlaying && !isPublishing,
+      child: PopScope(
       canPop: !isDeleting && !isPublishing,
       child: Scaffold(
         backgroundColor: colors.backgroundColor,
@@ -193,14 +202,14 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                 child: CircularProgressIndicator(color: colors.primaryColor),
               )
             : SafeArea(
-                child: ListView(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
                     AppSpacing.sm,
                     AppSpacing.md,
                     96,
                   ),
-                  children: [
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     ProcessingJobCard(
                       colors: colors,
                       status: composition.lastJobStatus,
@@ -228,11 +237,11 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
                     buildGeneratedFilesCard(colors),
                     const Gap(AppSpacing.md),
                     buildActionsCard(colors),
-                  ],
+                  ]),
                 ),
               ),
       ),
-    );
+    ));
   }
 
   Future<void> showPlayModeDialog() async {
@@ -390,7 +399,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Widget buildOverviewCard(AppThemeColors colors) {
-    return Container(
+    return FeatureTourTarget(id: 'overview', child: Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: buildCardDecoration(colors),
       child: Row(
@@ -470,7 +479,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget buildInformationRow({
@@ -524,7 +533,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         ? context.l10n.playing
         : context.l10n.ready;
 
-    return Container(
+    return FeatureTourTarget(id: 'playback', child: Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: buildCardDecoration(colors),
       child: Column(
@@ -659,7 +668,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget buildPlaybackButton({
@@ -774,7 +783,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
         ? const Color(0xFFF59E0B)
         : const Color(0xFFDC2626);
 
-    return Container(
+    return FeatureTourTarget(id: 'preview', child: Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: statusColor.withValues(alpha: 0.08),
@@ -867,7 +876,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget buildStatisticCard({
@@ -918,7 +927,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Widget buildActionsCard(AppThemeColors colors) {
-    return Container(
+    return FeatureTourTarget(id: 'actions', child: Container(
       clipBehavior: Clip.antiAlias,
       decoration: buildCardDecoration(colors),
       child: Column(
@@ -1034,7 +1043,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget buildActionRow({

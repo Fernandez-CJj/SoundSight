@@ -1,7 +1,9 @@
+import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
-import 'package:soundsight/screens/assessment/assessment_localization.dart';
+import 'package:soundsight/screens/assessment/localization/assessment_localization.dart';
 import 'package:soundsight/screens/assessment/models/assessment_attempt.dart';
 import 'package:soundsight/screens/assessment/models/assessment_notation_question.dart';
 import 'package:soundsight/screens/assessment/models/assessment_piano_task.dart';
@@ -136,12 +138,13 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
       ]);
     }
 
-    return Theme(
+    return ScreenFeatureTour(featureId: 'assessment_results', key: ValueKey('assessment_results'), colors: AppThemeColors.fromDarkMode(widget.isDarkMode), child: Theme(
       data: AssessmentTheme.dataFor(widget.isDarkMode),
       child: PopScope(
         canPop: true,
         child: Scaffold(
           appBar: AppBar(
+            
             leading: BackButton(
               onPressed: () {
                 Navigator.of(context).maybePop();
@@ -162,7 +165,7 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
+                        FeatureTourTarget(id: 'summary', child: Container(
                           padding: const EdgeInsets.all(AppSpacing.lg),
                           decoration: BoxDecoration(
                             color: colorScheme.surface,
@@ -198,7 +201,7 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
                               ),
                             ],
                           ),
-                        ),
+                        )),
                         const SizedBox(height: AppSpacing.lg),
                         ...scoredSummary,
                         const SizedBox(height: AppSpacing.lg),
@@ -250,7 +253,7 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   /// Shows the labels selected in the background questionnaire.
@@ -375,13 +378,13 @@ class _AssessmentResultsScreenState extends State<AssessmentResultsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
+          FeatureTourTarget(id: 'sections', child: Text(
             title,
             style: const TextStyle(
               fontSize: AppTextSizes.body,
               fontWeight: FontWeight.w600,
             ),
-          ),
+          )),
           ...children,
         ],
       ),

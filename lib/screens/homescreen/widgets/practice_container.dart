@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
-import 'package:soundsight/screens/lessons/practice.dart';
+import 'package:soundsight/screens/lessons/screens/fundamentals_screen.dart';
 
 class PracticeContainer extends StatelessWidget {
   const PracticeContainer({

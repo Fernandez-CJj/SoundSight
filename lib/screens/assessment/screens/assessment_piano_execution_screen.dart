@@ -1,3 +1,5 @@
+import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,7 +8,7 @@ import 'package:flutter/services.dart';
 import '../../../constants/constant.dart';
 import '../../../localization/localization_extension.dart';
 import '../../midi/services/midi_input_service.dart';
-import '../assessment_localization.dart';
+import '../localization/assessment_localization.dart';
 import '../models/assessment_piano_task.dart';
 import '../services/assessment_piano_performance_tracker.dart';
 import '../widgets/assessment_theme.dart';
@@ -182,6 +184,7 @@ class _AssessmentPianoExecutionScreenState
 
   /// Sends MIDI attacks to the tracker only during active performance.
   void _handleNoteOn(int midiNote) {
+    if (!mounted || ScreenFeatureTour.isActiveOn(context)) return;
     if (!mounted || !_isPerforming) {
       return;
     }
@@ -198,6 +201,7 @@ class _AssessmentPianoExecutionScreenState
 
   /// Keeps a visible snapshot of keys currently held on the MIDI keyboard.
   void _handleActiveNotes(Set<int> notes) {
+    if (!mounted || ScreenFeatureTour.isActiveOn(context)) return;
     if (!mounted) {
       return;
     }
@@ -466,13 +470,14 @@ class _AssessmentPianoExecutionScreenState
         !_isPerforming &&
         !_isSubmitting;
 
-    return AssessmentTheme(
+    return ScreenFeatureTour(featureId: 'assessment_piano', key: ValueKey('assessment_piano'), colors: AppThemeColors.fromDarkMode(widget.isDarkMode), canStart: () => !_hasStartedSection && !_isConnecting && !_isSubmitting && !_isCountingIn && !_isPerforming, autoStart: false, child: AssessmentTheme(
       isDarkMode: widget.isDarkMode,
       builder: (themedContext) {
         return PopScope(
           canPop: canLeave,
           child: Scaffold(
             appBar: AppBar(
+            
               title: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
@@ -485,11 +490,11 @@ class _AssessmentPianoExecutionScreenState
                   children: [
                 _buildProgress(),
                 const SizedBox(height: AppSpacing.md),
-                _buildMidiStatus(themedContext),
+                FeatureTourTarget(id: 'midi', child: _buildMidiStatus(themedContext)),
                 const SizedBox(height: AppSpacing.lg),
                 Expanded(
                   child: SingleChildScrollView(
-                    child: _buildTaskDetails(),
+                    child: FeatureTourTarget(id: 'instructions', child: _buildTaskDetails()),
                   ),
                 ),
                 if (_error != null) ...[
@@ -505,10 +510,10 @@ class _AssessmentPianoExecutionScreenState
                 const SizedBox(height: AppSpacing.md),
                 ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 52),
-                  child: ElevatedButton(
+                  child: FeatureTourTarget(id: 'continue', child: ElevatedButton(
                     onPressed: _primaryAction(),
                     child: _buildPrimaryButtonChild(),
-                  ),
+                  )),
                 ),
                   ],
                 ),
@@ -516,7 +521,7 @@ class _AssessmentPianoExecutionScreenState
           ),
         );
       },
-    );
+    ));
   }
 
   /// Displays task number and overall section progress.

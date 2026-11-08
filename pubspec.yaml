@@ -43,6 +43,7 @@ dependencies:
   firebase_storage: ^13.6.0
   firebase_messaging: ^16.0.0
   shared_preferences: ^2.5.4
+  showcaseview: ^5.1.0
   audioplayers: ^6.8.1
   http: ^1.6.0
   camera: ^0.12.1

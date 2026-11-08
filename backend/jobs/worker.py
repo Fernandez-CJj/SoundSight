@@ -7,16 +7,23 @@ import sys
 import threading
 import time
 
-from jobs.store import Store, QueueError
+from jobs.repositories.store import Store, QueueError
 from jobs.process_guard import ProcessTree, WorkerLock
-from jobs.artifact_cleanup import cleanup_local_artifacts
+from jobs.services.artifact_cleanup import cleanup_local_artifacts
+from core.logging_setup import configure_logging
 
 log = logging.getLogger("soundsight.worker")
 DEADLINES = {"omr": 65 * 60, "audio": 40 * 60, "composition": 35 * 60}
 
 
+def describe_job(job):
+    label = {"omr": "Recognize sheet music", "audio": "Transcribe piano audio",
+             "composition": "Generate composition files"}.get(job["kind"], job["kind"])
+    return f"{label} | job={job['id']} | item={job['target']}"
+
+
 def synchronize(store):
-    from jobs import firebase_bridge as bridge
+    from jobs.repositories import firebase_bridge as bridge
     for job in store.pending("admitting"):
         try:
             bridge.activate(job)
@@ -29,11 +36,20 @@ def synchronize(store):
             job["error"] = "This item changed or was removed. Please retry."
         job["outcome"] = outcome
         store.commit_terminal(job)
+        if outcome == "completed":
+            log.info("Completed and saved: %s", describe_job(job))
+        elif outcome == "cancelled":
+            log.info("Cancelled: %s", describe_job(job))
+        else:
+            attempt_log = store.path.parent / f"{job['id']}-{job['attempts']}.log"
+            details = f" | details={attempt_log}" if attempt_log.is_file() else ""
+            log.error("Failed: %s | Reason: %s%s", describe_job(job),
+                      job.get("error") or "See the worker log for details.", details)
     for job in store.cleanup_jobs():
         # Remove abandoned attempts and superseded private outputs only after
         # the conditional commit. Files still referenced by the item are kept.
         try:
-            from core.firebase_service import getStorageBucket
+            from core.integrations.firebase_service import getStorageBucket
             target, _ = bridge.refs(job)
             current = target.get().to_dict() or {}
             keep = {current.get(k) for k in bridge.OUTPUTS}
@@ -56,11 +72,12 @@ def synchronize(store):
                             pass
             store.cleanup_done(job["id"])
         except Exception:
-            log.exception("attempt_cleanup_failed job=%s", job["id"])
+            log.exception("Could not clean up old files; will retry | job=%s", job["id"])
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    log_path = configure_logging("WORKER")
+    log.info("Starting worker. Checking unfinished jobs and connecting to Firebase. Log: %s", log_path)
     store = Store()
     lock = WorkerLock(store.path.with_suffix(".worker.lock"))
     stop = threading.Event()
@@ -72,14 +89,14 @@ def main():
             try:
                 cleanup_local_artifacts(store)
             except Exception:
-                log.exception("local_artifact_cleanup_retry")
+                log.exception("Could not clean up temporary files; will retry in 60 seconds.")
             stop.wait(60)
 
     # Local maintenance also runs while Firebase is unavailable or the worker
     # is waiting for restart reconciliation. Unfinished jobs are never removed.
     threading.Thread(target=local_cleanup_loop, daemon=True).start()
-    from jobs import firebase_bridge as bridge
-    from jobs.notifications import deliver
+    from jobs.repositories import firebase_bridge as bridge
+    from jobs.services.notifications import deliver
 
     # Startup reconciliation must succeed before accepting new work.
     recovered = []
@@ -96,7 +113,7 @@ def main():
                         recovered.append(job)
             break
         except Exception:
-            log.exception("startup_reconciliation_retry")
+            log.exception("Could not restore pending jobs from Firebase; retrying in 5 seconds.")
             stop.wait(5)
 
     def sync_loop():
@@ -104,7 +121,7 @@ def main():
             try:
                 synchronize(store)
             except Exception:
-                log.exception("firebase_sync_retry")
+                log.exception("Could not save job updates to Firebase; retrying in 2 seconds.")
             stop.wait(2)
 
     def notification_loop():
@@ -112,11 +129,12 @@ def main():
             try:
                 deliver(store)
             except Exception:
-                log.exception("notification_delivery_retry")
+                log.exception("Could not send completion notifications; retrying in 5 seconds.")
             stop.wait(5)
 
     threading.Thread(target=sync_loop, daemon=True).start()
     threading.Thread(target=notification_loop, daemon=True).start()
+    log.info("Ready. Waiting for sheet-recognition, audio, or composition jobs.")
     active = None
     output = None
     try:
@@ -143,7 +161,7 @@ def main():
                         if not bridge.processing(job):
                             store.finish(job["id"], bridge.terminal_status(job) or "failed")
                             continue
-                        log.info("job_started job=%s kind=%s attempt=%s", job["id"], job["kind"], job["attempts"])
+                        log.info("Started: %s | attempt=%s", describe_job(job), job["attempts"])
                         output = open(store.path.parent / f"{job['id']}-{job['attempts']}.log", "ab", buffering=0)
                         scratch = (store.path.parent / "work" / f"{job['id']}-{job['attempts']}").resolve()
                         scratch.mkdir(parents=True, exist_ok=True)
@@ -153,7 +171,7 @@ def main():
                                            Path(__file__).resolve().parents[1], env=environment)
                         active = (tree, job, time.monotonic())
                     except Exception:
-                        log.exception("job_start_failed job=%s", job["id"])
+                        log.exception("Could not start processing: %s", describe_job(job))
                         if output:
                             output.close()
                         store.finish(job["id"], "failed", error="The task could not start. Please retry.")
@@ -167,6 +185,7 @@ def main():
         with store.connect() as db:
             db.execute("DELETE FROM runtime WHERE key='heartbeat'")
         lock.close()
+        log.info("Worker stopped. Interrupted jobs will be checked on the next start.")
 
 
 if __name__ == "__main__":

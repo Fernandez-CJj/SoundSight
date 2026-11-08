@@ -7,9 +7,9 @@ import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
 import 'package:soundsight/screens/composition/models/recording_composition_draft.dart';
-import 'package:soundsight/screens/composition/screens/manual/composition_editor_screen.dart';
+import 'package:soundsight/screens/composition/screens/composition_editor_screen.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';
-import 'package:soundsight/screens/composition/screens/recording/record_composition_screen.dart';
+import 'package:soundsight/screens/composition/screens/record_composition_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class NewCompositionScreen extends StatefulWidget {

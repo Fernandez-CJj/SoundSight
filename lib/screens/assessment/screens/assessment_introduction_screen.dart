@@ -1,3 +1,5 @@
+import 'package:soundsight/theme/app_theme_colors.dart';
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -109,11 +111,12 @@ class _AssessmentIntroductionScreenState
 
   @override
   Widget build(BuildContext context) {
-    return AssessmentTheme(
+    return ScreenFeatureTour(featureId: 'assessment_instructions', key: ValueKey('assessment_instructions'), colors: AppThemeColors.fromDarkMode(widget.isDarkMode), autoStart: false, child: AssessmentTheme(
       isDarkMode: widget.isDarkMode,
       builder: (themedContext) {
         return Scaffold(
-          appBar: AppBar(title: Text(themedContext.l10n.assessment)),
+          appBar: AppBar(
+            title: Text(themedContext.l10n.assessment)),
           body: AssessmentPageBody(
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -121,13 +124,13 @@ class _AssessmentIntroductionScreenState
                   Expanded(
                     child: ListView(
                       children: [
-                    Text(
+                    FeatureTourTarget(id: 'instructions', child: Text(
                       themedContext.l10n.assessmentBeforeYouBegin,
                       style: const TextStyle(
                         fontSize: AppTextSizes.screenTitle,
                         fontWeight: FontWeight.w700,
                       ),
-                    ),
+                    )),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       themedContext.l10n.assessmentReadCarefully,
@@ -137,7 +140,7 @@ class _AssessmentIntroductionScreenState
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    _buildRemainingTime(themedContext),
+                    FeatureTourTarget(id: 'timer', child: _buildRemainingTime(themedContext)),
                     const SizedBox(height: AppSpacing.lg),
                     const Divider(),
                     const SizedBox(height: AppSpacing.md),
@@ -188,13 +191,13 @@ class _AssessmentIntroductionScreenState
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  _buildActionButton(),
+                  FeatureTourTarget(id: 'continue', child: _buildActionButton()),
                 ],
               ),
           ),
         );
       },
-    );
+    ));
   }
 
   /// Displays the remaining duration with minimal visual styling.
