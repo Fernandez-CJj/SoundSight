@@ -1,4 +1,10 @@
 {
   "java.configuration.updateBuildConfiguration": "disabled",
-  "dart.flutterSdkPath": "~/develop/flutter"
+  "dart.flutterSdkPath": "~/develop/flutter",
+  "intellij.projects": [
+    {
+      "type": "gradle",
+      "path": "file:///C:/Users/CJ/Desktop/SoundSight/android"
+    }
+  ]
 }

@@ -18,8 +18,10 @@ and MuseScore integrations live in `backend/core/integrations/`.
 keeps its separate interpreter in `backend/transkun_venv/` and its scripts in
 `backend/audio/workers/`.
 
-The [backend teaching checklist](backend/README.md) lists every project-owned
-backend file and the code checkpoints for our walkthroughs.
+The [project study checklist](docs/study/README.md) tracks complete feature flows
+across Flutter, Firebase, native code, the backend, the admin app and the website.
+The [backend file reference](backend/README.md) lists backend files and symbols
+to revisit as each feature needs them.
 
 ## Reading backend activity
 

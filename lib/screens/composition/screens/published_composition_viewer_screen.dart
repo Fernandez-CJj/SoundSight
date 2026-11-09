@@ -232,6 +232,9 @@ class _PublishedCompositionViewerScreenState
         return;
       }
 
+      await playbackController.stop();
+      if (!mounted) return;
+
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => MusicSheetReadingScreen(
@@ -246,7 +249,7 @@ class _PublishedCompositionViewerScreenState
     }
 
     if (selectedMode == 'synthesia') {
-      await playbackController.playbackService.stop();
+      await playbackController.stop();
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute(
@@ -269,7 +272,7 @@ class _PublishedCompositionViewerScreenState
         return;
       }
 
-      await playbackController.playbackService.stop();
+      await playbackController.stop();
       if (!mounted) return;
 
       await Navigator.of(context).push(

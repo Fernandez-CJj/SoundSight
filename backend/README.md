@@ -1,8 +1,9 @@
-# SoundSight backend teaching checklist
+# SoundSight backend file reference
 
-This is our teaching plan, based on the current source. Checkboxes mean
-**explained together**, not merely inspected while preparing this document.
-All teaching checkboxes start unchecked.
+Use the [project study checklist](../docs/study/README.md) as the active learning plan.
+This document is a supporting inventory of backend files and symbols. All previous
+completion marks have been reset for the fresh start. Revisit these files whenever
+a feature uses them; do not use this inventory as a global list of files to skip.
 
 ## Coverage and how we will learn
 
@@ -11,9 +12,9 @@ markers and tests. The two root Windows launchers are included too. Generated
 runtime files and installed environments have their own section below; their
 formats and lifecycle are covered separately from project source code.
 
-For each file, we will open the actual current source and work from its first
-line to its last line in small blocks. A short purpose summary does not complete
-a lesson. Large files will take multiple sessions.
+During each feature lesson, follow the connected source in small code blocks.
+Explain responsibilities and data flow at the requested level of detail, including
+imports and helper modules as needed. Revisit shared files in each relevant flow.
 
 - [ ] Explain each import, where it comes from, and why this file needs it.
 - [ ] Explain module-level constants, configuration, data structures and any
@@ -85,11 +86,11 @@ Code walkthrough: How to use this checklist, its coverage rules, and when a less
 
 ### File 02: [../Start Backend.cmd](../Start%20Backend.cmd)
 
-- [x] File lesson complete: `../Start Backend.cmd`.
+- [ ] File lesson complete: `../Start Backend.cmd`.
 
 Code walkthrough: Every batch command: @echo off, setlocal, %~dp0, PowerShell flags, errorlevel, pause, and endlocal. Follow the jump into start-all.ps1.
 
-- [x] Explain every line, argument, option, assignment and exit path in this file.
+- [ ] Explain every line, argument, option, assignment and exit path in this file.
 
 ### File 03: [requirements.txt](requirements.txt)
 
@@ -103,7 +104,7 @@ Code walkthrough: Explain each dependency individually: fastapi, uvicorn[standar
 
 - [ ] File lesson complete: `start-all.ps1`.
 
-Code walkthrough: Parameters and defaults; required-file checks; credential path resolution; PowerShell discovery; CheckOnly; the service loop; -NoLogo/-NoProfile/-NoExit; command arguments; visible child windows; startup messages; failure exit codes.
+Code walkthrough: Credential parameter and default; required-file checks; credential path resolution; two explicit PowerShell launch commands; -NoLogo/-NoProfile/-NoExit; quoted paths; API bind address; visible child windows; startup message; failure exit codes.
 
 - [ ] Explain every line, argument, option, assignment and exit path in this file.
 
@@ -724,7 +725,7 @@ Code walkthrough: Every batch command and path, then follow the handoff to start
 
 - [ ] File lesson complete: `start-tunnel.ps1`.
 
-Code walkthrough: Program and credential defaults; required interpreter; quoted argument array; CheckOnly forwarding; calling quick_tunnel.py; exit status and error handling.
+Code walkthrough: Program and credential defaults; required interpreter; argument array; calling quick_tunnel.py; exit status and error handling.
 
 - [ ] Explain every line, argument, option, assignment and exit path in this file.
 
@@ -732,12 +733,13 @@ Code walkthrough: Program and credential defaults; required interpreter; quoted 
 
 - [ ] File lesson complete: `quick_tunnel.py`.
 
-Code walkthrough: Every constant and CLI argument; local/public health requests; readiness checks; Firebase project check; tunnel lock; ProcessTree; nested output-reader thread; URL regex and queue; deadlines; publish appConfig/backend only after health succeeds; save the local URL; keep-alive and finally cleanup.
+Code walkthrough: Every constant and CLI argument; local/public health requests; Firebase project check; tunnel lock; ProcessTree; output-reader thread; URL regex and queue; separate 120-second URL and public-readiness deadlines; publish appConfig/backend only after health succeeds; stage-specific errors; process monitoring and finally cleanup.
 
 - [ ] Explain module-level definitions: `ROOT`, `PROJECT`, `LOCAL_URL`, `CONFIG_DOCUMENT`, `TUNNEL_URL`.
 - [ ] Function/method `health`: explain its actual code, inputs, branches and effects.
-- [ ] Function/method `run`: explain its actual code, inputs, branches and effects.
-- [ ] Function/method `run.read_output`: explain its actual code, inputs, branches and effects.
+- [ ] Function/method `read_output`: explain its actual code, inputs, branches and effects.
+- [ ] Function/method `wait_for_url`: explain its actual code, inputs, branches and effects.
+- [ ] Function/method `wait_for_backend`: explain its actual code, inputs, branches and effects.
 - [ ] Function/method `main`: explain its actual code, inputs, branches and effects.
 
 ## 11. Understanding the automated checks
@@ -821,9 +823,10 @@ boundary of the source checklist, not an unlisted exclusion.
 - [ ] `data/work/<job-id>-<attempt>/` and every current file in a chosen attempt:
   explain its producing conversion step, format, consumer and cleanup condition.
   Inventory the actual contents at lesson time so newly generated files are covered.
-- [ ] `data/public-backend-url.txt`: explain who writes the file and how it
-  relates to the address published in Firebase.
-- [ ] `data/quick-tunnel.log`: explain captured cloudflared output and URL discovery.
+- [ ] `data/public-backend-url.txt`, if left from an earlier version: explain
+  that the launcher no longer updates this file; the app reads Firestore.
+- [ ] `data/quick-tunnel.log`, if left from an earlier version: explain that
+  new Cloudflare output is now displayed in the terminal instead of saved here.
 - [ ] `data/quick-tunnel.lock`: explain why tunnel ownership has a separate lock.
 - [ ] `__pycache__/` wherever present: explain `.pyc` bytecode, version suffixes,
   automatic generation and its distinction from the editable `.py` source.
@@ -896,20 +899,7 @@ the complete backend source inventory above.
 
 ## Progress notes
 
-Current teaching position: File 03, `requirements.txt`.
-
-Session 1 covers the checklist's completion rules and the launcher's five lines:
-command echoing, local environment scope, PowerShell and its flags, absolute
-script-path expansion, exit-code handling, and restoring the environment.
-The user confirmed that the launcher explanation, including `%~dp0`, is clear
-and requested the next lesson. File 02 is complete.
-
-Session 2 covers the six lines of `requirements.txt`, package installation,
-the `standard` extra, installation names versus import names, direct versus
-transitive dependencies, and the absence of version pins. File 03 remains
-unchecked pending discussion. Next in the planned file order: `start-all.ps1`.
-
-After each session, record the file, the last block/function explained, concrete
-examples used, questions still open and the next checkpoint. Check individual
-symbol boxes as we finish their code, then the file box only after the whole
-source has been covered.
+Fresh start: no previous backend lessons count as completed in the project study
+plan. Track progress within features in [the project checklist](../docs/study/README.md).
+Backend files are revisited whenever the feature flow reaches them, including
+files discussed in earlier sessions.

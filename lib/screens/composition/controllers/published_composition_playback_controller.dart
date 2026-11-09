@@ -2,20 +2,25 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:soundsight/screens/composition/models/published_composition.dart';
-import 'package:soundsight/screens/composition/services/composition_playback_service.dart';
 import 'package:soundsight/screens/composition/services/published_composition_service.dart';
+import 'package:soundsight/screens/players/services/score_audio_playback_service.dart';
 
 class PublishedCompositionPlaybackController extends ChangeNotifier {
-  final CompositionPlaybackService playbackService =
-      CompositionPlaybackService();
-  final PublishedCompositionService publishedCompositionService =
-      PublishedCompositionService();
+  PublishedCompositionPlaybackController({
+    ScoreAudioPlaybackService? playbackService,
+    PublishedCompositionService? publishedCompositionService,
+  }) : playbackService = playbackService ?? ScoreAudioPlaybackService(),
+       publishedCompositionService =
+           publishedCompositionService ?? PublishedCompositionService();
+
+  final ScoreAudioPlaybackService playbackService;
+  final PublishedCompositionService publishedCompositionService;
 
   String? playingVersionId;
   bool isBusy = false;
   int playbackRequestId = 0;
   bool isDisposed = false;
-  Future<void> _stopQueue = Future<void>.value();
+  Future<void> _playbackQueue = Future<void>.value();
 
   bool isPlaying(PublishedComposition composition) {
     return playingVersionId == getVersionId(composition);
@@ -43,12 +48,10 @@ class PublishedCompositionPlaybackController extends ChangeNotifier {
 
     notifySafely();
 
+    var playbackStarted = false;
+    String? playbackError;
     try {
-      // Finish earlier stops before starting the newly selected preview.
-      _stopQueue = _stopQueue.catchError((Object _) {}).then((_) async {
-        if (!isDisposed) await playbackService.stop();
-      });
-      await _stopQueue;
+      await _queuePlaybackAction(playbackService.stop);
 
       if (isRequestInvalid(currentRequestId)) return null;
 
@@ -56,25 +59,41 @@ class PublishedCompositionPlaybackController extends ChangeNotifier {
         return 'Playback stopped.';
       }
 
-      final composition = await publishedCompositionService
-          .loadPlayableComposition(publishedComposition);
+      final audioUrl = await publishedCompositionService.loadMp3Url(
+        publishedComposition,
+      );
 
       if (isRequestInvalid(currentRequestId)) return null;
 
-      if (composition == null || !composition.hasPlayableContent) {
+      if (audioUrl == null || audioUrl.trim().isEmpty) {
         return 'This version has no playback data. Republish it first.';
       }
 
-      await playbackService.playComposition(
-        composition: composition,
-        onPlaybackStarted: () {
-          if (isRequestInvalid(currentRequestId)) return;
+      await _queuePlaybackAction(() async {
+        if (isRequestInvalid(currentRequestId)) return;
 
-          isBusy = false;
-          notifySafely();
-          onPlaybackStarted?.call();
-        },
-      );
+        await playbackService.play(
+          audioUrl: audioUrl,
+          onStarted: () {
+            if (isRequestInvalid(currentRequestId)) return;
+
+            playbackStarted = true;
+            isBusy = false;
+            notifySafely();
+            onPlaybackStarted?.call();
+          },
+          onFinished: () => _finishPlayback(currentRequestId),
+          onError: (error) {
+            if (isRequestInvalid(currentRequestId)) return;
+
+            debugPrint('Published composition MP3 playback failed: $error');
+            playbackError = 'The published composition could not be played.';
+            _finishPlayback(currentRequestId);
+          },
+        );
+      });
+
+      return playbackError;
     } catch (error, stackTrace) {
       if (isRequestInvalid(currentRequestId)) return null;
 
@@ -83,14 +102,35 @@ class PublishedCompositionPlaybackController extends ChangeNotifier {
 
       return 'The published composition could not be played.';
     } finally {
-      if (!isRequestInvalid(currentRequestId)) {
-        playingVersionId = null;
-        isBusy = false;
-        notifySafely();
+      if (!playbackStarted) {
+        _finishPlayback(currentRequestId);
       }
     }
+  }
 
-    return null;
+  Future<void> stop() async {
+    if (isDisposed) return;
+
+    playbackRequestId++;
+    playingVersionId = null;
+    isBusy = false;
+    notifySafely();
+    await _queuePlaybackAction(playbackService.stop);
+  }
+
+  Future<void> _queuePlaybackAction(Future<void> Function() action) {
+    _playbackQueue = _playbackQueue.catchError((Object _) {}).then((_) async {
+      if (!isDisposed) await action();
+    });
+    return _playbackQueue;
+  }
+
+  void _finishPlayback(int requestId) {
+    if (isRequestInvalid(requestId)) return;
+
+    playingVersionId = null;
+    isBusy = false;
+    notifySafely();
   }
 
   bool isRequestInvalid(int requestId) {

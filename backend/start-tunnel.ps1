@@ -1,7 +1,6 @@
 param(
     [string]$CloudflaredPath = (Join-Path $env:USERPROFILE 'Downloads\cloudflared-windows-amd64.exe'),
-    [string]$FirebaseCredentials = (Join-Path $env:USERPROFILE 'SoundSightKeys\soundsight-service-account.json'),
-    [switch]$CheckOnly
+    [string]$FirebaseCredentials = (Join-Path $env:USERPROFILE 'SoundSightKeys\soundsight-service-account.json')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,7 +14,6 @@ try {
         '--cloudflared', $CloudflaredPath,
         '--credentials', $FirebaseCredentials
     )
-    if ($CheckOnly) { $tunnelArguments += '--check-only' }
     & $pythonPath @tunnelArguments
     exit $LASTEXITCODE
 } catch {

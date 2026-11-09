@@ -76,6 +76,18 @@ class PublishedCompositionService {
     return FirebaseStorage.instance.ref(storagePath).getData(maximumPdfSize);
   }
 
+  Future<String?> loadMp3Url(PublishedComposition composition) async {
+    final storagePath = composition.mp3StoragePath.trim();
+    if (storagePath.isEmpty) return null;
+
+    final storage = FirebaseStorage.instance;
+    final uri = Uri.tryParse(storagePath);
+    final reference = uri != null && uri.hasScheme
+        ? storage.refFromURL(storagePath)
+        : storage.ref(storagePath);
+    return reference.getDownloadURL();
+  }
+
   Future<Composition?> loadPlayableComposition(
     PublishedComposition publishedComposition,
   ) async {
