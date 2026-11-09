@@ -111,7 +111,7 @@ h1 { font-size: clamp(44px, 4.8vw, 68px); letter-spacing: -3.4px; line-height: 1
 .testimonial-previous .icon { transform: rotate(180deg); }
 .testimonials-list { display: flex; align-items: flex-start; gap: 20px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; list-style: none; margin: 0; padding: 4px 4px 16px; scrollbar-width: thin; scrollbar-color: var(--input-border) var(--background); }
 .testimonial-card { flex: 0 0 calc((100% - 40px) / 3); display: flex; flex-direction: column; min-width: 0; min-height: 230px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: 0 3px 8px color-mix(in srgb, var(--primary) 5%, transparent); scroll-snap-align: start; }
-.testimonial-quote { margin: 0; min-height: 64px; font-size: 17px; font-weight: 550; line-height: 1.5; overflow-wrap: anywhere; }
+.testimonial-quote { margin: 0; min-height: 64px; font-size: 17px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
 .testimonial-preview { min-height: 4.5em; }
 .testimonial-quote:has(.testimonial-more[open]) .testimonial-ellipsis { display: none; }
 .testimonial-more summary { display: flex; align-items: center; min-height: 44px; width: fit-content; font-size: 13px; cursor: pointer; list-style: none; text-decoration: underline; text-underline-offset: 4px; }
