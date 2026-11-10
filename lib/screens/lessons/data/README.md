@@ -31,8 +31,10 @@ stage number order so the displayed sequence matches saved progress.
 Fully stop and relaunch the app after adding or moving assets.
 
 The user profile's `practiceLevel` is the highest unlocked stage. It starts at
-`1` and reaches `17` after stage 16 is passed. A video stage passes with a
-perfect quiz score. A sight-reading stage passes only after a perfect run in
-Performance mode; Wait mode is available for practice.
+`1` and reaches `18` after stage 17 is passed. Stage 17 pairs an ordered chord
+callout text file with same-order MIDI chord events; it passes after every
+called-out chord is played correctly. A video stage passes with a perfect quiz
+score. A sight-reading stage passes only after a perfect run in Performance
+mode; Wait mode is available for practice.
 Every completed lesson Performance run is saved to Practice Results, including
 runs with mistakes. Wait-mode practice and video quiz scores are not saved there.

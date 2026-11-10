@@ -248,7 +248,7 @@ service cloud.firestore {
                     ])
                && previousLevel is int
                && previousLevel >= 1
-               && previousLevel <= 16
+               && previousLevel <= 17
                && previousExperience is int
                && previousExperience >= 0
                && request.resource.data.practiceLevel is int

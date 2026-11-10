@@ -27,8 +27,8 @@ class PracticeProgressService {
   }
 
   Future<int> advanceAfterPass(int stageNumber) async {
-    if (stageNumber < 1 || stageNumber > 16) {
-      throw RangeError.range(stageNumber, 1, 16, 'stageNumber');
+    if (stageNumber < 1 || stageNumber > 17) {
+      throw RangeError.range(stageNumber, 1, 17, 'stageNumber');
     }
     final profile = _profile;
     final badge = AchievementBadge.forCompletedStage(stageNumber);
@@ -80,7 +80,7 @@ class PracticeProgressService {
   int _levelFrom(Map<String, dynamic>? data) {
     final raw = data?['practiceLevel'];
     if (raw == null) return 1;
-    if (raw is! int || raw < 1 || raw > 17) {
+    if (raw is! int || raw < 1 || raw > 18) {
       throw const FormatException('Invalid practice level on user profile.');
     }
     return raw;

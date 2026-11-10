@@ -703,7 +703,7 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
       ScaffoldMessenger.of(context).showLatestSnackBar(
         appSnackBar(
           colors: AppThemeColors.fromDarkMode(_isDarkMode),
-          message: level == 17
+          message: level > practiceStages.length
               ? context.l10n.lessonAllStagesCompleteMessage
               : context.l10n.lessonStageUnlocked(level),
           type: AppSnackBarType.success,

@@ -174,4 +174,14 @@ const practiceStages = <PracticeStage>[
       'assets/practice/stage_16/play a song.pdf',
     ],
   ),
+  PracticeStage(
+    number: 17,
+    title: 'Nashville Chord Callouts',
+    description: 'Play each chord shown by the callout in order.',
+    circleText: 'Chord Callouts',
+    assets: [
+      'assets/practice/stage_17/nashville.mid',
+      'assets/practice/stage_17/nashville.txt',
+    ],
+  ),
 ];

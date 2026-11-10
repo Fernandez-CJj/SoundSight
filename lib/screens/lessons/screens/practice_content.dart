@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -9,6 +7,7 @@ import 'package:soundsight/theme/app_theme_colors.dart';
 
 import '../localization/lesson_localization.dart';
 import '../models/practice_stage.dart';
+import 'nashville_chord_callout_screen.dart';
 import 'video_lesson_screen.dart';
 
 /// Opens a stage's primary activity directly, falling back to its file list.
@@ -85,11 +84,14 @@ Future<bool> openPracticeStage(
     return passed == true;
   }
 
-  // A MIDI and MusicXML pair opens the interactive sight-reading challenge.
+  // A MIDI with callouts opens the chord test; MusicXML opens sight reading.
   final midiPath = stage.assets
       .where(
         (path) => RegExp(r'\.(mid|midi)$', caseSensitive: false).hasMatch(path),
       )
+      .firstOrNull;
+  final calloutPath = stage.assets
+      .where((path) => path.toLowerCase().endsWith('.txt'))
       .firstOrNull;
   final scorePath = stage.assets
       .where(
@@ -99,6 +101,19 @@ Future<bool> openPracticeStage(
         ).hasMatch(path),
       )
       .firstOrNull;
+  if (midiPath != null && scorePath == null && calloutPath != null) {
+    final passed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => NashvilleChordCalloutScreen(
+          title: localizedPracticeStageTitle(context.l10n, stage.number),
+          midiAssetPath: midiPath,
+          calloutAssetPath: calloutPath,
+          colors: colors,
+        ),
+      ),
+    );
+    return passed == true;
+  }
   if (midiPath != null && scorePath != null) {
     final pdfPath = stage.assets
         .where((path) => path.toLowerCase().endsWith('.pdf'))
