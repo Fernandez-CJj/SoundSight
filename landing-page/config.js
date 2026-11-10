@@ -4,5 +4,5 @@ window.SOUNDSIGHT_CONFIG = Object.freeze({
   version: "1.0.2",
   minimumAndroid: "7.0",
   fileSizeBytes: 377844180,
-  sha256: "4c96453a2d1107795e4dc2f45a16dc36e4db3f81370ef6c8756200aed546b0b9",
+  sha256: "c5766e8b90c000c3e2fdbf2e4b8a64dda8317c5a7a3158ba3d00ffad6f9e701b",
 });
