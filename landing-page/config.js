@@ -1,8 +1,8 @@
 // Public download settings for the APK hosted in GitHub Releases.
 window.SOUNDSIGHT_CONFIG = Object.freeze({
-  downloadUrl: "https://github.com/Fernandez-CJj/SoundSight/releases/download/v1.0.0/app-release.apk",
-  version: "1.0.0",
+  downloadUrl: "https://github.com/Fernandez-CJj/SoundSight/releases/download/v1.0.1/SoundSight.apk",
+  version: "1.0.1",
   minimumAndroid: "7.0",
-  fileSizeBytes: 376840828,
-  sha256: "e4346de77060588ce2d08f052105b554df7878342f976533917b968a6edeedd6",
+  fileSizeBytes: 377677632,
+  sha256: "28cf6d6b675167bb36f70b30124525e0c245c48ba33bda63463dc4f836c01899",
 });
