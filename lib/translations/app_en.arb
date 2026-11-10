@@ -1650,6 +1650,15 @@
   "jobFailedNotification": "We couldn't finish preparing your music. Open it to try again.",
   "jobOpen": "Open",
   "jobItemUnavailable": "We couldn't find this music in your account. It may have been deleted.",
-  "jobItemLocked": "You can edit or delete this music after the current request finishes or is cancelled."
+  "jobItemLocked": "You can edit or delete this music after the current request finishes or is cancelled.",
+  "performanceVideoQuestion": "Would you like to save your performance video?",
+  "performanceVideoPreparing": "Preparing your recording…",
+  "performanceVideoUnavailable": "No video is available for this performance. Your results are unaffected.",
+  "performanceVideoPreviewFailed": "The preview could not be loaded. You can still save the video.",
+  "performanceVideoSaved": "Video saved.",
+  "performanceVideoSaving": "Saving video…",
+  "performanceVideoDiscardNotice": "Unsaved recordings are deleted when you leave these results or retry.",
+  "performanceVideoPlay": "Play recording",
+  "performanceVideoMute": "Mute recording",
+  "performanceVideoUnmute": "Unmute recording"
 }
-

@@ -18,25 +18,36 @@ class SystemNavigationService with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addObserver(_instance);
     _instance._keyboardWasVisible = _instance._keyboardIsVisible;
-    await _instance._hideNavigationBar();
+    if (_instance._keyboardWasVisible) {
+      await _instance._showStatusBar();
+    } else {
+      await _instance._hideSystemBars();
+    }
   }
 
   bool get _keyboardIsVisible => WidgetsBinding.instance.platformDispatcher.views
       .any((view) => view.viewInsets.bottom > 0);
 
-  Future<void> _hideNavigationBar() async {
+  Future<void> _showStatusBar() async {
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    await _channel.invokeMethod<void>('showStatusBar');
+  }
+
+  Future<void> _hideSystemBars() async {
     if (_keyboardIsVisible ||
         WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
       return;
     }
-    await _channel.invokeMethod<void>('hideNavigationBar');
+    await _channel.invokeMethod<void>('hideSystemBars');
   }
 
   void _scheduleHide() {
     _hideTimer?.cancel();
     // Android temporarily prevents hiding system bars after keyboard dismissal.
     _hideTimer = Timer(const Duration(milliseconds: 1100), () {
-      unawaited(_hideNavigationBar());
+      unawaited(_hideSystemBars());
     });
   }
 
@@ -45,6 +56,7 @@ class SystemNavigationService with WidgetsBindingObserver {
     final keyboardIsVisible = _keyboardIsVisible;
     if (keyboardIsVisible) {
       _hideTimer?.cancel();
+      if (!_keyboardWasVisible) unawaited(_showStatusBar());
     } else if (_keyboardWasVisible) {
       _scheduleHide();
     }
@@ -54,7 +66,11 @@ class SystemNavigationService with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _scheduleHide();
+      if (_keyboardIsVisible) {
+        unawaited(_showStatusBar());
+      } else {
+        _scheduleHide();
+      }
     } else {
       _hideTimer?.cancel();
     }

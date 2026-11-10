@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:soundsight/screens/players/services/performance_recording_controller.dart';
+import 'package:soundsight/screens/players/widgets/performance_recording_preview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +57,9 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   final ScoreAudioPlaybackService scoreAudioPlaybackService =
       ScoreAudioPlaybackService();
   final MidiInputService midiInputService = MidiInputService();
+  final PerformanceRecordingController performanceRecording =
+      PerformanceRecordingController();
+  bool recordingSetupPending = false;
   final ArPracticePerformanceTracker performanceTracker =
       ArPracticePerformanceTracker(evaluateNoteDurations: true);
   final PracticeResultService practiceResultService = PracticeResultService();
@@ -96,6 +101,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   @override
   void initState() {
     super.initState();
+    performanceRecording.addListener(_recordingChanged);
     SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -248,8 +254,10 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
       connected,
     ) {
       if (!mounted) return;
+      if (!connected && !isComplete) unawaited(performanceRecording.discard());
       bool interrupted = !connected && hasStarted && !isComplete;
       if (interrupted) {
+        unawaited(performanceRecording.discard());
         timelineController?.stop();
         waitModeTimer?.cancel();
         waitModeTimer = null;
@@ -494,25 +502,67 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     return animationUs < approachDuration.inMicroseconds;
   }
 
-  void _startOrResume() {
-    final controller = timelineController;
-    if (controller == null || !isMidiConnected || isComplete) return;
+  Future<void> _startOrResume() async {
+    if (recordingSetupPending) return;
+    setState(() => recordingSetupPending = true);
+    try {
+      final controller = timelineController;
+      if (controller == null || !isMidiConnected || isComplete) return;
 
-    if (isPaused) {
-      if (mode == SynthesiaMode.wait) {
-        waitModeEngine.resume();
-        _ensureWaitModeTimer();
+      if (isPaused) {
+        if (mode == SynthesiaMode.wait) {
+          waitModeEngine.resume();
+          _ensureWaitModeTimer();
+        }
+        setState(() => isPaused = false);
+        if (mode == SynthesiaMode.performance && !isWaiting) {
+          controller.forward();
+        }
+        return;
       }
-      setState(() => isPaused = false);
-      if (mode == SynthesiaMode.performance && !isWaiting) {
-        controller.forward();
+
+      if (!hasStarted) {
+        if (mode == SynthesiaMode.performance) {
+          await performanceRecording.start();
+          if (!mounted || !isMidiConnected || !performanceRecording.hasAttempt) {
+            return;
+          }
+        }
+        performanceTracker.resetAttempt();
+        _resetWaitState();
+        setState(() {
+          hasStarted = true;
+          isPaused = false;
+          isComplete = false;
+        });
+        if (mode == SynthesiaMode.wait) waitModeEngine.start();
+        controller.forward(from: 0);
       }
-      return;
+    } finally {
+      if (mounted) setState(() => recordingSetupPending = false);
     }
+  }
 
-    if (!hasStarted) {
+  Future<void> _restart() async {
+    if (recordingSetupPending) return;
+    setState(() => recordingSetupPending = true);
+    try {
+      timelineController?.stop();
+      setState(() => hasStarted = false);
+      await performanceRecording.discard();
+      if (!mounted) return;
+      final controller = timelineController;
+      if (controller == null || !isMidiConnected) return;
+      controller.stop();
+      if (mode == SynthesiaMode.performance) {
+        await performanceRecording.start();
+        if (!mounted || !isMidiConnected || !performanceRecording.hasAttempt) {
+          return;
+        }
+      }
       performanceTracker.resetAttempt();
       _resetWaitState();
+      controller.stop();
       setState(() {
         hasStarted = true;
         isPaused = false;
@@ -520,25 +570,13 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
       });
       if (mode == SynthesiaMode.wait) waitModeEngine.start();
       controller.forward(from: 0);
+    } finally {
+      if (mounted) setState(() => recordingSetupPending = false);
     }
   }
 
-  void _restart() {
-    final controller = timelineController;
-    if (controller == null || !isMidiConnected) return;
-    performanceTracker.resetAttempt();
-    _resetWaitState();
-    controller.stop();
-    setState(() {
-      hasStarted = true;
-      isPaused = false;
-      isComplete = false;
-    });
-    if (mode == SynthesiaMode.wait) waitModeEngine.start();
-    controller.forward(from: 0);
-  }
-
   void _prepareRetry() {
+    unawaited(performanceRecording.discard());
     final controller = timelineController;
     if (controller == null) return;
 
@@ -553,6 +591,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   }
 
   void _stopPractice() {
+    unawaited(performanceRecording.discard());
     final controller = timelineController;
     if (controller == null) return;
 
@@ -791,6 +830,8 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     if (confirmed != true || !mounted) return;
 
     timelineController?.stop();
+    await performanceRecording.discard();
+    if (!mounted) return;
     timelineController?.value = 0;
     performanceTracker.resetAttempt();
     setState(() {
@@ -1353,6 +1394,12 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   Future<void> _showCompletionDialog() async {
     if (completionDialogOpen) return;
     completionDialogOpen = true;
+    final recordingAttemptId = performanceRecording.attemptId;
+    await performanceRecording.finish();
+    if (!mounted || !isComplete || recordingAttemptId != performanceRecording.attemptId) {
+      completionDialogOpen = false;
+      return;
+    }
 
     final colors = widget.colors;
     final totalGroups = performanceTracker.totalGroupCount;
@@ -1416,9 +1463,10 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
         ? null
         : practiceResultService.savePerformanceResult(performanceReport);
 
-    await showDialog<void>(
+    await showRecordedPerformanceDialog(
       context: context,
-      barrierDismissible: false,
+      recording: performanceRecording,
+      colors: colors,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) => Dialog(
@@ -1515,6 +1563,11 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                             ),
                           )
                           .toList(),
+                    ),
+                    PerformanceRecordingPreview(
+                      recording: performanceRecording,
+                      colors: colors,
+                      pieceTitle: score?.title ?? 'SoundSight',
                     ),
                     if (performanceReport != null) ...[
                       const Gap(AppSpacing.md),
@@ -2056,6 +2109,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
+          unawaited(performanceRecording.discard());
           controller.stop();
           waitModeTimer?.cancel();
           waitModeTimer = null;
@@ -2193,7 +2247,8 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   }
 
   bool _canStartPractice() {
-    return _shouldShowStartButton() &&
+    return !recordingSetupPending &&
+        _shouldShowStartButton() &&
         timelineController != null &&
         !isConnectingMidi &&
         !scorePreviewPreparing &&
@@ -2609,10 +2664,12 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                   !scorePreviewPreparing &&
                   !scorePreviewPlaying;
               final canStart =
+                  !recordingSetupPending &&
                   timelineController != null &&
                   !isConnectingMidi &&
                   (!hasStarted || isPaused);
-              final canRestart = isMidiConnected && hasStarted;
+              final canRestart =
+                  !recordingSetupPending && isMidiConnected && hasStarted;
               final showMidiReconnectPrompt =
                   !isMidiConnected && !isConnectingMidi;
 
@@ -3054,8 +3111,13 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     );
   }
 
+  void _recordingChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    unawaited(performanceRecording.close());
     waitModeTimer?.cancel();
     waitModeEngine.reset();
     timelineController?.dispose();

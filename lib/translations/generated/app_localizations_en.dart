@@ -5402,4 +5402,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get jobItemLocked =>
       'You can edit or delete this music after the current request finishes or is cancelled.';
+
+  @override
+  String get performanceVideoQuestion =>
+      'Would you like to save your performance video?';
+
+  @override
+  String get performanceVideoPreparing => 'Preparing your recording…';
+
+  @override
+  String get performanceVideoUnavailable =>
+      'No video is available for this performance. Your results are unaffected.';
+
+  @override
+  String get performanceVideoPreviewFailed =>
+      'The preview could not be loaded. You can still save the video.';
+
+  @override
+  String get performanceVideoSaved => 'Video saved.';
+
+  @override
+  String get performanceVideoSaving => 'Saving video…';
+
+  @override
+  String get performanceVideoDiscardNotice =>
+      'Unsaved recordings are deleted when you leave these results or retry.';
+
+  @override
+  String get performanceVideoPlay => 'Play recording';
+
+  @override
+  String get performanceVideoMute => 'Mute recording';
+
+  @override
+  String get performanceVideoUnmute => 'Unmute recording';
 }

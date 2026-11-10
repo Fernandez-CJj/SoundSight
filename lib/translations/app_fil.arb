@@ -1580,5 +1580,15 @@
   "jobFailedNotification": "Hindi namin natapos ang paghahanda ng iyong musika. Buksan ito para subukang muli.",
   "jobOpen": "Buksan",
   "jobItemUnavailable": "Hindi makita ang musikang ito sa iyong account. Maaaring nabura na ito.",
-  "jobItemLocked": "Maaari mong baguhin o burahin ang musikang ito kapag natapos o nakansela na ang kasalukuyang hiling."
+  "jobItemLocked": "Maaari mong baguhin o burahin ang musikang ito kapag natapos o nakansela na ang kasalukuyang hiling.",
+  "performanceVideoQuestion": "Gusto mo bang i-save ang video ng iyong pagtugtog?",
+  "performanceVideoPreparing": "Inihahanda ang iyong recording…",
+  "performanceVideoUnavailable": "Walang video para sa pagtugtog na ito. Hindi apektado ang iyong mga resulta.",
+  "performanceVideoPreviewFailed": "Hindi ma-load ang preview. Maaari mo pa ring i-save ang video.",
+  "performanceVideoSaved": "Na-save ang video.",
+  "performanceVideoSaving": "Sine-save ang video…",
+  "performanceVideoDiscardNotice": "Dinedelete ang hindi na-save na recording kapag umalis ka sa mga resulta o sumubok muli.",
+  "performanceVideoPlay": "I-play ang recording",
+  "performanceVideoMute": "I-mute ang recording",
+  "performanceVideoUnmute": "I-unmute ang recording"
 }

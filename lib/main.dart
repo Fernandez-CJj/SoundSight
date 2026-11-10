@@ -1,3 +1,4 @@
+import 'package:soundsight/screens/players/services/performance_recording_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:soundsight/services/processing_announcements.dart';
@@ -22,6 +23,7 @@ import 'package:soundsight/achievements/widgets/achievement_announcements.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NativePerformanceRecordingBackend.cleanupOrphans();
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);

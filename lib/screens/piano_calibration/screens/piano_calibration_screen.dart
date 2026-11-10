@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:soundsight/screens/players/services/performance_recording_controller.dart';
+import 'package:soundsight/screens/players/widgets/performance_recording_preview.dart';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -187,6 +189,13 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   AnimationController? fallingNotesAnimationController;
 
   final MidiInputService midiInputService = MidiInputService();
+  final PerformanceRecordingController performanceRecording =
+      PerformanceRecordingController();
+  bool recordingSetupPending = false;
+  void _recordingChanged() {
+    if (mounted) setState(() {});
+  }
+
   final MiddleCGuideService middleCGuideService = const MiddleCGuideService();
   StreamSubscription<Set<int>>? activeMidiNotesSubscription;
   StreamSubscription<int>? midiNoteOnSubscription;
@@ -244,6 +253,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   /// Starts MIDI listeners, locks landscape orientation, and opens the camera.
   void initState() {
     super.initState();
+    performanceRecording.addListener(_recordingChanged);
     listenToMidiInput();
     practicePerformanceTracker.applySkillLevel('beginner');
     unawaited(loadArPerformanceDifficulty());
@@ -732,7 +742,9 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                   ),
                   child: isMidiConnected
                       ? FilledButton.icon(
-                          onPressed: currentAnimationController == null
+                          onPressed:
+                              currentAnimationController == null ||
+                                  recordingSetupPending
                               ? null
                               : startPracticePlayback,
                           style: practicePrimaryButtonStyle(),
@@ -924,7 +936,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           ),
           const SizedBox(width: AppSpacing.sm),
           buildPracticeControlsButton(compact: screenWidth < 760),
-],
+        ],
       ),
     );
   }
@@ -973,14 +985,10 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Align(
-          alignment: centerLabel
-              ? Alignment.center
-              : Alignment.centerLeft,
+          alignment: centerLabel ? Alignment.center : Alignment.centerLeft,
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: centerLabel
-                ? Alignment.center
-                : Alignment.centerLeft,
+            alignment: centerLabel ? Alignment.center : Alignment.centerLeft,
             child: Text(
               '$completedGroups / $totalGroups · $percentage%',
               maxLines: 1,
@@ -1028,9 +1036,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: feedback.color.withValues(alpha: 0.35),
-              ),
+              border: Border.all(color: feedback.color.withValues(alpha: 0.35)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.08),
@@ -1096,23 +1102,17 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         ArPracticeFeedbackKind.neutral) {
       return switch (practicePerformanceTracker.feedbackKind) {
         ArPracticeFeedbackKind.correct => (
-          text: localizedArFeedback(
-            practicePerformanceTracker.feedbackText,
-          ),
+          text: localizedArFeedback(practicePerformanceTracker.feedbackText),
           icon: Icons.check_circle_outline_rounded,
           color: Colors.green.shade600,
         ),
         ArPracticeFeedbackKind.warning => (
-          text: localizedArFeedback(
-            practicePerformanceTracker.feedbackText,
-          ),
+          text: localizedArFeedback(practicePerformanceTracker.feedbackText),
           icon: Icons.schedule_rounded,
           color: Colors.amber.shade700,
         ),
         ArPracticeFeedbackKind.incorrect => (
-          text: localizedArFeedback(
-            practicePerformanceTracker.feedbackText,
-          ),
+          text: localizedArFeedback(practicePerformanceTracker.feedbackText),
           icon: Icons.error_outline_rounded,
           color: Colors.red.shade600,
         ),
@@ -1222,6 +1222,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
               bool attemptIsRunning =
                   hasPracticePlaybackStarted && !isPracticePlaybackComplete;
               bool canStart =
+                  !recordingSetupPending &&
                   !attemptIsRunning &&
                   !isPracticePlaybackComplete &&
                   isMidiConnected &&
@@ -1297,7 +1298,8 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                   ),
                                   Text(
                                     performanceModeEnabled
-                                        ? context.l10n
+                                        ? context
+                                              .l10n
                                               .sightReadingPerformanceMode
                                         : context.l10n.sightReadingWaitMode,
                                     style: TextStyle(
@@ -1446,9 +1448,11 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                       ),
                                       label: Text(
                                         performanceModeEnabled
-                                            ? context.l10n
+                                            ? context
+                                                  .l10n
                                                   .synthesiaStartPerformance
-                                            : context.l10n
+                                            : context
+                                                  .l10n
                                                   .synthesiaStartWaitMode,
                                         textAlign: TextAlign.center,
                                       ),
@@ -2049,10 +2053,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
               OutlinedButton.icon(
                 onPressed: detectKeyboardAgain,
                 icon: const Icon(Icons.refresh),
-                label: Text(
-                  context.l10n.tryAgain,
-                  textAlign: TextAlign.center,
-                ),
+                label: Text(context.l10n.tryAgain, textAlign: TextAlign.center),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.black54,
@@ -2807,6 +2808,8 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         return;
       }
 
+      if (!connected && !isPracticePlaybackComplete)
+        unawaited(performanceRecording.discard());
       bool shouldInterruptPractice =
           !connected &&
           isPracticeMode &&
@@ -2815,6 +2818,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           !practiceInterruptedByMidiDisconnect;
 
       if (shouldInterruptPractice) {
+        unawaited(performanceRecording.discard());
         fallingNotesAnimationController?.stop();
         waitModeDurationClock.stop();
 
@@ -2870,10 +2874,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       return;
     }
 
-    practicePerformanceTracker.recordWaitModeNoteOn(
-      rewindGroupIndex,
-      midiNote,
-    );
+    practicePerformanceTracker.recordWaitModeNoteOn(rewindGroupIndex, midiNote);
     beginWaitModeRewind(
       rewindGroupIndex,
       context.l10n.synthesiaReleaseMistakenNotes,
@@ -3052,8 +3053,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     if (!performanceModeEnabled && waitModePendingRewindGroupIndex != null) {
       performWaitModeRewind(
-        feedbackMessage:
-            context.l10n.arPracticeConnectionRestoredTryAgain,
+        feedbackMessage: context.l10n.arPracticeConnectionRestoredTryAgain,
       );
       return;
     }
@@ -3195,28 +3195,43 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   }
 
   /// Resets attempt state and starts falling notes from the four-second lead-in.
-  void startPracticePlayback() {
-    AnimationController? controller = fallingNotesAnimationController;
+  Future<void> startPracticePlayback() async {
+    if (recordingSetupPending) return;
+    setState(() => recordingSetupPending = true);
+    try {
+      AnimationController? controller = fallingNotesAnimationController;
 
-    if (!isMidiConnected || controller == null) {
-      return;
+      if (!isMidiConnected || controller == null) {
+        return;
+      }
+
+      controller.stop();
+      await performanceRecording.discard();
+      if (!mounted) return;
+      if (performanceModeEnabled) {
+        await performanceRecording.start();
+        if (!mounted || !isMidiConnected || !performanceRecording.hasAttempt) {
+          return;
+        }
+      }
+      resetWaitModeProgress();
+      practicePerformanceTracker.resetAttempt();
+      practiceAttemptVersion++;
+
+      if (!performanceModeEnabled) {
+        waitModeDurationClock.start();
+      }
+
+      setState(() {
+        hasPracticePlaybackStarted = true;
+        isPracticePlaybackPaused = false;
+        isPracticePlaybackComplete = false;
+      });
+
+      controller.forward(from: 0);
+    } finally {
+      if (mounted) setState(() => recordingSetupPending = false);
     }
-
-    resetWaitModeProgress();
-    practicePerformanceTracker.resetAttempt();
-    practiceAttemptVersion++;
-
-    if (!performanceModeEnabled) {
-      waitModeDurationClock.start();
-    }
-
-    setState(() {
-      hasPracticePlaybackStarted = true;
-      isPracticePlaybackPaused = false;
-      isPracticePlaybackComplete = false;
-    });
-
-    controller.forward(from: 0);
   }
 
   /// Converts animation position into score time by removing the lead-in.
@@ -3278,6 +3293,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
   /// Resets a completed attempt to the ready screen without starting it again.
   void preparePracticeRetry() {
+    unawaited(performanceRecording.discard());
     AnimationController? controller = fallingNotesAnimationController;
 
     if (controller == null) {
@@ -3368,6 +3384,9 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     AnimationController? controller = fallingNotesAnimationController;
 
     controller?.stop();
+    practiceAttemptVersion++;
+    await performanceRecording.discard();
+    if (!mounted) return;
 
     if (controller != null) {
       controller.value = 0;
@@ -3375,7 +3394,6 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     resetWaitModeProgress();
     practicePerformanceTracker.resetAttempt();
-    practiceAttemptVersion++;
 
     setState(() {
       performanceModeEnabled = !performanceModeEnabled;
@@ -3752,8 +3770,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         ) -
         heldNote.pressedAt;
 
-    if (heldDuration >
-        heldNote.noteDuration + waitModeOverholdTolerance) {
+    if (heldDuration > heldNote.noteDuration + waitModeOverholdTolerance) {
       heldNote.heldTooLong = true;
       practicePerformanceTracker.recordWaitModeDurationMistake(
         heldNote.groupIndex,
@@ -4122,6 +4139,14 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     }
 
     isCompletionDialogShowing = true;
+    final recordingAttemptVersion = practiceAttemptVersion;
+    await performanceRecording.finish();
+    if (!mounted ||
+        !isPracticePlaybackComplete ||
+        recordingAttemptVersion != practiceAttemptVersion) {
+      isCompletionDialogShowing = false;
+      return;
+    }
     AppThemeColors colors = widget.colors;
     int totalGroups = practicePerformanceTracker.totalGroupCount;
     int totalMistakes = practicePerformanceTracker.mistakeCount;
@@ -4177,10 +4202,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
               label: context.l10n.synthesiaFirstTry,
               value: '${practicePerformanceTracker.correctGroupCount}',
             ),
-            (
-              label: context.l10n.synthesiaMistakes,
-              value: '$totalMistakes',
-            ),
+            (label: context.l10n.synthesiaMistakes, value: '$totalMistakes'),
             (
               label: context.l10n.synthesiaTime,
               value: context.l10n.synthesiaNoLimit,
@@ -4192,9 +4214,10 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         ? null
         : practiceResultService.savePerformanceResult(performanceReport);
 
-    await showDialog<void>(
+    await showRecordedPerformanceDialog(
       context: context,
-      barrierDismissible: false,
+      recording: performanceRecording,
+      colors: colors,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) => Dialog(
@@ -4290,6 +4313,12 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                             ),
                           )
                           .toList(),
+                    ),
+                    PerformanceRecordingPreview(
+                      recording: performanceRecording,
+                      colors: colors,
+                      pieceTitle:
+                          widget.scoreTimeline?.pieceTitle ?? 'SoundSight',
                     ),
                     if (performanceReport != null) ...[
                       const SizedBox(height: AppSpacing.md),
@@ -4811,9 +4840,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     required List<PracticeResultErrorEvent> errorEvents,
   }) {
     if (errorEvents.isEmpty) {
-      return <String>[
-        context.l10n.synthesiaSuggestionPerfect,
-      ];
+      return <String>[context.l10n.synthesiaSuggestionPerfect];
     }
 
     Map<PerformanceIssueType, int> issueCounts = <PerformanceIssueType, int>{};
@@ -4829,9 +4856,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     if (errorEvents.length <=
         (totalGroups * 0.10).ceil().clamp(1, totalGroups)) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionAlmostPerfect,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionAlmostPerfect);
     }
 
     List<NotePerformanceBreakdown> difficultNotes =
@@ -4856,43 +4881,29 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     int wrongNotes = issueCounts[PerformanceIssueType.wrongNote] ?? 0;
 
     if (releasedEarly > 0 && suggestions.length < 3) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionReleasedTooSoon,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionReleasedTooSoon);
     }
 
     if (missed > 0 && suggestions.length < 3) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionMissedNotes,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionMissedNotes);
     }
 
     if (late > early && suggestions.length < 3) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionPlayedLate,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionPlayedLate);
     } else if (early > late && suggestions.length < 3) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionPlayedEarly,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionPlayedEarly);
     }
 
     if (chordTiming > 0 && suggestions.length < 3) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionChordTiming,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionChordTiming);
     }
 
     if (wrongNotes > 0 && suggestions.length < 3) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionWrongNotes,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionWrongNotes);
     }
 
     if (suggestions.isEmpty) {
-      suggestions.add(
-        context.l10n.synthesiaSuggestionGeneralPractice,
-      );
+      suggestions.add(context.l10n.synthesiaSuggestionGeneralPractice);
     }
 
     return suggestions.take(3).toList(growable: false);
@@ -5298,6 +5309,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   @override
   /// Releases animation, MIDI, orientation, and camera resources.
   void dispose() {
+    unawaited(performanceRecording.close());
     practiceFeedbackTimer?.cancel();
     waitModeHoldTimer?.cancel();
     waitModeDurationClock.stop();

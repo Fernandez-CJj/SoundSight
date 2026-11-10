@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:soundsight/screens/players/services/performance_recording_controller.dart';
+import 'package:soundsight/screens/players/widgets/performance_recording_preview.dart';
 import 'package:archive/archive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -85,6 +87,9 @@ class MusicSheetReadingScreen extends StatefulWidget {
 
 class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   final MidiInputService midiInputService = MidiInputService();
+  final PerformanceRecordingController performanceRecording =
+      PerformanceRecordingController();
+  bool recordingSetupPending = false;
   final SightReadingNoteMatcher noteMatcher = SightReadingNoteMatcher();
   final SightReadingPerformanceTracker performanceTracker =
       SightReadingPerformanceTracker();
@@ -149,6 +154,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   @override
   void initState() {
     super.initState();
+    performanceRecording.addListener(_recordingChanged);
 
     if (widget.lesson != null) {
       performanceModeEnabled = false;
@@ -400,6 +406,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       final shouldShowReconnectControls =
           midiWasConnected || midiStatus.startsWith('Connected:');
       midiWasConnected = false;
+      if (!scoreCompleted) unawaited(performanceRecording.discard());
 
       final exerciseWasActive =
           waitHoldInProgress ||
@@ -1090,7 +1097,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   }
 
   bool canStartPerformance() {
-    return shouldShowPerformanceStartButton() &&
+    return !recordingSetupPending &&
+        shouldShowPerformanceStartButton() &&
         performanceTracker.hasTimeline &&
         midiStatus != 'Searching...' &&
         midiStatus != 'Connecting...' &&
@@ -1792,7 +1800,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                 Expanded(
                   child: performanceModeEnabled
                       ? FilledButton.icon(
-                          onPressed: canStartPerformance
+                          onPressed:
+                              canStartPerformance && !recordingSetupPending
                               ? armPerformanceForFirstKey
                               : null,
                           style: primaryButtonStyle(colors),
@@ -3276,9 +3285,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
     var activeResultSaveFuture = resultSaveFuture;
 
-    await showDialog<void>(
+    await showRecordedPerformanceDialog(
       context: context,
-      barrierDismissible: false,
+      recording: performanceRecording,
+      colors: colors,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
@@ -3375,6 +3385,11 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                               ),
                             )
                             .toList(),
+                      ),
+                      PerformanceRecordingPreview(
+                        recording: performanceRecording,
+                        colors: colors,
+                        pieceTitle: pieceTitle,
                       ),
                       if (performanceReport != null) ...[
                         const Gap(AppSpacing.md),
@@ -3807,8 +3822,13 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   }
 
   Future<void> retryExercise() async {
-    await stopScorePreview();
+    // Freeze this run before awaiting native teardown so a Stop near the last
+    // note cannot race the old run into its completion dialog.
     cancelPerformanceTimers();
+    stopPlayingTimer();
+    await performanceRecording.discard();
+    if (!mounted) return;
+    await stopScorePreview();
     cancelWaitDurationTracking();
     resetPlayingTimer();
     final musicXml = loadedMusicXml;
@@ -3869,26 +3889,40 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     }
   }
 
-  void armPerformanceForFirstKey() {
-    if (!performanceModeEnabled ||
-        !performanceTracker.hasTimeline ||
-        !midiStatus.startsWith('Connected:') ||
-        performanceRunning ||
-        performanceWaitingForFirstKey ||
-        scorePreviewPreparing ||
-        scorePreviewPlaying ||
-        scoreCompleted) {
-      return;
+  Future<void> armPerformanceForFirstKey() async {
+    if (recordingSetupPending) return;
+    setState(() => recordingSetupPending = true);
+    try {
+      if (!performanceModeEnabled ||
+          !performanceTracker.hasTimeline ||
+          !midiStatus.startsWith('Connected:') ||
+          performanceRunning ||
+          performanceWaitingForFirstKey ||
+          scorePreviewPreparing ||
+          scorePreviewPlaying ||
+          scoreCompleted) {
+        return;
+      }
+
+      cancelPerformanceTimers();
+      await performanceRecording.discard();
+      if (!mounted) return;
+      await performanceRecording.start();
+      if (!mounted ||
+          !midiStatus.startsWith('Connected:') ||
+          !performanceRecording.hasAttempt) {
+        return;
+      }
+      resetPlayingTimer();
+      performanceTracker.resetAttempt();
+
+      setState(() {
+        performanceWaitingForFirstKey = true;
+        performanceTracker.resultText = 'Press any MIDI key to begin';
+      });
+    } finally {
+      if (mounted) setState(() => recordingSetupPending = false);
     }
-
-    cancelPerformanceTimers();
-    resetPlayingTimer();
-    performanceTracker.resetAttempt();
-
-    setState(() {
-      performanceWaitingForFirstKey = true;
-      performanceTracker.resultText = 'Press any MIDI key to begin';
-    });
   }
 
   void beginPerformanceTimeline() {
@@ -4004,6 +4038,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     performanceTicker = null;
 
     final finishingRunId = performanceRunId;
+    await performanceRecording.finish();
+    if (!mounted || finishingRunId != performanceRunId) return;
 
     try {
       await cursorAdvanceQueue;
@@ -4124,6 +4160,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   }
 
   void cancelPerformanceTimers() {
+    unawaited(performanceRecording.discard());
     performanceRunId++;
     performanceTicker?.cancel();
     performanceTicker = null;
@@ -4140,8 +4177,13 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     return '$minutes:$paddedSeconds';
   }
 
+  void _recordingChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    unawaited(performanceRecording.close());
     activeNotesSubscription?.cancel();
     noteOnSubscription?.cancel();
     midiNoteEventSubscription?.cancel();

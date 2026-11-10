@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.os.Build
 import android.content.Intent
 import androidx.core.view.WindowCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import java.io.File
@@ -14,22 +15,50 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private var keyboardWasVisible = false
+    private var performanceRecording: PerformanceRecordingBridge? = null
     private val saveVideoRequest = 8301
     private var pendingVideo: File? = null
     private var pendingResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // Observe the IME's target visibility before its animation reaches Dart.
+        // Forward the insets normally so Flutter keeps handling keyboard layout.
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+            val keyboardIsVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            if (keyboardIsVisible && !keyboardWasVisible) {
+                WindowCompat.getInsetsController(window, window.decorView)
+                    .show(WindowInsetsCompat.Type.statusBars())
+            }
+            keyboardWasVisible = keyboardIsVisible
+            ViewCompat.onApplyWindowInsets(view, insets)
+        }
+        performanceRecording = PerformanceRecordingBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "soundsight/system_navigation")
             .setMethodCallHandler { call, result ->
-                if (call.method != "hideNavigationBar") {
+                if (call.method == "showStatusBar") {
+                    WindowCompat.getInsetsController(window, window.decorView)
+                        .show(WindowInsetsCompat.Type.statusBars())
+                    result.success(null)
+                    return@setMethodCallHandler
+                }
+                if (call.method != "hideSystemBars") {
                     result.notImplemented()
                     return@setMethodCallHandler
                 }
+                if (ViewCompat.getRootWindowInsets(window.decorView)
+                        ?.isVisible(WindowInsetsCompat.Type.ime()) == true) {
+                    WindowCompat.getInsetsController(window, window.decorView)
+                        .show(WindowInsetsCompat.Type.statusBars())
+                    result.success(null)
+                    return@setMethodCallHandler
+                }
+                WindowCompat.setDecorFitsSystemWindows(window, false)
                 val controller = WindowCompat.getInsetsController(window, window.decorView)
                 controller.systemBarsBehavior =
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                controller.hide(WindowInsetsCompat.Type.navigationBars())
+                controller.hide(WindowInsetsCompat.Type.systemBars())
                 result.success(null)
             }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -73,13 +102,14 @@ class MainActivity : FlutterActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (performanceRecording?.onActivityResult(requestCode, resultCode, data) == true) return
         if (requestCode != saveVideoRequest) return
         val result = pendingResult ?: return
         val source = pendingVideo
-        pendingResult = null
-        pendingVideo = null
         val destination = data?.data
         if (resultCode != Activity.RESULT_OK || destination == null || source == null) {
+            pendingResult = null
+            pendingVideo = null
             result.success(false)
             return
         }
@@ -90,13 +120,23 @@ class MainActivity : FlutterActivity() {
                 source.inputStream().use { input ->
                     output.use { input.copyTo(it, 64 * 1024) }
                 }
-                runOnUiThread { result.success(true) }
+                runOnUiThread { pendingResult = null; pendingVideo = null; result.success(true) }
             } catch (error: Exception) {
                 try {
                     contentResolver.delete(destination, null, null)
                 } catch (_: Exception) { }
-                runOnUiThread { result.error("save_failed", error.message, null) }
+                runOnUiThread { pendingResult = null; pendingVideo = null; result.error("save_failed", error.message, null) }
             }
         }.start()
+    }
+
+    override fun onResume() { super.onResume(); performanceRecording?.onResume() }
+    override fun onPause() { performanceRecording?.onPause(); super.onPause() }
+    override fun onStop() { performanceRecording?.onStop(); super.onStop() }
+    override fun onDestroy() { performanceRecording?.dispose(); super.onDestroy() }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        performanceRecording?.onRequestPermissionsResult(requestCode, grantResults)
     }
 }

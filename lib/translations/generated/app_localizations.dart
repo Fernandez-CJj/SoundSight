@@ -8933,6 +8933,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can edit or delete this music after the current request finishes or is cancelled.'**
   String get jobItemLocked;
+
+  /// No description provided for @performanceVideoQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Would you like to save your performance video?'**
+  String get performanceVideoQuestion;
+
+  /// No description provided for @performanceVideoPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your recording…'**
+  String get performanceVideoPreparing;
+
+  /// No description provided for @performanceVideoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No video is available for this performance. Your results are unaffected.'**
+  String get performanceVideoUnavailable;
+
+  /// No description provided for @performanceVideoPreviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The preview could not be loaded. You can still save the video.'**
+  String get performanceVideoPreviewFailed;
+
+  /// No description provided for @performanceVideoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Video saved.'**
+  String get performanceVideoSaved;
+
+  /// No description provided for @performanceVideoSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving video…'**
+  String get performanceVideoSaving;
+
+  /// No description provided for @performanceVideoDiscardNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved recordings are deleted when you leave these results or retry.'**
+  String get performanceVideoDiscardNotice;
+
+  /// No description provided for @performanceVideoPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play recording'**
+  String get performanceVideoPlay;
+
+  /// No description provided for @performanceVideoMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute recording'**
+  String get performanceVideoMute;
+
+  /// No description provided for @performanceVideoUnmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute recording'**
+  String get performanceVideoUnmute;
 }
 
 class _AppLocalizationsDelegate

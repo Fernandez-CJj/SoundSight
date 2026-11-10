@@ -5468,4 +5468,38 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get jobItemLocked =>
       'Maaari mong baguhin o burahin ang musikang ito kapag natapos o nakansela na ang kasalukuyang hiling.';
+
+  @override
+  String get performanceVideoQuestion =>
+      'Gusto mo bang i-save ang video ng iyong pagtugtog?';
+
+  @override
+  String get performanceVideoPreparing => 'Inihahanda ang iyong recording…';
+
+  @override
+  String get performanceVideoUnavailable =>
+      'Walang video para sa pagtugtog na ito. Hindi apektado ang iyong mga resulta.';
+
+  @override
+  String get performanceVideoPreviewFailed =>
+      'Hindi ma-load ang preview. Maaari mo pa ring i-save ang video.';
+
+  @override
+  String get performanceVideoSaved => 'Na-save ang video.';
+
+  @override
+  String get performanceVideoSaving => 'Sine-save ang video…';
+
+  @override
+  String get performanceVideoDiscardNotice =>
+      'Dinedelete ang hindi na-save na recording kapag umalis ka sa mga resulta o sumubok muli.';
+
+  @override
+  String get performanceVideoPlay => 'I-play ang recording';
+
+  @override
+  String get performanceVideoMute => 'I-mute ang recording';
+
+  @override
+  String get performanceVideoUnmute => 'I-unmute ang recording';
 }
