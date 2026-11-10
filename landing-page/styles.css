@@ -113,7 +113,8 @@ h1 { font-size: clamp(44px, 4.8vw, 68px); letter-spacing: -3.4px; line-height: 1
 .testimonial-quote { margin: 0; min-height: 64px; font-size: 17px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
 .testimonial-preview { min-height: 4.5em; }
 .testimonial-quote:has(.testimonial-more[open]) .testimonial-ellipsis { display: none; }
-.testimonial-more summary { display: flex; align-items: center; min-height: 44px; width: fit-content; font-size: 13px; cursor: pointer; list-style: none; text-decoration: underline; text-underline-offset: 4px; }
+/* Keep the hidden review name inside its control, including off-screen cards. */
+.testimonial-more summary { position: relative; display: flex; align-items: center; min-height: 44px; width: fit-content; font-size: 13px; cursor: pointer; list-style: none; text-decoration: underline; text-underline-offset: 4px; }
 .testimonial-more p { margin-top: 6px; }
 .testimonial-more .review-read-less, .testimonial-more[open] .review-read-more { display: none; }
 .testimonial-more[open] .review-read-less { display: inline; }
