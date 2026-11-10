@@ -1,281 +1,883 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#F3F3F3">
-  <meta name="description" content="Learn to read music sheets and play piano with SoundSight. Watch lessons, try quizzes, and practice on Android.">
-  <title>SoundSight - Landing Page</title>
-  <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="stylesheet" href="styles.css">
-  <script src="config.js" defer></script>
-  <script src="script.js" defer></script>
-</head>
-<body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <defs>
-      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
-      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
-      <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 9l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></symbol>
-      <symbol id="i-keys" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m6-16v16M7 4v8h4V4m2 0v8h4V4"/></symbol>
-      <symbol id="i-scan" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 12h10m-5-5v10"/></symbol>
-      <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v14"/></symbol>
-      <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8l-5-5Zm0 0v5h5M8 12h8m-8 4h5"/></symbol>
-      <symbol id="i-compose" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Zm0 0h16"/></symbol>
-      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 3v17h17M8 15v-4m5 4V7m5 8V4"/></symbol>
-      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
-      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
-      <symbol id="i-android" viewBox="0 0 24 24"><path d="m7 4-2-3m12 3 2-3M3 12a9 9 0 0 1 18 0v7H3v-7Zm5 7v3m8-3v3M1 11v7m22-7v7M7 8h.01M17 8h.01"/></symbol>
-    </defs>
-  </svg>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#F3F3F3" />
+    <meta
+      name="description"
+      content="Learn to read music sheets and play piano with SoundSight. Watch lessons, try quizzes, and practice on Android."
+    />
+    <title>SoundSight - Landing Page</title>
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="config.js" defer></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <svg
+      class="icon-definitions"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <symbol id="i-arrow" viewBox="0 0 24 24">
+          <path d="M5 12h14m-6-6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-download" viewBox="0 0 24 24">
+          <path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4" />
+        </symbol>
+        <symbol id="i-note" viewBox="0 0 24 24">
+          <path d="M9 18V5l11-2v13M9 9l11-2" />
+          <ellipse cx="6" cy="18" rx="3" ry="2.5" />
+          <ellipse cx="17" cy="16" rx="3" ry="2.5" />
+        </symbol>
+        <symbol id="i-keys" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M9 4v16m6-16v16M7 4v8h4V4m2 0v8h4V4" />
+        </symbol>
+        <symbol id="i-scan" viewBox="0 0 24 24">
+          <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 12h10m-5-5v10" />
+        </symbol>
+        <symbol id="i-book" viewBox="0 0 24 24">
+          <path
+            d="M12 6c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v14"
+          />
+        </symbol>
+        <symbol id="i-sheet" viewBox="0 0 24 24">
+          <path d="M14 3H5v18h14V8l-5-5Zm0 0v5h5M8 12h8m-8 4h5" />
+        </symbol>
+        <symbol id="i-compose" viewBox="0 0 24 24">
+          <path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Zm0 0h16" />
+        </symbol>
+        <symbol id="i-chart" viewBox="0 0 24 24">
+          <path d="M4 3v17h17M8 15v-4m5 4V7m5 8V4" />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <path d="m5 12 4 4L19 6" />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="m6 6 12 12M6 18 18 6" />
+        </symbol>
+        <symbol id="i-android" viewBox="0 0 24 24">
+          <path
+            d="m7 4-2-3m12 3 2-3M3 12a9 9 0 0 1 18 0v7H3v-7Zm5 7v3m8-3v3M1 11v7m22-7v7M7 8h.01M17 8h.01"
+          />
+        </symbol>
+      </defs>
+    </svg>
 
-  <header class="site-header">
-    <div class="header-inner container">
-      <a class="brand" href="#" aria-label="SoundSight home"><img src="assets/logo.png" alt="" width="34" height="34"><span>SoundSight<span class="brand-period">.</span></span></a>
-      <nav class="main-nav" aria-label="Main navigation">
-        <a href="#features">Features</a>
-        <a href="#how-it-works">Get started</a>
-        <a href="#installation">Install</a>
-      </nav>
-      <button class="button button-dark header-download" type="button" data-open-download>Download SoundSight</button>
-    </div>
-  </header>
+    <header class="site-header">
+      <div class="header-inner container">
+        <a class="brand" href="#" aria-label="SoundSight home"
+          ><img src="assets/logo.png" alt="" width="34" height="34" /><span
+            >SoundSight<span class="brand-period">.</span></span
+          ></a
+        >
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">Get started</a>
+          <a href="#installation">Install</a>
+        </nav>
+        <button
+          class="button button-dark header-download"
+          type="button"
+          data-open-download
+        >
+          Download SoundSight
+        </button>
+      </div>
+    </header>
 
-  <main id="main">
-    <div class="hero-backdrop">
-    <section class="hero container" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <h1 id="hero-title">Music sheets and piano made simple.</h1>
-        <p class="hero-description">Video lessons and quizzes in one app<br>help you put each note into practice.</p>
-        <div class="hero-actions">
-          <div class="hero-download">
-            <button class="button button-dark" type="button" data-open-download><svg class="icon" aria-hidden="true"><use href="#i-android"/></svg> Download on Android</button>
-            <p class="hero-meta">No credit card required</p>
+    <main id="main">
+      <div class="hero-backdrop">
+        <section class="hero container" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <h1 id="hero-title">Music sheets and piano made simple.</h1>
+            <p class="hero-description">
+              Video lessons and quizzes in one app<br />help you put each note
+              into practice.
+            </p>
+            <div class="hero-actions">
+              <div class="hero-download">
+                <button
+                  class="button button-dark"
+                  type="button"
+                  data-open-download
+                >
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-android" />
+                  </svg>
+                  Download on Android
+                </button>
+                <p class="hero-meta">No credit card required</p>
+              </div>
+            </div>
+          </div>
+          <figure class="hero-visual hero-phone-preview">
+            <div class="android-phone">
+              <span
+                class="android-side-button android-volume"
+                aria-hidden="true"
+              ></span>
+              <span
+                class="android-side-button android-power"
+                aria-hidden="true"
+              ></span>
+              <div class="android-screen">
+                <img
+                  src="assets/screenshots/home.jpg"
+                  alt="SoundSight home screen with your level, practice button, and music tools"
+                  width="1080"
+                  height="2400"
+                  fetchpriority="high"
+                  decoding="async"
+                />
+              </div>
+              <span class="android-camera" aria-hidden="true"></span>
+            </div>
+          </figure>
+        </section>
+      </div>
+
+      <section
+        class="section container lessons-section"
+        id="features"
+        aria-labelledby="lessons-title"
+      >
+        <div class="section-heading">
+          <div>
+            <h2 id="lessons-title">
+              Read music sheets,<br />one lesson at a time.
+            </h2>
           </div>
         </div>
-      </div>
-      <figure class="hero-visual hero-phone-preview">
-        <div class="android-phone">
-          <span class="android-side-button android-volume" aria-hidden="true"></span>
-          <span class="android-side-button android-power" aria-hidden="true"></span>
-          <div class="android-screen"><img src="assets/screenshots/home.jpg" alt="SoundSight home screen with your level, practice button, and music tools" width="1080" height="2400" fetchpriority="high" decoding="async"></div>
-          <span class="android-camera" aria-hidden="true"></span>
+        <div class="lessons-layout">
+          <figure class="lesson-card">
+            <figcaption>
+              <h3>See your levels</h3>
+              <p>Find your next lesson.</p>
+            </figcaption>
+            <div class="android-device android-portrait lesson-device">
+              <span class="android-device-screen"
+                ><img
+                  src="assets/screenshots/lessons.jpg"
+                  alt="Lesson list with finished lessons and a piano activity to try next"
+                  width="1080"
+                  height="2400"
+                  loading="lazy"
+                  decoding="async"
+              /></span>
+            </div>
+          </figure>
+          <figure class="lesson-card lesson-card-video">
+            <figcaption>
+              <h3>Watch a lesson</h3>
+              <p>See how music notes work.</p>
+            </figcaption>
+            <div class="android-device android-landscape lesson-device">
+              <span class="android-device-screen"
+                ><img
+                  src="assets/screenshots/video-lesson.jpg"
+                  alt="Video lesson explaining the lines and spaces where music notes are written"
+                  width="2400"
+                  height="1080"
+                  loading="lazy"
+                  decoding="async"
+              /></span>
+            </div>
+          </figure>
+          <figure class="lesson-card">
+            <figcaption>
+              <h3>Try a quiz</h3>
+              <p>Check what you have learned.</p>
+            </figcaption>
+            <div class="android-device android-portrait lesson-device">
+              <span class="android-device-screen"
+                ><img
+                  src="assets/screenshots/lesson-quiz.jpg"
+                  alt="Stage 1 quiz with a music question and four answer choices"
+                  width="1080"
+                  height="2400"
+                  loading="lazy"
+                  decoding="async"
+              /></span>
+            </div>
+          </figure>
         </div>
-      </figure>
-    </section>
-    </div>
+      </section>
 
-    <section class="section container lessons-section" id="features" aria-labelledby="lessons-title">
-      <div class="section-heading"><div><h2 id="lessons-title">Read music sheets,<br>one lesson at a time.</h2></div></div>
-      <div class="lessons-layout">
-        <figure class="lesson-card">
-          <figcaption><h3>See your levels</h3><p>Find your next lesson.</p></figcaption>
-          <div class="android-device android-portrait lesson-device"><span class="android-device-screen"><img src="assets/screenshots/lessons.jpg" alt="Lesson list with finished lessons and a piano activity to try next" width="1080" height="2400" loading="lazy" decoding="async"></span></div>
-        </figure>
-        <figure class="lesson-card lesson-card-video">
-          <figcaption><h3>Watch a lesson</h3><p>See how music notes work.</p></figcaption>
-          <div class="android-device android-landscape lesson-device"><span class="android-device-screen"><img src="assets/screenshots/video-lesson.jpg" alt="Video lesson explaining the lines and spaces where music notes are written" width="2400" height="1080" loading="lazy" decoding="async"></span></div>
-        </figure>
-        <figure class="lesson-card">
-          <figcaption><h3>Try a quiz</h3><p>Check what you have learned.</p></figcaption>
-          <div class="android-device android-portrait lesson-device"><span class="android-device-screen"><img src="assets/screenshots/lesson-quiz.jpg" alt="Stage 1 quiz with a music question and four answer choices" width="1080" height="2400" loading="lazy" decoding="async"></span></div>
-        </figure>
-      </div>
-    </section>
-
-    <section class="section container" id="practice" aria-labelledby="practice-title">
-      <div class="section-heading"><div><h2 id="practice-title">Three ways to<br>practice piano.</h2></div></div>
-      <div class="practice-grid">
-        <article class="practice-card sight-mode" id="panel-sight" aria-labelledby="mode-sight-title">
-          <div class="practice-card-heading"><span class="mode-icon"><svg class="icon" aria-hidden="true"><use href="#i-note"/></svg></span><div><span class="practice-mode-number">MODE 01</span><h3 id="mode-sight-title">Sight Reading</h3></div></div>
-          <div class="screenshot-frame mode-screenshot android-device android-landscape"><span class="android-device-screen"><img src="assets/screenshots/sight-reading.jpg" alt="Sight Reading showing music notes and the note being played" width="2400" height="1080" loading="lazy" decoding="async"></span></div>
-          <p class="practice-card-copy">Read the music sheet as you play.</p>
-
-        </article>
-        <article class="practice-card synthesia-mode" id="panel-synthesia" aria-labelledby="mode-synthesia-title">
-          <div class="practice-card-heading"><span class="mode-icon"><svg class="icon" aria-hidden="true"><use href="#i-keys"/></svg></span><div><span class="practice-mode-number">MODE 02</span><h3 id="mode-synthesia-title">Synthesia</h3></div></div>
-          <div class="screenshot-frame mode-screenshot android-device android-landscape"><span class="android-device-screen"><img src="assets/screenshots/synthesia.jpg" alt="Synthesia showing notes falling toward piano keys" width="2400" height="1080" loading="lazy" decoding="async"></span></div>
-          <p class="practice-card-copy">Follow the falling notes to see which keys to play.</p>
-
-        </article>
-        <article class="practice-card ar-mode" id="panel-ar" aria-labelledby="mode-ar-title">
-          <div class="practice-card-heading"><span class="mode-icon"><svg class="icon" aria-hidden="true"><use href="#i-scan"/></svg></span><div><span class="practice-mode-number">MODE 03</span><h3 id="mode-ar-title">AR Practice</h3></div></div>
-          <div class="screenshot-frame mode-screenshot android-device android-landscape"><span class="android-device-screen"><img src="assets/screenshots/ar-practice.jpg" alt="AR Practice showing falling notes over real piano keys through the camera" width="2400" height="1080" loading="lazy" decoding="async"></span></div>
-          <p class="practice-card-copy">Use your camera to see notes over your piano keys. Camera setup and a MIDI piano are needed.</p>
-
-        </article>
-      </div>
-    </section>
-
-    <section class="section container testimonials-section" id="testimonials" aria-labelledby="testimonials-title">
-      <div class="section-heading">
-        <div><h2 id="testimonials-title">What our testers say</h2></div>
-        <div class="testimonial-controls" data-testimonial-controls hidden>
-          <button class="testimonial-arrow testimonial-previous" type="button" data-testimonial-previous aria-label="Previous reviews" aria-controls="testimonials-list" disabled><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
-          <button class="testimonial-arrow" type="button" data-testimonial-next aria-label="Next reviews" aria-controls="testimonials-list"><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      <section
+        class="section container"
+        id="practice"
+        aria-labelledby="practice-title"
+      >
+        <div class="section-heading">
+          <div>
+            <h2 id="practice-title">Three ways to<br />practice piano.</h2>
+          </div>
         </div>
+        <div class="practice-grid">
+          <article
+            class="practice-card sight-mode"
+            id="panel-sight"
+            aria-labelledby="mode-sight-title"
+          >
+            <div class="practice-card-heading">
+              <span class="mode-icon"
+                ><svg class="icon" aria-hidden="true">
+                  <use href="#i-note" /></svg
+              ></span>
+              <div>
+                <span class="practice-mode-number">MODE 01</span>
+                <h3 id="mode-sight-title">Sight Reading</h3>
+              </div>
+            </div>
+            <div
+              class="screenshot-frame mode-screenshot android-device android-landscape"
+            >
+              <span class="android-device-screen"
+                ><img
+                  src="assets/screenshots/sight-reading.jpg"
+                  alt="Sight Reading showing music notes and the note being played"
+                  width="2400"
+                  height="1080"
+                  loading="lazy"
+                  decoding="async"
+              /></span>
+            </div>
+            <p class="practice-card-copy">Read the music sheet as you play.</p>
+          </article>
+          <article
+            class="practice-card synthesia-mode"
+            id="panel-synthesia"
+            aria-labelledby="mode-synthesia-title"
+          >
+            <div class="practice-card-heading">
+              <span class="mode-icon"
+                ><svg class="icon" aria-hidden="true">
+                  <use href="#i-keys" /></svg
+              ></span>
+              <div>
+                <span class="practice-mode-number">MODE 02</span>
+                <h3 id="mode-synthesia-title">Synthesia</h3>
+              </div>
+            </div>
+            <div
+              class="screenshot-frame mode-screenshot android-device android-landscape"
+            >
+              <span class="android-device-screen"
+                ><img
+                  src="assets/screenshots/synthesia.jpg"
+                  alt="Synthesia showing notes falling toward piano keys"
+                  width="2400"
+                  height="1080"
+                  loading="lazy"
+                  decoding="async"
+              /></span>
+            </div>
+            <p class="practice-card-copy">
+              Follow the falling notes to see which keys to play.
+            </p>
+          </article>
+          <article
+            class="practice-card ar-mode"
+            id="panel-ar"
+            aria-labelledby="mode-ar-title"
+          >
+            <div class="practice-card-heading">
+              <span class="mode-icon"
+                ><svg class="icon" aria-hidden="true">
+                  <use href="#i-scan" /></svg
+              ></span>
+              <div>
+                <span class="practice-mode-number">MODE 03</span>
+                <h3 id="mode-ar-title">AR Practice</h3>
+              </div>
+            </div>
+            <div
+              class="screenshot-frame mode-screenshot android-device android-landscape"
+            >
+              <span class="android-device-screen"
+                ><img
+                  src="assets/screenshots/ar-practice.jpg"
+                  alt="AR Practice showing falling notes over real piano keys through the camera"
+                  width="2400"
+                  height="1080"
+                  loading="lazy"
+                  decoding="async"
+              /></span>
+            </div>
+            <p class="practice-card-copy">
+              Use your camera to see notes over your piano keys. Camera setup
+              and a MIDI piano are needed.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="section container testimonials-section"
+        id="testimonials"
+        aria-labelledby="testimonials-title"
+      >
+        <div class="section-heading">
+          <div><h2 id="testimonials-title">What our testers say</h2></div>
+          <div class="testimonial-controls" data-testimonial-controls hidden>
+            <button
+              class="testimonial-arrow testimonial-previous"
+              type="button"
+              data-testimonial-previous
+              aria-label="Previous reviews"
+              aria-controls="testimonials-list"
+              disabled
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+            </button>
+            <button
+              class="testimonial-arrow"
+              type="button"
+              data-testimonial-next
+              aria-label="Next reviews"
+              aria-controls="testimonials-list"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+            </button>
+          </div>
+        </div>
+        <ul
+          class="testimonials-list"
+          id="testimonials-list"
+          tabindex="0"
+          aria-label="Reviews from our testers"
+        >
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                The App is User friendly and all functions is working properly
+              </p>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">JL</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">John Ricky M. Lapitan</strong
+                ><span class="testimonial-role">Admin Asst III ICTMO</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                Yung application nila is very user-friendly and madaling
+                gamitin. Plus, yung main feature nila na AR piano guide is very
+                helpful, especially for pianists,<span
+                  class="testimonial-ellipsis"
+                  aria-hidden="true"
+                  >&#8230;</span
+                >
+              </p>
+              <details class="testimonial-more">
+                <summary>
+                  <span class="review-read-more">See more</span
+                  ><span class="review-read-less">See less</span
+                  ><span class="sr-only"> from Elmar V Marques Jr.</span>
+                </summary>
+                <p>
+                  dahil nagbibigay ito ng visual guidance habang nagpe-play ng
+                  piano. It also makes learning and practicing piano more
+                  interactive and engaging. Overall, maganda yung concept ng
+                  application nila, and I think it can be a useful tool for both
+                  beginners and experienced pianists
+                </p>
+              </details>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">EM</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Elmar V Marques Jr.</strong
+                ><span class="testimonial-role">UdD SITE, Faculty</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                Ive Never seen an app or used an app that can support the use of
+                live camera to act as a guide when<span
+                  class="testimonial-ellipsis"
+                  aria-hidden="true"
+                  >&#8230;</span
+                >
+              </p>
+              <details class="testimonial-more">
+                <summary>
+                  <span class="review-read-more">See more</span
+                  ><span class="review-read-less">See less</span
+                  ><span class="sr-only"> from Ryan Fernandez</span>
+                </summary>
+                <p>
+                  learning which I found very useful and effective for me as a
+                  beginner
+                </p>
+              </details>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">RF</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Ryan Fernandez</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                I tried using SoundSight, and honestly, it was pretty fun and
+                easy to use. I don&#x27;t really know much<span
+                  class="testimonial-ellipsis"
+                  aria-hidden="true"
+                  >&#8230;</span
+                >
+              </p>
+              <details class="testimonial-more">
+                <summary>
+                  <span class="review-read-more">See more</span
+                  ><span class="review-read-less">See less</span
+                  ><span class="sr-only"> from Rusty Lopez</span>
+                </summary>
+                <p>
+                  about playing the piano, but the video lessons helped me
+                  understand the basics. I especially liked the Synthesia mode
+                  because the falling notes made it easier to know which keys to
+                  press. The quizzes were also fun and helped me remember what I
+                  learned. I also enjoyed trying the Sight Reading feature since
+                  it helped me get more familiar with music notes. I had a good
+                  experience using the app, and I think it&#x27;s really helpful
+                  for beginners like me who want to learn piano.
+                </p>
+              </details>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">RL</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Rusty Lopez</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                I like how the application helps me understand the piano notes
+                because the instructions are easy to<span
+                  class="testimonial-ellipsis"
+                  aria-hidden="true"
+                  >&#8230;</span
+                >
+              </p>
+              <details class="testimonial-more">
+                <summary>
+                  <span class="review-read-more">See more</span
+                  ><span class="review-read-less">See less</span
+                  ><span class="sr-only"> from Rejoice Salenga</span>
+                </summary>
+                <p>follow.</p>
+              </details>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">RS</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Rejoice Salenga</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                I was amazed with the app especially when you want to convert
+                music sheets whether in pdf,capture,<span
+                  class="testimonial-ellipsis"
+                  aria-hidden="true"
+                  >&#8230;</span
+                >
+              </p>
+              <details class="testimonial-more">
+                <summary>
+                  <span class="review-read-more">See more</span
+                  ><span class="review-read-less">See less</span
+                  ><span class="sr-only"> from Zhereen Joie Rufo</span>
+                </summary>
+                <p>
+                  mp3, or video tha app can convert it. I enjoy the quizzes and
+                  different mode of practice which are the ar, synthesia and
+                  sightreading, but I like the most is the sight reading because
+                  it challenges me.
+                </p>
+              </details>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">ZR</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Zhereen Joie Rufo</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                Great App easy to use, and Good for learning Piano piece
+              </p>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">KN</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Kim Dominic Narcilla</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                The application is helpful for beginners who want to learn
+                piano.
+              </p>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">MA</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name"
+                  >Marie Flordelyz Agbanlog</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote">
+              <p class="testimonial-preview">
+                Suitable for anyone who longs to learn how to play
+              </p>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">PF</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Pauline Flores</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote" lang="fil">
+              <p class="testimonial-preview">
+                For me, interesting siya and makakatulong siya sa mga
+                nagsisimula palang mag-aral and nakabagay din<span
+                  class="testimonial-ellipsis"
+                  aria-hidden="true"
+                  >&#8230;</span
+                >
+              </p>
+              <details class="testimonial-more">
+                <summary>
+                  <span class="review-read-more">See more</span
+                  ><span class="review-read-less">See less</span
+                  ><span class="sr-only"> from Jessa Bagusto</span>
+                </summary>
+                <p>
+                  siya sa pangangailangan ng tao. Tas maraming pwedeng gawin and
+                  options to learn. Tas astig yung AR
+                </p>
+              </details>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">JB</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Jessa Bagusto</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+          <li class="testimonial-card">
+            <blockquote class="testimonial-quote" lang="fil">
+              <p class="testimonial-preview">
+                Unique yung mga features niya, Lalo na yung AR ,pero paimprove
+                pa yung directions for AR
+              </p>
+            </blockquote>
+            <div class="testimonial-person">
+              <span class="testimonial-avatar" aria-hidden="true">JS</span>
+              <div class="testimonial-identity">
+                <strong class="testimonial-name">Joward S.</strong
+                ><span class="testimonial-role">Tester</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section
+        class="section container getting-started"
+        id="how-it-works"
+        aria-labelledby="getting-started-title"
+      >
+        <div class="section-heading">
+          <div>
+            <h2 id="getting-started-title">Start in<br />three steps.</h2>
+          </div>
+          <a class="text-link" href="#installation"
+            >How to install
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
+          ></a>
+        </div>
+        <ol class="steps-grid">
+          <li>
+            <span class="step-number">01</span>
+            <h3>Get the app</h3>
+            <p>Download SoundSight and install it on your Android phone.</p>
+          </li>
+          <li>
+            <span class="step-number">02</span>
+            <h3>Make an account</h3>
+            <p>
+              Confirm your email, then take a test to find your starting level.
+            </p>
+          </li>
+          <li>
+            <span class="step-number">03</span>
+            <h3>Start a lesson</h3>
+            <p>Learn the notes, then try a piano activity.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section
+        class="section container download-section"
+        id="installation"
+        aria-labelledby="download-title"
+        tabindex="-1"
+      >
+        <div class="download-card">
+          <div class="download-copy">
+            <p class="eyebrow">SOUNDSIGHT FOR ANDROID</p>
+            <h2 id="download-title">Ready<br />to play?</h2>
+            <p>Get SoundSight on your Android phone.</p>
+            <button class="button button-dark" type="button" data-open-download>
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-android" />
+              </svg>
+              Download on Android
+            </button>
+            <div class="download-facts">
+              <span>VERSION <strong data-version>1.0.2</strong></span
+              ><span
+                >NEEDS
+                <strong>Android <span data-android>7.0</span>+</strong></span
+              ><span>FILE SIZE <strong data-file-size>378 MB</strong></span>
+            </div>
+          </div>
+          <div class="install-guide">
+            <h3>How to install</h3>
+            <ol>
+              <li>
+                <span>1</span>
+                <div>
+                  <h4>Download the app file</h4>
+                  <p>Save the APK file on your Android phone.</p>
+                </div>
+              </li>
+              <li>
+                <span>2</span>
+                <div>
+                  <h4>Allow the install</h4>
+                  <p>
+                    If asked, let your browser or Files app install it. Your
+                    phone may call this "Install unknown apps."
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span>3</span>
+                <div>
+                  <h4>Open SoundSight</h4>
+                  <p>Open the file, tap Install, then open the app.</p>
+                </div>
+              </li>
+            </ol>
+            <p class="install-note">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-android" />
+              </svg>
+              You install this app without Google Play.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="section container faq-section"
+        aria-labelledby="faq-title"
+      >
+        <div class="section-heading faq-heading">
+          <h2 id="faq-title">Need help?</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>
+              Will it work on my phone?<span
+                class="faq-plus"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            <p>
+              You need Android <span data-android>7.0</span> or newer. Some
+              tools also need a camera or a MIDI piano. This app file does not
+              work on iPhone or iPad.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What is an APK?<span class="faq-plus" aria-hidden="true"></span>
+            </summary>
+            <p>
+              An APK is a file that installs an Android app. Download it, then
+              follow the <a href="#installation">install steps</a>.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Do I need internet?<span
+                class="faq-plus"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            <p>
+              Yes, to sign in, turn files into music sheets, open shared music,
+              and save or load your piano setup.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What do I need for AR Practice?<span
+                class="faq-plus"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            <p>
+              You need a piano that can send notes to your phone (MIDI), a back
+              camera, and a phone holder. The app helps you line up the camera
+              with the keys. Keep the phone still after setup.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Can I use the app without a MIDI piano?<span
+                class="faq-plus"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            <p>
+              Yes. You can watch lessons, read music sheets, and make music with
+              the screen keys. To check the notes you play during practice,
+              connect a MIDI piano. AR Practice needs one too.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Why does it ask to use my camera or mic?<span
+                class="faq-plus"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            <p>
+              The camera lets you scan music sheets and use AR Practice. The mic
+              lets you record sound. Alerts can tell you when your music sheet
+              is ready.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer container">
+      <a class="brand" href="#" aria-label="SoundSight home"
+        ><img src="assets/logo.png" alt="" width="30" height="30" /><span
+          >SoundSight.</span
+        ></a
+      >
+      <p>See the notes. Find your rhythm.</p>
+      <a class="text-link back-to-top" href="#"
+        >Back to top <span aria-hidden="true">↑</span></a
+      >
+    </footer>
+
+    <dialog
+      class="download-dialog"
+      id="download-dialog"
+      aria-labelledby="dialog-title"
+      aria-describedby="dialog-description"
+    >
+      <div class="dialog-top">
+        <span class="eyebrow">GET THE APP</span
+        ><button
+          class="icon-button"
+          type="button"
+          data-close-download
+          aria-label="Close download window"
+        >
+          <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
       </div>
-      <ul class="testimonials-list" id="testimonials-list" tabindex="0" aria-label="Reviews from our testers">
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">The App is User friendly and all functions is working properly</p></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">JL</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">John Ricky M. Lapitan</strong><span class="testimonial-role">Admin Asst III ICTMO</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">Yung application nila is very user-friendly and madaling gamitin. Plus, yung main feature nila na AR piano guide is very helpful, especially for pianists,<span class="testimonial-ellipsis" aria-hidden="true">&#8230;</span></p>
-            <details class="testimonial-more">
-              <summary><span class="review-read-more">See more</span><span class="review-read-less">See less</span><span class="sr-only"> from Elmar V Marques Jr.</span></summary>
-              <p>dahil nagbibigay ito ng visual guidance habang nagpe-play ng piano. It also makes learning and practicing piano more interactive and engaging. Overall, maganda yung concept ng application nila, and I think it can be a useful tool for both beginners and experienced pianists</p>
-            </details></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">EM</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Elmar V Marques Jr.</strong><span class="testimonial-role">UdD SITE, Faculty</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">Ive Never seen an app or used an app that can support the use of live camera to act as a guide when<span class="testimonial-ellipsis" aria-hidden="true">&#8230;</span></p>
-            <details class="testimonial-more">
-              <summary><span class="review-read-more">See more</span><span class="review-read-less">See less</span><span class="sr-only"> from Ryan Fernandez</span></summary>
-              <p>learning which I found very useful and effective for me as a beginner</p>
-            </details></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">RF</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Ryan Fernandez</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">I tried using SoundSight, and honestly, it was pretty fun and easy to use. I don&#x27;t really know much<span class="testimonial-ellipsis" aria-hidden="true">&#8230;</span></p>
-            <details class="testimonial-more">
-              <summary><span class="review-read-more">See more</span><span class="review-read-less">See less</span><span class="sr-only"> from Rusty Lopez</span></summary>
-              <p>about playing the piano, but the video lessons helped me understand the basics. I especially liked the Synthesia mode because the falling notes made it easier to know which keys to press. The quizzes were also fun and helped me remember what I learned. I also enjoyed trying the Sight Reading feature since it helped me get more familiar with music notes. I had a good experience using the app, and I think it&#x27;s really helpful for beginners like me who want to learn piano.</p>
-            </details></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">RL</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Rusty Lopez</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">I like how the application helps me understand the piano notes because the instructions are easy to<span class="testimonial-ellipsis" aria-hidden="true">&#8230;</span></p>
-            <details class="testimonial-more">
-              <summary><span class="review-read-more">See more</span><span class="review-read-less">See less</span><span class="sr-only"> from Rejoice Salenga</span></summary>
-              <p>follow.</p>
-            </details></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">RS</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Rejoice Salenga</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">I was amazed with the app especially when you want to convert music sheets whether in pdf,capture,<span class="testimonial-ellipsis" aria-hidden="true">&#8230;</span></p>
-            <details class="testimonial-more">
-              <summary><span class="review-read-more">See more</span><span class="review-read-less">See less</span><span class="sr-only"> from Zhereen Joie Rufo</span></summary>
-              <p>mp3, or video tha app can convert it. I enjoy the quizzes and different mode of practice which are the ar, synthesia and sightreading, but I like the most is the sight reading because it challenges me.</p>
-            </details></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">ZR</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Zhereen Joie Rufo</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">Great App easy to use, and Good for learning Piano piece</p></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">KN</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Kim Dominic Narcilla</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">The application is helpful for beginners who want to learn piano.</p></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">MA</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Marie Flordelyz Agbanlog</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote"><p class="testimonial-preview">Suitable for anyone who longs to learn how to play</p></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">PF</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Pauline Flores</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote" lang="fil"><p class="testimonial-preview">For me, interesting siya and makakatulong siya sa mga nagsisimula palang mag-aral and nakabagay din<span class="testimonial-ellipsis" aria-hidden="true">&#8230;</span></p>
-            <details class="testimonial-more">
-              <summary><span class="review-read-more">See more</span><span class="review-read-less">See less</span><span class="sr-only"> from Jessa Bagusto</span></summary>
-              <p>siya sa pangangailangan ng tao. Tas maraming pwedeng gawin and options to learn. Tas astig yung  AR</p>
-            </details></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">JB</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Jessa Bagusto</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <blockquote class="testimonial-quote" lang="fil"><p class="testimonial-preview">Unique yung mga features niya, Lalo na yung AR ,pero paimprove pa yung directions for AR</p></blockquote>
-          <div class="testimonial-person">
-            <span class="testimonial-avatar" aria-hidden="true">JS</span>
-            <div class="testimonial-identity"><strong class="testimonial-name">Joward S.</strong><span class="testimonial-role">Tester</span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <p class="testimonial-quote">Review coming soon.</p>
-          <div class="testimonial-person" aria-hidden="true">
-            <span class="testimonial-avatar"></span>
-            <div class="testimonial-identity testimonial-identity-placeholder"><span class="testimonial-name-placeholder"></span><span class="testimonial-detail-placeholder"></span></div>
-          </div>
-        </li>
-        <li class="testimonial-card">
-          <p class="testimonial-quote">Review coming soon.</p>
-          <div class="testimonial-person" aria-hidden="true">
-            <span class="testimonial-avatar"></span>
-            <div class="testimonial-identity testimonial-identity-placeholder"><span class="testimonial-name-placeholder"></span><span class="testimonial-detail-placeholder"></span></div>
-          </div>
-        </li>
-      </ul>
-    </section>
-
-    <section class="section container getting-started" id="how-it-works" aria-labelledby="getting-started-title">
-      <div class="section-heading"><div><h2 id="getting-started-title">Start in<br>three steps.</h2></div><a class="text-link" href="#installation">How to install <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
-      <ol class="steps-grid">
-        <li><span class="step-number">01</span><h3>Get the app</h3><p>Download SoundSight and install it on your Android phone.</p></li>
-        <li><span class="step-number">02</span><h3>Make an account</h3><p>Confirm your email, then take a test to find your starting level.</p></li>
-        <li><span class="step-number">03</span><h3>Start a lesson</h3><p>Learn the notes, then try a piano activity.</p></li>
-      </ol>
-    </section>
-
-    <section class="section container download-section" id="installation" aria-labelledby="download-title" tabindex="-1">
-      <div class="download-card">
-        <div class="download-copy"><p class="eyebrow">SOUNDSIGHT FOR ANDROID</p><h2 id="download-title">Ready<br>to play?</h2><p>Get SoundSight on your Android phone.</p><button class="button button-dark" type="button" data-open-download><svg class="icon" aria-hidden="true"><use href="#i-android"/></svg> Download on Android</button><div class="download-facts"><span>VERSION <strong data-version>1.0.2</strong></span><span>NEEDS <strong>Android <span data-android>7.0</span>+</strong></span><span>FILE SIZE <strong data-file-size>378 MB</strong></span></div></div>
-        <div class="install-guide"><h3>How to install</h3><ol><li><span>1</span><div><h4>Download the app file</h4><p>Save the APK file on your Android phone.</p></div></li><li><span>2</span><div><h4>Allow the install</h4><p>If asked, let your browser or Files app install it. Your phone may call this "Install unknown apps."</p></div></li><li><span>3</span><div><h4>Open SoundSight</h4><p>Open the file, tap Install, then open the app.</p></div></li></ol><p class="install-note"><svg class="icon" aria-hidden="true"><use href="#i-android"/></svg> You install this app without Google Play.</p></div>
-      </div>
-    </section>
-
-    <section class="section container faq-section" aria-labelledby="faq-title">
-      <div class="section-heading faq-heading"><h2 id="faq-title">Need help?</h2></div>
-      <div class="faq-list">
-      <details><summary>Will it work on my phone?<span class="faq-plus" aria-hidden="true"></span></summary><p>You need Android <span data-android>7.0</span> or newer. Some tools also need a camera or a MIDI piano. This app file does not work on iPhone or iPad.</p></details>
-      <details><summary>What is an APK?<span class="faq-plus" aria-hidden="true"></span></summary><p>An APK is a file that installs an Android app. Download it, then follow the <a href="#installation">install steps</a>.</p></details>
-      <details><summary>Do I need internet?<span class="faq-plus" aria-hidden="true"></span></summary><p>Yes, to sign in, turn files into music sheets, open shared music, and save or load your piano setup.</p></details>
-      <details><summary>What do I need for AR Practice?<span class="faq-plus" aria-hidden="true"></span></summary><p>You need a piano that can send notes to your phone (MIDI), a back camera, and a phone holder. The app helps you line up the camera with the keys. Keep the phone still after setup.</p></details>
-      <details><summary>Can I use the app without a MIDI piano?<span class="faq-plus" aria-hidden="true"></span></summary><p>Yes. You can watch lessons, read music sheets, and make music with the screen keys. To check the notes you play during practice, connect a MIDI piano. AR Practice needs one too.</p></details>
-      <details><summary>Why does it ask to use my camera or mic?<span class="faq-plus" aria-hidden="true"></span></summary><p>The camera lets you scan music sheets and use AR Practice. The mic lets you record sound. Alerts can tell you when your music sheet is ready.</p></details>
-    </div></section>
-  </main>
-
-  <footer class="site-footer container"><a class="brand" href="#" aria-label="SoundSight home"><img src="assets/logo.png" alt="" width="30" height="30"><span>SoundSight.</span></a><p>See the notes. Find your rhythm.</p><a class="text-link back-to-top" href="#">Back to top <span aria-hidden="true">↑</span></a></footer>
-
-  <dialog class="download-dialog" id="download-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
-    <div class="dialog-top"><span class="eyebrow">GET THE APP</span><button class="icon-button" type="button" data-close-download aria-label="Close download window"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
-    <img class="dialog-logo" src="assets/logo.png" alt="" width="56" height="56">
-    <h2 id="dialog-title">SoundSight for Android.</h2><p id="dialog-description">Learn music and practice piano.</p>
-    <dl class="dialog-facts"><div><dt>Version</dt><dd data-version>1.0.2</dd></div><div><dt>Android</dt><dd><span data-android>7.0</span>+</dd></div><div><dt>Download</dt><dd data-file-size>378 MB</dd></div></dl>
-    <p class="download-status" id="download-status" role="status">The download is not ready yet. You can still see how to install the app.</p>
-    <a class="button button-dark dialog-download" id="apk-download" hidden>Download the app <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg></a>
-    <button class="button button-disabled" id="download-unavailable" type="button" disabled>Download not ready yet</button>
-    <a class="text-link dialog-guide" href="#installation" data-close-download>How to install <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-  </dialog>
-  <noscript><p class="noscript-note">Turn on JavaScript in your browser to open the download window. You can still read this page.</p></noscript>
-</body>
+      <img
+        class="dialog-logo"
+        src="assets/logo.png"
+        alt=""
+        width="56"
+        height="56"
+      />
+      <h2 id="dialog-title">SoundSight for Android.</h2>
+      <p id="dialog-description">Learn music and practice piano.</p>
+      <dl class="dialog-facts">
+        <div>
+          <dt>Version</dt>
+          <dd data-version>1.0.2</dd>
+        </div>
+        <div>
+          <dt>Android</dt>
+          <dd><span data-android>7.0</span>+</dd>
+        </div>
+        <div>
+          <dt>Download</dt>
+          <dd data-file-size>378 MB</dd>
+        </div>
+      </dl>
+      <p class="download-status" id="download-status" role="status">
+        The download is not ready yet. You can still see how to install the app.
+      </p>
+      <a class="button button-dark dialog-download" id="apk-download" hidden
+        >Download the app
+        <svg class="icon" aria-hidden="true"><use href="#i-download" /></svg
+      ></a>
+      <button
+        class="button button-disabled"
+        id="download-unavailable"
+        type="button"
+        disabled
+      >
+        Download not ready yet
+      </button>
+      <a class="text-link dialog-guide" href="#installation" data-close-download
+        >How to install
+        <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
+      ></a>
+    </dialog>
+    <noscript
+      ><p class="noscript-note">
+        Turn on JavaScript in your browser to open the download window. You can
+        still read this page.
+      </p></noscript
+    >
+  </body>
 </html>
