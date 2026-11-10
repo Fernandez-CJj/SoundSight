@@ -23,7 +23,6 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased; background: var(--background); }
-body.dialog-open { overflow: hidden; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { font: inherit; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
@@ -223,8 +222,9 @@ details[open] .faq-plus::after { transform: rotate(90deg); }
 .site-footer > p { font-size: 12px; }
 .back-to-top { font-size: 11px; gap: 20px; }
 .back-to-top span { font-size: 18px; }
-.download-dialog { width: min(510px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 28px; color: var(--primary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow-y: auto; overscroll-behavior: contain; }
-.download-dialog::backdrop { background: var(--primary); opacity: .55; }
+/* Keep the modal within the viewport without changing the page's scroll layout. */
+.download-dialog { position: fixed; inset: 0; margin: auto; width: min(510px, calc(100vw - 32px)); min-width: 0; max-width: calc(100vw - 32px); max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); padding: 28px; color: var(--primary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: auto; overflow-wrap: anywhere; overscroll-behavior: contain; }
+.download-dialog::backdrop { background: var(--primary); opacity: .55; overflow: hidden; overscroll-behavior: contain; }
 .dialog-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .dialog-top .eyebrow { font-size: 9px; }
 .icon-button { display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); }
@@ -232,7 +232,7 @@ details[open] .faq-plus::after { transform: rotate(90deg); }
 .dialog-logo { object-fit: contain; margin-top: 16px; }
 .download-dialog h2 { font-size: 29px; letter-spacing: -1px; margin-top: 20px; }
 .download-dialog > p { font-size: 13px; line-height: 1.8; color: var(--secondary); margin-top: 12px; }
-.dialog-facts { display: flex; justify-content: space-between; gap: 16px; padding-block: 20px; margin: 22px 0 0; border-block: 1px solid var(--border); }
+.dialog-facts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-block: 20px; margin: 22px 0 0; border-block: 1px solid var(--border); }
 .dialog-facts dt { font-size: 10px; color: var(--secondary); }
 .dialog-facts dd { font-size: 14px; margin: 5px 0 0; font-weight: 500; }
 .download-dialog .download-status { color: var(--primary); padding: 16px; margin-block: 20px; border-radius: var(--radius-sm); background: var(--background); font-size: 12px; }

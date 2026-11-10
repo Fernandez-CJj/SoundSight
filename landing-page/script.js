@@ -19,7 +19,7 @@
     button.addEventListener("click", () => {
       returnFocusTarget = button;
       dialog.showModal();
-      document.body.classList.add("dialog-open");
+      dialog.scrollTop = 0;
     });
   });
   document.querySelectorAll("[data-close-download]").forEach((button) => {
@@ -31,7 +31,6 @@
     });
   });
   dialog.addEventListener("close", () => {
-    document.body.classList.remove("dialog-open");
     returnFocusTarget?.focus({ preventScroll: true });
   });
   // Closing only when a full pointer gesture is outside avoids accidental closes
