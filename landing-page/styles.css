@@ -67,10 +67,10 @@ h1, h2 { font-weight: 550; }
 .text-link:hover .icon { transform: translateX(4px); }
 .text-link:hover { text-decoration: underline; text-underline-offset: 5px; }
 .hero-backdrop { background: var(--background); }
-.hero { position: relative; padding-block: 64px; display: grid; grid-template-columns: minmax(0, 640px) auto; justify-content: center; align-items: center; gap: clamp(48px, 6vw, 96px); }
-.hero-copy { min-width: 0; width: 100%; padding-block: 16px; }
-.hero h1 { margin-top: 0; }
-.hero .eyebrow { display: flex; align-items: center; gap: 10px; }
+.hero { position: relative; padding-block: 20x; display: grid; grid-template-columns: minmax(0, 640px) auto; justify-content: top-center; align-items: center; gap: clamp(4.8vw, 6vw, 96px); }
+.hero-copy { min-width: 0; width: 100%; padding-block: 10px; }
+.hero h1 { margin-top: -5; }
+.hero .eyebrow { display: flex; align-items: center; gap: 5px; }
 h1 { font-size: clamp(44px, 4.8vw, 68px); letter-spacing: -3.4px; line-height: 1.1; margin-top: 25px; }
 .wordmark { white-space: nowrap; }
 .wordmark > span { font-weight: 750; }
