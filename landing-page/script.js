@@ -86,6 +86,23 @@
 
   const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+  // Keep each review in one paragraph, with its disclosure button below it.
+  // Without JavaScript, the complete review stays visible.
+  document.querySelectorAll(".testimonial-toggle").forEach((button) => {
+    const continuation = document.getElementById(button.getAttribute("aria-controls"));
+    const ellipsis = button.closest(".testimonial-quote").querySelector(".testimonial-ellipsis");
+    const setExpanded = (expanded) => {
+      continuation.hidden = !expanded;
+      ellipsis.hidden = expanded;
+      button.setAttribute("aria-expanded", String(expanded));
+    };
+    setExpanded(false);
+    button.hidden = false;
+    button.addEventListener("click", () => {
+      setExpanded(button.getAttribute("aria-expanded") !== "true");
+    });
+  });
+
   // Native scrolling works without JavaScript; controls add one-card navigation.
   const testimonials = document.getElementById("testimonials-list");
   const previousReview = document.querySelector("[data-testimonial-previous]");
