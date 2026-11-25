@@ -134,7 +134,7 @@ h2 {
   padding-inline: max(var(--page-gutter), calc((100% - 1248px) / 2));
 }
 .section {
-  padding-block: 80px;
+  padding-block: 48px;
 }
 .lessons-section,
 .practice-section,
@@ -142,13 +142,13 @@ h2 {
   background: var(--surface);
 }
 .lessons-section {
-  padding-bottom: 40px;
+  padding-bottom: 24px;
 }
 .practice-section {
-  padding-top: 40px;
+  padding-top: 24px;
 }
 .getting-started {
-  padding-bottom: 40px;
+  padding-bottom: 24px;
 }
 .testimonials-section,
 .faq-section {
@@ -302,7 +302,7 @@ h2 {
 }
 .hero {
   position: relative;
-  padding-block: 64px;
+  padding-block: 48px;
   display: grid;
   grid-template-columns: minmax(0, 640px) auto;
   justify-content: center;
@@ -1374,7 +1374,7 @@ details[open] .faq-plus::after {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
     gap: 20px;
-    padding-block: 48px;
+    padding-block: 40px;
   }
   .hero-copy {
     max-width: 640px;
@@ -1398,16 +1398,16 @@ details[open] .faq-plus::after {
     scroll-padding-top: 130px;
   }
   .section {
-    padding-block: 64px;
+    padding-block: 40px;
   }
   .lessons-section {
-    padding-bottom: 32px;
+    padding-bottom: 20px;
   }
   .practice-section {
-    padding-top: 32px;
+    padding-top: 20px;
   }
   .getting-started {
-    padding-bottom: 32px;
+    padding-bottom: 20px;
   }
   .download-section {
     padding-top: 0;
@@ -1437,7 +1437,7 @@ details[open] .faq-plus::after {
     margin-left: auto;
   }
   .hero {
-    padding-block: 44px 48px;
+    padding-block: 32px 36px;
     gap: 22px;
   }
   h1 {
@@ -1575,7 +1575,7 @@ details[open] .faq-plus::after {
   .hero {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
-    padding-block: 24px 40px;
+    padding-block: 24px 28px;
   }
   .hero-copy {
     padding-top: 16px;
@@ -1625,13 +1625,19 @@ details[open] .faq-plus::after {
     width: min(270px, 100%);
   }
   .section {
-    padding-block: 48px;
+    padding-block: 32px;
   }
   .lessons-section {
-    padding-bottom: 24px;
+    padding-bottom: 16px;
   }
   .practice-section {
-    padding-top: 24px;
+    padding-top: 16px;
+  }
+  .getting-started {
+    padding-bottom: 16px;
+  }
+  .download-section {
+    padding-top: 0;
   }
   .download-card {
     padding: 24px 16px;
