@@ -125,12 +125,34 @@ h2 {
   stroke-linejoin: round;
 }
 .container {
-  width: min(1248px, calc(100% - 96px));
+  width: min(1248px, calc(100% - var(--page-gutter) * 2));
   margin-inline: auto;
 }
-/* Space each section from the next without stacking bottom and top padding. */
+/* Related sections share a surface; use soft changes between content groups. */
+.section,
+.site-footer {
+  padding-inline: max(var(--page-gutter), calc((100% - 1248px) / 2));
+}
 .section {
-  padding-block: 0 80px;
+  padding-block: 80px;
+}
+.lessons-section,
+.practice-section,
+.getting-started {
+  background: var(--surface);
+}
+.lessons-section {
+  padding-bottom: 40px;
+}
+.practice-section {
+  padding-top: 40px;
+}
+.getting-started {
+  padding-bottom: 40px;
+}
+.testimonials-section,
+.faq-section {
+  background: var(--background);
 }
 .eyebrow {
   font-size: 11px;
@@ -280,25 +302,24 @@ h2 {
 }
 .hero {
   position: relative;
-  padding-block: 20x;
+  padding-block: 64px;
   display: grid;
   grid-template-columns: minmax(0, 640px) auto;
-  justify-content: top-center;
-  align-items: center;
-  gap: clamp(4.8vw, 6vw, 96px);
+  justify-content: center;
+  gap: clamp(48px, 6vw, 96px);
 }
 .hero-copy {
   min-width: 0;
   width: 100%;
-  padding-block: 10px;
+  padding-block: 16px;
 }
 .hero h1 {
-  margin-top: -5;
+  margin-top: 0;
 }
 .hero .eyebrow {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
 }
 h1 {
   font-size: clamp(44px, 4.8vw, 68px);
@@ -333,7 +354,7 @@ h1 {
 }
 .hero-meta {
   margin-top: 12px;
-  font-size: 11px;
+  font-size: 13px;
   text-align: center;
 }
 .hero-visual {
@@ -556,7 +577,7 @@ h1 {
 }
 .testimonials-list {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 20px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
@@ -572,7 +593,7 @@ h1 {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 230px;
+  min-height: var(--testimonial-collapsed-height, 230px);
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -591,8 +612,8 @@ h1 {
 .testimonial-preview {
   min-height: 4.5em;
 }
-.testimonial-quote:has(.testimonial-more[open]) .testimonial-ellipsis {
-  display: none;
+.testimonial-quote:has(.testimonial-toggle[aria-expanded="true"]) .testimonial-preview {
+  min-height: 0;
 }
 /* Keep the hidden review name inside its control, including off-screen cards. */
 .testimonial-toggle {
@@ -1512,7 +1533,7 @@ details[open] .faq-plus::after {
   }
   .testimonial-card {
     flex-basis: 86%;
-    min-height: 270px;
+    min-height: var(--testimonial-collapsed-height, 270px);
   }
   .testimonial-preview {
     min-height: 6em;

@@ -109,6 +109,35 @@
   const nextReview = document.querySelector("[data-testimonial-next]");
   if (testimonials && previousReview && nextReview) {
     document.querySelector("[data-testimonial-controls]").hidden = false;
+    // Measure collapsed copies so all cards share a baseline height without
+    // changing any open review or stretching its neighbors when it expands.
+    const updateCollapsedReviewHeight = () => {
+      const measurement = testimonials.cloneNode(true);
+      measurement.removeAttribute("id");
+      measurement.classList.remove("scroll-reveal");
+      measurement.setAttribute("aria-hidden", "true");
+      measurement.inert = true;
+      measurement.style.removeProperty("--testimonial-collapsed-height");
+      Object.assign(measurement.style, {
+        position: "fixed",
+        top: "0",
+        left: "0",
+        width: `${testimonials.getBoundingClientRect().width}px`,
+        visibility: "hidden",
+        pointerEvents: "none",
+      });
+      measurement.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+      measurement.querySelectorAll(".testimonial-continuation").forEach((element) => { element.hidden = true; });
+      measurement.querySelectorAll(".testimonial-ellipsis").forEach((element) => { element.hidden = false; });
+      measurement.querySelectorAll(".testimonial-toggle").forEach((button) => {
+        button.setAttribute("aria-expanded", "false");
+        button.removeAttribute("aria-controls");
+      });
+      testimonials.after(measurement);
+      const height = Math.ceil(Math.max(...[...measurement.children].map((card) => card.getBoundingClientRect().height)));
+      measurement.remove();
+      testimonials.style.setProperty("--testimonial-collapsed-height", `${height}px`);
+    };
     const updateReviewControls = () => {
       const end = Math.max(0, testimonials.scrollWidth - testimonials.clientWidth);
       previousReview.disabled = testimonials.scrollLeft <= 1;
@@ -139,7 +168,12 @@
         });
       }
     });
-    window.addEventListener("resize", updateReviewControls);
+    window.addEventListener("resize", () => {
+      updateCollapsedReviewHeight();
+      updateReviewControls();
+    });
+    updateCollapsedReviewHeight();
+    document.fonts?.ready.then(updateCollapsedReviewHeight);
     updateReviewControls();
   }
 
