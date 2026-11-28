@@ -754,6 +754,55 @@ class AppLocalizationsFil extends AppLocalizations {
       'Hindi mabasa ang PDF. Tiyaking wasto at hindi naka-lock ang PDF.';
 
   @override
+  String get checkingSheetMusic => 'Sinusuri ang piyesa...';
+
+  @override
+  String get checkingSheetMusicDescription =>
+      'Hinahanap ang mga guhit ng pentagram at notasyon bago idagdag ang iyong piyesa.';
+
+  @override
+  String checkingSheetPage(int page, int total) {
+    return 'Sinusuri ang pahina $page sa $total';
+  }
+
+  @override
+  String get sheetMusicNotDetectedTitle => 'Walang natukoy na piyesa';
+
+  @override
+  String get sheetMusicNotDetectedDescription =>
+      'Wala kaming mahanap na pentagram at notasyon sa file na ito. Pumili ng piyesa o kumuha ng malinaw na larawang kita ang buong pentagram.';
+
+  @override
+  String get sheetMusicUncertainTitle => 'Pakisuri ang piyesang ito';
+
+  @override
+  String get sheetMusicUncertainDescription =>
+      'Hindi namin matiyak kung piyesa ito. Maaaring malabo, kulang, o iba ang notasyon. Pumili ng mas malinaw na piyesa, o gamitin pa rin kung may musika ito. Maaari pa ring mabigo ang conversion.';
+
+  @override
+  String get useSheetAnyway => 'Gamitin pa rin';
+
+  @override
+  String get sheetMusicCheckFailed =>
+      'Hindi natapos ang pagsusuri ng piyesa. Subukan muli o pumili ng ibang file.';
+
+  @override
+  String get sheetFileReadFailed =>
+      'Hindi mabuksan ang napiling file. Pumili ng nababasang PDF at subukang muli.';
+
+  @override
+  String get sheetCaptureFailed =>
+      'Hindi makuha o mabasa ang larawan. Subukang kumuha muli.';
+
+  @override
+  String get sheetCameraPermissionDenied =>
+      'Kailangan ang pahintulot sa camera para makuha ang piyesa. Payagan ang camera sa mga setting ng device at subukang muli.';
+
+  @override
+  String get emptySheetFile =>
+      'Walang laman ang file na ito. Pumili ng PDF o kumuha ng pahinang may piyesa.';
+
+  @override
   String get deletePdfBeforeCapture =>
       'Burahin ang napiling PDF bago kumuha ng mga larawan.';
 
@@ -1571,9 +1620,31 @@ class AppLocalizationsFil extends AppLocalizations {
       'Ihinto ang playback bago i-edit ang komposisyon.';
 
   @override
-  String compositionNoteLimitReached(int count) {
-    return 'Mayroon nang $count sa 256 pinapayagang nota ang komposisyong ito.';
+  String compositionNoteLimitReached(int count, int maximum) {
+    return 'Mayroon nang $count sa $maximum pinapayagang nota ang komposisyong ito.';
   }
+
+  @override
+  String get editingRecordedCompositionNotice =>
+      'I-edit ang mga nota mula sa recording. Maaaring bahagyang magbago ang timing upang umayon sa editor. Mananatili ang orihinal mong pagtugtog.';
+
+  @override
+  String get recordingEditInvalid =>
+      'Hindi mabuksan ang recording para i-edit. Hindi nabago ang orihinal mong pagtugtog.';
+
+  @override
+  String recordingEditNoteLimit(int maximum) {
+    return 'Kailangan ng higit sa $maximum nota sa editor dahil ang mga mahabang nota ay tumatawid sa mga measure. Hindi nabago ang recording.';
+  }
+
+  @override
+  String recordingEditMeasureLimit(int maximum) {
+    return 'Kailangan ng higit sa $maximum measure sa editor para sa recording na ito. Hindi nabago ang recording.';
+  }
+
+  @override
+  String get compositionEditConflict =>
+      'Nagbago ang komposisyon o nagsimula ang pagproseso. Bumalik sa mga detalye nito at buksan muli ang editor para makuha ang pinakabagong bersyon. Hindi na-save ang iyong mga pagbabago.';
 
   @override
   String get pianoNotePlaybackFailed => 'Hindi ma-play ang nota ng piano.';
@@ -2023,7 +2094,15 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get recordedVideoSaveDescription =>
-      'Nagre-record ang video ng tunog gamit ang mikropono ng iyong telepono. Kailangang marinig ang piano sa paligid. Piliin ngayon kung saan ise-save ang kopya; aalisin ang pansamantalang video kapag nagpatuloy ka.';
+      'Gumagamit ang video ng malinis na tunog ng piano mula sa MIDI keyboard. Piliin ngayon kung saan ise-save ang kopya; aalisin ang pansamantalang video kapag nagpatuloy ka.';
+
+  @override
+  String get preparingMidiRecordingDescription =>
+      'Inihahanda ang malinis na tunog ng piano para sa recording sa device na ito.';
+
+  @override
+  String get midiRecordingPreparationFailed =>
+      'Hindi maihanda ang malinis na tunog ng piano. Subukang muli, o magpatuloy nang hindi sine-save ang video.';
 
   @override
   String get saveRecordedVideo => 'I-save ang video';
@@ -2222,6 +2301,25 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get justNow => 'Ngayon lang';
+
+  @override
+  String get sheetAddedJustNow => 'Idinagdag ngayon lang';
+
+  @override
+  String sheetAddedAgo(String time) {
+    return 'Idinagdag $time';
+  }
+
+  @override
+  String secondsAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count segundo ang nakalipas',
+      one: '1 segundo ang nakalipas',
+    );
+    return '$_temp0';
+  }
 
   @override
   String minutesAgo(int count) {

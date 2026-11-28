@@ -16,6 +16,8 @@ import 'package:soundsight/screens/composition/services/composition_playback_ser
 import 'package:soundsight/screens/composition/services/composition_generation_service.dart';
 import 'package:soundsight/screens/composition/services/composition_publish_service.dart';
 import 'package:soundsight/screens/composition/services/composition_service.dart';
+import 'package:soundsight/screens/composition/services/recording_composition_editor_adapter.dart';
+import 'package:soundsight/screens/composition/models/composition_limits.dart';
 import 'package:soundsight/screens/composition/dialogs/publish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/dialogs/unpublish_composition_dialog.dart';
 import 'package:soundsight/screens/composition/widgets/composition_generated_preview.dart';
@@ -87,6 +89,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
 
   @override
   void dispose() {
+    playbackRunId++;
     jobSubscription?.cancel();
     unawaited(playbackService.dispose());
     super.dispose();
@@ -120,6 +123,9 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
             PopupMenuButton<String>(
               enabled:
                   !composition.hasActiveJob &&
+                  !isLoading &&
+                  !isGeneratingFiles &&
+                  !isPreparingPlayback &&
                   !isDeleting &&
                   !isPlaying &&
                   !isPublishing,
@@ -136,8 +142,6 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               },
               itemBuilder: (context) {
                 return [
-                  if (composition.creationMethod !=
-                      Composition.recordingCreationMethod)
                     PopupMenuItem(
                       value: 'edit',
                       child: Row(
@@ -1004,8 +1008,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
               );
             },
           ),
-          if (composition.creationMethod !=
-              Composition.recordingCreationMethod) ...[
+          ...[
             Divider(height: 1, color: colors.borderColor),
             buildActionRow(
               colors: colors,
@@ -1429,18 +1432,60 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   }
 
   Future<void> editComposition() async {
-    if (composition.hasActiveJob) return;
-    if (composition.creationMethod == Composition.recordingCreationMethod ||
-        isPlaying ||
-        isPublishing) {
+    if (composition.hasActiveJob || isLoading || isGeneratingFiles ||
+        isDeleting || isPlaying || isPreparingPlayback || isPublishing) {
       return;
     }
+
+    late final Composition editableComposition;
+    setState(() => isLoading = true);
+    try {
+      final latest = await compositionService.getComposition(
+        composition.ownerId, composition.id,
+      );
+      if (!mounted) return;
+      if (latest == null) {
+        showMessage(context.l10n.updatedCompositionLoadFailed,
+            type: AppSnackBarType.error);
+        return;
+      }
+      if (latest.hasActiveJob) {
+        showMessage(context.l10n.jobAlreadyActive);
+        return;
+      }
+      editableComposition = const RecordingCompositionEditorAdapter().prepare(latest);
+      if (compositionService.validateComposition(editableComposition) != null) {
+        showMessage(context.l10n.recordingEditInvalid,
+            type: AppSnackBarType.error);
+        return;
+      }
+    } on RecordingEditException catch (error) {
+      if (!mounted) return;
+      final message = switch (error.failure) {
+        RecordingEditFailure.noteLimit => context.l10n.recordingEditNoteLimit(
+            CompositionLimits.maximumNotes),
+        RecordingEditFailure.measureLimit => context.l10n.recordingEditMeasureLimit(
+            CompositionLimits.maximumMeasures),
+        RecordingEditFailure.invalidRecording => context.l10n.recordingEditInvalid,
+      };
+      showMessage(message, type: AppSnackBarType.error);
+      return;
+    } catch (_) {
+      if (mounted) {
+        showMessage(context.l10n.updatedCompositionLoadFailed,
+            type: AppSnackBarType.error);
+      }
+      return;
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+    if (!mounted) return;
 
     final savedCompositionId = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (_) => CompositionEditorScreen(
           colors: widget.colors,
-          composition: composition,
+          composition: editableComposition,
         ),
       ),
     );

@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
+import 'package:soundsight/screens/composition/models/composition_limits.dart';
 import 'package:soundsight/screens/composition/models/recorded_midi_event.dart';
 import 'package:soundsight/screens/composition/models/recording_composition_draft.dart';
 import 'package:soundsight/screens/composition/dialogs/recording/recording_completion_dialog.dart';
@@ -23,6 +24,7 @@ import 'package:soundsight/screens/composition/services/composition_service.dart
 import 'package:soundsight/screens/composition/services/recorded_performance_processor.dart';
 import 'package:soundsight/screens/midi/models/midi_note_event.dart';
 import 'package:soundsight/screens/midi/services/midi_input_service.dart';
+import 'package:soundsight/screens/players/services/midi_video_audio_capture.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 
 class RecordCompositionScreen extends StatefulWidget {
@@ -44,7 +46,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
     with WidgetsBindingObserver {
   CameraController? cameraController;
   List<CameraDescription> deviceCameras = [];
-  CameraLensDirection selectedLensDirection = CameraLensDirection.front;
+  CameraLensDirection selectedLensDirection = CameraLensDirection.back;
   String? cameraError;
   bool isInitializingCamera = false;
 
@@ -57,13 +59,15 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
   bool isConnectingMidi = false;
 
   bool isRecording = false;
+  bool isStartingRecording = false;
   bool isStoppingRecording = false;
   bool isGeneratingComposition = false;
   bool stopWhenHeldKeysAreReleased = false;
-  bool noteWarningShown = false;
   bool durationWarningShown = false;
   int acceptedNoteOnCount = 0;
   XFile? recordedVideo;
+  MidiVideoAudioCapture? videoAudioCapture;
+  Future<void> Function()? releaseVideoPreview;
   Timer? recordingTimer;
   Duration recordingDuration = Duration.zero;
   final Stopwatch midiRecordingStopwatch = Stopwatch();
@@ -146,15 +150,17 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       final camera =
           selectedCamera ??
           deviceCameras.firstWhere(
-            (item) => item.lensDirection == CameraLensDirection.front,
+            (item) => item.lensDirection == selectedLensDirection,
             orElse: () => deviceCameras.first,
           );
       newController = CameraController(
         camera,
         ResolutionPreset.high,
-        enableAudio: true,
+        enableAudio: false,
       );
       await newController.initialize();
+      await setRecordingFocus(newController, locked: false);
+      await disableRecordingStabilization(newController);
       if (!mounted) {
         await newController.dispose();
         return;
@@ -169,9 +175,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       if (!mounted) return;
       setState(() {
         isInitializingCamera = false;
-        cameraError = error.code.startsWith('AudioAccessDenied')
-            ? context.l10n.recordingMicrophonePermissionRequired
-            : error.description ?? context.l10n.cameraOpenFailed;
+        cameraError = error.description ?? context.l10n.cameraOpenFailed;
       });
     } catch (_) {
       await newController?.dispose();
@@ -180,6 +184,25 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
         isInitializingCamera = false;
         cameraError = context.l10n.cameraOpenFailed;
       });
+    }
+  }
+
+  Future<void> disableRecordingStabilization(CameraController controller) async {
+    try {
+      await controller.setVideoStabilizationMode(VideoStabilizationMode.off);
+    } catch (_) {
+      // Optional camera controls are not available on every device.
+    }
+  }
+
+  Future<void> setRecordingFocus(
+    CameraController controller, {
+    required bool locked,
+  }) async {
+    try {
+      await controller.setFocusMode(locked ? FocusMode.locked : FocusMode.auto);
+    } catch (_) {
+      // Fixed-focus cameras can still record without focus controls.
     }
   }
 
@@ -275,17 +298,18 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
         return;
       }
       acceptedNoteOnCount++;
-      if (acceptedNoteOnCount == 240 && !noteWarningShown) {
-        noteWarningShown = true;
+      if (CompositionLimits.warningMilestones.contains(acceptedNoteOnCount)) {
         showMessage(
-          context.l10n.recordingNoteLimitWarning(240, 256),
+          context.l10n.recordingNoteLimitWarning(
+            acceptedNoteOnCount, CompositionLimits.maximumNotes,
+          ),
           type: AppSnackBarType.warning,
         );
       }
       if (acceptedNoteOnCount == RecordedPerformanceProcessor.maximumNotes) {
         stopWhenHeldKeysAreReleased = true;
         showMessage(
-          context.l10n.recordingNoteLimitReached(256),
+          context.l10n.recordingNoteLimitReached(CompositionLimits.maximumNotes),
           type: AppSnackBarType.warning,
         );
       }
@@ -303,23 +327,47 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
 
   Future<void> startRecording() async {
     final controller = cameraController;
-    if (controller == null ||
+    if (isStartingRecording || isStoppingRecording || isGeneratingComposition ||
+        controller == null ||
         !controller.value.isInitialized ||
         controller.value.isRecordingVideo ||
         !midiIsConnected) {
       return;
     }
+    setState(() => isStartingRecording = true);
     try {
       await deleteTemporaryVideo();
+      final capture = await MidiVideoAudioCapture.start(
+        notes: midiInputService.noteEventStream,
+        controls: midiInputService.controlEventStream,
+      );
+      if (!mounted || !midiIsConnected) {
+        await capture.dispose();
+        return;
+      }
+      videoAudioCapture = capture;
+      // A stationary keyboard should keep its focus when CameraX adds the
+      // video use case, rather than continuously refocusing on moving hands.
+      await setRecordingFocus(controller, locked: true);
+      await disableRecordingStabilization(controller);
+      if (!mounted || !midiIsConnected || !identical(cameraController, controller)) {
+        await capture.dispose();
+        await setRecordingFocus(controller, locked: false);
+        return;
+      }
       await controller.startVideoRecording();
-      if (!mounted) return;
+      // CameraX can reconfigure its capture session when video starts.
+      await disableRecordingStabilization(controller);
+      if (!mounted) {
+        await capture.dispose();
+        return;
+      }
       recordedMidiEvents.clear();
       performanceResult = null;
       savedComposition = null;
       reservedCompositionId = null;
       acceptedNoteOnCount = 0;
       stopWhenHeldKeysAreReleased = false;
-      noteWarningShown = false;
       durationWarningShown = false;
       midiRecordingStopwatch
         ..reset()
@@ -330,10 +378,23 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       });
       startRecordingTimer();
     } on CameraException catch (error) {
+      await setRecordingFocus(controller, locked: false);
+      await videoAudioCapture?.dispose();
+      videoAudioCapture = null;
+      if (!mounted) return;
       showMessage(
         error.description ?? context.l10n.recordingStartFailed,
         type: AppSnackBarType.error,
       );
+    } catch (_) {
+      await setRecordingFocus(controller, locked: false);
+      await videoAudioCapture?.dispose();
+      videoAudioCapture = null;
+      if (mounted) {
+        showMessage(context.l10n.recordingStartFailed, type: AppSnackBarType.error);
+      }
+    } finally {
+      if (mounted) setState(() => isStartingRecording = false);
     }
   }
 
@@ -403,6 +464,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       }
     }
     midiRecordingStopwatch.stop();
+    videoAudioCapture?.stop();
     recordingTimer?.cancel();
     recordingTimer = null;
 
@@ -410,6 +472,7 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
       final video = await controller.stopVideoRecording().timeout(
         const Duration(seconds: 10),
       );
+      await setRecordingFocus(controller, locked: false);
       final result = performanceProcessor.process(recordedMidiEvents);
       if (!mounted) {
         try {
@@ -504,10 +567,18 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
         durationText: formatDuration(Duration(microseconds: result.durationUs)),
         noteCount: result.notes.length,
         videoPath: video.path,
+        prepareVideo: () {
+          final capture = videoAudioCapture;
+          if (capture == null) throw StateError('Recording audio is unavailable.');
+          return capture.prepare(video.path);
+        },
+        onPreviewReleaseReady: (release) => releaseVideoPreview = release,
         detectedTempo: result.detectedTempo,
         measureCount: result.measureCount,
       ),
     );
+    await releaseVideoPreview?.call();
+    releaseVideoPreview = null;
     if (!mounted) return;
     if (action == RecordingCompletionAction.discard) {
       await discardRecording();
@@ -684,7 +755,13 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
 
   Future<void> deleteTemporaryVideo() async {
     final video = recordedVideo;
+    final capture = videoAudioCapture;
+    final release = releaseVideoPreview;
+    releaseVideoPreview = null;
+    videoAudioCapture = null;
     recordedVideo = null;
+    await release?.call();
+    await capture?.dispose();
     if (video == null) return;
     try {
       final file = File(video.path);
@@ -758,17 +835,8 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isPortrait =
-        MediaQuery.orientationOf(context) == Orientation.portrait;
-    final cameraAspectRatio = cameraIsReady
-        ? cameraController!.value.aspectRatio
-        : 16 / 9;
-    final previewAspectRatio = isPortrait
-        ? 1 / cameraAspectRatio
-        : cameraAspectRatio;
-
-    return ScreenFeatureTour(featureId: 'recording_composition', key: ValueKey('recording_composition'), colors: widget.colors, canStart: () => !isRecording && !isGeneratingComposition && !isInitializingCamera, child: PopScope(
-      canPop: !isRecording && !isGeneratingComposition,
+    return ScreenFeatureTour(featureId: 'recording_composition', key: ValueKey('recording_composition'), colors: widget.colors, canStart: () => !isRecording && !isStartingRecording && !isStoppingRecording && !isGeneratingComposition && !isInitializingCamera, child: PopScope(
+      canPop: !isRecording && !isStartingRecording && !isStoppingRecording && !isGeneratingComposition,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
@@ -778,10 +846,10 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
               color: Colors.black,
               child: cameraIsReady
                   ? Center(
-                      child: AspectRatio(
-                        aspectRatio: previewAspectRatio,
-                        child: CameraPreview(cameraController!),
-                      ),
+                      // CameraPreview uses the camera's own orientation and
+                      // aspect ratio, including the orientation of a recording.
+                      // Loose constraints keep the image in proportion.
+                      child: CameraPreview(cameraController!),
                     )
                   : cameraError != null
                   ? Center(
@@ -852,8 +920,11 @@ class _RecordCompositionScreenState extends State<RecordCompositionScreen>
                 isRecording: isRecording,
                 onSwitch: switchCamera,
               ),
-            if (isGeneratingComposition)
-              RecordingGenerationOverlay(colors: widget.colors),
+            if (isGeneratingComposition || isStartingRecording)
+              RecordingGenerationOverlay(
+                colors: widget.colors,
+                title: isStartingRecording ? context.l10n.performanceVideoPreparing : null,
+              ),
           ],
         ),
       ),

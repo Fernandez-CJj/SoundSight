@@ -9,6 +9,7 @@ from music21 import tempo
 
 from composition.models.composition_models import CompositionRequest
 from composition.processing.music_writer import addCompositionMusic
+from composition.processing.edited_recording_music_writer import addEditedRecordingMusic
 from composition.processing.performance_music_writer import addPerformanceMusic
 from composition.processing.performance_music_writer import microsecondsToTicks
 from composition.processing.performance_music_writer import TICKS_PER_QUARTER
@@ -18,10 +19,7 @@ def create_basic_score(
     composition: CompositionRequest,
     authorName="SoundSight Musician",
 ):
-    usesPerformanceRecording = (
-        composition.creationMethod == "recording"
-        and composition.recordingSchemaVersion == 1
-    )
+    usesPerformanceRecording = composition.usesPerformanceRecording
     if usesPerformanceRecording and composition.performanceDurationUs is not None:
         measureTicks = round(
             composition.beatsPerMeasure
@@ -100,13 +98,18 @@ def create_basic_score(
             maximumMidi=59,
         )
     else:
-        addCompositionMusic(
+        addScoreMusic = (
+            addEditedRecordingMusic
+            if composition.creationMethod == "recording"
+            else addCompositionMusic
+        )
+        addScoreMusic(
             trebleStaff,
             composition,
             minimumMidi=60,
         )
 
-        addCompositionMusic(
+        addScoreMusic(
             bassStaff,
             composition,
             maximumMidi=59,

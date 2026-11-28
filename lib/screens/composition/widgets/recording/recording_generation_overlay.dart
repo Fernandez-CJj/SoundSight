@@ -7,9 +7,11 @@ class RecordingGenerationOverlay extends StatelessWidget {
   const RecordingGenerationOverlay({
     super.key,
     required this.colors,
+    this.title,
   });
 
   final AppThemeColors colors;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +40,7 @@ class RecordingGenerationOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    context.l10n.generatingCompositionFiles,
+                    title ?? context.l10n.generatingCompositionFiles,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colors.primaryColor,

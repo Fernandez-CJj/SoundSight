@@ -1,9 +1,7 @@
 package com.example.soundsight
 
-import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.os.Build
@@ -21,14 +19,16 @@ class PerformanceRecordingBridge(private val activity: Activity, messenger: Bina
     private var canceled = false
     private var grant: Pair<Int, Intent>? = null
     private var permissionInFlight = false
+    private var captureTiming: Map<String, Any?>? = null
 
-    companion object { const val MICROPHONE = 8310; const val CAPTURE = 8311 }
+    companion object { const val CAPTURE = 8311 }
 
     init {
         PerformanceRecordingService.listener = ::onEvent
         channel.setMethodCallHandler { call, result ->
             val id = call.argument<String>("attemptId")
             when (call.method) {
+                "timing" -> result.success(if (id == attempt) captureTiming else null)
                 "cleanupOrphans" -> {
                     val active = PerformanceRecordingService.current?.activeAttemptId ?: attempt
                     Thread {
@@ -41,16 +41,8 @@ class PerformanceRecordingBridge(private val activity: Activity, messenger: Bina
                         result.error("busy", "Capture is already starting or active.", null)
                     } else {
                         attempt = id; startResult = result; canceled = false
-                        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) requestCapture()
-                        else {
-                            permissionInFlight = true
-                            try {
-                                activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MICROPHONE)
-                            } catch (_: Exception) {
-                                permissionInFlight = false
-                                completeStart("unavailable")
-                            }
-                        }
+                        captureTiming = null
+                        requestCapture()
                     }
                 }
                 "finish", "discard" -> {
@@ -87,16 +79,6 @@ class PerformanceRecordingBridge(private val activity: Activity, messenger: Bina
             }
             activity.startActivityForResult(request, CAPTURE)
         } catch (_: Exception) { permissionInFlight = false; completeStart("unavailable") }
-    }
-
-    fun onRequestPermissionsResult(code: Int, results: IntArray): Boolean {
-        if (code != MICROPHONE) return false
-        permissionInFlight = false
-        if (!canceled && startResult != null) {
-            if (results.firstOrNull() == PackageManager.PERMISSION_GRANTED) requestCapture()
-            else completeStart("declined")
-        }
-        return true
     }
 
     fun onActivityResult(code: Int, resultCode: Int, data: Intent?): Boolean {
@@ -137,6 +119,7 @@ class PerformanceRecordingBridge(private val activity: Activity, messenger: Bina
 
     private fun onEvent(event: Map<String, Any?>) {
         if (event["attemptId"] != attempt) return
+        if (event["captureStartedAtUs"] != null) captureTiming = event
         val state = event["state"] as String
         if (state == "recording") {
             if (canceled || stopResult != null) PerformanceRecordingService.current?.finish(!canceled)

@@ -1,4 +1,5 @@
 import 'package:soundsight/screens/composition/models/composition_note.dart';
+import 'package:soundsight/screens/composition/models/composition_limits.dart';
 
 class CompositionEditorController {
   CompositionEditorController({
@@ -32,12 +33,12 @@ class CompositionEditorController {
     }
   }
 
-  static const int maximumNoteCount = 256;
-  static const int maximumMeasureCount = 128;
+  static const int maximumNoteCount = CompositionLimits.maximumNotes;
+  static const int maximumMeasureCount = CompositionLimits.maximumMeasures;
   static const int maximumHistoryLength = 100;
   static const double timingStep = CompositionNote.timingStep;
   static const String noteLimitError =
-      'A composition can contain up to 256 notes.';
+      'A composition can contain up to ${CompositionLimits.maximumNotes} notes.';
   static const String measureLimitError =
       'A composition can contain up to 128 measures.';
 

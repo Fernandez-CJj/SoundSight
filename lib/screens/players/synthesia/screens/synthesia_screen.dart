@@ -535,7 +535,10 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
 
       if (!hasStarted) {
         if (mode == SynthesiaMode.performance) {
-          await performanceRecording.start();
+          await performanceRecording.start(
+        midiEvents: midiInputService.noteEventStream,
+        midiControls: midiInputService.controlEventStream,
+      );
           if (!mounted || !isMidiConnected || !performanceRecording.hasAttempt) {
             return;
           }
@@ -567,7 +570,10 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
       if (controller == null || !isMidiConnected) return;
       controller.stop();
       if (mode == SynthesiaMode.performance) {
-        await performanceRecording.start();
+        await performanceRecording.start(
+        midiEvents: midiInputService.noteEventStream,
+        midiControls: midiInputService.controlEventStream,
+      );
         if (!mounted || !isMidiConnected || !performanceRecording.hasAttempt) {
           return;
         }
@@ -1407,7 +1413,11 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     if (completionDialogOpen) return;
     completionDialogOpen = true;
     final recordingAttemptId = performanceRecording.attemptId;
-    await performanceRecording.finish();
+    final recordingFinished = finishPerformanceRecording(
+      context: context,
+      recording: performanceRecording,
+      colors: widget.colors,
+    );
     if (!mounted || !isComplete || recordingAttemptId != performanceRecording.attemptId) {
       completionDialogOpen = false;
       return;
@@ -1474,6 +1484,14 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     Future<String>? activeResultSaveFuture = performanceReport == null
         ? null
         : practiceResultService.savePerformanceResult(performanceReport);
+    // Persist results while the optional video soundtrack is being prepared.
+    unawaited(activeResultSaveFuture?.then<void>((_) {},
+        onError: (Object _, StackTrace __) {}));
+    await recordingFinished;
+    if (!mounted || !isComplete || recordingAttemptId != performanceRecording.attemptId) {
+      completionDialogOpen = false;
+      return;
+    }
 
     await showRecordedPerformanceDialog(
       context: context,

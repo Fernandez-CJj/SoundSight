@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:soundsight/screens/composition/models/composition_limits.dart';
 
 import 'package:soundsight/screens/composition/models/recorded_midi_event.dart';
 import 'package:soundsight/screens/composition/models/recorded_performance_note.dart';
@@ -28,8 +29,8 @@ class RecordedPerformanceProcessor {
   static const int minimumTempo = 40;
   static const int maximumTempo = 200;
   static const int fallbackTempo = 80;
-  static const int maximumMeasures = 128;
-  static const int maximumNotes = 256;
+  static const int maximumMeasures = CompositionLimits.maximumMeasures;
+  static const int maximumNotes = CompositionLimits.maximumNotes;
   static const Duration maximumAudioDuration = Duration(minutes: 10);
   static const List<double> commonQuarterLengths = <double>[
     0.25,

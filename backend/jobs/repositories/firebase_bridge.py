@@ -10,7 +10,7 @@ from jobs.repositories.store import QueueError, public_job
 
 CONTENT = ("ownerId", "title", "updatedAt", "type", "files", "pageCount", "durationMs",
            "key", "tempo", "beatsPerMeasure", "beatUnit", "measureCount", "notes",
-           "creationMethod", "recordingSchemaVersion", "performanceNotes", "performanceDurationUs")
+           "creationMethod", "contentMode", "recordingSchemaVersion", "performanceNotes", "performanceDurationUs")
 OUTPUTS = ("pdfStoragePath", "musicXmlStoragePath", "midiStoragePath",
            "mp3StoragePath", "recognizedPdfStoragePath", "previewAudioStoragePath")
 

@@ -746,6 +746,55 @@ class AppLocalizationsEn extends AppLocalizations {
       'The PDF could not be read. Make sure it is a valid, unlocked PDF.';
 
   @override
+  String get checkingSheetMusic => 'Checking sheet music...';
+
+  @override
+  String get checkingSheetMusicDescription =>
+      'Looking for musical staves and notation before adding your sheet.';
+
+  @override
+  String checkingSheetPage(int page, int total) {
+    return 'Checking page $page of $total';
+  }
+
+  @override
+  String get sheetMusicNotDetectedTitle => 'Sheet music not detected';
+
+  @override
+  String get sheetMusicNotDetectedDescription =>
+      'We could not find musical staves and notation in this file. Choose a score or take a clear photo with the full staff visible.';
+
+  @override
+  String get sheetMusicUncertainTitle => 'Please check this sheet';
+
+  @override
+  String get sheetMusicUncertainDescription =>
+      'We could not confidently identify sheet music. The page may be blurry, incomplete, or use unusual notation. Choose a clearer sheet, or use it anyway if it contains music. Conversion may still fail.';
+
+  @override
+  String get useSheetAnyway => 'Use anyway';
+
+  @override
+  String get sheetMusicCheckFailed =>
+      'The sheet music check could not finish. Please try again or choose another file.';
+
+  @override
+  String get sheetFileReadFailed =>
+      'The selected file could not be opened. Please choose a readable PDF and try again.';
+
+  @override
+  String get sheetCaptureFailed =>
+      'The photo could not be captured or read. Please try taking it again.';
+
+  @override
+  String get sheetCameraPermissionDenied =>
+      'Camera access is needed to capture your sheet. Allow camera access in your device settings and try again.';
+
+  @override
+  String get emptySheetFile =>
+      'This file is empty. Please choose a PDF or capture a page containing sheet music.';
+
+  @override
   String get deletePdfBeforeCapture =>
       'Delete the selected PDF before capturing images.';
 
@@ -1551,9 +1600,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'Stop playback before editing the composition.';
 
   @override
-  String compositionNoteLimitReached(int count) {
-    return 'This composition now has $count of the 256 allowed notes.';
+  String compositionNoteLimitReached(int count, int maximum) {
+    return 'This composition now has $count of the $maximum allowed notes.';
   }
+
+  @override
+  String get editingRecordedCompositionNotice =>
+      'Edit the notes from your recording. Timing may shift slightly to fit the editor. Your original performance is kept.';
+
+  @override
+  String get recordingEditInvalid =>
+      'This recording could not be opened for editing. Its original performance has not been changed.';
+
+  @override
+  String recordingEditNoteLimit(int maximum) {
+    return 'Editing this recording requires more than $maximum note entries because held notes span measures. The recording has not been changed.';
+  }
+
+  @override
+  String recordingEditMeasureLimit(int maximum) {
+    return 'This recording needs more than $maximum measures in the editor. The recording has not been changed.';
+  }
+
+  @override
+  String get compositionEditConflict =>
+      'This composition changed or started processing. Return to its details and reopen the editor to load the latest version. Your edits have not been saved.';
 
   @override
   String get pianoNotePlaybackFailed => 'The piano note could not be played.';
@@ -1998,7 +2069,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordedVideoSaveDescription =>
-      'The video records sound through your phone\'s microphone. Your piano must be audible nearby. Choose where to save a copy now; the temporary video will be removed when you continue.';
+      'Your video uses clean piano audio from the MIDI keyboard. Choose where to save a copy now; the temporary video is removed when you continue.';
+
+  @override
+  String get preparingMidiRecordingDescription =>
+      'Preparing clean piano sound for your recording on this device.';
+
+  @override
+  String get midiRecordingPreparationFailed =>
+      'The clean piano audio could not be prepared. Try again, or continue without saving the video.';
 
   @override
   String get saveRecordedVideo => 'Save video';
@@ -2195,6 +2274,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get justNow => 'Just now';
+
+  @override
+  String get sheetAddedJustNow => 'Added just now';
+
+  @override
+  String sheetAddedAgo(String time) {
+    return 'Added $time';
+  }
+
+  @override
+  String secondsAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seconds ago',
+      one: '1 second ago',
+    );
+    return '$_temp0';
+  }
 
   @override
   String minutesAgo(int count) {

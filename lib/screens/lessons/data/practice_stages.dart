@@ -61,9 +61,9 @@ const practiceStages = <PracticeStage>[
         'Open the sheet music, connect your piano, and play the notes shown.',
     circleText: 'Play Twinkle Twinkle',
     assets: [
-      'assets/practice/stage_6/twinkle.mid',
-      'assets/practice/stage_6/twinkle.mxl',
-      'assets/practice/stage_6/twinkle.pdf',
+      'assets/practice/stage_6/twinkle_twinkle_little_star.mid',
+      'assets/practice/stage_6/twinkle_twinkle_little_star.mxl',
+      'assets/practice/stage_6/twinkle_twinkle_little_star.pdf',
     ],
   ),
   PracticeStage(

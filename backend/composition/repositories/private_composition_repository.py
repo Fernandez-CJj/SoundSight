@@ -1,7 +1,7 @@
 from firebase_admin import firestore
 
 from core.integrations.firebase_service import getDatabase
-from composition.models.composition_models import CompositionRequest
+from composition.models.composition_models import CompositionRequest, MAX_COMPOSITION_NOTES
 from composition.processing.performance_timing import (
     normalizeRecordedCompositionTiming,
 )
@@ -80,9 +80,9 @@ def loadOwnedComposition(
     except AttributeError:
         composition = CompositionRequest.parse_obj(compositionData)
 
-    if len(composition.notes) > 256:
+    if len(composition.notes) > MAX_COMPOSITION_NOTES:
         raise ValueError(
-            "A composition can contain up to 256 notes."
+            f"A composition can contain up to {MAX_COMPOSITION_NOTES} notes."
         )
 
     if composition.recordingSchemaVersion not in [None, 1]:
@@ -94,16 +94,31 @@ def loadOwnedComposition(
         if (
             composition.creationMethod != "recording"
             or len(composition.performanceNotes) == 0
-            or len(composition.performanceNotes) > 256
+            or len(composition.performanceNotes) > MAX_COMPOSITION_NOTES
+            or composition.performanceDurationUs is None
         ):
             raise ValueError(
                 "The recorded performance data is incomplete."
             )
-        normalizeRecordedCompositionTiming(composition)
+        if composition.usesPerformanceRecording:
+            normalizeRecordedCompositionTiming(composition)
         if composition.performanceDurationUs > 600_000_000:
             raise ValueError(
                 "The recorded performance is longer than 10 minutes."
             )
+        if any(note.startTimeUs + note.durationUs > composition.performanceDurationUs
+               for note in composition.performanceNotes):
+            raise ValueError("A recorded note extends past the performance ending.")
+
+    if composition.usesPerformanceRecording and (
+        composition.creationMethod != "recording" or composition.recordingSchemaVersion != 1
+    ):
+        raise ValueError("The recorded performance data is incomplete.")
+    if composition.originalRecordingSettings is not None and (
+        composition.creationMethod != "recording" or composition.recordingSchemaVersion != 1
+        or composition.effectiveContentMode != "score"
+    ):
+        raise ValueError("Original settings belong to an edited recording.")
 
     return composition
 
@@ -145,8 +160,7 @@ def saveGeneratedFilePaths(
 
     if (
         composition is not None
-        and composition.creationMethod == "recording"
-        and composition.recordingSchemaVersion == 1
+        and composition.usesPerformanceRecording
     ):
         generatedData.update({
             "tempo": composition.tempo,

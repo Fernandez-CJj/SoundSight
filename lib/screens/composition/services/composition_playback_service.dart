@@ -34,8 +34,11 @@ class CompositionPlaybackService {
   final Set<int> _currentPreviewMidiNumbers = {};
   final List<_PreviewVoice> _activePreviewVoices = [];
   final Map<String, CompositionNote> _activeTimelineNotes = {};
+  final Set<Future<void>> _compositionTasks = {};
 
   Future<void> _previewQueue = Future<void>.value();
+  Future<void>? _disposal;
+  bool _disposed = false;
   AudioPlayer? _compositionPlayer;
   bool _isPlaying = false;
   bool _isPaused = false;
@@ -59,6 +62,7 @@ class CompositionPlaybackService {
   bool get sustainEnabled => _sustainEnabled;
 
   set sustainEnabled(bool value) {
+    if (_disposed) return;
     final shouldReleasePreviewVoices = _sustainEnabled && !value;
     _sustainEnabled = value;
 
@@ -68,6 +72,7 @@ class CompositionPlaybackService {
   }
 
   Future<void> setVolume(double value) async {
+    if (_disposed) return;
     if (!value.isFinite) {
       throw ArgumentError.value(value, 'value', 'Volume must be finite.');
     }
@@ -77,11 +82,16 @@ class CompositionPlaybackService {
     final player = _compositionPlayer;
 
     if (player != null) {
-      await player.setVolume(_volume);
+      try {
+        await player.setVolume(_volume);
+      } catch (_) {
+        if (!_disposed) rethrow;
+      }
     }
   }
 
   Future<void> preloadPreviewOctave(int octave) async {
+    if (_disposed) return;
     final currentLoadSession = ++_previewLoadSession;
     final safeOctave = octave.clamp(0, 8).toInt();
     final firstMidi = safeOctave == 0
@@ -110,7 +120,7 @@ class CompositionPlaybackService {
       }),
     );
 
-    if (currentLoadSession != _previewLoadSession) return;
+    if (_disposed || currentLoadSession != _previewLoadSession) return;
 
     _currentPreviewMidiNumbers
       ..clear()
@@ -120,6 +130,7 @@ class CompositionPlaybackService {
   }
 
   Future<Set<int>> preloadPreviewNotes(Iterable<int> midiNumbers) async {
+    if (_disposed) return const <int>{};
     final currentLoadSession = ++_previewLoadSession;
     final requiredMidiNumbers = midiNumbers
         .where(PianoNote.isValidMidi)
@@ -136,7 +147,7 @@ class CompositionPlaybackService {
       }),
     );
 
-    if (currentLoadSession != _previewLoadSession) {
+    if (_disposed || currentLoadSession != _previewLoadSession) {
       return const <int>{};
     }
 
@@ -152,6 +163,32 @@ class CompositionPlaybackService {
   }
 
   Future<void> playComposition({
+    required Composition composition,
+    void Function(CompositionNote?)? onNoteChanged,
+    void Function(Set<String>)? onActiveNotesChanged,
+    void Function(Duration position, Duration total)? onProgressChanged,
+    void Function()? onPlaybackStarted,
+    bool loop = false,
+    double startBeat = 0,
+    int? loopMeasureIndex,
+  }) {
+    if (_disposed) return Future<void>.value();
+    late final Future<void> task;
+    task = _playComposition(
+      composition: composition,
+      onNoteChanged: onNoteChanged,
+      onActiveNotesChanged: onActiveNotesChanged,
+      onProgressChanged: onProgressChanged,
+      onPlaybackStarted: onPlaybackStarted,
+      loop: loop,
+      startBeat: startBeat,
+      loopMeasureIndex: loopMeasureIndex,
+    ).whenComplete(() => _compositionTasks.remove(task));
+    _compositionTasks.add(task);
+    return task;
+  }
+
+  Future<void> _playComposition({
     required Composition composition,
     void Function(CompositionNote?)? onNoteChanged,
     void Function(Set<String>)? onActiveNotesChanged,
@@ -202,14 +239,14 @@ class CompositionPlaybackService {
 
     await _prepareForNewComposition();
 
-    if (currentSession != _playbackSession) return;
+    if (_disposed || currentSession != _playbackSession) return;
 
     final renderResult = await _renderer.render(
       composition,
       releaseDuration: _compositionReleaseDuration,
     );
 
-    if (currentSession != _playbackSession) return;
+    if (_disposed || currentSession != _playbackSession) return;
 
     final timelineNotes = _buildTimelineNotes(composition);
     final microsecondsPerBeat =
@@ -248,12 +285,21 @@ class CompositionPlaybackService {
         await player.seek(playbackStartPosition);
       }
     } catch (_) {
-      await player.dispose();
+      try {
+        await player.dispose();
+      } catch (_) {
+        // A failed native setup may already have released the player.
+      }
+      if (_disposed || currentSession != _playbackSession) return;
       rethrow;
     }
 
-    if (currentSession != _playbackSession) {
-      await player.dispose();
+    if (_disposed || currentSession != _playbackSession) {
+      try {
+        await player.dispose();
+      } catch (_) {
+        // The route no longer owns a usable player.
+      }
       return;
     }
 
@@ -321,18 +367,18 @@ class CompositionPlaybackService {
     bool allowOverlap = false,
     double velocity = 1,
   }) {
-    if (_isPlaying) return Future<void>.value();
+    if (_disposed || _isPlaying) return Future<void>.value();
 
     final generation = allowOverlap ? _previewGeneration : ++_previewGeneration;
 
     return _enqueuePreview(() async {
-      if (_isPlaying || generation != _previewGeneration) return;
+      if (_disposed || _isPlaying || generation != _previewGeneration) return;
 
       if (!allowOverlap && !_sustainEnabled) {
         await _clearActivePreviewSound();
       }
 
-      if (_isPlaying || generation != _previewGeneration) return;
+      if (_disposed || _isPlaying || generation != _previewGeneration) return;
 
       while (_activePreviewVoices.where((voice) {
             return voice.midiNumber == midiNumber;
@@ -348,17 +394,17 @@ class CompositionPlaybackService {
         await _finishPreviewVoice(_activePreviewVoices.first);
       }
 
-      if (_isPlaying || generation != _previewGeneration) return;
+      if (_disposed || _isPlaying || generation != _previewGeneration) return;
 
       final pool = await _getPreviewPool(midiNumber);
 
-      if (_isPlaying || generation != _previewGeneration) return;
+      if (_disposed || _isPlaying || generation != _previewGeneration) return;
 
       final previewVolume = (_volume * velocity).clamp(0.0, 1.0).toDouble();
       final stopSound = await pool.start(volume: previewVolume);
       final voice = _PreviewVoice(midiNumber: midiNumber, stopSound: stopSound);
 
-      if (_isPlaying || generation != _previewGeneration) {
+      if (_disposed || _isPlaying || generation != _previewGeneration) {
         await _stopPreviewVoiceSafely(voice);
         return;
       }
@@ -371,7 +417,7 @@ class CompositionPlaybackService {
   }
 
   Future<void> pause() async {
-    if (!_isPlaying || _isPaused) return;
+    if (_disposed || !_isPlaying || _isPaused) return;
 
     _isPaused = true;
     _resumeSignal ??= Completer<void>();
@@ -379,12 +425,16 @@ class CompositionPlaybackService {
     final player = _compositionPlayer;
 
     if (player != null) {
-      await player.pause();
+      try {
+        await player.pause();
+      } catch (_) {
+        if (!_disposed) rethrow;
+      }
     }
   }
 
   Future<void> resume() async {
-    if (!_isPlaying || !_isPaused) return;
+    if (_disposed || !_isPlaying || !_isPaused) return;
 
     final player = _compositionPlayer;
 
@@ -392,6 +442,8 @@ class CompositionPlaybackService {
       if (player != null) {
         await player.resume();
       }
+    } catch (_) {
+      if (!_disposed) rethrow;
     } finally {
       _isPaused = false;
       _completeResumeSignal();
@@ -439,8 +491,10 @@ class CompositionPlaybackService {
   }
 
   void _clearPlaybackCallbacks() {
-    _onNoteChanged?.call(null);
-    _onActiveNotesChanged?.call(const <String>{});
+    if (!_disposed) {
+      _onNoteChanged?.call(null);
+      _onActiveNotesChanged?.call(const <String>{});
+    }
     _onNoteChanged = null;
     _onActiveNotesChanged = null;
   }
@@ -726,6 +780,7 @@ class CompositionPlaybackService {
   }
 
   Future<void> _enqueuePreview(Future<void> Function() action) {
+    if (_disposed) return Future<void>.value();
     final completer = Completer<void>();
 
     _previewQueue = _previewQueue.then((_) async {
@@ -847,10 +902,11 @@ class CompositionPlaybackService {
   }
 
   bool _isCurrentSession(int session) {
-    return _isPlaying && session == _playbackSession;
+    return !_disposed && _isPlaying && session == _playbackSession;
   }
 
   void _notifyProgress() {
+    if (_disposed) return;
     _onProgressChanged?.call(
       Duration(microseconds: _elapsedMicroseconds),
       Duration(microseconds: _totalMicroseconds),
@@ -863,9 +919,31 @@ class CompositionPlaybackService {
     return 'audio/piano/cleaned/$filePitch${pianoNote.octave}.wav';
   }
 
-  Future<void> dispose() async {
-    await stop();
+  Future<void> dispose() {
+    final disposal = _disposal;
+    if (disposal != null) return disposal;
+    // State.mounted is still true while its dispose method runs. Detach
+    // callbacks synchronously so stopping cannot call setState on that route.
+    _disposed = true;
+    _onNoteChanged = null;
+    _onActiveNotesChanged = null;
+    _onProgressChanged = null;
     _previewLoadSession++;
+    return _disposal = _dispose();
+  }
+
+  Future<void> _dispose() async {
+    await stop();
+    // Pending rendering/player setup must settle before deleting its audio.
+    // Each cancelled setup releases its own player without starting playback.
+    await Future.wait(List<Future<void>>.of(_compositionTasks).map((task) async {
+      try {
+        await task;
+      } catch (_) {
+        // A cancelled preparation must not make route cleanup fail.
+      }
+    }));
+    await _previewQueue;
     _currentPreviewMidiNumbers.clear();
 
     final previewPoolFutures = _previewPools.values.toSet().toList();

@@ -43,7 +43,7 @@ void showAgreementRequiredDialog(BuildContext context) {
           ],
         ),
         content: const Text(
-          'Please agree to the Terms and Privacy Policy before creating your account.',
+          'Please agree to the Terms and Conditions and acknowledge the Privacy Policy before creating your account.',
           style: TextStyle(
             color: AppColors.lightSecondaryText,
             fontSize: AppTextSizes.body,
@@ -383,7 +383,7 @@ void showRegisterLoadingDialog(BuildContext context) {
 Future<void> showTermsDialog(BuildContext context) async {
   await _showRegisterInformationDialog(
     context,
-    title: 'Terms of Use',
+    title: 'Terms and Conditions',
     icon: Icons.description_outlined,
     content:
         'Using SoundSight\n'
@@ -403,7 +403,7 @@ Future<void> showTermsDialog(BuildContext context) async {
         'Account and service changes\n'
         'Access may be restricted when these terms are violated. SoundSight '
         'features may also be updated as the application develops.\n\n'
-        'By creating an account, you agree to these Terms of Use.',
+        'By creating an account, you agree to these Terms and Conditions.',
   );
 }
 

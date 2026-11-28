@@ -3286,7 +3286,10 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       await performanceRecording.discard();
       if (!mounted) return;
       if (performanceModeEnabled) {
-        await performanceRecording.start();
+        await performanceRecording.start(
+        midiEvents: midiInputService.noteEventStream,
+        midiControls: midiInputService.controlEventStream,
+      );
         if (!mounted || !isMidiConnected || !performanceRecording.hasAttempt) {
           return;
         }
@@ -4217,7 +4220,11 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     isCompletionDialogShowing = true;
     final recordingAttemptVersion = practiceAttemptVersion;
-    await performanceRecording.finish();
+    final recordingFinished = finishPerformanceRecording(
+      context: context,
+      recording: performanceRecording,
+      colors: widget.colors,
+    );
     if (!mounted ||
         !isPracticePlaybackComplete ||
         recordingAttemptVersion != practiceAttemptVersion) {
@@ -4290,6 +4297,13 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     Future<String>? activeResultSaveFuture = performanceReport == null
         ? null
         : practiceResultService.savePerformanceResult(performanceReport);
+    unawaited(activeResultSaveFuture?.then<void>((_) {},
+        onError: (Object _, StackTrace __) {}));
+    await recordingFinished;
+    if (!mounted || !isPracticePlaybackComplete || recordingAttemptVersion != practiceAttemptVersion) {
+      isCompletionDialogShowing = false;
+      return;
+    }
 
     await showRecordedPerformanceDialog(
       context: context,

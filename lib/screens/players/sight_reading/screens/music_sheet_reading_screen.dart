@@ -330,7 +330,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           beginPerformanceTimeline();
         }
 
-        if (performanceRunning) {
+        if (performanceRunning && !performanceFinishing) {
           performanceTracker.recordNoteOn(
             note,
             playingStopwatch.elapsedMilliseconds,
@@ -383,7 +383,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         return;
       }
 
-      if (!performanceRunning) {
+      if (!performanceRunning || performanceFinishing) {
         return;
       }
 
@@ -3972,7 +3972,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       cancelPerformanceTimers();
       await performanceRecording.discard();
       if (!mounted) return;
-      await performanceRecording.start();
+      await performanceRecording.start(
+        midiEvents: midiInputService.noteEventStream,
+        midiControls: midiInputService.controlEventStream,
+      );
       if (!mounted ||
           !midiStatus.startsWith('Connected:') ||
           !performanceRecording.hasAttempt) {
@@ -4101,9 +4104,15 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     performanceFinishing = true;
     performanceTicker?.cancel();
     performanceTicker = null;
+    stopPlayingTimer();
 
     final finishingRunId = performanceRunId;
-    await performanceRecording.finish();
+    final recordingAttemptId = performanceRecording.attemptId;
+    final recordingFinished = finishPerformanceRecording(
+      context: context,
+      recording: performanceRecording,
+      colors: widget.colors,
+    );
     if (!mounted || finishingRunId != performanceRunId) return;
 
     try {
@@ -4209,6 +4218,10 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final resultSaveFuture = practiceResultService.savePerformanceResult(
       performanceReport,
     );
+    unawaited(resultSaveFuture.then<void>((_) {},
+        onError: (Object _, StackTrace __) {}));
+    await recordingFinished;
+    if (!mounted || !scoreCompleted || recordingAttemptId != performanceRecording.attemptId) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {

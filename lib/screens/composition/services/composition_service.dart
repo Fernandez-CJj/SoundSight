@@ -1,11 +1,18 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:soundsight/achievements/models/achievement_badge.dart';
 import 'package:soundsight/achievements/repositories/achievement_repository.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
+import 'package:soundsight/screens/composition/models/composition_limits.dart';
 import 'package:soundsight/screens/composition/models/composition_note.dart';
 import 'package:soundsight/screens/composition/models/composition_options.dart';
 import 'package:soundsight/screens/composition/models/piano_note.dart';
+
+class CompositionEditConflictException implements Exception {
+  const CompositionEditConflictException();
+}
 
 class CompositionService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -112,9 +119,44 @@ class CompositionService {
     compositionData['generationStatus'] = Composition.pendingGenerationStatus;
     compositionData['updatedAt'] = FieldValue.serverTimestamp();
 
-    await userCompositions(
-      composition.ownerId,
-    ).doc(composition.id).update(compositionData);
+    final reference = userCompositions(composition.ownerId).doc(composition.id);
+    if (composition.creationMethod == Composition.recordingCreationMethod) {
+      await firestore.runTransaction<void>((transaction) async {
+        final snapshot = await transaction.get(reference);
+        final data = snapshot.data();
+        if (data == null || data['activeJobId'] != null) {
+          throw const CompositionEditConflictException();
+        }
+        final latest = Composition.fromMap(snapshot.id, data);
+        if (latest.updatedAt != composition.updatedAt ||
+            latest.creationMethod != composition.creationMethod ||
+            latest.recordingSchemaVersion != composition.recordingSchemaVersion ||
+            latest.performanceDurationUs != composition.performanceDurationUs ||
+            jsonEncode(latest.performanceNotes.map((note) => note.toMap()).toList()) !=
+                jsonEncode(composition.performanceNotes.map((note) => note.toMap()).toList())) {
+          throw const CompositionEditConflictException();
+        }
+        // The server's original performance remains authoritative. Editing
+        // changes score notes, never the archived MIDI performance.
+        compositionData.remove('recordingSchemaVersion');
+        compositionData.remove('performanceNotes');
+        compositionData.remove('performanceDurationUs');
+        if (latest.recordingSchemaVersion != null &&
+            composition.effectiveContentMode == Composition.scoreContentMode) {
+          compositionData['originalRecordingSettings'] =
+              latest.originalRecordingSettings ?? {
+                'tempo': latest.tempo,
+                'key': latest.keySignature,
+                'beatsPerMeasure': latest.beatsPerMeasure,
+                'beatUnit': latest.beatUnit,
+                'measureCount': latest.measureCount,
+              };
+        }
+        transaction.update(reference, compositionData);
+      });
+    } else {
+      await reference.update(compositionData);
+    }
   }
 
   Future<void> markGenerationPending(
@@ -201,6 +243,15 @@ class CompositionService {
         composition.creationMethod != Composition.recordingCreationMethod) {
       return 'Choose a supported composition creation method.';
     }
+    if (composition.effectiveContentMode != Composition.scoreContentMode &&
+        composition.effectiveContentMode != Composition.performanceContentMode) {
+      return 'Choose a supported composition content mode.';
+    }
+    if (composition.usesPerformanceRecording &&
+        (composition.creationMethod != Composition.recordingCreationMethod ||
+         composition.recordingSchemaVersion != Composition.currentRecordingSchemaVersion)) {
+      return 'The recorded performance data is incomplete.';
+    }
     if (!compositionKeySignatures.contains(composition.keySignature)) {
       return 'Choose a supported key signature.';
     }
@@ -212,14 +263,23 @@ class CompositionService {
     if (!compositionTimeSignatures.contains(timeSignature)) {
       return 'Choose a supported time signature.';
     }
-    if (composition.measureCount < 1 || composition.measureCount > 128) {
+    if (composition.measureCount < 1 ||
+        composition.measureCount > CompositionLimits.maximumMeasures) {
       return 'A composition can contain up to 128 measures.';
     }
-    if (composition.playableNoteCount > 256) {
-      return 'A composition can contain up to 256 notes.';
+    if (composition.notes.length > CompositionLimits.maximumNotes ||
+        composition.performanceNotes.length > CompositionLimits.maximumNotes) {
+      return 'A composition can contain up to ${CompositionLimits.maximumNotes} notes.';
     }
 
-    if (composition.usesPerformanceRecording) {
+    if (composition.recordingSchemaVersion != null &&
+        composition.recordingSchemaVersion != Composition.currentRecordingSchemaVersion) {
+      return 'The recording schema version is not supported.';
+    }
+    if (composition.recordingSchemaVersion == Composition.currentRecordingSchemaVersion) {
+      if (composition.creationMethod != Composition.recordingCreationMethod) {
+        return 'The recorded performance data is incomplete.';
+      }
       if (composition.performanceNotes.isEmpty ||
           composition.performanceDurationUs == null ||
           composition.performanceDurationUs! <= 0) {
@@ -243,7 +303,7 @@ class CompositionService {
           return 'A recorded note extends past the performance ending.';
         }
       }
-      return null;
+      if (composition.usesPerformanceRecording) return null;
     }
 
     final noteIds = <String>{};

@@ -39,6 +39,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
   QueryDocumentSnapshot<Map<String, dynamic>>? _tutorialSheet;
   Stream<QuerySnapshot<Map<String, dynamic>>>? musicSheetsStream;
   final Set<String> deletingSheetIds = {};
+  final Set<String> hiddenSheetIds = {};
   final MusicSheetDeleteService deleteService = MusicSheetDeleteService();
 
   @override
@@ -191,9 +192,14 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
                   return buildErrorState(colors);
                 }
 
+                final sourceSheets = snapshot.data?.docs ?? [];
+                final sourceIds = sourceSheets.map((sheet) => sheet.id).toSet();
+                hiddenSheetIds.removeWhere((id) =>
+                    !deletingSheetIds.contains(id) && !sourceIds.contains(id));
                 final sheets =
                     List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
-                      snapshot.data?.docs ?? [],
+                      sourceSheets.where((sheet) =>
+                          !hiddenSheetIds.contains(sheet.id)),
                     );
                 sheets.sort(sortSheetsByDate);
                 _hasSheets = sheets.isNotEmpty;
@@ -284,6 +290,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
         final pageCount = (data['pageCount'] as num?)?.toInt() ?? 0;
 
         return MusicSheetCard(
+          key: ValueKey(sheet.id),
           colors: colors,
           dismissKey: sheet.id,
           title: title,
@@ -292,11 +299,12 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
           durationMs: (data['durationMs'] as num?)?.toInt() ?? 0,
           jobId: data['activeJobId'] as String?,
           jobStatus: data['lastJobStatus'] as String?,
-          dateText: formatDate(data['createdAt'] as Timestamp?),
+          createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
           isDeleting: deletingSheetIds.contains(sheet.id),
           onView: () => openMusicSheet(colors, sheet.id, title, type, data),
           onRename: () => renameMusicSheet(colors, sheet, title),
-          onDelete: () => deleteMusicSheet(colors, sheet, title, data),
+          onDelete: () => confirmDeleteMusicSheet(colors, sheet.id, title, data),
+          onDismissed: () => unawaited(deleteMusicSheet(sheet, title, data)),
           infoGuideBuilder: index == 1 ? (child) => guide(
             3, context.l10n.featureTourSheetsOpenTitle,
             context.l10n.featureTourSheetsOpenBody, child,
@@ -508,25 +516,26 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     }
   }
 
-  Future<void> deleteMusicSheet(
+  Future<bool> confirmDeleteMusicSheet(
     AppThemeColors colors,
-    QueryDocumentSnapshot<Map<String, dynamic>> sheet,
+    String sheetId,
     String title,
     Map<String, dynamic> data,
   ) async {
+    if (deletingSheetIds.contains(sheetId)) return false;
     if (data['transcriptionStatus'] == 'processing') {
       showMessage(
         context.l10n.audioWaitBeforeDelete,
         type: AppSnackBarType.warning,
       );
-      return;
+      return false;
     }
     if (data['omrStatus'] == 'processing') {
       showMessage(
         context.l10n.waitForTranslationBeforeDelete,
         type: AppSnackBarType.warning,
       );
-      return;
+      return false;
     }
 
     final shouldDelete = await showDialog<bool>(
@@ -534,31 +543,45 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
       builder: (_) => DeleteMusicSheetDialog(colors: colors, title: title),
     );
 
-    if (shouldDelete != true || !mounted) return;
+    return shouldDelete == true && mounted;
+  }
+
+  Future<void> deleteMusicSheet(
+    QueryDocumentSnapshot<Map<String, dynamic>> sheet,
+    String title,
+    Map<String, dynamic> data,
+  ) async {
+    if (!mounted || deletingSheetIds.contains(sheet.id)) return;
 
     setState(() {
       deletingSheetIds.add(sheet.id);
+      hiddenSheetIds.add(sheet.id);
     });
 
+    var wasDeleted = false;
     try {
       final latestSheet = await sheet.reference.get();
-      if (!mounted) return;
       if (latestSheet.data()?['transcriptionStatus'] == 'processing') {
-        showMessage(
-          context.l10n.audioWaitBeforeDelete,
-          type: AppSnackBarType.warning,
-        );
+        if (mounted) {
+          showMessage(
+            context.l10n.audioWaitBeforeDelete,
+            type: AppSnackBarType.warning,
+          );
+        }
         return;
       }
       await deleteService.deleteMusicSheet(
         sheetReference: sheet.reference,
         sheetData: data,
       );
+      wasDeleted = true;
+      if (!mounted) return;
       showMessage(
         context.l10n.musicSheetDeleted(title),
         type: AppSnackBarType.success,
       );
     } catch (_) {
+      if (!mounted) return;
       showMessage(
         context.l10n.musicSheetDeleteFailed,
         type: AppSnackBarType.error,
@@ -567,6 +590,7 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
       if (mounted) {
         setState(() {
           deletingSheetIds.remove(sheet.id);
+          if (!wasDeleted) hiddenSheetIds.remove(sheet.id);
         });
       }
     }
@@ -592,16 +616,6 @@ class _MusicSheetScreenState extends State<MusicSheetScreen> {
     if (firstDate == null) return 1;
     if (secondDate == null) return -1;
     return secondDate.compareTo(firstDate);
-  }
-
-  String formatDate(Timestamp? timestamp) {
-    if (timestamp == null) return '';
-
-    final date = timestamp.toDate();
-    final localizedDate = MaterialLocalizations.of(
-      context,
-    ).formatMediumDate(date);
-    return context.l10n.addedDate(localizedDate);
   }
 
   void showMessage(

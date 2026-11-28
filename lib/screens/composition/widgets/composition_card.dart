@@ -18,6 +18,7 @@ class CompositionCard extends StatelessWidget {
     required this.onOpen,
     required this.onRetryGeneration,
     required this.onDelete,
+    required this.onDismissed,
   });
 
   final AppThemeColors colors;
@@ -26,7 +27,8 @@ class CompositionCard extends StatelessWidget {
   final bool isGeneratingFiles;
   final VoidCallback onOpen;
   final VoidCallback onRetryGeneration;
-  final Future<void> Function() onDelete;
+  final Future<bool> Function() onDelete;
+  final VoidCallback onDismissed;
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +55,8 @@ class CompositionCard extends StatelessWidget {
       direction: isDeleting || composition.hasActiveJob
           ? DismissDirection.none
           : DismissDirection.startToEnd,
-      confirmDismiss: (_) async {
-        await onDelete();
-        return false;
-      },
+      confirmDismiss: (_) => onDelete(),
+      onDismissed: (_) => onDismissed(),
       background: DeleteSwipeBackground(colors: colors),
       child: Container(
         decoration: BoxDecoration(

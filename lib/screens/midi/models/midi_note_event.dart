@@ -1,5 +1,11 @@
 enum MidiNoteEventType { noteOn, noteOff }
 
+class MidiControlEvent {
+  const MidiControlEvent({required this.controller, required this.value});
+  final int controller;
+  final int value;
+}
+
 class MidiNoteEvent {
   const MidiNoteEvent({
     required this.type,

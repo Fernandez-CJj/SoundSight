@@ -26,6 +26,10 @@ class MidiInputService {
 
   final StreamController<MidiNoteEvent> noteEventController =
       StreamController<MidiNoteEvent>.broadcast();
+  final StreamController<MidiControlEvent> controlEventController =
+      StreamController<MidiControlEvent>.broadcast();
+
+  Stream<MidiControlEvent> get controlEventStream => controlEventController.stream;
 
   MidiInputService() {
     // USB appearance and removal are reported by the platform MIDI plugin.
@@ -161,6 +165,10 @@ class MidiInputService {
         );
         notesChanged = activeMidiNoteNumbers.remove(message.note);
       }
+    } else if (message is CCMessage) {
+      controlEventController.add(MidiControlEvent(
+        controller: message.controller, value: message.value,
+      ));
     } else if (message is NoteOffMessage) {
       noteEventController.add(
         MidiNoteEvent(
@@ -269,6 +277,7 @@ class MidiInputService {
       midiCommand.disconnectDevice(device);
     }
     await noteEventController.close();
+    await controlEventController.close();
     await midiSubscription?.cancel();
     await connectionSubscription?.cancel();
     await setupSubscription?.cancel();

@@ -16,10 +16,7 @@ def generateCompositionFiles(
     authorName,
     fileSuffix="",
 ):
-    usesPerformanceRecording = (
-        composition.creationMethod == "recording"
-        and composition.recordingSchemaVersion == 1
-    )
+    usesPerformanceRecording = composition.usesPerformanceRecording
     score = create_basic_score(
         composition,
         authorName,

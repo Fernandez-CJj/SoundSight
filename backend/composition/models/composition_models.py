@@ -2,6 +2,16 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+MAX_COMPOSITION_NOTES = 768
+
+
+class OriginalRecordingSettingsRequest(BaseModel):
+    tempo: int = Field(ge=40, le=200)
+    key: str
+    beatsPerMeasure: int = Field(ge=1, le=12)
+    beatUnit: Literal[4, 8]
+    measureCount: int = Field(ge=1, le=128)
+
 
 class CompositionNoteRequest(BaseModel):
     id: str
@@ -49,6 +59,8 @@ class CompositionRequest(BaseModel):
     ownerId: str
     title: str
     creationMethod: Literal["manual", "recording"] = "manual"
+    contentMode: Literal["performance", "score"] | None = None
+    originalRecordingSettings: OriginalRecordingSettingsRequest | None = None
 
     tempo: int = Field(
         ge=40,
@@ -69,9 +81,23 @@ class CompositionRequest(BaseModel):
         le=128,
     )
 
-    notes: list[CompositionNoteRequest] = Field(default_factory=list)
+    notes: list[CompositionNoteRequest] = Field(
+        default_factory=list, max_length=MAX_COMPOSITION_NOTES
+    )
     recordingSchemaVersion: int | None = None
     performanceNotes: list[RecordedPerformanceNoteRequest] = Field(
-        default_factory=list
+        default_factory=list, max_length=MAX_COMPOSITION_NOTES
     )
     performanceDurationUs: int | None = Field(default=None, gt=0)
+
+    @property
+    def effectiveContentMode(self):
+        if self.contentMode is not None:
+            return self.contentMode
+        return "performance" if (
+            self.creationMethod == "recording" and self.recordingSchemaVersion == 1
+        ) else "score"
+
+    @property
+    def usesPerformanceRecording(self):
+        return self.effectiveContentMode == "performance"

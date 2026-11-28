@@ -52,6 +52,7 @@ def saveCompositionPost(
         "currentVersion": versionNumber,
         "title": composition.title,
         "creationMethod": composition.creationMethod,
+        "contentMode": composition.effectiveContentMode,
         "tempo": composition.tempo,
         "key": composition.key,
         "beatsPerMeasure": (
@@ -61,7 +62,7 @@ def saveCompositionPost(
         "measureCount": composition.measureCount,
         "noteCount": (
             len(composition.performanceNotes)
-            if composition.recordingSchemaVersion == 1
+            if composition.usesPerformanceRecording
             else len(composition.notes)
         ),
         "publishedFilesVersion": 1,
@@ -103,7 +104,7 @@ def saveCompositionPost(
 
     versionData["notes"] = notesData
 
-    if composition.recordingSchemaVersion == 1:
+    if composition.usesPerformanceRecording:
         versionData["recordingSchemaVersion"] = 1
         versionData["performanceDurationUs"] = (
             composition.performanceDurationUs

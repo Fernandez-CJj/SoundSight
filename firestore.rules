@@ -64,6 +64,40 @@ service cloud.firestore {
              );
     }
 
+    function compositionNoteLimit() {
+      return 768;
+    }
+
+    function compositionContentMode(data) {
+      return data.get('contentMode',
+        data.get('creationMethod', 'manual') == 'recording'
+          && data.get('recordingSchemaVersion', 0) == 1
+            ? 'performance' : 'score');
+    }
+
+    function originalCompositionSettings(data) {
+      return {
+        'tempo': data.tempo,
+        'key': data.key,
+        'beatsPerMeasure': data.beatsPerMeasure,
+        'beatUnit': data.beatUnit,
+        'measureCount': data.measureCount
+      };
+    }
+
+    function validOriginalRecordingSettings(settings) {
+      return settings is map
+        && settings.keys().hasAll(['tempo', 'key', 'beatsPerMeasure', 'beatUnit', 'measureCount'])
+        && settings.keys().hasOnly(['tempo', 'key', 'beatsPerMeasure', 'beatUnit', 'measureCount'])
+        && settings.tempo is int && settings.tempo >= 40 && settings.tempo <= 200
+        && settings.key is string && settings.key.size() > 0 && settings.key.size() <= 20
+        && settings.beatsPerMeasure is int
+        && settings.beatUnit is int
+        && ((settings.beatUnit == 4 && settings.beatsPerMeasure >= 2 && settings.beatsPerMeasure <= 7)
+          || (settings.beatUnit == 8 && settings.beatsPerMeasure in [3, 6, 9, 12]))
+        && settings.measureCount is int && settings.measureCount >= 1 && settings.measureCount <= 128;
+    }
+
     function validComposition(data) {
       return data.keys().hasOnly([
                'ownerId',
@@ -75,6 +109,8 @@ service cloud.firestore {
                'measureCount',
                'notes',
                'creationMethod',
+               'contentMode',
+               'originalRecordingSettings',
                'recordingSchemaVersion',
                'performanceNotes',
                'performanceDurationUs',
@@ -120,14 +156,23 @@ service cloud.firestore {
              && data.measureCount > 0
              && data.measureCount <= 128
              && data.notes is list
-             && data.notes.size() <= 256
+             && data.notes.size() <= compositionNoteLimit()
              && data.creationMethod in ['manual', 'recording']
+             && (!('contentMode' in data) || data.contentMode in ['performance', 'score'])
+             && (compositionContentMode(data) != 'performance'
+                 || (data.creationMethod == 'recording'
+                     && data.get('recordingSchemaVersion', 0) == 1))
+             && (!('originalRecordingSettings' in data)
+                 || (data.creationMethod == 'recording'
+                     && data.get('recordingSchemaVersion', 0) == 1
+                     && compositionContentMode(data) == 'score'
+                     && validOriginalRecordingSettings(data.originalRecordingSettings)))
              && (!('recordingSchemaVersion' in data)
                  || data.recordingSchemaVersion == 1)
              && (!('performanceNotes' in data)
                  || (data.performanceNotes is list
                      && data.performanceNotes.size() > 0
-                     && data.performanceNotes.size() <= 256))
+                     && data.performanceNotes.size() <= compositionNoteLimit()))
              && (!('performanceDurationUs' in data)
                  || (data.performanceDurationUs is int
                      && data.performanceDurationUs > 0
@@ -1367,6 +1412,24 @@ service cloud.firestore {
     }
 
     match /users/{userId}/compositions/{compositionId} {
+      function preservesOriginalRecording() {
+        let wasPerformanceRecording = resource.data.get('creationMethod', 'manual') == 'recording'
+          && resource.data.get('recordingSchemaVersion', 0) == 1;
+        let beforeMode = compositionContentMode(resource.data);
+        let afterMode = compositionContentMode(request.resource.data);
+        return !wasPerformanceRecording || (
+          request.resource.data.recordingSchemaVersion == resource.data.recordingSchemaVersion
+          && request.resource.data.performanceNotes == resource.data.performanceNotes
+          && request.resource.data.performanceDurationUs == resource.data.performanceDurationUs
+          && (beforeMode != 'score' || afterMode == 'score')
+          && (afterMode == 'score'
+            ? request.resource.data.originalRecordingSettings == resource.data.get(
+                'originalRecordingSettings', originalCompositionSettings(resource.data))
+            : request.resource.data.get('originalRecordingSettings', null)
+                == resource.data.get('originalRecordingSettings', null))
+        );
+      }
+
       function isCompositionContentUpdate() {
         return request.resource.data.diff(resource.data)
                  .affectedKeys()
@@ -1379,6 +1442,8 @@ service cloud.firestore {
                    'measureCount',
                    'notes',
                    'creationMethod',
+                   'contentMode',
+                   'originalRecordingSettings',
                    'recordingSchemaVersion',
                    'performanceNotes',
                    'performanceDurationUs',
@@ -1441,6 +1506,7 @@ service cloud.firestore {
                        == resource.data.ownerId
                     && request.resource.data.createdAt
                        == resource.data.createdAt
+                    && preservesOriginalRecording()
                     && (
                       !('creationMethod' in resource.data)
                       || request.resource.data.creationMethod

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 import 'package:soundsight/screens/onboarding/tours/feature_tour_step_counts.dart';
 import 'package:soundsight/services/processing_job_service.dart';
@@ -33,6 +35,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
       CompositionGenerationService();
 
   final Set<String> deletingCompositionIds = {};
+  final Set<String> hiddenCompositionIds = {};
   final Set<String> generatingCompositionIds = {};
 
   bool _tourDataReady = false;
@@ -117,7 +120,14 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
                 }
 
                 _tourDataReady = true;
-                final compositions = snapshot.data ?? [];
+                final sourceCompositions = snapshot.data ?? [];
+                final sourceIds = sourceCompositions
+                    .map((composition) => composition.id).toSet();
+                hiddenCompositionIds.removeWhere((id) =>
+                    !deletingCompositionIds.contains(id) &&
+                    !sourceIds.contains(id));
+                final compositions = sourceCompositions.where((composition) =>
+                    !hiddenCompositionIds.contains(composition.id)).toList();
 
                 _tutorialComposition = compositions.isEmpty ? null : compositions.first;
                 if (compositions.isEmpty) {
@@ -162,6 +172,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
         final composition = compositions[index - 1];
 
         return CompositionCard(
+          key: ValueKey(composition.id),
           colors: colors,
           composition: composition,
           isDeleting: deletingCompositionIds.contains(composition.id),
@@ -172,7 +183,8 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
           onRetryGeneration: () {
             retryCompositionGeneration(composition);
           },
-          onDelete: () => deleteComposition(colors, composition),
+          onDelete: () => confirmDeleteComposition(colors, composition),
+          onDismissed: () => unawaited(deleteComposition(composition)),
         );
       },
     );
@@ -480,10 +492,12 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
     }
   }
 
-  Future<void> deleteComposition(
+  Future<bool> confirmDeleteComposition(
     AppThemeColors colors,
     Composition composition,
   ) async {
+    if (deletingCompositionIds.contains(composition.id) ||
+        composition.hasActiveJob) return false;
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (_) {
@@ -494,17 +508,24 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
       },
     );
 
-    if (shouldDelete != true || !mounted) return;
+    return shouldDelete == true && mounted;
+  }
+
+  Future<void> deleteComposition(Composition composition) async {
+    if (!mounted || deletingCompositionIds.contains(composition.id)) return;
 
     setState(() {
       deletingCompositionIds.add(composition.id);
+      hiddenCompositionIds.add(composition.id);
     });
 
+    var wasDeleted = false;
     try {
       await compositionService.deleteComposition(
         composition.ownerId,
         composition.id,
       );
+      wasDeleted = true;
 
       if (!mounted) return;
 
@@ -523,6 +544,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
       if (mounted) {
         setState(() {
           deletingCompositionIds.remove(composition.id);
+          if (!wasDeleted) hiddenCompositionIds.remove(composition.id);
         });
       }
     }

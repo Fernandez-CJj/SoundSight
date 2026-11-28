@@ -1,7 +1,11 @@
+import logging
 import os
 import subprocess
 
 import imageio_ffmpeg
+
+
+logger = logging.getLogger(__name__)
 
 
 MUSESCORE_PATH = (
@@ -74,6 +78,12 @@ def exportPdf(musicXmlPath):
         ) from error
 
     if result.returncode != 0:
+        logger.error(
+            "MuseScore PDF export failed (exit=%s). stderr=%s stdout=%s",
+            result.returncode,
+            (result.stderr or "")[-8000:],
+            (result.stdout or "")[-8000:],
+        )
         raise RuntimeError(
             "MuseScore could not generate the PDF."
         )

@@ -10,6 +10,7 @@ import 'package:gap/gap.dart';
 import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/screens/composition/models/composition.dart';
+import 'package:soundsight/screens/composition/models/composition_limits.dart';
 import 'package:soundsight/screens/composition/widgets/chord_mode_controls.dart';
 import 'package:soundsight/screens/composition/widgets/layer_notes_controls.dart';
 import 'package:soundsight/screens/composition/controllers/composition_editor_controller.dart';
@@ -119,6 +120,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   @override
   void initState() {
     super.initState();
+    remoteJobActive = widget.composition.hasActiveJob;
     if (widget.composition.id.isNotEmpty) {
       activeJobSubscription = FirebaseFirestore.instance
           .collection('users')
@@ -242,9 +244,29 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
           ],
         ),
         body: SafeArea(
-          child: isLandscape
+          child: Column(
+            children: [
+              if (widget.composition.creationMethod == Composition.recordingCreationMethod)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md, vertical: AppSpacing.sm,
+                  ),
+                  color: colors.surfaceColor,
+                  child: Text(
+                    context.l10n.editingRecordedCompositionNotice,
+                    style: TextStyle(
+                      color: colors.secondaryTextColor,
+                      fontSize: AppTextSizes.caption,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              Expanded(child: isLandscape
               ? buildLandscapeEditor(colors)
-              : buildPortraitEditor(colors, selectedNote),
+              : buildPortraitEditor(colors, selectedNote)),
+            ],
+          ),
         ),
         bottomNavigationBar: isLandscape ? null : buildSaveButton(colors),
       ),
@@ -697,9 +719,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     bool compact = false,
   }) {
     final noteCount = editorController.notes.length;
-    final noteUsageColor = noteCount >= 256
+    final noteUsageColor = noteCount >= CompositionLimits.maximumNotes
         ? const Color(0xFFDC2626)
-        : noteCount >= 240
+        : noteCount >= CompositionLimits.warningNotes
         ? const Color(0xFFF59E0B)
         : null;
 
@@ -720,7 +742,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
             colors: colors,
             icon: Icons.library_music_outlined,
             label: context.l10n.noteLabel(noteCount),
-            value: '$noteCount/256',
+            value: '$noteCount/${CompositionLimits.maximumNotes}',
             compact: compact,
             accentColor: noteUsageColor,
           ),
@@ -1402,6 +1424,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       startAbsoluteBeat: midiStepStartAbsoluteBeat,
       idPrefix: 'manual-midi-step',
     );
+    final previousNoteCount = editorController.notes.length;
     final errorMessage = editorController.applyMidiStep(
       compositionNotes,
       stepEndAbsoluteBeat: midiStepStartAbsoluteBeat + stepDuration,
@@ -1424,6 +1447,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       showMessage(errorMessage, type: AppSnackBarType.error);
       return;
     }
+    warnForNoteLimit(previousNoteCount);
   }
 
   double nearestStandardMidiDuration(double rawDurationBeats) {
@@ -1642,11 +1666,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       updateDirtyState();
     });
 
-    final noteCount = editorController.notes.length;
-    if (noteCount > previousNoteCount &&
-        (noteCount == 240 || noteCount == 250 || noteCount == 255)) {
-      showMessage(context.l10n.compositionNoteLimitReached(noteCount));
-    }
+    warnForNoteLimit(previousNoteCount);
 
     try {
       await playbackService.playPreview(
@@ -1719,6 +1739,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   }
 
   void handleMeasureAction(MeasureAction action) {
+    final previousNoteCount = editorController.notes.length;
     final currentMeasure = editorController.currentMeasureIndex;
     String? errorMessage;
     var changed = true;
@@ -1765,6 +1786,7 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
     setState(() {
       updateDirtyState();
     });
+    warnForNoteLimit(previousNoteCount);
   }
 
   void undo() {
@@ -1802,9 +1824,23 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
   }
 
   void pasteSelection() {
-    applyEditorResult(
-      editorController.pasteNotes(allowStacking: isChordMode || isLayerMode),
+    final previousNoteCount = editorController.notes.length;
+    final errorMessage = editorController.pasteNotes(
+      allowStacking: isChordMode || isLayerMode,
     );
+    applyEditorResult(errorMessage);
+    if (errorMessage == null) warnForNoteLimit(previousNoteCount);
+  }
+
+  void warnForNoteLimit(int previousNoteCount) {
+    final count = editorController.notes.length;
+    if (CompositionLimits.warningMilestones.any(
+      (milestone) => previousNoteCount < milestone && count >= milestone,
+    )) {
+      showMessage(context.l10n.compositionNoteLimitReached(
+        count, CompositionLimits.maximumNotes,
+      ));
+    }
   }
 
   void selectAllNotes() {
@@ -2123,6 +2159,11 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
       measureCount: editorController.measureCount,
       notes: editorController.sortedNotes,
       creationMethod: widget.composition.creationMethod,
+      contentMode: Composition.scoreContentMode,
+      recordingSchemaVersion: widget.composition.recordingSchemaVersion,
+      performanceNotes: widget.composition.performanceNotes,
+      performanceDurationUs: widget.composition.performanceDurationUs,
+      originalRecordingSettings: widget.composition.originalRecordingSettings,
       keySignature: keySignature,
       beatsPerMeasure: editorController.beatsPerMeasure,
       beatUnit: editorController.beatUnit,
@@ -2215,7 +2256,9 @@ class _CompositionEditorScreenState extends State<CompositionEditorScreen>
         Navigator.pop(context, compositionId);
       } else {
         showMessage(
-          context.l10n.compositionSaveFailed,
+          error is CompositionEditConflictException
+              ? context.l10n.compositionEditConflict
+              : context.l10n.compositionSaveFailed,
           type: AppSnackBarType.error,
         );
       }

@@ -25,6 +25,7 @@ class PerformanceRecordingService : Service() {
     private var attempt: String? = null
     val activeAttemptId: String? get() = attempt
     private var output: File? = null
+    private var captureStartedAtUs = 0L
     @Volatile private var closing = false
 
     companion object {
@@ -77,8 +78,7 @@ class PerformanceRecordingService : Service() {
                 .addAction(Notification.Action.Builder(null, getString(R.string.performance_recording_stop), stop).build())
                 .build()
             if (Build.VERSION.SDK_INT >= 29) {
-                var types = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-                if (Build.VERSION.SDK_INT >= 30) types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                val types = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
                 startForeground(NOTIFICATION, notification, types)
             } else startForeground(NOTIFICATION, notification)
             @Suppress("DEPRECATION")
@@ -106,17 +106,12 @@ class PerformanceRecordingService : Service() {
             @Suppress("DEPRECATION")
             val media = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this) else MediaRecorder()
             recorder = media
-            media.setAudioSource(MediaRecorder.AudioSource.MIC)
             media.setVideoSource(MediaRecorder.VideoSource.SURFACE)
             media.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             media.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
             media.setVideoSize(width, height)
             media.setVideoFrameRate(30)
             media.setVideoEncodingBitRate(4_000_000)
-            media.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            media.setAudioChannels(1)
-            media.setAudioSamplingRate(48000)
-            media.setAudioEncodingBitRate(128000)
             media.setOutputFile(output!!.absolutePath)
             media.setOnErrorListener { _, _, _ -> finish(false, "unavailable") }
             media.prepare()
@@ -135,8 +130,9 @@ class PerformanceRecordingService : Service() {
                 inputSurface, null, worker)
             if (closing) return
             media.start()
+            captureStartedAtUs = SystemClock.elapsedRealtimeNanos() / 1000L
             recording = true
-            // Let the microphone/encoder pipeline warm up before enabling the
+            // Let the video encoder warm up before enabling the
             // first-key trigger in sight reading (falling-note players have a lead-in).
             worker.postDelayed({ if (!closing) emit("recording") }, 250)
         } catch (_: Exception) {
@@ -160,7 +156,13 @@ class PerformanceRecordingService : Service() {
             runCatching { recorder?.release() }; recorder = null
             runCatching { projection?.stop() }; projection = null
             val file = output
-            valid = valid && file != null && file.isFile && file.length() > 0 && validMedia(file)
+            val durationUs = if (valid && file != null && file.isFile && file.length() > 0)
+                videoDurationUs(file) else 0L
+            valid = valid && durationUs > 0L
+            // Keep the monotonic timestamp captured at media.start(). A static
+            // screen can stop producing frames before finish() is called, so
+            // stop time minus encoded duration is not the recording's start.
+            // Replacing it moves MIDI audio earlier, especially in sight reading.
             if (!valid) attempt?.let { runCatching { deleteAttempt(this, it) } }
             emit(if (valid) "ready" else if (keep) "unavailable" else reason,
                 if (valid) file!!.absolutePath else null)
@@ -173,24 +175,24 @@ class PerformanceRecordingService : Service() {
         }
     }
 
-    private fun validMedia(file: File): Boolean {
+    private fun videoDurationUs(file: File): Long {
         val extractor = MediaExtractor()
         return try {
             extractor.setDataSource(file.absolutePath)
-            var video = false; var audio = false
+            var videoDurationUs = 0L
             for (i in 0 until extractor.trackCount) {
                 val format = extractor.getTrackFormat(i)
                 val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
                 val duration = if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION) else 0
-                if (duration > 0 && mime.startsWith("video/")) video = true
-                if (duration > 0 && mime.startsWith("audio/")) audio = true
+                if (mime.startsWith("video/")) videoDurationUs = maxOf(videoDurationUs, duration)
             }
-            video && audio
-        } catch (_: Exception) { false } finally { extractor.release() }
+            videoDurationUs
+        } catch (_: Exception) { 0L } finally { extractor.release() }
     }
 
     private fun emit(state: String, path: String? = null) {
-        val event = mapOf("attemptId" to attempt, "state" to state, "path" to path)
+        val event = mapOf("attemptId" to attempt, "state" to state, "path" to path,
+            "captureStartedAtUs" to captureStartedAtUs)
         main.post { listener?.invoke(event) }
     }
 

@@ -9,7 +9,7 @@ def process(job, suffix):
     composition = loadOwnedComposition(target, owner)
     paths = generateCompositionFiles(composition, getPublicProfile(owner)["username"], suffix)
     fields = {**paths, "generatedFilesVersion": CURRENT_GENERATED_FILES_VERSION}
-    if composition.recordingSchemaVersion == 1:
+    if composition.usesPerformanceRecording:
         fields.update(tempo=composition.tempo, measureCount=composition.measureCount,
                       performanceDurationUs=composition.performanceDurationUs,
                       performanceNotes=[

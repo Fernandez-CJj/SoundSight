@@ -16,7 +16,8 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final formKey = GlobalKey<FormState>();
-  bool isChecked = false;
+  bool hasAcceptedTerms = false;
+  bool hasAcknowledgedPrivacy = false;
   bool isObscure = true;
   final usernameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
@@ -41,11 +42,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               emailController: emailCtrl,
               passwordController: passwordCtrl,
               confirmPasswordController: confirmPassCtrl,
-              isChecked: isChecked,
+              hasAcceptedTerms: hasAcceptedTerms,
+              hasAcknowledgedPrivacy: hasAcknowledgedPrivacy,
               isObscure: isObscure,
-              onAgreementChanged: (value) {
+              onTermsChanged: (value) {
                 setState(() {
-                  isChecked = value ?? false;
+                  hasAcceptedTerms = value ?? false;
+                });
+              },
+              onPrivacyChanged: (value) {
+                setState(() {
+                  hasAcknowledgedPrivacy = value ?? false;
                 });
               },
               onTermsPressed: () {
@@ -74,7 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   bool isAgree() {
-    if (!isChecked) {
+    if (!hasAcceptedTerms || !hasAcknowledgedPrivacy) {
       showAgreementRequiredDialog(context);
       return false;
     }

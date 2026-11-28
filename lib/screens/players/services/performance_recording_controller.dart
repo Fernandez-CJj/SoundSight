@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:soundsight/screens/midi/models/midi_note_event.dart';
+import 'midi_video_audio_capture.dart';
 
 enum PerformanceRecordingState {
   idle,
@@ -40,6 +42,7 @@ class NativePerformanceRecordingBackend implements PerformanceRecordingBackend {
   @override
   Stream<Map<dynamic, dynamic>> get events => _events.stream;
   static Future<void> cleanupOrphans() async {
+    await MidiVideoAudioCapture.cleanupOrphans();
     if (!kIsWeb && Platform.isAndroid) {
       try {
         await _channel.invokeMethod<void>('cleanupOrphans');
@@ -61,6 +64,13 @@ class NativePerformanceRecordingBackend implements PerformanceRecordingBackend {
   @override
   Future<String?> finish(String attemptId) =>
       _channel.invokeMethod<String>('finish', {'attemptId': attemptId});
+
+  Future<int?> captureStartedAtUs(String attemptId) async {
+    final timing = await _channel.invokeMapMethod<String, dynamic>(
+      'timing', {'attemptId': attemptId},
+    );
+    return (timing?['captureStartedAtUs'] as num?)?.toInt();
+  }
   @override
   Future<void> discard(String attemptId) =>
       _channel.invokeMethod<void>('discard', {'attemptId': attemptId});
@@ -84,6 +94,7 @@ class PerformanceRecordingController extends ChangeNotifier {
         _setState(PerformanceRecordingState.starting);
       } else if (event['state'] == 'interrupted' ||
           event['state'] == 'unavailable') {
+        _audioCapture?.cancel();
         path = null;
         _setState(PerformanceRecordingState.unavailable);
       }
@@ -104,6 +115,7 @@ class PerformanceRecordingController extends ChangeNotifier {
   Future<void>? _closing;
   Future<void> Function()? releasePreview;
   bool saveFailed = false;
+  MidiVideoAudioCapture? _audioCapture;
   bool get isStarting => _starting;
   bool get isSaving => state == PerformanceRecordingState.saving;
   bool get hasAttempt => _attemptId != null;
@@ -114,7 +126,10 @@ class PerformanceRecordingController extends ChangeNotifier {
     if (!_closed) notifyListeners();
   }
 
-  Future<void> start() async {
+  Future<void> start({
+    Stream<MidiNoteEvent>? midiEvents,
+    Stream<MidiControlEvent>? midiControls,
+  }) async {
     if (_closed || _starting || _attemptId != null) return;
     _starting = true;
     final generation = ++_generation;
@@ -130,14 +145,34 @@ class PerformanceRecordingController extends ChangeNotifier {
     saveFailed = false;
     _setState(PerformanceRecordingState.requestingPermission);
     try {
+      if (midiEvents == null && _backend is NativePerformanceRecordingBackend) {
+        _setState(PerformanceRecordingState.unavailable);
+        return;
+      }
+      if (midiEvents != null) {
+        final capture = await MidiVideoAudioCapture.start(
+          notes: midiEvents, controls: midiControls,
+        );
+        if (_closed || generation != _generation) {
+          await capture.dispose();
+          return;
+        }
+        _audioCapture = capture;
+      }
       final outcome = await _backend.start(id);
       if (_closed || generation != _generation) return;
+      if (outcome != 'recording') {
+        await _audioCapture?.dispose();
+        _audioCapture = null;
+      }
       _setState(
         outcome == 'recording'
             ? PerformanceRecordingState.recording
             : PerformanceRecordingState.unavailable,
       );
     } catch (_) {
+      await _audioCapture?.dispose();
+      _audioCapture = null;
       if (!_closed && generation == _generation) {
         _setState(PerformanceRecordingState.unavailable);
       }
@@ -147,16 +182,29 @@ class PerformanceRecordingController extends ChangeNotifier {
     }
   }
 
-  Future<void> finish() => _finishing ??= _finish();
-  Future<void> _finish() async {
+  Future<void> finish({VoidCallback? onVideoStopped}) =>
+      _finishing ??= _finish(onVideoStopped);
+  Future<void> _finish(VoidCallback? onVideoStopped) async {
     final id = _attemptId;
     final generation = _generation;
     if (id == null || state != PerformanceRecordingState.recording) return;
+    final capture = _audioCapture;
+    capture?.stop();
     _setState(PerformanceRecordingState.finalizing);
     String? result;
     try {
       result = await _backend.finish(id);
+      if (_closed || generation != _generation) return;
+      if (result != null && capture != null) {
+        onVideoStopped?.call();
+        final backend = _backend;
+        final startUs = backend is NativePerformanceRecordingBackend
+            ? await backend.captureStartedAtUs(id) : null;
+        if (_closed || generation != _generation) return;
+        result = await capture.prepare(result, videoStartedAtUs: startUs);
+      }
     } catch (_) {
+      result = null;
       /* Results are independent of video. */
     }
     if (_closed || generation != _generation) return;
@@ -196,6 +244,8 @@ class PerformanceRecordingController extends ChangeNotifier {
         } catch (_) {
           /* File cleanup must still run. */
         }
+        await _audioCapture?.dispose();
+        _audioCapture = null;
         if (id != null) {
           try {
             await _backend.discard(id);
@@ -208,6 +258,7 @@ class PerformanceRecordingController extends ChangeNotifier {
           _setState(PerformanceRecordingState.saved);
         }
       } else if (generation == _generation) {
+        saveFailed = true;
         _setState(PerformanceRecordingState.ready);
       }
     } catch (_) {
@@ -229,6 +280,9 @@ class PerformanceRecordingController extends ChangeNotifier {
     final finishing = _finishing;
     final saving = _saving;
     final release = releasePreview;
+    final capture = _audioCapture;
+    _audioCapture = null;
+    capture?.cancel();
     _finishing = null;
     path = null;
     _setState(PerformanceRecordingState.idle);
@@ -240,6 +294,7 @@ class PerformanceRecordingController extends ChangeNotifier {
         /* Do not leak media after preview errors. */
       }
       if (finishing != null) await finishing;
+      await capture?.dispose();
       // Cancel pending permission/start immediately; native serializes media teardown.
       if (id != null) {
         try {

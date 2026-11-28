@@ -20,6 +20,7 @@ class CompositionAudioRenderer {
 
   final Map<String, Future<CompositionRenderResult>> _renderCache = {};
   final Set<String> _createdFilePaths = {};
+  Future<Directory>? _outputDirectory;
 
   Future<CompositionRenderResult> render(
     Composition composition, {
@@ -145,12 +146,10 @@ class CompositionAudioRenderer {
 
     final outputScale = peak > 0.95 ? 0.95 / peak : 1.0;
     final wavBytes = _encodeWav(mixedSamples, outputScale: outputScale);
-    final outputDirectory = Directory(
-      '${Directory.systemTemp.path}${Platform.pathSeparator}'
-      'soundsight_compositions',
-    );
-
-    await outputDirectory.create(recursive: true);
+    // A closing route must never delete another route's copy of the same
+    // composition while that route is preparing or playing it.
+    final outputDirectory = await (_outputDirectory ??=
+        Directory.systemTemp.createTemp('soundsight-composition-audio-'));
 
     final outputFile = File(
       '${outputDirectory.path}${Platform.pathSeparator}$cacheKey.wav',
@@ -370,6 +369,7 @@ class CompositionAudioRenderer {
     }
 
     addValue(composition.id);
+    addValue(composition.effectiveContentMode);
     addValue(composition.tempo);
     addValue(composition.measureCount);
     addValue(composition.beatsPerMeasure);
@@ -425,6 +425,15 @@ class CompositionAudioRenderer {
     }
 
     _createdFilePaths.clear();
+    final directoryFuture = _outputDirectory;
+    if (directoryFuture != null) {
+      try {
+        final directory = await directoryFuture;
+        if (await directory.exists()) await directory.delete();
+      } catch (_) {
+        // The operating system can clear a cache folder that is still in use.
+      }
+    }
   }
 }
 

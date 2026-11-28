@@ -5,6 +5,8 @@ import 'package:soundsight/screens/composition/models/recorded_performance_note.
 class Composition {
   static const String manualCreationMethod = 'manual';
   static const String recordingCreationMethod = 'recording';
+  static const String performanceContentMode = 'performance';
+  static const String scoreContentMode = 'score';
   static const String pendingGenerationStatus = 'pending';
   static const String generatingStatus = 'generating';
   static const String completedGenerationStatus = 'completed';
@@ -23,6 +25,8 @@ class Composition {
     this.performanceNotes = const [],
     this.performanceDurationUs,
     this.creationMethod = manualCreationMethod,
+    this.contentMode,
+    this.originalRecordingSettings,
     this.keySignature = 'C Major',
     this.beatsPerMeasure = 4,
     this.beatUnit = 4,
@@ -50,6 +54,8 @@ class Composition {
   final int? performanceDurationUs;
 
   final String creationMethod;
+  final String? contentMode;
+  final Map<String, dynamic>? originalRecordingSettings;
 
   final String keySignature;
   final int beatsPerMeasure;
@@ -70,10 +76,14 @@ class Composition {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  bool get usesPerformanceRecording {
-    return creationMethod == recordingCreationMethod &&
-        recordingSchemaVersion == currentRecordingSchemaVersion;
-  }
+  String get effectiveContentMode => contentMode ??
+      (creationMethod == recordingCreationMethod &&
+              recordingSchemaVersion == currentRecordingSchemaVersion
+          ? performanceContentMode
+          : scoreContentMode);
+
+  bool get usesPerformanceRecording =>
+      effectiveContentMode == performanceContentMode;
 
   int get playableNoteCount {
     return usesPerformanceRecording ? performanceNotes.length : notes.length;
@@ -129,6 +139,8 @@ class Composition {
     List<RecordedPerformanceNote>? performanceNotes,
     int? performanceDurationUs,
     String? creationMethod,
+    String? contentMode,
+    Map<String, dynamic>? originalRecordingSettings,
     String? keySignature,
     int? beatsPerMeasure,
     int? beatUnit,
@@ -155,6 +167,9 @@ class Composition {
       performanceDurationUs:
           performanceDurationUs ?? this.performanceDurationUs,
       creationMethod: creationMethod ?? this.creationMethod,
+      contentMode: contentMode ?? this.contentMode,
+      originalRecordingSettings:
+          originalRecordingSettings ?? this.originalRecordingSettings,
       keySignature: keySignature ?? this.keySignature,
       beatsPerMeasure: beatsPerMeasure ?? this.beatsPerMeasure,
       beatUnit: beatUnit ?? this.beatUnit,
@@ -185,6 +200,10 @@ class Composition {
       'notes': notes.map((note) => note.toMap()).toList(),
       'creationMethod': creationMethod,
     };
+    if (contentMode != null) data['contentMode'] = contentMode;
+    if (originalRecordingSettings != null) {
+      data['originalRecordingSettings'] = originalRecordingSettings;
+    }
 
     if (recordingSchemaVersion != null) {
       data['recordingSchemaVersion'] = recordingSchemaVersion;
@@ -258,6 +277,12 @@ class Composition {
       performanceNotes: performanceNotes,
       performanceDurationUs: (map['performanceDurationUs'] as num?)?.toInt(),
       creationMethod: creationMethodFromMap(map),
+      contentMode: map['contentMode'] as String?,
+      originalRecordingSettings: map['originalRecordingSettings'] is Map
+          ? Map<String, dynamic>.unmodifiable(
+              Map<String, dynamic>.from(map['originalRecordingSettings'] as Map),
+            )
+          : null,
       keySignature: map['key'] as String? ?? 'C Major',
       beatsPerMeasure: (map['beatsPerMeasure'] as num?)?.toInt() ?? 4,
       beatUnit: (map['beatUnit'] as num?)?.toInt() ?? 4,

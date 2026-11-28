@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:soundsight/widgets/processing_job_card.dart';
 import 'package:flutter/material.dart';
 import 'package:soundsight/widgets/delete_swipe_background.dart';
@@ -17,11 +19,12 @@ class MusicSheetCard extends StatelessWidget {
     this.durationMs = 0,
     this.jobId,
     this.jobStatus,
-    required this.dateText,
+    required this.createdAt,
     required this.isDeleting,
     required this.onView,
     required this.onRename,
     required this.onDelete,
+    required this.onDismissed,
     this.infoGuideBuilder,
     this.processingGuideBuilder,
   });
@@ -34,11 +37,12 @@ class MusicSheetCard extends StatelessWidget {
   final String type;
   final int pageCount;
   final int durationMs;
-  final String dateText;
+  final DateTime? createdAt;
   final bool isDeleting;
   final VoidCallback onView;
   final VoidCallback onRename;
-  final Future<void> Function() onDelete;
+  final Future<bool> Function() onDelete;
+  final VoidCallback onDismissed;
   final Widget Function(Widget)? infoGuideBuilder;
   final Widget Function(Widget)? processingGuideBuilder;
 
@@ -64,10 +68,8 @@ class MusicSheetCard extends StatelessWidget {
       direction: isDeleting || jobId != null
           ? DismissDirection.none
           : DismissDirection.startToEnd,
-      confirmDismiss: (_) async {
-        await onDelete();
-        return false;
-      },
+      confirmDismiss: (_) => onDelete(),
+      onDismissed: (_) => onDismissed(),
       background: DeleteSwipeBackground(colors: colors),
       child: Material(
         color: colors.surfaceColor,
@@ -128,14 +130,11 @@ class MusicSheetCard extends StatelessWidget {
                               fontSize: AppTextSizes.caption,
                             ),
                           ),
-                          if (dateText.isNotEmpty) ...[
+                          if (createdAt != null) ...[
                             const Gap(AppSpacing.xs),
-                            Text(
-                              dateText,
-                              style: TextStyle(
-                                color: colors.secondaryTextColor,
-                                fontSize: AppTextSizes.caption,
-                              ),
+                            _SheetAddedTimestamp(
+                              createdAt: createdAt!,
+                              colors: colors,
                             ),
                           ],
                         ],
@@ -196,6 +195,96 @@ class MusicSheetCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SheetAddedTimestamp extends StatefulWidget {
+  const _SheetAddedTimestamp({required this.createdAt, required this.colors});
+
+  final DateTime createdAt;
+  final AppThemeColors colors;
+
+  @override
+  State<_SheetAddedTimestamp> createState() => _SheetAddedTimestampState();
+}
+
+class _SheetAddedTimestampState extends State<_SheetAddedTimestamp>
+    with WidgetsBindingObserver {
+  Timer? refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    scheduleRefresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SheetAddedTimestamp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.createdAt != widget.createdAt) scheduleRefresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {});
+      scheduleRefresh();
+    } else {
+      refreshTimer?.cancel();
+    }
+  }
+
+  void scheduleRefresh() {
+    refreshTimer?.cancel();
+    final elapsed = DateTime.now().difference(widget.createdAt);
+    final unit = elapsed.inMinutes < 1
+        ? const Duration(seconds: 1)
+        : elapsed.inHours < 1
+        ? const Duration(minutes: 1)
+        : elapsed.inDays < 1
+        ? const Duration(hours: 1)
+        : const Duration(days: 1);
+    final delay = unit - Duration(
+      microseconds: elapsed.inMicroseconds % unit.inMicroseconds,
+    );
+    refreshTimer = Timer(delay, () {
+      if (!mounted) return;
+      setState(() {});
+      scheduleRefresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elapsed = DateTime.now().difference(widget.createdAt);
+    final l10n = context.l10n;
+    final relativeTime = elapsed.inSeconds < 1
+        ? null
+        : elapsed.inMinutes < 1
+        ? l10n.secondsAgo(elapsed.inSeconds)
+        : elapsed.inHours < 1
+        ? l10n.minutesAgo(elapsed.inMinutes)
+        : elapsed.inDays < 1
+        ? l10n.hoursAgo(elapsed.inHours)
+        : l10n.daysAgo(elapsed.inDays);
+
+    return Text(
+      relativeTime == null
+          ? l10n.sheetAddedJustNow
+          : l10n.sheetAddedAgo(relativeTime),
+      style: TextStyle(
+        color: widget.colors.secondaryTextColor,
+        fontSize: AppTextSizes.caption,
       ),
     );
   }

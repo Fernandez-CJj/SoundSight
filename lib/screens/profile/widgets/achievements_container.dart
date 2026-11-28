@@ -67,7 +67,7 @@ class _AchievementsContainerState extends State<AchievementsContainer> {
                 _Badge(
                   badge.title(context.l10n),
                   badge.description(context.l10n),
-                  '${badge.id}.png',
+                  '${badge.id}${colors.isDarkMode ? '' : '_light'}.png',
                   earnedIds?.contains(badge.id),
                 ),
             ];

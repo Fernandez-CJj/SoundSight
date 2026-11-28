@@ -1310,6 +1310,84 @@ abstract class AppLocalizations {
   /// **'The PDF could not be read. Make sure it is a valid, unlocked PDF.'**
   String get pdfReadFailed;
 
+  /// No description provided for @checkingSheetMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking sheet music...'**
+  String get checkingSheetMusic;
+
+  /// No description provided for @checkingSheetMusicDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for musical staves and notation before adding your sheet.'**
+  String get checkingSheetMusicDescription;
+
+  /// No description provided for @checkingSheetPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking page {page} of {total}'**
+  String checkingSheetPage(int page, int total);
+
+  /// No description provided for @sheetMusicNotDetectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sheet music not detected'**
+  String get sheetMusicNotDetectedTitle;
+
+  /// No description provided for @sheetMusicNotDetectedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not find musical staves and notation in this file. Choose a score or take a clear photo with the full staff visible.'**
+  String get sheetMusicNotDetectedDescription;
+
+  /// No description provided for @sheetMusicUncertainTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check this sheet'**
+  String get sheetMusicUncertainTitle;
+
+  /// No description provided for @sheetMusicUncertainDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not confidently identify sheet music. The page may be blurry, incomplete, or use unusual notation. Choose a clearer sheet, or use it anyway if it contains music. Conversion may still fail.'**
+  String get sheetMusicUncertainDescription;
+
+  /// No description provided for @useSheetAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Use anyway'**
+  String get useSheetAnyway;
+
+  /// No description provided for @sheetMusicCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The sheet music check could not finish. Please try again or choose another file.'**
+  String get sheetMusicCheckFailed;
+
+  /// No description provided for @sheetFileReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected file could not be opened. Please choose a readable PDF and try again.'**
+  String get sheetFileReadFailed;
+
+  /// No description provided for @sheetCaptureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The photo could not be captured or read. Please try taking it again.'**
+  String get sheetCaptureFailed;
+
+  /// No description provided for @sheetCameraPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is needed to capture your sheet. Allow camera access in your device settings and try again.'**
+  String get sheetCameraPermissionDenied;
+
+  /// No description provided for @emptySheetFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is empty. Please choose a PDF or capture a page containing sheet music.'**
+  String get emptySheetFile;
+
   /// No description provided for @deletePdfBeforeCapture.
   ///
   /// In en, this message translates to:
@@ -2692,8 +2770,38 @@ abstract class AppLocalizations {
   /// No description provided for @compositionNoteLimitReached.
   ///
   /// In en, this message translates to:
-  /// **'This composition now has {count} of the 256 allowed notes.'**
-  String compositionNoteLimitReached(int count);
+  /// **'This composition now has {count} of the {maximum} allowed notes.'**
+  String compositionNoteLimitReached(int count, int maximum);
+
+  /// No description provided for @editingRecordedCompositionNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit the notes from your recording. Timing may shift slightly to fit the editor. Your original performance is kept.'**
+  String get editingRecordedCompositionNotice;
+
+  /// No description provided for @recordingEditInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This recording could not be opened for editing. Its original performance has not been changed.'**
+  String get recordingEditInvalid;
+
+  /// No description provided for @recordingEditNoteLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing this recording requires more than {maximum} note entries because held notes span measures. The recording has not been changed.'**
+  String recordingEditNoteLimit(int maximum);
+
+  /// No description provided for @recordingEditMeasureLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'This recording needs more than {maximum} measures in the editor. The recording has not been changed.'**
+  String recordingEditMeasureLimit(int maximum);
+
+  /// No description provided for @compositionEditConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This composition changed or started processing. Return to its details and reopen the editor to load the latest version. Your edits have not been saved.'**
+  String get compositionEditConflict;
 
   /// No description provided for @pianoNotePlaybackFailed.
   ///
@@ -3424,8 +3532,20 @@ abstract class AppLocalizations {
   /// No description provided for @recordedVideoSaveDescription.
   ///
   /// In en, this message translates to:
-  /// **'The video records sound through your phone\'s microphone. Your piano must be audible nearby. Choose where to save a copy now; the temporary video will be removed when you continue.'**
+  /// **'Your video uses clean piano audio from the MIDI keyboard. Choose where to save a copy now; the temporary video is removed when you continue.'**
   String get recordedVideoSaveDescription;
+
+  /// No description provided for @preparingMidiRecordingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing clean piano sound for your recording on this device.'**
+  String get preparingMidiRecordingDescription;
+
+  /// No description provided for @midiRecordingPreparationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The clean piano audio could not be prepared. Try again, or continue without saving the video.'**
+  String get midiRecordingPreparationFailed;
 
   /// No description provided for @saveRecordedVideo.
   ///
@@ -3732,6 +3852,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Just now'**
   String get justNow;
+
+  /// No description provided for @sheetAddedJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Added just now'**
+  String get sheetAddedJustNow;
+
+  /// No description provided for @sheetAddedAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {time}'**
+  String sheetAddedAgo(String time);
+
+  /// No description provided for @secondsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 second ago} other {{count} seconds ago}}'**
+  String secondsAgo(int count);
 
   /// No description provided for @minutesAgo.
   ///

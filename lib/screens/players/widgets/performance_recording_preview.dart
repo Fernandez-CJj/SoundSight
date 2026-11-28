@@ -2,11 +2,62 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:soundsight/constants/constant.dart';
 import 'package:soundsight/localization/localization_extension.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:video_player/video_player.dart';
 
 import '../services/performance_recording_controller.dart';
+
+/// Show preparation only after native capture has stopped, so the exported
+/// video never contains the progress or completion dialogs.
+Future<void> finishPerformanceRecording({
+  required BuildContext context,
+  required PerformanceRecordingController recording,
+  required AppThemeColors colors,
+}) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final route = DialogRoute<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        backgroundColor: colors.surfaceColor,
+        surfaceTintColor: colors.surfaceColor,
+        scrollable: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        icon: Center(child: SizedBox(
+          width: 32, height: 32,
+          child: CircularProgressIndicator(
+            color: colors.primaryColor, backgroundColor: colors.borderColor,
+          ),
+        )),
+        title: Text(
+          context.l10n.performanceVideoPreparing,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: colors.primaryColor,
+              fontSize: AppTextSizes.body, fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          context.l10n.preparingMidiRecordingDescription,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: colors.secondaryTextColor,
+              fontSize: AppTextSizes.label),
+        ),
+      ),
+    ),
+  );
+  try {
+    await recording.finish(onVideoStopped: () {
+      if (context.mounted) unawaited(navigator.push(route));
+    });
+  } finally {
+    if (route.isActive) navigator.removeRoute(route);
+  }
+}
 
 /// Owns the result-route lifetime, including Back and programmatic exits.
 Future<void> showRecordedPerformanceDialog({

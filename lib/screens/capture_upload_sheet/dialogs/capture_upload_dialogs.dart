@@ -267,6 +267,222 @@ class _SheetTitleDialogState extends State<SheetTitleDialog> {
   }
 }
 
+class SheetSavingDialog extends StatefulWidget {
+  const SheetSavingDialog({
+    super.key,
+    required this.colors,
+    required this.progress,
+  });
+
+  final AppThemeColors colors;
+  final double? progress;
+
+  @override
+  State<SheetSavingDialog> createState() => _SheetSavingDialogState();
+}
+
+class _SheetSavingDialogState extends State<SheetSavingDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      animationController.stop();
+      animationController.value = 0;
+    } else if (!animationController.isAnimating) {
+      animationController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = widget.colors;
+    final value = widget.progress?.clamp(0.0, 1.0).toDouble();
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final label = value == null
+        ? context.l10n.preparingAudio
+        : context.l10n.savingProgress((value * 100).round());
+    final isWaiting = value == null || value == 0 || value == 1;
+
+    return PopScope(
+      canPop: false,
+      child: AlertDialog(
+        backgroundColor: colors.surfaceColor,
+        surfaceTintColor: colors.surfaceColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: colors.borderColor),
+        ),
+        scrollable: true,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
+        ),
+        contentPadding: const EdgeInsets.all(AppSpacing.lg),
+        content: SizedBox(
+          width: 280,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ExcludeSemantics(
+                child: SizedBox(
+                  width: 140,
+                  height: 120,
+                  child: AnimatedBuilder(
+                    animation: animationController,
+                    builder: (context, child) {
+                      final motion = Curves.easeInOut.transform(
+                        animationController.value,
+                      );
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Transform.scale(
+                            scale: 0.94 + motion * 0.06,
+                            child: Container(
+                              width: 104,
+                              height: 104,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: colors.primaryColor.withValues(
+                                  alpha: 0.05 + motion * 0.03,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Transform.translate(
+                            offset: Offset(0, 3 - motion * 6),
+                            child: Transform.rotate(
+                              angle: -0.04 + motion * 0.08,
+                              child: child,
+                            ),
+                          ),
+                          Positioned(
+                            left: 8,
+                            top: 24 + motion * 5,
+                            child: Icon(
+                              Icons.music_note_rounded,
+                              size: 22,
+                              color: colors.primaryColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          Positioned(
+                            right: 5,
+                            bottom: 22 + motion * 7,
+                            child: Icon(
+                              Icons.music_note_rounded,
+                              size: 18,
+                              color: colors.primaryColor.withValues(alpha: 0.25),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    child: Container(
+                      width: 62,
+                      height: 76,
+                      decoration: BoxDecoration(
+                        color: colors.surfaceColor,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: colors.borderColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primaryColor.withValues(alpha: 0.08),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.library_music_outlined,
+                        color: colors.primaryColor,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Gap(AppSpacing.sm),
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: reduceMotion ? 0 : 200),
+                child: Text(
+                  value == null
+                      ? context.l10n.preparingAudio
+                      : context.l10n.savingEllipsis,
+                  key: ValueKey(value == null),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.primaryColor,
+                    fontSize: AppTextSizes.body,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Gap(AppSpacing.xs),
+              Text(
+                context.l10n.pleaseWait,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.secondaryTextColor,
+                  fontSize: AppTextSizes.caption,
+                  height: 1.5,
+                ),
+              ),
+              Gap(AppSpacing.lg),
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: value ?? 0),
+                duration: Duration(milliseconds: reduceMotion ? 0 : 300),
+                curve: Curves.easeOut,
+                builder: (context, animatedValue, _) {
+                  return LinearProgressIndicator(
+                    value: isWaiting && !reduceMotion ? null : animatedValue,
+                    minHeight: 6,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    color: colors.primaryColor,
+                    backgroundColor: colors.borderColor,
+                    semanticsLabel: label,
+                  );
+                },
+              ),
+              if (value != null) ...[
+                Gap(AppSpacing.sm),
+                ExcludeSemantics(
+                  child: Text(
+                    '${(value * 100).round()}%',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colors.secondaryTextColor,
+                      fontSize: AppTextSizes.caption,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class SheetSaveResultDialog extends StatelessWidget {
   const SheetSaveResultDialog({
     super.key,

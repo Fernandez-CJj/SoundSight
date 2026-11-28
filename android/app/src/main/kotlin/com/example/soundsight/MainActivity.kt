@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.os.SystemClock
 import android.content.Intent
 import androidx.core.view.WindowCompat
 import androidx.core.view.ViewCompat
@@ -68,6 +69,10 @@ class MainActivity : FlutterActivity() {
         }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "soundsight/recorded_video")
             .setMethodCallHandler { call, result ->
+                if (call.method == "clock") {
+                    result.success(SystemClock.elapsedRealtimeNanos() / 1000L)
+                    return@setMethodCallHandler
+                }
                 if (call.method != "saveVideo") {
                     result.notImplemented()
                     return@setMethodCallHandler
@@ -135,8 +140,4 @@ class MainActivity : FlutterActivity() {
     override fun onStop() { performanceRecording?.onStop(); super.onStop() }
     override fun onDestroy() { performanceRecording?.dispose(); super.onDestroy() }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        performanceRecording?.onRequestPermissionsResult(requestCode, grantResults)
-    }
 }

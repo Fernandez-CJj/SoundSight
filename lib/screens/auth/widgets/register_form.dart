@@ -14,9 +14,11 @@ class RegisterForm extends StatelessWidget {
     required this.emailController,
     required this.passwordController,
     required this.confirmPasswordController,
-    required this.isChecked,
+    required this.hasAcceptedTerms,
+    required this.hasAcknowledgedPrivacy,
     required this.isObscure,
-    required this.onAgreementChanged,
+    required this.onTermsChanged,
+    required this.onPrivacyChanged,
     required this.onTermsPressed,
     required this.onPrivacyPolicyPressed,
     required this.onTogglePasswordVisibility,
@@ -29,9 +31,11 @@ class RegisterForm extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
-  final bool isChecked;
+  final bool hasAcceptedTerms;
+  final bool hasAcknowledgedPrivacy;
   final bool isObscure;
-  final ValueChanged<bool?> onAgreementChanged;
+  final ValueChanged<bool?> onTermsChanged;
+  final ValueChanged<bool?> onPrivacyChanged;
   final VoidCallback onTermsPressed;
   final VoidCallback onPrivacyPolicyPressed;
   final VoidCallback onTogglePasswordVisibility;
@@ -216,10 +220,10 @@ class RegisterForm extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Checkbox(
-                value: isChecked,
+                value: hasAcceptedTerms,
                 activeColor: AppColors.lightPrimary,
                 checkColor: AppColors.lightSurface,
-                onChanged: onAgreementChanged,
+                onChanged: onTermsChanged,
               ),
               Expanded(
                 child: Wrap(
@@ -246,10 +250,28 @@ class RegisterForm extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      child: const Text('Terms'),
+                      child: const Text('Terms and Conditions'),
                     ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Checkbox(
+                value: hasAcknowledgedPrivacy,
+                activeColor: AppColors.lightPrimary,
+                checkColor: AppColors.lightSurface,
+                onChanged: onPrivacyChanged,
+              ),
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
                     const Text(
-                      'and ',
+                      'I acknowledge the ',
                       style: TextStyle(
                         fontSize: AppTextSizes.body,
                         color: AppColors.lightSecondaryText,
