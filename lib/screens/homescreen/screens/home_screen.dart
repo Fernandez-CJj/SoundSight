@@ -186,7 +186,7 @@ IconButton(
         onReplayTutorial: () => unawaited(homeTour.controller.start(replay: true)),
         replayGuideBuilder: (child) => guide(
           6,
-          context.l10n.featureTourReplay,
+          context.l10n.helpCenterTitle,
           context.l10n.featureTourReplayBody,
           child,
         ),

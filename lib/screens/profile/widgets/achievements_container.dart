@@ -100,7 +100,10 @@ class _AchievementsContainerState extends State<AchievementsContainer> {
                 ),
                 const Gap(AppSpacing.sm),
                 if (migrationSnapshot.connectionState != ConnectionState.done)
-                  LinearProgressIndicator(color: colors.completedStageColor),
+                  LinearProgressIndicator(
+                    color: colors.completedStageColor,
+                    backgroundColor: colors.borderColor,
+                  ),
                 if (migrationSnapshot.hasError || snapshot.hasError)
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.sm),

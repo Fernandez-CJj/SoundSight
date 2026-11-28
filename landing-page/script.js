@@ -11,6 +11,56 @@
   setText("[data-android]", config.minimumAndroid);
   setText("[data-file-size]", `${Math.round(config.fileSizeBytes / 1000000)} MB`);
 
+  // Only display contact details supplied by the project owner.
+  try {
+    const supportUrl = new URL(config.supportUrl);
+    if (supportUrl.protocol === "https:") {
+      document.querySelectorAll("[data-support-link]").forEach((link) => { link.href = supportUrl.href; });
+    }
+  } catch { /* Keep the project support link in the HTML. */ }
+  const supportEmail = typeof config.supportEmail === "string" ? config.supportEmail.trim() : "";
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supportEmail)) {
+    const emailLink = document.querySelector("[data-support-email]");
+    emailLink.href = `mailto:${encodeURIComponent(supportEmail)}`;
+    emailLink.textContent = supportEmail;
+    document.querySelector("[data-support-email-card]").hidden = false;
+  }
+
+  // This event describes an APK request, not a finished transfer or installation.
+  // An optional server collector can aggregate requests by UTC day. The app must
+  // report installations independently; this page cannot observe an Android install.
+  const trackDownloadRequest = () => {
+    const occurredAt = new Date().toISOString();
+    const payload = {
+      event: "download_requested",
+      source: "landing_page",
+      platform: "android",
+      appVersion: config.version,
+      occurredAt,
+      day: occurredAt.slice(0, 10),
+      timeZone: "UTC",
+    };
+    window.dispatchEvent(new CustomEvent("soundsight:download-requested", { detail: payload }));
+    if (!config.downloadTrackingEndpoint) return;
+    let endpoint;
+    try {
+      endpoint = new URL(config.downloadTrackingEndpoint, document.baseURI);
+      if (endpoint.protocol !== "https:") return;
+    } catch { return; }
+    const body = JSON.stringify(payload);
+    try {
+      if (navigator.sendBeacon?.(endpoint.href, new Blob([body], { type: "application/json" }))) return;
+    } catch { /* Fall back without delaying the download link. */ }
+    fetch(endpoint.href, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      keepalive: true,
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
+    }).catch(() => { /* A collector failure must not block the download. */ });
+  };
+
   const dialog = document.getElementById("download-dialog");
   let returnFocusTarget;
   document.querySelectorAll("[data-open-download]").forEach((button) => {
@@ -63,6 +113,10 @@
     document.getElementById("download-unavailable").hidden = true;
     document.getElementById("download-status").textContent =
       "Save the app file on your Android phone, then follow the install steps. You install it without Google Play.";
+    link.addEventListener("click", trackDownloadRequest);
+    link.addEventListener("auxclick", (event) => {
+      if (event.button === 1) trackDownloadRequest();
+    });
   }
 
   // Indicate the section being read without interfering with native anchor links.
@@ -103,17 +157,49 @@
     });
   });
 
-  // Native scrolling works without JavaScript; controls add one-card navigation.
+  // Page whole cards instead of exposing a clipped next review. Ten reviews
+  // are initially available; Show more reveals the remaining static entries.
   const testimonials = document.getElementById("testimonials-list");
   const previousReview = document.querySelector("[data-testimonial-previous]");
   const nextReview = document.querySelector("[data-testimonial-next]");
+  const moreReviews = document.querySelector("[data-show-more-reviews]");
+  const pagination = document.getElementById("testimonial-pagination");
   if (testimonials && previousReview && nextReview) {
+    const cards = [...testimonials.querySelectorAll(".testimonial-card")];
+    const initialLimit = Number.parseInt(testimonials.dataset.reviewLimit, 10) || 10;
+    let reviewLimit = Math.min(initialLimit, cards.length);
+    let currentPage = 0;
+    let columns = 1;
+    let resizeFrame;
     document.querySelector("[data-testimonial-controls]").hidden = false;
-    // Measure collapsed copies so all cards share a baseline height without
-    // changing any open review or stretching its neighbors when it expands.
+    document.querySelector("[data-testimonial-footer]").hidden = false;
+
+    const getColumns = () => Math.max(1,
+      Number.parseInt(window.getComputedStyle(testimonials).getPropertyValue("--review-columns"), 10) || 1);
+    const pageCount = () => Math.max(1, Math.ceil(reviewLimit / columns));
+    const renderReviews = () => {
+      currentPage = Math.max(0, Math.min(currentPage, pageCount() - 1));
+      const start = currentPage * columns;
+      const end = Math.min(start + columns, reviewLimit);
+      const focusedCard = cards.find((card) => card.contains(document.activeElement));
+      cards.forEach((card, index) => { card.hidden = index < start || index >= end; });
+      previousReview.disabled = currentPage === 0;
+      nextReview.disabled = currentPage >= pageCount() - 1;
+      if (moreReviews) moreReviews.hidden = reviewLimit >= cards.length;
+      if (pagination) {
+        const text = reviewLimit ? `Reviews ${start + 1} to ${end} of ${reviewLimit}` : "No reviews yet";
+        if (pagination.textContent !== text) pagination.textContent = text;
+      }
+      if (focusedCard?.hidden) testimonials.focus({ preventScroll: true });
+    };
+
+    // Measure collapsed copies, including off-page reviews, without touching
+    // an expanded original or stretching neighboring cards.
     const updateCollapsedReviewHeight = () => {
+      if (!cards.length || testimonials.getBoundingClientRect().width === 0) return;
       const measurement = testimonials.cloneNode(true);
       measurement.removeAttribute("id");
+      measurement.removeAttribute("aria-describedby");
       measurement.classList.remove("scroll-reveal");
       measurement.setAttribute("aria-hidden", "true");
       measurement.inert = true;
@@ -127,6 +213,7 @@
         pointerEvents: "none",
       });
       measurement.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+      measurement.querySelectorAll(".testimonial-card").forEach((card) => { card.hidden = false; });
       measurement.querySelectorAll(".testimonial-continuation").forEach((element) => { element.hidden = true; });
       measurement.querySelectorAll(".testimonial-ellipsis").forEach((element) => { element.hidden = false; });
       measurement.querySelectorAll(".testimonial-toggle").forEach((button) => {
@@ -134,47 +221,76 @@
         button.removeAttribute("aria-controls");
       });
       testimonials.after(measurement);
-      const height = Math.ceil(Math.max(...[...measurement.children].map((card) => card.getBoundingClientRect().height)));
-      measurement.remove();
-      testimonials.style.setProperty("--testimonial-collapsed-height", `${height}px`);
+      try {
+        const height = Math.ceil(Math.max(...[...measurement.children].map((card) => card.getBoundingClientRect().height)));
+        testimonials.style.setProperty("--testimonial-collapsed-height", `${height}px`);
+      } finally {
+        measurement.remove();
+      }
     };
-    const updateReviewControls = () => {
-      const end = Math.max(0, testimonials.scrollWidth - testimonials.clientWidth);
-      previousReview.disabled = testimonials.scrollLeft <= 1;
-      nextReview.disabled = testimonials.scrollLeft >= end - 1;
+    const changePage = (direction) => {
+      currentPage += direction;
+      renderReviews();
     };
-    const scrollReviews = (direction) => {
-      const card = testimonials.firstElementChild;
-      if (!card) return;
-      const gap = parseFloat(window.getComputedStyle(testimonials).columnGap) || 0;
-      testimonials.scrollBy({
-        left: direction * (card.getBoundingClientRect().width + gap),
-        behavior: motionPreference.matches ? "auto" : "smooth",
-      });
-    };
-    previousReview.addEventListener("click", () => scrollReviews(-1));
-    nextReview.addEventListener("click", () => scrollReviews(1));
-    testimonials.addEventListener("scroll", updateReviewControls, { passive: true });
+    previousReview.addEventListener("click", () => changePage(-1));
+    nextReview.addEventListener("click", () => changePage(1));
+    moreReviews?.addEventListener("click", () => {
+      const firstNewReview = reviewLimit;
+      reviewLimit = cards.length;
+      currentPage = Math.floor(firstNewReview / columns);
+      renderReviews();
+      testimonials.focus({ preventScroll: true });
+    });
     testimonials.addEventListener("keydown", (event) => {
       if (event.target !== testimonials || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
-        scrollReviews(event.key === "ArrowRight" ? 1 : -1);
+        changePage(event.key === "ArrowRight" ? 1 : -1);
       } else if (event.key === "Home" || event.key === "End") {
         event.preventDefault();
-        testimonials.scrollTo({
-          left: event.key === "Home" ? 0 : testimonials.scrollWidth - testimonials.clientWidth,
-          behavior: motionPreference.matches ? "auto" : "smooth",
-        });
+        currentPage = event.key === "Home" ? 0 : pageCount() - 1;
+        renderReviews();
       }
     });
-    window.addEventListener("resize", () => {
+    let swipeStart;
+    testimonials.addEventListener("pointerdown", (event) => {
+      swipeStart = null;
+      if (event.pointerType === "touch" && !event.target.closest("button, a")) {
+        swipeStart = { x: event.clientX, y: event.clientY };
+      }
+    }, { passive: true });
+    testimonials.addEventListener("pointerup", (event) => {
+      if (!swipeStart || event.pointerType !== "touch") return;
+      const dx = event.clientX - swipeStart.x;
+      const dy = event.clientY - swipeStart.y;
+      swipeStart = null;
+      if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.4) changePage(dx < 0 ? 1 : -1);
+    }, { passive: true });
+    testimonials.addEventListener("pointercancel", () => { swipeStart = null; });
+
+    const updateReviewLayout = () => {
+      const firstVisible = currentPage * columns;
+      columns = getColumns();
+      currentPage = Math.floor(firstVisible / columns);
+      renderReviews();
       updateCollapsedReviewHeight();
-      updateReviewControls();
-    });
-    updateCollapsedReviewHeight();
-    document.fonts?.ready.then(updateCollapsedReviewHeight);
-    updateReviewControls();
+    };
+    const scheduleReviewLayout = () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(updateReviewLayout);
+    };
+    window.addEventListener("resize", scheduleReviewLayout);
+    if ("ResizeObserver" in window) {
+      let previousWidth = -1;
+      new ResizeObserver(([entry]) => {
+        if (entry.contentRect.width !== previousWidth) {
+          previousWidth = entry.contentRect.width;
+          scheduleReviewLayout();
+        }
+      }).observe(testimonials);
+    }
+    updateReviewLayout();
+    document.fonts?.ready.then(updateReviewLayout);
   }
 
   // Add animation only when content enters view. Nothing is hidden while waiting,

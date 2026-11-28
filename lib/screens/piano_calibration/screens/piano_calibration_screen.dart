@@ -1,3 +1,5 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
+import 'package:soundsight/screens/onboarding/controllers/feature_tour_controller.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -188,6 +190,34 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   bool isPracticeMode = false;
   AnimationController? fallingNotesAnimationController;
 
+  bool _calibrationTourResolved = false;
+  bool _calibrationReviewTourResolved = false;
+  bool _practiceTourResolved = false;
+  bool _tourControlsPending = false;
+  bool _initialMiddleCHelpPresented = false;
+
+  bool get _playerTourBlocksInput {
+    final resolved = isPracticeMode
+        ? _practiceTourResolved
+        : calibrationStage == PianoCalibrationStage.mappingConfirmed
+        ? _calibrationReviewTourResolved
+        : _calibrationTourResolved;
+    return !resolved || _tourControlsPending || FeatureTourController.isAnyTourActive;
+  }
+
+  void _scheduleInitialMiddleCHelp() {
+    if (!mounted || isPracticeMode || !_calibrationTourResolved ||
+        FeatureTourController.isAnyTourActive || _initialMiddleCHelpPresented) return;
+    _initialMiddleCHelpPresented = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !isPracticeMode && ModalRoute.of(context)?.isCurrent == true) {
+        unawaited(askForMiddleCHelpBeforeCalibration(
+          forSavedAlignment: widget.savedCalibration != null,
+        ));
+      }
+    });
+  }
+
   final MidiInputService midiInputService = MidiInputService();
   final PerformanceRecordingController performanceRecording =
       PerformanceRecordingController();
@@ -272,14 +302,6 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       DeviceOrientation.landscapeRight,
     ]);
     initializeCamera();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        askForMiddleCHelpBeforeCalibration(
-          forSavedAlignment: initialSavedCalibration != null,
-        );
-      }
-    });
   }
 
   @override
@@ -289,7 +311,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          Positioned.fill(child: buildCameraContent()),
+          Positioned.fill(child: FeatureTourTarget(id: 'camera', child: buildCameraContent())),
           if (!isPracticeMode) buildDetectionStatus(),
           if (!isPracticeMode) buildCalibrationControls(),
           if (isPracticeMode) buildPracticeControls(),
@@ -316,7 +338,46 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         ],
       ),
     );
-    return screen;
+    final tourFeature = isPracticeMode
+        ? 'ar_player'
+        : calibrationStage == PianoCalibrationStage.mappingConfirmed
+        ? 'ar_calibration_review'
+        : 'ar_calibration';
+    return ScreenFeatureTour(
+      key: ValueKey(tourFeature),
+      featureId: tourFeature,
+      colors: widget.colors,
+      canStart: () => cameraController?.value.isInitialized == true &&
+          cameraError == null && !isSavingCalibration && !recordingSetupPending &&
+          !hasPracticePlaybackStarted && !isCompletionDialogShowing &&
+          !isPracticeControlsSheetOpen &&
+          _middleCGuidePhase == _MiddleCGuidePhase.inactive &&
+          (!isPracticeMode || fallingNotesAnimationController != null),
+      onAutoStartResolved: () {
+        setState(() {
+          if (tourFeature == 'ar_player') {
+            _practiceTourResolved = true;
+          } else if (tourFeature == 'ar_calibration_review') {
+            _calibrationReviewTourResolved = true;
+          } else {
+            _calibrationTourResolved = true;
+          }
+        });
+        _scheduleInitialMiddleCHelp();
+      },
+      onExit: _scheduleInitialMiddleCHelp,
+      openNext: isPracticeMode ? () async {
+        _tourControlsPending = true;
+        try {
+          await showPracticeControlsSheet();
+        } finally {
+          _tourControlsPending = false;
+        }
+        return null;
+      } : null,
+      nextScreens: isPracticeMode ? const {'ar_player_controls'} : const {},
+      child: screen,
+    );
   }
 
   /// Builds the top status card for detection, restoration, and mapping review.
@@ -521,7 +582,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         alignment: Alignment.topCenter,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(64, 8, 64, 8),
-          child: Container(
+          child: FeatureTourTarget(id: 'instructions', child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
@@ -558,7 +619,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                 ),
               ],
             ),
-          ),
+          )),
         ),
       ),
     );
@@ -580,7 +641,11 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
     if (currentCameraController == null ||
         !currentCameraController.value.isInitialized) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppThemeColors.fromDarkMode(true).primaryColor,
+        ),
+      );
     }
 
     KeyboardAreaCorners? currentKeyboardAreaCorners = keyboardAreaCorners;
@@ -734,7 +799,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
               alignment: Alignment.topCenter,
               child: Padding(
                 padding: const EdgeInsets.only(top: 76),
-                child: ConstrainedBox(
+                child: FeatureTourTarget(id: 'start', child: ConstrainedBox(
                   constraints: const BoxConstraints(
                     minWidth: 220,
                     maxWidth: 320,
@@ -743,7 +808,8 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                   child: isMidiConnected
                       ? FilledButton.icon(
                           onPressed:
-                              currentAnimationController == null ||
+                              _playerTourBlocksInput ||
+                                  currentAnimationController == null ||
                                   recordingSetupPending
                               ? null
                               : startPracticePlayback,
@@ -765,10 +831,11 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                 },
                           style: practiceSecondaryButtonStyle(),
                           icon: isConnectingMidi
-                              ? const SizedBox.square(
+                              ? SizedBox.square(
                                   dimension: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
+                                    color: widget.colors.primaryColor,
                                   ),
                                 )
                               : const Icon(Icons.usb_rounded),
@@ -780,7 +847,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                             style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
-                ),
+                )),
               ),
             ),
           ),
@@ -889,7 +956,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
             ),
           ],
           const SizedBox(width: AppSpacing.sm),
-          PracticeModeToggle<bool>(
+          FeatureTourTarget(id: 'modes', child: PracticeModeToggle<bool>(
             firstValue: false,
             firstLabel: context.l10n.synthesiaWait,
             secondValue: true,
@@ -903,7 +970,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                       unawaited(togglePracticePlaybackMode());
                     }
                   },
-          ),
+          )),
           const SizedBox(width: AppSpacing.sm),
           if (showProgress)
             Expanded(
@@ -935,7 +1002,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          buildPracticeControlsButton(compact: screenWidth < 760),
+          FeatureTourTarget(id: 'controls', child: buildPracticeControlsButton(compact: screenWidth < 760)),
         ],
       ),
     );
@@ -1217,7 +1284,14 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         enableDrag: false,
         isScrollControlled: true,
         builder: (BuildContext sheetContext) {
-          return StatefulBuilder(
+          return ScreenFeatureTour(
+            featureId: 'ar_player_controls',
+            colors: widget.colors,
+            canStart: () => isPracticeMode && !hasPracticePlaybackStarted && !recordingSetupPending,
+            onSeen: () {
+              if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+            },
+            child: StatefulBuilder(
             builder: (BuildContext sheetContext, StateSetter refreshControls) {
               bool attemptIsRunning =
                   hasPracticePlaybackStarted && !isPracticePlaybackComplete;
@@ -1268,7 +1342,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
+                        FeatureTourTarget(id: 'feedback', child: Row(
                           children: [
                             Container(
                               width: 36,
@@ -1363,7 +1437,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                               icon: const Icon(Icons.close_rounded),
                             ),
                           ],
-                        ),
+                        )),
                         if (attemptIsRunning) ...[
                           const SizedBox(height: AppSpacing.sm),
                           Container(
@@ -1392,7 +1466,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: FeatureTourTarget(id: 'midi', child: OutlinedButton.icon(
                                 onPressed: isConnectingMidi || isMidiConnected
                                     ? null
                                     : () {
@@ -1400,10 +1474,11 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                       },
                                 style: practiceSecondaryButtonStyle(),
                                 icon: isConnectingMidi
-                                    ? const SizedBox.square(
+                                    ? SizedBox.square(
                                         dimension: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
+                                          color: colors.primaryColor,
                                         ),
                                       )
                                     : Icon(
@@ -1419,7 +1494,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                       : context.l10n.synthesiaConnectMidi,
                                   textAlign: TextAlign.center,
                                 ),
-                              ),
+                              )),
                             ),
                             const SizedBox(width: AppSpacing.sm),
                             Expanded(
@@ -1435,7 +1510,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                       icon: const Icon(Icons.stop_rounded),
                                       label: Text(context.l10n.stop),
                                     )
-                                  : FilledButton.icon(
+                                  : FeatureTourTarget(id: 'session', child: FilledButton.icon(
                                       onPressed: canStart
                                           ? () {
                                               Navigator.of(sheetContext).pop();
@@ -1456,7 +1531,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                                                   .synthesiaStartWaitMode,
                                         textAlign: TextAlign.center,
                                       ),
-                                    ),
+                                    )),
                             ),
                           ],
                         ),
@@ -1466,7 +1541,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                 ),
               );
             },
-          );
+          ));
         },
       );
     } finally {
@@ -1515,6 +1590,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   /// When a saved calibration is pending, the first frame supplies only the
   /// current source dimensions needed to restore normalized coordinates.
   void processCameraImage(CameraImage cameraImage) {
+    if (!_calibrationTourResolved || FeatureTourController.isAnyTourActive) return;
     if (isRestoringSavedCalibration) {
       restoreSavedCalibration(cameraImage);
       return;
@@ -1786,7 +1862,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Wrap(
+            child: FeatureTourTarget(id: 'setup', child: Wrap(
               alignment: WrapAlignment.center,
               spacing: 12,
               runSpacing: 8,
@@ -1870,7 +1946,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                   ),
                 ),
               ],
-            ),
+            )),
           ),
         ),
       );
@@ -1885,7 +1961,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Wrap(
+            child: FeatureTourTarget(id: 'setup', child: Wrap(
               alignment: WrapAlignment.center,
               spacing: 12,
               runSpacing: 8,
@@ -1979,7 +2055,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                     ),
                   ),
               ],
-            ),
+            )),
           ),
         ),
       );
@@ -1991,7 +2067,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Wrap(
+            child: FeatureTourTarget(id: 'setup', child: Wrap(
               alignment: WrapAlignment.center,
               spacing: 12,
               runSpacing: 8,
@@ -2030,7 +2106,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                   ),
                 ),
               ],
-            ),
+            )),
           ),
         ),
       );
@@ -2045,7 +2121,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
         alignment: Alignment.bottomCenter,
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Wrap(
+          child: FeatureTourTarget(id: 'setup', child: Wrap(
             alignment: WrapAlignment.center,
             spacing: 12,
             runSpacing: 8,
@@ -2073,7 +2149,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
                 ),
               ),
             ],
-          ),
+          )),
         ),
       ),
     );
@@ -2661,7 +2737,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     activeMidiNotesSubscription = midiInputService.activeNotesStream.listen((
       Set<int> notes,
     ) {
-      if (!mounted) {
+      if (!mounted || _playerTourBlocksInput) {
         return;
       }
 
@@ -2687,7 +2763,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     midiNoteOnSubscription = midiInputService.noteOnStream.listen((
       int midiNote,
     ) {
-      if (!mounted) {
+      if (!mounted || _playerTourBlocksInput) {
         return;
       }
 
@@ -2773,7 +2849,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
     midiNoteEventSubscription = midiInputService.noteEventStream.listen((
       MidiNoteEvent event,
     ) {
-      if (!mounted || event.type != MidiNoteEventType.noteOff) {
+      if (!mounted || _playerTourBlocksInput || event.type != MidiNoteEventType.noteOff) {
         return;
       }
 
@@ -3196,6 +3272,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
 
   /// Resets attempt state and starts falling notes from the four-second lead-in.
   Future<void> startPracticePlayback() async {
+    if (_playerTourBlocksInput) return;
     if (recordingSetupPending) return;
     setState(() => recordingSetupPending = true);
     try {
@@ -4952,6 +5029,7 @@ class PianoCalibrationScreenState extends State<PianoCalibrationScreen>
   /// Practice preparation validates score coverage, stops costly frame analysis,
   /// creates the falling-note controller, and loads the performance tracker.
   Future<void> finishCalibration() async {
+    if (_playerTourBlocksInput) return;
     if (calibrationStage != PianoCalibrationStage.mappingConfirmed) {
       return;
     }

@@ -98,16 +98,10 @@ abstract class AppLocalizations {
     Locale('fil'),
   ];
 
-  /// No description provided for @featureTourReplay.
-  ///
-  /// In en, this message translates to:
-  /// **'Help'**
-  String get featureTourReplay;
-
   /// No description provided for @featureTourReplayBody.
   ///
   /// In en, this message translates to:
-  /// **'Need help? Tap here to watch this guide again, from the first step.'**
+  /// **'Open the Help Center, choose a feature, and follow its guide one step at a time.'**
   String get featureTourReplayBody;
 
   /// No description provided for @featureTourSheetsAddBody.
@@ -8993,6 +8987,1014 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unmute recording'**
   String get performanceVideoUnmute;
+
+  /// No description provided for @helpHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Home & navigation'**
+  String get helpHomeTitle;
+
+  /// No description provided for @helpManualCompositionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual composition'**
+  String get helpManualCompositionTitle;
+
+  /// No description provided for @helpManualCompositionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Write, play, and save your own notes.'**
+  String get helpManualCompositionDescription;
+
+  /// No description provided for @helpRecordingCompositionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording composition'**
+  String get helpRecordingCompositionTitle;
+
+  /// No description provided for @helpRecordingCompositionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Record your piano playing to create a composition.'**
+  String get helpRecordingCompositionDescription;
+
+  /// No description provided for @helpArPlayerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AR player'**
+  String get helpArPlayerTitle;
+
+  /// No description provided for @helpArPlayerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow notes aligned with your real piano keys.'**
+  String get helpArPlayerDescription;
+
+  /// No description provided for @helpCenterEnlargeScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'View screenshot full screen'**
+  String get helpCenterEnlargeScreenshot;
+
+  /// No description provided for @helpHomeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your way around SoundSight.'**
+  String get helpHomeDescription;
+
+  /// No description provided for @helpHomeStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Start at Home'**
+  String get helpHomeStep1Title;
+
+  /// No description provided for @helpHomeStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'See your progress and use Quick Actions to open your music, upload a sheet, or view your results.'**
+  String get helpHomeStep1Description;
+
+  /// No description provided for @helpHomeStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the side menu'**
+  String get helpHomeStep2Title;
+
+  /// No description provided for @helpHomeStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the menu icon at the top left to find lessons, compositions, and your saved music.'**
+  String get helpHomeStep2Description;
+
+  /// No description provided for @helpHomeStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Make it yours'**
+  String get helpHomeStep3Title;
+
+  /// No description provided for @helpHomeStep3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the menu to change the language or switch between light and dark mode. Open Help whenever you need a guide.'**
+  String get helpHomeStep3Description;
+
+  /// No description provided for @helpMusicLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Music Library'**
+  String get helpMusicLibraryTitle;
+
+  /// No description provided for @helpMusicLibraryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a song to learn.'**
+  String get helpMusicLibraryDescription;
+
+  /// No description provided for @helpMusicLibraryStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a song'**
+  String get helpMusicLibraryStep1Title;
+
+  /// No description provided for @helpMusicLibraryStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the search icon on Home. Type a song title, or browse the available pieces.'**
+  String get helpMusicLibraryStep1Description;
+
+  /// No description provided for @helpMusicLibraryStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Look inside'**
+  String get helpMusicLibraryStep2Title;
+
+  /// No description provided for @helpMusicLibraryStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a song to view its music pages. Tap Play and choose how you want to practice.'**
+  String get helpMusicLibraryStep2Description;
+
+  /// No description provided for @helpUploadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a music sheet'**
+  String get helpUploadTitle;
+
+  /// No description provided for @helpUploadDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a PDF, photo, or piano recording.'**
+  String get helpUploadDescription;
+
+  /// No description provided for @helpUploadStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your source'**
+  String get helpUploadStep1Title;
+
+  /// No description provided for @helpUploadStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Upload Sheet from the menu, or tap the plus sign in My Music Sheets. Choose a PDF, take photos, or select a piano recording.'**
+  String get helpUploadStep1Description;
+
+  /// No description provided for @helpUploadStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your selection'**
+  String get helpUploadStep2Title;
+
+  /// No description provided for @helpUploadStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview each page or listen to your recording. Use clear, well-lit photos with all the notes visible.'**
+  String get helpUploadStep2Description;
+
+  /// No description provided for @helpUploadStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your music'**
+  String get helpUploadStep3Title;
+
+  /// No description provided for @helpUploadStep3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Save Sheet or Save Audio, enter a title, and wait for confirmation. Your upload appears in My Music Sheets.'**
+  String get helpUploadStep3Description;
+
+  /// No description provided for @helpMusicSheetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Music Sheets'**
+  String get helpMusicSheetsTitle;
+
+  /// No description provided for @helpMusicSheetsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Open and manage your uploaded music.'**
+  String get helpMusicSheetsDescription;
+
+  /// No description provided for @helpMusicSheetsStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your music collection'**
+  String get helpMusicSheetsStep1Title;
+
+  /// No description provided for @helpMusicSheetsStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open My Music Sheets to see your uploads, with the newest first. Tap a card to open it.'**
+  String get helpMusicSheetsStep1Description;
+
+  /// No description provided for @helpMusicSheetsStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview and process'**
+  String get helpMusicSheetsStep2Title;
+
+  /// No description provided for @helpMusicSheetsStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'View the music pages or listen to the audio. Check the processing status and wait until your music is ready before practicing.'**
+  String get helpMusicSheetsStep2Description;
+
+  /// No description provided for @helpMusicSheetsStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename or remove a sheet'**
+  String get helpMusicSheetsStep3Title;
+
+  /// No description provided for @helpMusicSheetsStep3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the card menu to rename a sheet. Swipe right on a card to request deletion, then confirm your choice.'**
+  String get helpMusicSheetsStep3Description;
+
+  /// No description provided for @helpLessonsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons'**
+  String get helpLessonsTitle;
+
+  /// No description provided for @helpLessonsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn the basics, one lesson at a time.'**
+  String get helpLessonsDescription;
+
+  /// No description provided for @helpLessonsStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a lesson'**
+  String get helpLessonsStep1Title;
+
+  /// No description provided for @helpLessonsStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Practice from the menu. Check your progress and select a lesson to see what you will learn.'**
+  String get helpLessonsStep1Description;
+
+  /// No description provided for @helpLessonsStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn at your pace'**
+  String get helpLessonsStep2Title;
+
+  /// No description provided for @helpLessonsStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the instructions and start when you are ready. You can pause a lesson video or watch a part again.'**
+  String get helpLessonsStep2Description;
+
+  /// No description provided for @helpAssessmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting assessment'**
+  String get helpAssessmentTitle;
+
+  /// No description provided for @helpAssessmentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Understand your starting level.'**
+  String get helpAssessmentDescription;
+
+  /// No description provided for @helpAssessmentStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Read before starting'**
+  String get helpAssessmentStep1Title;
+
+  /// No description provided for @helpAssessmentStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your assessment from your profile. Read the rules and prepare your piano before starting a timed attempt.'**
+  String get helpAssessmentStep1Description;
+
+  /// No description provided for @helpAssessmentStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete each section'**
+  String get helpAssessmentStep2Title;
+
+  /// No description provided for @helpAssessmentStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the questions, note-reading tasks, and piano instructions. Watch the timer; opening Help does not pause an active assessment.'**
+  String get helpAssessmentStep2Description;
+
+  /// No description provided for @helpAssessmentStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your result'**
+  String get helpAssessmentStep3Title;
+
+  /// No description provided for @helpAssessmentStep3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your starting level and section results to see what to practice next.'**
+  String get helpAssessmentStep3Description;
+
+  /// No description provided for @helpSightReadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sight Reading'**
+  String get helpSightReadingTitle;
+
+  /// No description provided for @helpSightReadingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice reading notes on a music sheet.'**
+  String get helpSightReadingDescription;
+
+  /// No description provided for @helpSightReadingStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your music'**
+  String get helpSightReadingStep1Title;
+
+  /// No description provided for @helpSightReadingStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a ready song, tap Play, and choose Sight Reading from the available practice modes.'**
+  String get helpSightReadingStep1Description;
+
+  /// No description provided for @helpSightReadingStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the notes'**
+  String get helpSightReadingStep2Title;
+
+  /// No description provided for @helpSightReadingStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the setup instructions on the practice screen. Read the notes on the sheet and play along on your piano.'**
+  String get helpSightReadingStep2Description;
+
+  /// No description provided for @helpSynthesiaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesia'**
+  String get helpSynthesiaTitle;
+
+  /// No description provided for @helpSynthesiaDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow falling notes as you play.'**
+  String get helpSynthesiaDescription;
+
+  /// No description provided for @helpSynthesiaStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Synthesia'**
+  String get helpSynthesiaStep1Title;
+
+  /// No description provided for @helpSynthesiaStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a ready song, tap Play, and choose Synthesia from the available practice modes.'**
+  String get helpSynthesiaStep1Description;
+
+  /// No description provided for @helpSynthesiaStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Play with the falling notes'**
+  String get helpSynthesiaStep2Title;
+
+  /// No description provided for @helpSynthesiaStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the setup shown on the screen. Follow the falling notes toward the keyboard and play the matching keys.'**
+  String get helpSynthesiaStep2Description;
+
+  /// No description provided for @helpArTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AR piano setup'**
+  String get helpArTitle;
+
+  /// No description provided for @helpArDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Help the camera recognize your piano.'**
+  String get helpArDescription;
+
+  /// No description provided for @helpArStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare your camera'**
+  String get helpArStep1Title;
+
+  /// No description provided for @helpArStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'When using AR practice, follow the piano setup instructions. Allow camera access and keep the keyboard clearly in view.'**
+  String get helpArStep1Description;
+
+  /// No description provided for @helpArStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your setup steady'**
+  String get helpArStep2Title;
+
+  /// No description provided for @helpArStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your phone and piano in place while the app finds the keys. Set up again if you move either one.'**
+  String get helpArStep2Description;
+
+  /// No description provided for @helpPracticeResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice results'**
+  String get helpPracticeResultsTitle;
+
+  /// No description provided for @helpPracticeResultsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your scores and progress.'**
+  String get helpPracticeResultsDescription;
+
+  /// No description provided for @helpPracticeResultsStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a past session'**
+  String get helpPracticeResultsStep1Title;
+
+  /// No description provided for @helpPracticeResultsStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Practice Results from the menu. Use the available filters to find the song or session you want to review.'**
+  String get helpPracticeResultsStep1Description;
+
+  /// No description provided for @helpPracticeResultsStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'See what to improve'**
+  String get helpPracticeResultsStep2Title;
+
+  /// No description provided for @helpPracticeResultsStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a result to see its score, note breakdown, and practice suggestions.'**
+  String get helpPracticeResultsStep2Description;
+
+  /// No description provided for @helpCompositionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Compositions'**
+  String get helpCompositionsTitle;
+
+  /// No description provided for @helpCompositionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and save your own music.'**
+  String get helpCompositionsDescription;
+
+  /// No description provided for @helpCompositionsStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a composition'**
+  String get helpCompositionsStep1Title;
+
+  /// No description provided for @helpCompositionsStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open My Compositions and tap the plus sign. Name your song and choose how you want to create it.'**
+  String get helpCompositionsStep1Description;
+
+  /// No description provided for @helpCompositionsStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add notes or record'**
+  String get helpCompositionsStep2Title;
+
+  /// No description provided for @helpCompositionsStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Add notes in the editor, or follow the recording instructions to capture your playing. Use playback to listen to your work.'**
+  String get helpCompositionsStep2Description;
+
+  /// No description provided for @helpCompositionsStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your work'**
+  String get helpCompositionsStep3Title;
+
+  /// No description provided for @helpCompositionsStep3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your composition and wait for it to finish. Open it from your list to listen, edit, or share.'**
+  String get helpCompositionsStep3Description;
+
+  /// No description provided for @helpPublishedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Published Compositions'**
+  String get helpPublishedTitle;
+
+  /// No description provided for @helpPublishedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover music shared by the community.'**
+  String get helpPublishedDescription;
+
+  /// No description provided for @helpPublishedStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore shared music'**
+  String get helpPublishedStep1Title;
+
+  /// No description provided for @helpPublishedStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Published Compositions. Sort the list and tap a song to see its creator and music pages.'**
+  String get helpPublishedStep1Description;
+
+  /// No description provided for @helpPublishedStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen, like, and save'**
+  String get helpPublishedStep2Title;
+
+  /// No description provided for @helpPublishedStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Play to listen, the heart to like a song, and the bookmark to save it. You can also leave a kind comment.'**
+  String get helpPublishedStep2Description;
+
+  /// No description provided for @helpSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved music'**
+  String get helpSavedTitle;
+
+  /// No description provided for @helpSavedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your bookmarked compositions.'**
+  String get helpSavedDescription;
+
+  /// No description provided for @helpSavedStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a song you like'**
+  String get helpSavedStep1Title;
+
+  /// No description provided for @helpSavedStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'In Published Compositions, tap a song’s bookmark to add it to your saved collection.'**
+  String get helpSavedStep1Description;
+
+  /// No description provided for @helpSavedStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Come back to your favorites'**
+  String get helpSavedStep2Title;
+
+  /// No description provided for @helpSavedStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Saved Sheets from the menu to find your saved songs. Tap a card to open it, or its bookmark to request removal.'**
+  String get helpSavedStep2Description;
+
+  /// No description provided for @helpProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile & preferences'**
+  String get helpProfileTitle;
+
+  /// No description provided for @helpProfileDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your profile, language, and theme.'**
+  String get helpProfileDescription;
+
+  /// No description provided for @helpProfileStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your profile'**
+  String get helpProfileStep1Title;
+
+  /// No description provided for @helpProfileStep1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap your profile card at the top of the menu. View your progress, achievements, and starting assessment.'**
+  String get helpProfileStep1Description;
+
+  /// No description provided for @helpProfileStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your details'**
+  String get helpProfileStep2Title;
+
+  /// No description provided for @helpProfileStep2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Edit to update your name or picture, then save your changes.'**
+  String get helpProfileStep2Description;
+
+  /// No description provided for @helpProfileStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your preferences'**
+  String get helpProfileStep3Title;
+
+  /// No description provided for @helpProfileStep3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the language or light and dark theme in your preferences or the side menu. Help Center follows your selected theme.'**
+  String get helpProfileStep3Description;
+
+  /// No description provided for @helpCenterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help Center'**
+  String get helpCenterTitle;
+
+  /// No description provided for @helpCenterHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'How can we help?'**
+  String get helpCenterHeading;
+
+  /// No description provided for @helpCenterIntroduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a feature and learn at your own pace.'**
+  String get helpCenterIntroduction;
+
+  /// No description provided for @helpCenterSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search features or topics'**
+  String get helpCenterSearchHint;
+
+  /// No description provided for @helpCenterClearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get helpCenterClearSearch;
+
+  /// No description provided for @helpCenterBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore features'**
+  String get helpCenterBrowse;
+
+  /// No description provided for @helpCenterSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results'**
+  String get helpCenterSearchResults;
+
+  /// No description provided for @helpCenterEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No guides found'**
+  String get helpCenterEmptyTitle;
+
+  /// No description provided for @helpCenterEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another search or choose a different category.'**
+  String get helpCenterEmptyBody;
+
+  /// No description provided for @helpCenterReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all guides'**
+  String get helpCenterReset;
+
+  /// No description provided for @helpCenterPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get helpCenterPrevious;
+
+  /// No description provided for @helpCenterNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get helpCenterNext;
+
+  /// No description provided for @helpCenterDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get helpCenterDone;
+
+  /// No description provided for @helpCenterClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close guide'**
+  String get helpCenterClose;
+
+  /// No description provided for @helpCenterScreenshotPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Guide screenshot coming soon'**
+  String get helpCenterScreenshotPending;
+
+  /// No description provided for @helpCenterScreenshotUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This image is unavailable. Follow the instructions below.'**
+  String get helpCenterScreenshotUnavailable;
+
+  /// No description provided for @helpCenterGuideCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 guide} other{{count} guides}}'**
+  String helpCenterGuideCount(int count);
+
+  /// No description provided for @helpCenterStepCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String helpCenterStepCount(int current, int total);
+
+  /// No description provided for @helpCenterScreenshotLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Guide screenshot: {title}'**
+  String helpCenterScreenshotLabel(String title);
+
+  /// No description provided for @helpCategoryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get helpCategoryAll;
+
+  /// No description provided for @helpCategoryGettingStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting started'**
+  String get helpCategoryGettingStarted;
+
+  /// No description provided for @helpCategoryMusicSheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Music Sheets'**
+  String get helpCategoryMusicSheets;
+
+  /// No description provided for @helpCategoryPractice.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice'**
+  String get helpCategoryPractice;
+
+  /// No description provided for @helpCategoryCompositions.
+  ///
+  /// In en, this message translates to:
+  /// **'Compositions'**
+  String get helpCategoryCompositions;
+
+  /// No description provided for @helpCategoryAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get helpCategoryAccount;
+
+  /// No description provided for @helpCenterGuidesTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Guides'**
+  String get helpCenterGuidesTab;
+
+  /// No description provided for @helpCenterContactTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get helpCenterContactTab;
+
+  /// No description provided for @helpCenterContactHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Get in touch'**
+  String get helpCenterContactHeading;
+
+  /// No description provided for @helpCenterContactIntroduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Have a question or need a hand with SoundSight? You will be able to reach us here.'**
+  String get helpCenterContactIntroduction;
+
+  /// No description provided for @helpCenterCustomerService.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Service'**
+  String get helpCenterCustomerService;
+
+  /// No description provided for @helpCenterFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Facebook'**
+  String get helpCenterFacebook;
+
+  /// No description provided for @helpCenterGmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Gmail'**
+  String get helpCenterGmail;
+
+  /// No description provided for @helpCenterContactPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact details coming soon'**
+  String get helpCenterContactPending;
+
+  /// No description provided for @playerTourScoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read your music'**
+  String get playerTourScoreTitle;
+
+  /// No description provided for @playerTourScoreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the highlighted position and cursor on the sheet. In Wait mode, hold the expected notes for their full length and release them when needed.'**
+  String get playerTourScoreBody;
+
+  /// No description provided for @playerTourModesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a practice mode'**
+  String get playerTourModesTitle;
+
+  /// No description provided for @playerTourModesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait mode lets you learn at your own pace. Performance mode follows a continuous timeline and evaluates your notes and timing. Choose a mode before starting.'**
+  String get playerTourModesBody;
+
+  /// No description provided for @playerTourControlsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session controls'**
+  String get playerTourControlsTitle;
+
+  /// No description provided for @playerTourControlsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Controls to listen, connect your piano, and find the session actions. Tap Next to look inside together.'**
+  String get playerTourControlsBody;
+
+  /// No description provided for @playerTourListenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen before you play'**
+  String get playerTourListenTitle;
+
+  /// No description provided for @playerTourListenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Listen to preview the music. Stop the preview before starting your own attempt.'**
+  String get playerTourListenBody;
+
+  /// No description provided for @playerTourMidiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your piano'**
+  String get playerTourMidiTitle;
+
+  /// No description provided for @playerTourMidiBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this control to connect your MIDI piano. Check the connection status before you start. Finish this guide before connecting.'**
+  String get playerTourMidiBody;
+
+  /// No description provided for @playerTourFeedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Understand the feedback'**
+  String get playerTourFeedbackTitle;
+
+  /// No description provided for @playerTourFeedbackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This area shows your connection and playing feedback. During practice, use it to check the notes you played and what to try next.'**
+  String get playerTourFeedbackBody;
+
+  /// No description provided for @playerTourSightStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start when you are ready'**
+  String get playerTourSightStartTitle;
+
+  /// No description provided for @playerTourSightStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'In Performance mode, tap Start and then play the first key to begin the timed attempt. In Wait mode, play the highlighted notes to advance. During Performance, Stop in the app bar resets the attempt.'**
+  String get playerTourSightStartBody;
+
+  /// No description provided for @playerTourSynthStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start your session'**
+  String get playerTourSynthStartTitle;
+
+  /// No description provided for @playerTourSynthStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'After connecting your piano, tap Start for your chosen mode. During a session, use Stop to reset the attempt. Wait-mode timeline dragging lets you return to a part you want to practice.'**
+  String get playerTourSynthStartBody;
+
+  /// No description provided for @playerTourNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the falling notes'**
+  String get playerTourNotesTitle;
+
+  /// No description provided for @playerTourNotesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes move toward the keyboard. Play each matching key as the note reaches it, and hold it for the length shown.'**
+  String get playerTourNotesBody;
+
+  /// No description provided for @playerTourKeyboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Match the piano keys'**
+  String get playerTourKeyboardTitle;
+
+  /// No description provided for @playerTourKeyboardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This keyboard helps you match the music to your piano. Highlighted keys show the notes to play.'**
+  String get playerTourKeyboardBody;
+
+  /// No description provided for @playerTourSessionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the guide, then play'**
+  String get playerTourSessionTitle;
+
+  /// No description provided for @playerTourSessionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Done closes these controls. Connect your piano and choose your mode before starting. Restart returns to the beginning. In Performance mode, Stop resets an unfinished attempt.'**
+  String get playerTourSessionBody;
+
+  /// No description provided for @playerTourCameraTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your piano in view'**
+  String get playerTourCameraTitle;
+
+  /// No description provided for @playerTourCameraBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the whole keyboard in good light and keep the phone steady. Move objects away from the keys before detection starts.'**
+  String get playerTourCameraBody;
+
+  /// No description provided for @playerTourCalibrationInstructionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the setup instructions'**
+  String get playerTourCalibrationInstructionsTitle;
+
+  /// No description provided for @playerTourCalibrationInstructionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This area explains the current setup step. Adjust the keyboard area and follow the Middle C guide when asked. For a saved setup, align the saved shapes with your piano.'**
+  String get playerTourCalibrationInstructionsBody;
+
+  /// No description provided for @playerTourCalibrationActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and save your setup'**
+  String get playerTourCalibrationActionsTitle;
+
+  /// No description provided for @playerTourCalibrationActionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the controls below the camera to confirm each step. Review the key outlines, then save or use the setup. Set up again if you move the piano or phone.'**
+  String get playerTourCalibrationActionsBody;
+
+  /// No description provided for @playerTourArOverlayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Match the notes to your piano'**
+  String get playerTourArOverlayTitle;
+
+  /// No description provided for @playerTourArOverlayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The overlay lines up the music with your real keys. Keep the phone in the same position after setup.'**
+  String get playerTourArOverlayBody;
+
+  /// No description provided for @playerTourArStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Begin AR practice'**
+  String get playerTourArStartTitle;
+
+  /// No description provided for @playerTourArStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your MIDI piano, choose Wait or Performance, and tap Start. Use Stop to reset the attempt. Keep your camera and piano steady while playing.'**
+  String get playerTourArStartBody;
 }
 
 class _AppLocalizationsDelegate

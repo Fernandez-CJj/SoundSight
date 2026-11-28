@@ -674,7 +674,9 @@ class _AssetContentScreenState extends State<AssetContentScreen> {
               return _message(context.l10n.lessonQuizLoadFailed);
             }
             if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: widget.colors.primaryColor),
+              );
             }
             return LessonQuizScreen(
               text: snapshot.data!,
@@ -689,7 +691,9 @@ class _AssetContentScreenState extends State<AssetContentScreen> {
               return _message(context.l10n.lessonPdfLoadFailed);
             }
             if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: widget.colors.primaryColor),
+              );
             }
             return PdfViewer.data(snapshot.data!, sourceName: widget.title);
           },

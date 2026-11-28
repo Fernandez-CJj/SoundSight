@@ -135,7 +135,11 @@ class _VideoLessonScreenState extends State<VideoLessonScreen>
               future: videoInitialization,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: AppThemeColors.fromDarkMode(true).primaryColor,
+                    ),
+                  );
                 }
                 if (snapshot.hasError) {
                   return Center(

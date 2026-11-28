@@ -21,6 +21,9 @@ class ScreenFeatureTour extends StatefulWidget {
     this.nextScreens = const <String>{},
     this.canContinue,
     this.remainingStepCount,
+    this.onAutoStartResolved,
+    this.onSeen,
+    this.onExit,
   });
 
   final String featureId;
@@ -32,6 +35,9 @@ class ScreenFeatureTour extends StatefulWidget {
   final Set<String> nextScreens;
   final bool Function()? canContinue;
   final int? Function()? remainingStepCount;
+  final VoidCallback? onAutoStartResolved;
+  final VoidCallback? onSeen;
+  final VoidCallback? onExit;
 
   static final Map<ModalRoute<dynamic>, ScreenFeatureTourState> _routes = {};
 
@@ -86,7 +92,10 @@ class ScreenFeatureTourState extends State<ScreenFeatureTour> {
       currentUserId: () => FirebaseAuth.instance.currentUser?.uid,
       canPresent: () => mounted && _route?.isCurrent == true &&
           (widget.canStart?.call() ?? true),
-      onExit: _closeDrawer,
+      onExit: () async {
+        await _closeDrawer();
+        if (mounted) widget.onExit?.call();
+      },
       continueTour: widget.openNext == null ? null : _continueToNextScreen,
       canContinue: () => widget.openNext != null && (widget.canContinue?.call() ?? true),
       returnToPrevious: _journey == null ? null : () async {
@@ -95,6 +104,7 @@ class ScreenFeatureTourState extends State<ScreenFeatureTour> {
       },
       onSeen: () {
         _journey?.progress.finished = true;
+        widget.onSeen?.call();
       },
       steps: [
         for (final hint in hints)
@@ -186,21 +196,25 @@ class ScreenFeatureTourState extends State<ScreenFeatureTour> {
   }
 
   Future<void> _start({bool replay = false}) async {
-    _attempted = true;
-    await _closeDrawer();
-    if (!mounted || !controller.canPresent()) return;
-    // Restore a lazy list's first targets when replay is requested after scrolling.
-    for (final hint in hints) {
-      final target = _targetContext(hint.id);
-      final scrollable = target == null ? null : Scrollable.maybeOf(target);
-      if (scrollable != null && scrollable.position.hasContentDimensions) {
-        scrollable.position.jumpTo(scrollable.position.minScrollExtent);
-        break;
+    try {
+      _attempted = true;
+      await _closeDrawer();
+      if (!mounted || !controller.canPresent()) return;
+      // Restore a lazy list's first targets when replay is requested after scrolling.
+      for (final hint in hints) {
+        final target = _targetContext(hint.id);
+        final scrollable = target == null ? null : Scrollable.maybeOf(target);
+        if (scrollable != null && scrollable.position.hasContentDimensions) {
+          scrollable.position.jumpTo(scrollable.position.minScrollExtent);
+          break;
+        }
       }
+      FocusManager.instance.primaryFocus?.unfocus();
+      await _frame();
+      if (mounted) await controller.start(replay: replay);
+    } finally {
+      if (mounted && !replay) widget.onAutoStartResolved?.call();
     }
-    FocusManager.instance.primaryFocus?.unfocus();
-    await _frame();
-    if (mounted) await controller.start(replay: replay);
   }
 
   void replay() {

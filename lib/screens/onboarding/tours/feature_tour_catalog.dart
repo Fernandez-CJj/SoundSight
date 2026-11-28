@@ -1,3 +1,6 @@
+import 'package:flutter/widgets.dart';
+import 'package:soundsight/translations/generated/app_localizations.dart';
+
 class FeatureTourHint {
   const FeatureTourHint(this.id, this.title, this.filipinoTitle, this.body, this.filipinoBody);
   final String id;
@@ -8,13 +11,14 @@ class FeatureTourHint {
 }
 
 // Copy is kept beside the target definitions in both supported languages.
-const featureTourCatalog = <String, List<FeatureTourHint>>{
+final featureTourCatalog = <String, List<FeatureTourHint>>{
+  ..._playerFeatureTours(),
   'music_sheet_viewer': [
     FeatureTourHint('preview', 'Your music pages', 'Mga pahina ng musika', 'Here are your music pages. You can look at them before you play.', 'Narito ang mga pahina ng musika. Tingnan muna bago tumugtog.'),
     FeatureTourHint('expand', 'Make the page bigger', 'Palakihin ang pahina', 'Tap this to see a bigger page. Swipe up to see more pages, then close it to come back.', 'I-tap ito para lumaki ang pahina. Mag-swipe pataas para sa iba pang pahina. Isara para bumalik.'),
     FeatureTourHint('audio', 'Listen to the song', 'Pakinggan ang kanta', 'Tap Play to listen. Tap Stop or Pause when you want a break.', 'I-tap ang Play para makinig. I-tap ang Stop o Pause para huminto muna.'),
     FeatureTourHint('process', 'Is your song ready?', 'Handa na ba ang kanta?', 'This tells you if the app is still getting your song ready. Wait until it is done before playing.', 'Sinasabi rito kung inihahanda pa ang kanta. Hintaying matapos bago tumugtog.'),
-    FeatureTourHint('practice', 'Choose how to play', 'Pumili ng paraan ng pagtugtog', 'Tap Play to pick how you want to learn this song. You can read notes or follow moving notes.', 'I-tap ang Play para pumili kung paano aaralin ang kanta. Maaari kang magbasa o sumunod sa gumagalaw na nota.'),
+    FeatureTourHint('practice', 'Convert or play', 'I-convert o i-play', 'If you see Convert, tap it to prepare the sheet. When it’s ready, tap Play to choose a practice mode.', 'Kung nakikita mo ang I-convert, i-tap ito para ihanda ang sheet. Kapag handa na, i-tap ang I-play para pumili ng paraan ng pagsasanay.'),
   ],
   'music_library': [
     FeatureTourHint('search', 'Find a song', 'Maghanap ng kanta', 'Type a song name here. Clear the words to see all the songs again.', 'I-type dito ang pangalan ng kanta. Burahin ang mga salita para makita muli ang lahat.'),
@@ -27,8 +31,8 @@ const featureTourCatalog = <String, List<FeatureTourHint>>{
   'my_compositions': [
     FeatureTourHint('create', 'Make your own song', 'Gumawa ng sariling kanta', 'Tap the plus sign to make a song. You can add notes with the piano or record yourself playing.', 'I-tap ang plus para gumawa ng kanta. Maglagay ng nota gamit ang piano o i-record ang iyong pagtugtog.'),
     FeatureTourHint('list', 'Songs you made', 'Mga ginawa mong kanta', 'Your songs live here. You can open them to listen, make changes, or share them.', 'Narito ang iyong mga kanta. Buksan para makinig, magbago ng nota, o magbahagi.'),
-    FeatureTourHint('card_info', 'Open your song', 'Buksan ang iyong kanta', 'Tap Next to look inside this song. You can see its music pages and learn how to change its notes.', 'I-tap ang Susunod para tingnan ang kanta. Makikita mo ang mga pahina at kung paano baguhin ang mga nota.'),
-    FeatureTourHint('empty', 'Make your first song', 'Gumawa ng unang kanta', 'No songs yet! Tap Next to name your first song and choose how to make it. Choose Start when you are ready.', 'Wala pang kanta! I-tap ang Susunod para pangalanan ito at pumili ng paraan. Piliin ang Start kapag handa ka na.'),
+    FeatureTourHint('card_info', 'Open your song', 'Buksan ang iyong kanta', 'Tap Next to look inside this song. You can see its music pages, playback, and available actions.', 'I-tap ang Susunod para tingnan ang kanta. Makikita mo ang mga pahina, pagpapatugtog, at mga magagamit na aksyon.'),
+    FeatureTourHint('empty', 'Make your first song', 'Gumawa ng unang kanta', 'No songs yet! After this guide, tap the plus sign to name your first song and choose Manual or Recording. Each method has its own guide.', 'Wala pang kanta! Pagkatapos ng gabay, i-tap ang plus para pangalanan ang unang kanta at piliin ang Manual o Recording. May sariling gabay ang bawat paraan.'),
   ],
   'manual_composition': [
     FeatureTourHint('midi', 'Use your piano', 'Gamitin ang iyong piano', 'You can connect a piano to your phone and add notes by pressing its keys.', 'Maaari mong ikonekta ang piano sa telepono at magdagdag ng nota sa pagpindot ng mga key.'),
@@ -48,7 +52,7 @@ const featureTourCatalog = <String, List<FeatureTourHint>>{
     FeatureTourHint('overview', 'About your song', 'Tungkol sa iyong kanta', 'Here is your song name and its music choices. Check them before you play.', 'Narito ang pangalan at mga pagpipilian ng kanta. Tingnan muna bago tumugtog.'),
     FeatureTourHint('playback', 'Listen to your song', 'Pakinggan ang iyong kanta', 'Tap Play to listen. Stop the song when you want to make changes.', 'I-tap ang Play para makinig. Ihinto kapag gusto mong baguhin ang kanta.'),
     FeatureTourHint('preview', 'Your music pages', 'Mga pahina ng iyong kanta', 'See the music pages the app made for your song. Make a page bigger to look at it closely.', 'Tingnan ang mga pahina ng kantang ginawa ng app. Palakihin para makita nang mas malinaw.'),
-    FeatureTourHint('actions', 'What comes next?', 'Ano ang susunod?', 'You can play or share your song here. If you see Next, tap it to learn how to change the notes.', 'Maaari mong tugtugin o ibahagi ang kanta. Kung may Susunod, i-tap ito para matutong baguhin ang mga nota.'),
+    FeatureTourHint('actions', 'What comes next?', 'Ano ang susunod?', 'You can play or share your song here. For a manual composition, choose Edit Composition to change its notes. The editor has its own guide.', 'Maaari mong tugtugin o ibahagi ang kanta. Para sa manual na komposisyon, piliin ang Edit Composition para baguhin ang mga nota. May sariling gabay ang editor.'),
   ],
   'published_compositions': [
     FeatureTourHint('sort', 'Pick what comes first', 'Piliin ang mauuna', 'Your own shared songs come first. Choose Most liked to see popular songs, or Newest to see recent ones.', 'Nauuna ang sarili mong ibinahaging kanta. Piliin ang Pinakamaraming like o Pinakabago para sa ibang kanta.'),
@@ -130,3 +134,60 @@ const featureTourCatalog = <String, List<FeatureTourHint>>{
     FeatureTourHint('video', 'Watch and learn', 'Manood at matuto', 'Tap Play to watch the lesson. You can pause or watch a part again whenever you want.', 'I-tap ang Play para manood ng aralin. Maaari kang huminto o ulitin ang bahagi kung gusto mo.'),
   ],
 };
+
+Map<String, List<FeatureTourHint>> _playerFeatureTours() {
+  final english = lookupAppLocalizations(const Locale('en'));
+  final filipino = lookupAppLocalizations(const Locale('fil'));
+  FeatureTourHint hint(
+    String id,
+    String Function(AppLocalizations) title,
+    String Function(AppLocalizations) body,
+  ) => FeatureTourHint(id, title(english), title(filipino), body(english), body(filipino));
+
+  return {
+    'sight_reading_player': [
+      hint('score', (l10n) => l10n.playerTourScoreTitle, (l10n) => l10n.playerTourScoreBody),
+      hint('modes', (l10n) => l10n.playerTourModesTitle, (l10n) => l10n.playerTourModesBody),
+      hint('start', (l10n) => l10n.playerTourSightStartTitle, (l10n) => l10n.playerTourSightStartBody),
+      hint('controls', (l10n) => l10n.playerTourControlsTitle, (l10n) => l10n.playerTourControlsBody),
+    ],
+    'sight_reading_controls': [
+      hint('feedback', (l10n) => l10n.playerTourFeedbackTitle, (l10n) => l10n.playerTourFeedbackBody),
+      hint('listen', (l10n) => l10n.playerTourListenTitle, (l10n) => l10n.playerTourListenBody),
+      hint('midi', (l10n) => l10n.playerTourMidiTitle, (l10n) => l10n.playerTourMidiBody),
+      hint('session', (l10n) => l10n.playerTourSessionTitle, (l10n) => l10n.playerTourSessionBody),
+    ],
+    'synthesia_player': [
+      hint('notes', (l10n) => l10n.playerTourNotesTitle, (l10n) => l10n.playerTourNotesBody),
+      hint('keyboard', (l10n) => l10n.playerTourKeyboardTitle, (l10n) => l10n.playerTourKeyboardBody),
+      hint('modes', (l10n) => l10n.playerTourModesTitle, (l10n) => l10n.playerTourModesBody),
+      hint('start', (l10n) => l10n.playerTourSynthStartTitle, (l10n) => l10n.playerTourSynthStartBody),
+      hint('controls', (l10n) => l10n.playerTourControlsTitle, (l10n) => l10n.playerTourControlsBody),
+    ],
+    'synthesia_controls': [
+      hint('feedback', (l10n) => l10n.playerTourFeedbackTitle, (l10n) => l10n.playerTourFeedbackBody),
+      hint('listen', (l10n) => l10n.playerTourListenTitle, (l10n) => l10n.playerTourListenBody),
+      hint('midi', (l10n) => l10n.playerTourMidiTitle, (l10n) => l10n.playerTourMidiBody),
+      hint('session', (l10n) => l10n.playerTourSessionTitle, (l10n) => l10n.playerTourSessionBody),
+    ],
+    'ar_calibration': [
+      hint('camera', (l10n) => l10n.playerTourCameraTitle, (l10n) => l10n.playerTourCameraBody),
+      hint('instructions', (l10n) => l10n.playerTourCalibrationInstructionsTitle, (l10n) => l10n.playerTourCalibrationInstructionsBody),
+      hint('setup', (l10n) => l10n.playerTourCalibrationActionsTitle, (l10n) => l10n.playerTourCalibrationActionsBody),
+    ],
+    'ar_calibration_review': [
+      hint('setup', (l10n) => l10n.playerTourCalibrationActionsTitle, (l10n) => l10n.playerTourCalibrationActionsBody),
+    ],
+    'ar_player': [
+      hint('camera', (l10n) => l10n.playerTourArOverlayTitle, (l10n) => l10n.playerTourArOverlayBody),
+      hint('modes', (l10n) => l10n.playerTourModesTitle, (l10n) => l10n.playerTourModesBody),
+      hint('start', (l10n) => l10n.playerTourArStartTitle, (l10n) => l10n.playerTourArStartBody),
+      hint('controls', (l10n) => l10n.playerTourControlsTitle, (l10n) => l10n.playerTourControlsBody),
+    ],
+    'ar_player_controls': [
+      hint('feedback', (l10n) => l10n.playerTourFeedbackTitle, (l10n) => l10n.playerTourFeedbackBody),
+      hint('midi', (l10n) => l10n.playerTourMidiTitle, (l10n) => l10n.playerTourMidiBody),
+      hint('session', (l10n) => l10n.playerTourArStartTitle, (l10n) => l10n.playerTourArStartBody),
+    ],
+  };
+}

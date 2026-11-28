@@ -9,11 +9,8 @@ class AppLocalizationsFil extends AppLocalizations {
   AppLocalizationsFil([String locale = 'fil']) : super(locale);
 
   @override
-  String get featureTourReplay => 'Tulong';
-
-  @override
   String get featureTourReplayBody =>
-      'Kailangan ng tulong? I-tap ito para ulitin ang gabay mula sa unang hakbang.';
+      'Buksan ang Sentro ng Tulong, pumili ng feature, at sundan ang gabay nang paisa-isang hakbang.';
 
   @override
   String get featureTourSheetsAddBody =>
@@ -5502,4 +5499,582 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get performanceVideoUnmute => 'I-unmute ang recording';
+
+  @override
+  String get helpHomeTitle => 'Home at pag-navigate';
+
+  @override
+  String get helpManualCompositionTitle => 'Manual na komposisyon';
+
+  @override
+  String get helpManualCompositionDescription =>
+      'Isulat, pakinggan, at i-save ang sariling mga nota.';
+
+  @override
+  String get helpRecordingCompositionTitle => 'Pag-record ng komposisyon';
+
+  @override
+  String get helpRecordingCompositionDescription =>
+      'I-record ang pagtugtog sa piano para gumawa ng komposisyon.';
+
+  @override
+  String get helpArPlayerTitle => 'AR player';
+
+  @override
+  String get helpArPlayerDescription =>
+      'Sundan ang mga notang nakatapat sa totoong mga key ng piano.';
+
+  @override
+  String get helpCenterEnlargeScreenshot =>
+      'Tingnan ang screenshot sa buong screen';
+
+  @override
+  String get helpHomeDescription =>
+      'Alamin kung saan makikita ang mga feature.';
+
+  @override
+  String get helpHomeStep1Title => 'Magsimula sa Home';
+
+  @override
+  String get helpHomeStep1Description =>
+      'Tingnan ang iyong pag-usad. Gamitin ang Quick Actions para buksan ang musika, mag-upload, o tingnan ang resulta.';
+
+  @override
+  String get helpHomeStep2Title => 'Buksan ang menu sa gilid';
+
+  @override
+  String get helpHomeStep2Description =>
+      'I-tap ang menu sa kaliwang itaas para makita ang mga aralin, komposisyon, at na-save na musika.';
+
+  @override
+  String get helpHomeStep3Title => 'Gawing para sa iyo';
+
+  @override
+  String get helpHomeStep3Description =>
+      'Gamitin ang menu para baguhin ang wika o pumili ng light o dark mode. Buksan ang Tulong kapag kailangan mo ng gabay.';
+
+  @override
+  String get helpMusicLibraryTitle => 'Music Library';
+
+  @override
+  String get helpMusicLibraryDescription => 'Maghanap ng kantang aaralin.';
+
+  @override
+  String get helpMusicLibraryStep1Title => 'Maghanap ng kanta';
+
+  @override
+  String get helpMusicLibraryStep1Description =>
+      'I-tap ang search sa Home. Ilagay ang pamagat ng kanta o tingnan ang mga available na piyesa.';
+
+  @override
+  String get helpMusicLibraryStep2Title => 'Tingnan ang kanta';
+
+  @override
+  String get helpMusicLibraryStep2Description =>
+      'Pumili ng kanta para makita ang mga pahina nito. I-tap ang Play at piliin kung paano magsasanay.';
+
+  @override
+  String get helpUploadTitle => 'Mag-upload ng music sheet';
+
+  @override
+  String get helpUploadDescription =>
+      'Magdagdag ng PDF, larawan, o piano recording.';
+
+  @override
+  String get helpUploadStep1Title => 'Piliin ang iyong file';
+
+  @override
+  String get helpUploadStep1Description =>
+      'Buksan ang Upload Sheet sa menu o i-tap ang plus sa My Music Sheets. Pumili ng PDF, kumuha ng larawan, o pumili ng piano recording.';
+
+  @override
+  String get helpUploadStep2Title => 'Suriin ang napili';
+
+  @override
+  String get helpUploadStep2Description =>
+      'Tingnan ang bawat pahina o pakinggan ang recording. Gumamit ng malinaw at maliwanag na larawan na kita ang lahat ng nota.';
+
+  @override
+  String get helpUploadStep3Title => 'I-save ang iyong musika';
+
+  @override
+  String get helpUploadStep3Description =>
+      'I-tap ang Save Sheet o Save Audio, maglagay ng pamagat, at hintaying makumpirma. Makikita ito sa My Music Sheets.';
+
+  @override
+  String get helpMusicSheetsTitle => 'My Music Sheets';
+
+  @override
+  String get helpMusicSheetsDescription =>
+      'Buksan at ayusin ang na-upload na musika.';
+
+  @override
+  String get helpMusicSheetsStep1Title => 'Ang iyong koleksiyon';
+
+  @override
+  String get helpMusicSheetsStep1Description =>
+      'Buksan ang My Music Sheets para makita ang mga upload, pinakabago muna. I-tap ang card para buksan ito.';
+
+  @override
+  String get helpMusicSheetsStep2Title => 'Tingnan at ihanda ang musika';
+
+  @override
+  String get helpMusicSheetsStep2Description =>
+      'Tingnan ang mga pahina o pakinggan ang audio. Suriin ang processing status at hintaying maging handa ang musika bago magsanay.';
+
+  @override
+  String get helpMusicSheetsStep3Title => 'Palitan ang pangalan o alisin';
+
+  @override
+  String get helpMusicSheetsStep3Description =>
+      'Gamitin ang menu ng card para palitan ang pangalan. Mag-swipe pakanan para alisin ang sheet, saka kumpirmahin ang pagpili.';
+
+  @override
+  String get helpLessonsTitle => 'Mga aralin';
+
+  @override
+  String get helpLessonsDescription => 'Aralin ang mga batayan nang paisa-isa.';
+
+  @override
+  String get helpLessonsStep1Title => 'Pumili ng aralin';
+
+  @override
+  String get helpLessonsStep1Description =>
+      'Buksan ang Practice sa menu. Tingnan ang iyong pag-usad at pumili ng aralin para makita ang matututuhan.';
+
+  @override
+  String get helpLessonsStep2Title => 'Matuto sa sarili mong bilis';
+
+  @override
+  String get helpLessonsStep2Description =>
+      'Basahin ang panuto at magsimula kapag handa ka na. Maaari mong i-pause ang video o ulitin ang isang bahagi.';
+
+  @override
+  String get helpAssessmentTitle => 'Panimulang pagtatasa';
+
+  @override
+  String get helpAssessmentDescription => 'Alamin ang iyong panimulang antas.';
+
+  @override
+  String get helpAssessmentStep1Title => 'Basahin bago magsimula';
+
+  @override
+  String get helpAssessmentStep1Description =>
+      'Buksan ang assessment sa iyong profile. Basahin ang panuto at ihanda ang piano bago simulan ang may oras na pagsusulit.';
+
+  @override
+  String get helpAssessmentStep2Title => 'Tapusin ang bawat bahagi';
+
+  @override
+  String get helpAssessmentStep2Description =>
+      'Sundin ang mga tanong, pagbasa ng nota, at panuto sa piano. Bantayan ang oras; hindi humihinto ang pagsusulit kapag binuksan ang Tulong.';
+
+  @override
+  String get helpAssessmentStep3Title => 'Tingnan ang resulta';
+
+  @override
+  String get helpAssessmentStep3Description =>
+      'Tingnan ang panimulang antas at resulta ng bawat bahagi para malaman ang susunod na pagsasanay.';
+
+  @override
+  String get helpSightReadingTitle => 'Sight Reading';
+
+  @override
+  String get helpSightReadingDescription => 'Magsanay sa pagbasa ng mga nota.';
+
+  @override
+  String get helpSightReadingStep1Title => 'Piliin ang musika';
+
+  @override
+  String get helpSightReadingStep1Description =>
+      'Buksan ang handang kanta, i-tap ang Play, at piliin ang Sight Reading sa mga available na mode.';
+
+  @override
+  String get helpSightReadingStep2Title => 'Sundan ang mga nota';
+
+  @override
+  String get helpSightReadingStep2Description =>
+      'Sundin ang paghahanda sa practice screen. Basahin ang mga nota sa sheet at sabayan sa piano.';
+
+  @override
+  String get helpSynthesiaTitle => 'Synthesia';
+
+  @override
+  String get helpSynthesiaDescription => 'Sundan ang bumabagsak na mga nota.';
+
+  @override
+  String get helpSynthesiaStep1Title => 'Buksan ang Synthesia';
+
+  @override
+  String get helpSynthesiaStep1Description =>
+      'Buksan ang handang kanta, i-tap ang Play, at piliin ang Synthesia sa mga available na mode.';
+
+  @override
+  String get helpSynthesiaStep2Title => 'Sabayan ang mga nota';
+
+  @override
+  String get helpSynthesiaStep2Description =>
+      'Tapusin ang paghahanda sa screen. Sundan ang mga notang bumababa patungo sa keyboard at pindutin ang katumbas na mga key.';
+
+  @override
+  String get helpArTitle => 'Pag-set up ng AR piano';
+
+  @override
+  String get helpArDescription => 'Tulungan ang camera na makilala ang piano.';
+
+  @override
+  String get helpArStep1Title => 'Ihanda ang camera';
+
+  @override
+  String get helpArStep1Description =>
+      'Kapag gumagamit ng AR practice, sundin ang piano setup. Payagan ang camera at tiyaking malinaw na nakikita ang keyboard.';
+
+  @override
+  String get helpArStep2Title => 'Panatilihing matatag ang setup';
+
+  @override
+  String get helpArStep2Description =>
+      'Panatilihin sa puwesto ang telepono at piano habang hinahanap ang mga key. Ulitin ang setup kapag nailipat ang alinman.';
+
+  @override
+  String get helpPracticeResultsTitle => 'Mga resulta ng pagsasanay';
+
+  @override
+  String get helpPracticeResultsDescription =>
+      'Tingnan ang puntos at pag-usad mo.';
+
+  @override
+  String get helpPracticeResultsStep1Title => 'Hanapin ang dating pagsasanay';
+
+  @override
+  String get helpPracticeResultsStep1Description =>
+      'Buksan ang Practice Results sa menu. Gamitin ang mga filter para hanapin ang kanta o pagsasanay na gusto mong tingnan.';
+
+  @override
+  String get helpPracticeResultsStep2Title => 'Alamin ang mapapahusay';
+
+  @override
+  String get helpPracticeResultsStep2Description =>
+      'I-tap ang resulta para makita ang puntos, mga nota, at mungkahi sa pagsasanay.';
+
+  @override
+  String get helpCompositionsTitle => 'My Compositions';
+
+  @override
+  String get helpCompositionsDescription =>
+      'Gumawa at mag-save ng sariling musika.';
+
+  @override
+  String get helpCompositionsStep1Title => 'Magsimula ng komposisyon';
+
+  @override
+  String get helpCompositionsStep1Description =>
+      'Buksan ang My Compositions at i-tap ang plus. Pangalanan ang kanta at piliin kung paano ito gagawin.';
+
+  @override
+  String get helpCompositionsStep2Title => 'Magdagdag ng nota o mag-record';
+
+  @override
+  String get helpCompositionsStep2Description =>
+      'Magdagdag ng nota sa editor o sundin ang panuto sa pag-record ng pagtugtog. Gamitin ang playback para pakinggan ang ginawa mo.';
+
+  @override
+  String get helpCompositionsStep3Title => 'I-save ang ginawa mo';
+
+  @override
+  String get helpCompositionsStep3Description =>
+      'I-save ang komposisyon at hintaying matapos. Buksan ito sa listahan para makinig, mag-edit, o magbahagi.';
+
+  @override
+  String get helpPublishedTitle => 'Published Compositions';
+
+  @override
+  String get helpPublishedDescription =>
+      'Tuklasin ang musikang ibinahagi ng iba.';
+
+  @override
+  String get helpPublishedStep1Title => 'Tuklasin ang mga ibinahaging kanta';
+
+  @override
+  String get helpPublishedStep1Description =>
+      'Buksan ang Published Compositions. Ayusin ang listahan at pumili ng kanta para makita ang gumawa at mga pahina nito.';
+
+  @override
+  String get helpPublishedStep2Title => 'Makinig, mag-like, at mag-save';
+
+  @override
+  String get helpPublishedStep2Description =>
+      'Gamitin ang Play para makinig, puso para mag-like, at bookmark para mag-save. Maaari ka ring mag-iwan ng mabait na komento.';
+
+  @override
+  String get helpSavedTitle => 'Na-save na musika';
+
+  @override
+  String get helpSavedDescription =>
+      'Hanapin ang mga na-bookmark na komposisyon.';
+
+  @override
+  String get helpSavedStep1Title => 'Mag-save ng kantang gusto mo';
+
+  @override
+  String get helpSavedStep1Description =>
+      'Sa Published Compositions, i-tap ang bookmark ng kanta para idagdag ito sa iyong koleksiyon.';
+
+  @override
+  String get helpSavedStep2Title => 'Balikan ang mga paborito';
+
+  @override
+  String get helpSavedStep2Description =>
+      'Buksan ang Saved Sheets sa menu para makita ang na-save na kanta. I-tap ang card para buksan o ang bookmark para alisin ito.';
+
+  @override
+  String get helpProfileTitle => 'Profile at mga kagustuhan';
+
+  @override
+  String get helpProfileDescription => 'Ayusin ang profile, wika, at tema.';
+
+  @override
+  String get helpProfileStep1Title => 'Buksan ang iyong profile';
+
+  @override
+  String get helpProfileStep1Description =>
+      'I-tap ang profile card sa itaas ng menu. Tingnan ang pag-usad, mga badge, at panimulang assessment.';
+
+  @override
+  String get helpProfileStep2Title => 'Baguhin ang iyong detalye';
+
+  @override
+  String get helpProfileStep2Description =>
+      'Piliin ang Edit para baguhin ang pangalan o larawan, saka i-save ang mga pagbabago.';
+
+  @override
+  String get helpProfileStep3Title => 'Piliin ang iyong kagustuhan';
+
+  @override
+  String get helpProfileStep3Description =>
+      'Baguhin ang wika o light at dark na tema sa preferences o menu. Susunod ang Help Center sa napiling tema.';
+
+  @override
+  String get helpCenterTitle => 'Sentro ng Tulong';
+
+  @override
+  String get helpCenterHeading => 'Paano ka namin matutulungan?';
+
+  @override
+  String get helpCenterIntroduction =>
+      'Pumili ng feature at sundan ang gabay sa sarili mong bilis.';
+
+  @override
+  String get helpCenterSearchHint => 'Maghanap ng feature o paksa';
+
+  @override
+  String get helpCenterClearSearch => 'Burahin ang paghahanap';
+
+  @override
+  String get helpCenterBrowse => 'Tuklasin ang mga feature';
+
+  @override
+  String get helpCenterSearchResults => 'Mga resulta ng paghahanap';
+
+  @override
+  String get helpCenterEmptyTitle => 'Walang nahanap na gabay';
+
+  @override
+  String get helpCenterEmptyBody =>
+      'Subukan ang ibang salita o pumili ng ibang kategorya.';
+
+  @override
+  String get helpCenterReset => 'Ipakita ang lahat ng gabay';
+
+  @override
+  String get helpCenterPrevious => 'Nakaraan';
+
+  @override
+  String get helpCenterNext => 'Susunod';
+
+  @override
+  String get helpCenterDone => 'Tapos na';
+
+  @override
+  String get helpCenterClose => 'Isara ang gabay';
+
+  @override
+  String get helpCenterScreenshotPending =>
+      'Malapit nang idagdag ang larawan ng gabay';
+
+  @override
+  String get helpCenterScreenshotUnavailable =>
+      'Hindi maipakita ang larawan. Basahin ang gabay sa ibaba.';
+
+  @override
+  String helpCenterGuideCount(int count) {
+    return '$count na gabay';
+  }
+
+  @override
+  String helpCenterStepCount(int current, int total) {
+    return 'Hakbang $current sa $total';
+  }
+
+  @override
+  String helpCenterScreenshotLabel(String title) {
+    return 'Larawan ng gabay: $title';
+  }
+
+  @override
+  String get helpCategoryAll => 'Lahat';
+
+  @override
+  String get helpCategoryGettingStarted => 'Pagsisimula';
+
+  @override
+  String get helpCategoryMusicSheets => 'Music Sheets';
+
+  @override
+  String get helpCategoryPractice => 'Pagsasanay';
+
+  @override
+  String get helpCategoryCompositions => 'Komposisyon';
+
+  @override
+  String get helpCategoryAccount => 'Account';
+
+  @override
+  String get helpCenterGuidesTab => 'Mga Gabay';
+
+  @override
+  String get helpCenterContactTab => 'Makipag-ugnayan';
+
+  @override
+  String get helpCenterContactHeading => 'Makipag-ugnayan sa amin';
+
+  @override
+  String get helpCenterContactIntroduction =>
+      'May tanong o kailangan ng tulong sa SoundSight? Dito mo kami makokontak kapag available na ang aming mga detalye.';
+
+  @override
+  String get helpCenterCustomerService => 'Serbisyo sa Customer';
+
+  @override
+  String get helpCenterFacebook => 'Facebook';
+
+  @override
+  String get helpCenterGmail => 'Gmail';
+
+  @override
+  String get helpCenterContactPending =>
+      'Malapit nang ilagay ang mga detalye sa pakikipag-ugnayan';
+
+  @override
+  String get playerTourScoreTitle => 'Basahin ang musika';
+
+  @override
+  String get playerTourScoreBody =>
+      'Sundan ang naka-highlight na posisyon at cursor sa sheet. Sa Wait mode, hawakan ang tamang nota nang buong tagal at bitawan kapag kailangan.';
+
+  @override
+  String get playerTourModesTitle => 'Pumili ng paraan ng pagsasanay';
+
+  @override
+  String get playerTourModesBody =>
+      'Sa Wait mode, magsanay sa sarili mong bilis. Sa Performance mode, tuloy ang oras at sinusuri ang mga nota at timing. Pumili bago magsimula.';
+
+  @override
+  String get playerTourControlsTitle => 'Mga kontrol sa pagsasanay';
+
+  @override
+  String get playerTourControlsBody =>
+      'Buksan ang Controls para makinig, ikonekta ang piano, at makita ang mga kontrol. I-tap ang Susunod para tingnan ang mga ito.';
+
+  @override
+  String get playerTourListenTitle => 'Makinig bago tumugtog';
+
+  @override
+  String get playerTourListenBody =>
+      'Gamitin ang Listen para pakinggan ang musika. Ihinto ang preview bago simulan ang iyong pagsasanay.';
+
+  @override
+  String get playerTourMidiTitle => 'Ikonekta ang piano';
+
+  @override
+  String get playerTourMidiBody =>
+      'Gamitin ito para ikonekta ang MIDI piano. Suriin ang koneksiyon bago magsimula. Tapusin muna ang gabay bago kumonekta.';
+
+  @override
+  String get playerTourFeedbackTitle => 'Unawain ang feedback';
+
+  @override
+  String get playerTourFeedbackBody =>
+      'Dito makikita ang koneksiyon at feedback sa pagtugtog. Habang nagsasanay, tingnan ang mga notang natugtog at ang susunod na gagawin.';
+
+  @override
+  String get playerTourSightStartTitle => 'Magsimula kapag handa';
+
+  @override
+  String get playerTourSightStartBody =>
+      'Sa Performance mode, i-tap ang Start at tumugtog ng unang key para simulan ang oras. Sa Wait mode, tugtugin ang naka-highlight na nota para magpatuloy. Ang Stop sa app bar ay nagre-reset ng pagsasanay.';
+
+  @override
+  String get playerTourSynthStartTitle => 'Simulan ang pagsasanay';
+
+  @override
+  String get playerTourSynthStartBody =>
+      'Pagkakonekta ng piano, i-tap ang Start para sa napiling mode. Gamitin ang Stop para i-reset ang pagsasanay. Sa Wait mode, maaaring i-drag ang timeline para balikan ang gustong aralin.';
+
+  @override
+  String get playerTourNotesTitle => 'Sundan ang bumabagsak na nota';
+
+  @override
+  String get playerTourNotesBody =>
+      'Bumababa ang mga nota patungo sa keyboard. Pindutin ang katumbas na key pagdating ng nota at hawakan ito nang ipinapakitang tagal.';
+
+  @override
+  String get playerTourKeyboardTitle => 'Itugma ang mga key ng piano';
+
+  @override
+  String get playerTourKeyboardBody =>
+      'Tinutulungan ka ng keyboard na itugma ang musika sa piano. Ipinapakita ng mga naka-highlight na key ang mga tutugtuging nota.';
+
+  @override
+  String get playerTourSessionTitle => 'Tapusin ang gabay, saka tumugtog';
+
+  @override
+  String get playerTourSessionBody =>
+      'Isinasara ng Tapos na ang mga kontrol. Ikonekta ang piano at pumili ng mode bago magsimula. Ibinabalik ng Restart ang kanta sa simula. Sa Performance mode, nire-reset ng Stop ang hindi pa tapos na pagsasanay.';
+
+  @override
+  String get playerTourCameraTitle => 'Panatilihing kita ang piano';
+
+  @override
+  String get playerTourCameraBody =>
+      'Ipakita ang buong keyboard sa maliwanag na lugar at panatilihing matatag ang telepono. Alisin ang mga bagay na nakaharang sa mga key.';
+
+  @override
+  String get playerTourCalibrationInstructionsTitle =>
+      'Sundin ang panuto sa setup';
+
+  @override
+  String get playerTourCalibrationInstructionsBody =>
+      'Ipinapaliwanag dito ang kasalukuyang hakbang. Ayusin ang keyboard area at sundin ang gabay sa Middle C. Para sa na-save na setup, itapat ang mga hugis sa piano.';
+
+  @override
+  String get playerTourCalibrationActionsTitle => 'Suriin at i-save ang setup';
+
+  @override
+  String get playerTourCalibrationActionsBody =>
+      'Gamitin ang mga kontrol sa ibaba ng camera para kumpirmahin ang bawat hakbang. Suriin ang mga key, saka i-save o gamitin ang setup. Ulitin kapag nailipat ang piano o telepono.';
+
+  @override
+  String get playerTourArOverlayTitle => 'Itugma ang mga nota sa piano';
+
+  @override
+  String get playerTourArOverlayBody =>
+      'Itinatapat ng overlay ang musika sa totoong mga key. Panatilihin sa parehong puwesto ang telepono pagkatapos ng setup.';
+
+  @override
+  String get playerTourArStartTitle => 'Simulan ang AR practice';
+
+  @override
+  String get playerTourArStartBody =>
+      'Ikonekta ang MIDI piano, pumili ng Wait o Performance, at i-tap ang Start. Gamitin ang Stop para i-reset ang pagsasanay. Panatilihing matatag ang camera at piano habang tumutugtog.';
 }

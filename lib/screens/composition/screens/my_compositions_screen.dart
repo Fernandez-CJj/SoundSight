@@ -60,9 +60,9 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
   Widget build(BuildContext context) {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
 
-    return ScreenFeatureTour(featureId: 'my_compositions', key: ValueKey('my_compositions'), colors: colors, canStart: () => _tourDataReady && deletingCompositionIds.isEmpty && generatingCompositionIds.isEmpty, openNext: _openTutorialItem, nextScreens: const {'composition_details', 'manual_composition', 'recording_composition'}, canContinue: () => _tourDataReady, remainingStepCount: () {
+    return ScreenFeatureTour(featureId: 'my_compositions', key: ValueKey('my_compositions'), colors: colors, canStart: () => _tourDataReady && deletingCompositionIds.isEmpty && generatingCompositionIds.isEmpty, openNext: _openTutorialItem, nextScreens: const {'composition_details'}, canContinue: () => _tourDataReady && _tutorialComposition != null, remainingStepCount: () {
       final composition = _tutorialComposition;
-      return composition == null ? null : FeatureTourStepCounts.compositionJourney(composition);
+      return composition == null ? 0 : FeatureTourStepCounts.compositionDetails(composition);
     }, child: Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: AppBar(
@@ -132,11 +132,7 @@ class _MyCompositionsScreenState extends State<MyCompositionsScreen> {
 
   Future<Object?> _openTutorialItem() async {
     final item = _tutorialComposition;
-    if (!mounted) return null;
-    if (item == null) {
-      await openNewComposition();
-      return null;
-    }
+    if (!mounted || item == null) return null;
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
     return Navigator.of(context).push<Object?>(MaterialPageRoute<Object?>(
       builder: (_) => CompositionDetailsScreen(colors: colors, composition: item),

@@ -1,3 +1,5 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
+import 'package:soundsight/screens/onboarding/controllers/feature_tour_controller.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -86,6 +88,11 @@ class MusicSheetReadingScreen extends StatefulWidget {
 }
 
 class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
+  bool _playerTourResolved = false;
+  bool _tourControlsPending = false;
+  bool get _playerTourBlocksInput => !_playerTourResolved ||
+      _tourControlsPending || FeatureTourController.isAnyTourActive;
+
   final MidiInputService midiInputService = MidiInputService();
   final PerformanceRecordingController performanceRecording =
       PerformanceRecordingController();
@@ -206,7 +213,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           return;
         }
 
-        if (!mounted || scoreCompleted) {
+        if (!mounted || _playerTourBlocksInput || scoreCompleted) {
           return;
         }
 
@@ -233,7 +240,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         return;
       }
 
-      if (scorePreviewPreparing || scorePreviewPlaying) {
+      if (_playerTourBlocksInput || scorePreviewPreparing || scorePreviewPlaying) {
         return;
       }
 
@@ -314,7 +321,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         return;
       }
 
-      if (scorePreviewPreparing || scorePreviewPlaying) {
+      if (_playerTourBlocksInput || scorePreviewPreparing || scorePreviewPlaying) {
         return;
       }
 
@@ -366,7 +373,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         return;
       }
 
-      if (scorePreviewPreparing || scorePreviewPlaying) {
+      if (_playerTourBlocksInput || scorePreviewPreparing || scorePreviewPlaying) {
         return;
       }
 
@@ -476,7 +483,27 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         waitHeldNotes.isEmpty &&
         !scorePreviewPreparing &&
         !scorePreviewPlaying;
-    return Scaffold(
+    return ScreenFeatureTour(
+      featureId: 'sight_reading_player',
+      colors: colors,
+      canStart: () => !scoreIsLoading && scoreLoadingError == null &&
+          loadedMusicXml != null && !recordingSetupPending &&
+          !performanceRunning && !performanceWaitingForFirstKey &&
+          !waitHoldInProgress && waitHeldNotes.isEmpty &&
+          !scorePreviewPreparing && !scorePreviewPlaying &&
+          !practiceControlsSheetOpen,
+      onAutoStartResolved: () => setState(() => _playerTourResolved = true),
+      openNext: () async {
+        _tourControlsPending = true;
+        try {
+          await showCurrentPracticeControls();
+        } finally {
+          _tourControlsPending = false;
+        }
+        return null;
+      },
+      nextScreens: const {'sight_reading_controls'},
+      child: Scaffold(
       backgroundColor: colors.backgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
@@ -530,7 +557,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget buildPracticeAppBarContent({
@@ -555,6 +582,8 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final showTitle = screenWidth >= 700;
     final showProgress = screenWidth >= 620;
+    final showStopAction = performanceModeEnabled &&
+        (performanceRunning || performanceWaitingForFirstKey);
 
     return Row(
       children: [
@@ -594,7 +623,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             ),
           ),
         if (showTitle) const Gap(AppSpacing.sm),
-        PracticeModeToggle<bool>(
+        FeatureTourTarget(id: 'modes', child: PracticeModeToggle<bool>(
           firstValue: false,
           firstLabel: context.l10n.sightReadingWait,
           secondValue: true,
@@ -606,7 +635,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                   unawaited(confirmPracticeModeChange(selectedMode));
                 }
               : null,
-        ),
+        )),
         const Gap(AppSpacing.sm),
         if (showProgress)
           Expanded(
@@ -666,17 +695,26 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           ),
         ),
         const Gap(AppSpacing.sm),
-        OutlinedButton.icon(
-          onPressed: onOpenControls,
+        FeatureTourTarget(id: 'controls', child: OutlinedButton.icon(
+          onPressed: showStopAction
+              ? () {
+                  unawaited(retryExercise());
+                }
+              : onOpenControls,
           style: secondaryButtonStyle(colors).copyWith(
             visualDensity: VisualDensity.compact,
             padding: const WidgetStatePropertyAll(
               EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             ),
           ),
-          icon: const Icon(Icons.tune_rounded, size: 18),
-          label: Text(context.l10n.sightReadingControls),
-        ),
+          icon: Icon(
+            showStopAction ? Icons.stop_rounded : Icons.tune_rounded,
+            size: 18,
+          ),
+          label: Text(
+            showStopAction ? context.l10n.stop : context.l10n.sightReadingControls,
+          ),
+        )),
         const Gap(AppSpacing.sm),
       ],
     );
@@ -1041,7 +1079,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     required String resultText,
     required bool showExpectedHint,
   }) {
-    return Container(
+    return FeatureTourTarget(id: 'score', child: FeatureTourTarget(id: 'start', enabled: !performanceModeEnabled, child: Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -1083,7 +1121,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
           if (performanceWaitingForFirstKey) buildPerformanceReadyOverlay(),
         ],
       ),
-    );
+    )));
   }
 
   bool shouldShowPerformanceStartButton() {
@@ -1097,7 +1135,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   }
 
   bool canStartPerformance() {
-    return !recordingSetupPending &&
+    return !_playerTourBlocksInput && !recordingSetupPending &&
         shouldShowPerformanceStartButton() &&
         performanceTracker.hasTimeline &&
         midiStatus != 'Searching...' &&
@@ -1118,7 +1156,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
             minHeight: 46,
             maxWidth: 300,
           ),
-          child: FilledButton.icon(
+          child: FeatureTourTarget(id: 'start', child: FilledButton.icon(
             onPressed: canStartPerformance()
                 ? () {
                     unawaited(handlePerformanceStartPressed());
@@ -1138,7 +1176,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-          ),
+          )),
         ),
       ),
     );
@@ -1374,7 +1412,14 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
         barrierColor: Colors.black.withValues(alpha: 0.35),
         enableDrag: false,
         builder: (sheetContext) {
-          return StatefulBuilder(
+          return ScreenFeatureTour(
+            featureId: 'sight_reading_controls',
+            colors: widget.colors,
+            canStart: () => !scoreIsLoading && !performanceRunning && !performanceWaitingForFirstKey && !recordingSetupPending,
+            onSeen: () {
+              if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+            },
+            child: StatefulBuilder(
             builder: (sheetContext, refreshControls) {
             final sheetCanToggleScorePreview =
                 scorePreviewPreparing ||
@@ -1455,7 +1500,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
+                        FeatureTourTarget(id: 'feedback', child: Row(
                           children: [
                             Container(
                               width: 36,
@@ -1515,7 +1560,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                               color: colors.primaryColor,
                             ),
                           ],
-                        ),
+                        )),
                         if (showMidiReconnectPrompt) ...[
                           const Gap(AppSpacing.sm),
                           Container(
@@ -1563,7 +1608,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: FeatureTourTarget(id: 'listen', enabled: scoreAudioUrl?.isNotEmpty == true, child: OutlinedButton.icon(
                                 onPressed: sheetCanToggleScorePreview
                                     ? () {
                                         unawaited(
@@ -1574,11 +1619,12 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                     : null,
                                 style: secondaryButtonStyle(colors),
                                 icon: scorePreviewPreparing
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 16,
                                         height: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
+                                          color: colors.primaryColor,
                                         ),
                                       )
                                     : Icon(
@@ -1593,11 +1639,11 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                       ? context.l10n.stop
                                       : context.l10n.sightReadingListen,
                                 ),
-                              ),
+                              )),
                             ),
                             const Gap(AppSpacing.sm),
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: FeatureTourTarget(id: 'midi', child: OutlinedButton.icon(
                                 onPressed: sheetCanConnectMidi
                                     ? () {
                                         unawaited(runAndRefresh(connectToMidi));
@@ -1606,11 +1652,11 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                 style: secondaryButtonStyle(colors),
                                 icon: Icon(midiActionIcon()),
                                 label: Text(midiActionLabel()),
-                              ),
+                              )),
                             ),
                             const Gap(AppSpacing.sm),
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: FeatureTourTarget(id: 'session', child: OutlinedButton.icon(
                                 onPressed: sheetCanRetry
                                     ? () {
                                         unawaited(runAndRefresh(retryExercise));
@@ -1619,7 +1665,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                                 style: secondaryButtonStyle(colors),
                                 icon: const Icon(Icons.replay_rounded),
                                 label: Text(context.l10n.retry),
-                              ),
+                              )),
                             ),
                           ],
                         ),
@@ -1629,7 +1675,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                 ),
               );
             },
-          );
+          ));
         },
       );
     } finally {
@@ -1665,6 +1711,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
 
   void scheduleMidiReconnectControls() {
     if (!mounted ||
+        _playerTourBlocksInput ||
         midiReconnectSheetScheduled ||
         practiceControlsSheetOpen) {
       return;
@@ -1675,6 +1722,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
       midiReconnectSheetScheduled = false;
 
       if (!mounted ||
+          _playerTourBlocksInput ||
           practiceControlsSheetOpen ||
           midiStatus.startsWith('Connected:')) {
         return;
@@ -1864,10 +1912,13 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
                         : null,
                     style: secondaryButtonStyle(colors),
                     icon: scorePreviewPreparing
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.primaryColor,
+                            ),
                           )
                         : Icon(
                             scorePreviewPlaying
@@ -2169,15 +2220,27 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
-          appBar: AppBar(title: Text(lesson.displayTitle)),
+          backgroundColor: widget.colors.backgroundColor,
+          appBar: AppBar(
+            title: Text(lesson.displayTitle),
+            backgroundColor: widget.colors.backgroundColor,
+            foregroundColor: widget.colors.primaryColor,
+          ),
           body: FutureBuilder<ByteData>(
             future: pdfBytes,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text(context.l10n.lessonPdfLoadFailed));
+                return Center(
+                  child: Text(
+                    context.l10n.lessonPdfLoadFailed,
+                    style: TextStyle(color: widget.colors.primaryColor),
+                  ),
+                );
               }
               if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(color: widget.colors.primaryColor),
+                );
               }
               return PdfViewer.data(
                 snapshot.data!.buffer.asUint8List(),
@@ -2466,6 +2529,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   }
 
   Future<void> beginWaitHoldAttempt() async {
+    if (_playerTourBlocksInput) return;
     if (!mounted ||
         performanceModeEnabled ||
         waitHoldInProgress ||
@@ -3890,6 +3954,7 @@ class _MusicSheetReadingScreenState extends State<MusicSheetReadingScreen> {
   }
 
   Future<void> armPerformanceForFirstKey() async {
+    if (_playerTourBlocksInput) return;
     if (recordingSetupPending) return;
     setState(() => recordingSetupPending = true);
     try {

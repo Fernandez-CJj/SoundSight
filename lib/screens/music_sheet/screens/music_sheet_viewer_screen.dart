@@ -223,7 +223,10 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FeatureTourTarget(id: 'practice', child: buildPlayButton(colors)),
+      floatingActionButton: FeatureTourTarget(
+        id: 'practice',
+        child: buildPrimaryAction(colors, sheetData),
+      ),
       body: buildSheetBody(sheetData),
     ));
   }
@@ -241,18 +244,51 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
     return buildViewerBody(sheetData);
   }
 
-  Widget buildPlayButton(AppThemeColors colors) => Padding(
-    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-    child: SizedBox(
-      width: double.infinity,
-      child: FloatingActionButton.extended(
-        onPressed: showPlayModeDialog,
-        backgroundColor: colors.primaryColor,
-        foregroundColor: colors.backgroundColor,
-        label: Text(context.l10n.play),
+  Widget buildPrimaryAction(
+    AppThemeColors colors,
+    Map<String, dynamic> sheetData,
+  ) {
+    final l10n = context.l10n;
+    final status = sheetData['omrStatus'];
+    final jobStatus = sheetData['lastJobStatus'];
+    const pendingStatuses = {'submitting', 'queued', 'processing'};
+    final isProcessing = submissionBusy ||
+        sheetData['activeJobId'] != null ||
+        pendingStatuses.contains(status) ||
+        pendingStatuses.contains(jobStatus);
+    final String label;
+    final VoidCallback? onPressed;
+
+    if (widget.type == 'audio' || (!isProcessing && hasConvertedScore(sheetData))) {
+      label = l10n.play;
+      onPressed = showPlayModeDialog;
+    } else if (isProcessing) {
+      label = l10n.translatingMusicSheet;
+      onPressed = null;
+    } else {
+      final failed = status == 'failed' ||
+          jobStatus == 'failed' ||
+          jobStatus == 'submissionFailed';
+      label = failed ? l10n.retry : l10n.translate;
+      onPressed = canSubmitConversion && files.isNotEmpty
+          ? recognizeMusicSheet
+          : null;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: SizedBox(
+        width: double.infinity,
+        child: FloatingActionButton.extended(
+          onPressed: onPressed,
+          backgroundColor: onPressed == null ? colors.borderColor : colors.primaryColor,
+          foregroundColor: onPressed == null ? colors.secondaryTextColor : colors.backgroundColor,
+          disabledElevation: 0,
+          label: Text(label),
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   bool hasPlayableAudioScore(Map<String, dynamic>? sheetData) =>
       sheetData?['transcriptionStatus'] == 'completed' &&
@@ -793,7 +829,7 @@ class _MusicSheetViewerScreenState extends State<MusicSheetViewerScreen> {
               partCount: partCount,
               noteCount: noteCount,
               isConverting: submissionBusy,
-              showAction: canSubmitConversion,
+              showAction: canSubmitConversion && status == 'completed',
               onRecognize: () =>
                   recognizeMusicSheet(isReconversion: status == 'completed'),
             ),

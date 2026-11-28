@@ -95,7 +95,42 @@ class HomeDrawerTour {
     scaffoldKey.currentState?.openDrawer();
     if (!await _waitForDrawer(true)) return false;
     if (!_canPrepare(presentationId)) return false;
-    return _reveal(targetKey, presentationId);
+    if (targetKey == navigationKey && drawerScrollController.hasClients) {
+      drawerScrollController.jumpTo(
+        drawerScrollController.position.minScrollExtent,
+      );
+    }
+    if (!await _reveal(targetKey, presentationId)) return false;
+    return _waitForDrawerTargetToSettle(targetKey, presentationId);
+  }
+
+  Future<bool> _waitForDrawerTargetToSettle(
+    GlobalKey targetKey,
+    int presentationId,
+  ) async {
+    // onDrawerChanged fires when opening starts, before the slide finishes.
+    // Measure the whole target only after its position and size stop changing.
+    final step = controller.steps.firstWhere((step) => step.targetKey == targetKey);
+    Rect? previousRect;
+    var stableFrames = 0;
+    for (var attempt = 0; attempt < 60; attempt++) {
+      await _nextFrame();
+      if (!_canPrepare(presentationId) || !_drawerOpen) return false;
+      final target = step.anchorKey.currentContext?.findRenderObject();
+      if (target is! RenderBox || !target.attached || !target.hasSize ||
+          target.size.isEmpty) return false;
+      final rect = target.localToGlobal(Offset.zero) & target.size;
+      if (previousRect != null &&
+          (rect.topLeft - previousRect.topLeft).distance < 0.1 &&
+          (rect.bottomRight - previousRect.bottomRight).distance < 0.1) {
+        stableFrames++;
+        if (stableFrames >= 3) return true;
+      } else {
+        stableFrames = 0;
+      }
+      previousRect = rect;
+    }
+    return false;
   }
 
   bool _canPrepare(int presentationId) =>

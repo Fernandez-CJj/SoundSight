@@ -312,6 +312,7 @@ h2 {
   min-width: 0;
   width: 100%;
   padding-block: 16px;
+  text-align: left;
 }
 .hero h1 {
   margin-top: 0;
@@ -560,13 +561,14 @@ h1 {
   width: 44px;
   height: 44px;
   padding: 10px;
-  border: 1px solid var(--input-border);
+  border: 1px solid var(--primary);
   border-radius: 50%;
-  background: var(--background);
-}
-.testimonial-arrow:hover:not(:disabled) {
   color: var(--surface);
   background: var(--primary);
+}
+.testimonial-arrow:hover:not(:disabled) {
+  color: var(--primary);
+  background: var(--surface);
   border-color: var(--primary);
 }
 .testimonial-arrow:disabled {
@@ -576,20 +578,17 @@ h1 {
   transform: rotate(180deg);
 }
 .testimonials-list {
-  display: flex;
-  align-items: flex-start;
+  --review-columns: 3;
+  display: grid;
+  grid-template-columns: repeat(var(--review-columns), minmax(0, 1fr));
+  align-items: start;
   gap: 20px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
+  touch-action: pan-y pinch-zoom;
   list-style: none;
   margin: 0;
   padding: 4px 4px 16px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--input-border) var(--background);
 }
 .testimonial-card {
-  flex: 0 0 calc((100% - 40px) / 3);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -599,7 +598,25 @@ h1 {
   border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: 0 3px 8px color-mix(in srgb, var(--primary) 5%, transparent);
-  scroll-snap-align: start;
+}
+.testimonial-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-top: 8px;
+}
+.testimonial-pagination {
+  color: var(--secondary);
+  font-size: 14px;
+}
+.button-outline {
+  color: var(--primary);
+  background: var(--surface);
+}
+.button-outline:hover {
+  background: var(--surface-emphasis);
 }
 .testimonial-quote {
   margin: 0;
@@ -721,6 +738,7 @@ h1 {
   width: 100%;
 }
 .lesson-card figcaption {
+  min-height: 88px;
   max-width: 300px;
   text-align: center;
 }
@@ -748,6 +766,7 @@ h1 {
 }
 .practice-card-heading {
   display: flex;
+  min-height: 58px;
   align-items: center;
   gap: 14px;
 }
@@ -970,16 +989,38 @@ h1 {
   color: var(--accent);
 }
 .steps-grid {
+  --step-gap: 44px;
+  --step-arrow-size: 32px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   list-style: none;
   padding: 0;
   margin: 0;
-  gap: 44px;
+  gap: var(--step-gap);
 }
-.steps-grid li {
-  border-top: 1px solid var(--input-border);
-  padding-top: 22px;
+.steps-grid > li {
+  position: relative;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+}
+.step-connector {
+  position: absolute;
+  right: calc((var(--step-gap) + var(--step-arrow-size)) / -2);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary);
+}
+.step-connector .icon {
+  width: var(--step-arrow-size);
+  height: var(--step-arrow-size);
+}
+.step-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 38px;
 }
 .step-number {
   font-size: 38px;
@@ -987,7 +1028,8 @@ h1 {
   letter-spacing: -2px;
   line-height: 1;
   display: block;
-  margin-bottom: 27px;
+  flex-shrink: 0;
+  margin: 0;
 }
 .steps-grid h3 {
   font-size: 20px;
@@ -1184,6 +1226,44 @@ details[open] .faq-plus::after {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.contact-section {
+  background: var(--surface);
+}
+.contact-intro {
+  margin-top: 16px;
+  color: var(--secondary);
+}
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 24px;
+}
+.contact-card {
+  min-width: 0;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+}
+.contact-card h3 {
+  font-size: 20px;
+}
+.contact-card p,
+.contact-details {
+  margin-top: 16px;
+  color: var(--secondary);
+}
+.contact-card .button,
+.contact-card .text-link {
+  margin-top: 20px;
+  overflow-wrap: anywhere;
+}
+.contact-details {
+  padding-left: 20px;
+}
+.contact-details li + li {
+  margin-top: 8px;
+}
 .site-footer {
   border-top: 1px solid var(--border);
   background: var(--background);
@@ -1326,6 +1406,22 @@ details[open] .faq-plus::after {
   :root {
     --page-gutter: 32px;
   }
+  .steps-grid {
+    --step-gap: 40px;
+    --step-arrow-size: 28px;
+  }
+  .steps-grid > li {
+    padding: 20px 16px;
+  }
+  .step-heading {
+    gap: 10px;
+  }
+  .step-number {
+    font-size: 32px;
+  }
+  .steps-grid h3 {
+    font-size: 18px;
+  }
   .main-nav {
     gap: 20px;
   }
@@ -1364,20 +1460,20 @@ details[open] .faq-plus::after {
   }
 }
 @media (max-width: 1000px) {
-  .testimonial-card {
-    flex-basis: calc((100% - 20px) / 2);
+  .testimonials-list {
+    --review-columns: 2;
   }
   .practice-grid {
     grid-template-columns: 1fr;
   }
   .hero {
     grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
+    justify-items: stretch;
     gap: 20px;
     padding-block: 40px;
   }
   .hero-copy {
-    max-width: 640px;
+    max-width: none;
   }
   .hero .desktop-break {
     display: none;
@@ -1392,6 +1488,9 @@ details[open] .faq-plus::after {
     width: 100%;
     max-width: 640px;
     margin-inline: auto;
+  }
+  .lesson-card figcaption {
+    min-height: 0;
   }
   :root {
     --page-gutter: 24px;
@@ -1488,13 +1587,22 @@ details[open] .faq-plus::after {
     width: 60%;
   }
   .steps-grid {
-    gap: 24px;
+    --step-gap: 48px;
+    --step-arrow-size: 32px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .steps-grid > li {
+    padding: 20px;
+  }
+  .step-connector {
+    top: auto;
+    right: auto;
+    bottom: calc((var(--step-gap) + var(--step-arrow-size)) / -2);
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
   }
   .steps-grid h3 {
-    font-size: 17px;
-  }
-  .steps-grid p {
-    font-size: 16px;
+    font-size: 20px;
   }
   .getting-started .section-heading {
     align-items: flex-end;
@@ -1531,8 +1639,10 @@ details[open] .faq-plus::after {
   :root {
     --page-gutter: 20px;
   }
+  .testimonials-list {
+    --review-columns: 1;
+  }
   .testimonial-card {
-    flex-basis: 86%;
     min-height: var(--testimonial-collapsed-height, 270px);
   }
   .testimonial-preview {
@@ -1569,7 +1679,7 @@ details[open] .faq-plus::after {
     height: 15px;
   }
   .main-nav {
-    gap: 30px;
+    gap: 20px;
     font-size: 12px;
   }
   .hero {
@@ -1682,19 +1792,11 @@ details[open] .faq-plus::after {
     align-items: flex-start;
     gap: 12px;
   }
-  .steps-grid {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-  .steps-grid li {
-    padding-top: 20px;
+  .contact-card {
+    padding: 24px 20px;
   }
   .step-number {
     font-size: 30px;
-    margin-bottom: 15px;
-  }
-  .steps-grid h3 {
-    font-size: 20px;
   }
   .steps-grid p {
     font-size: 16px;

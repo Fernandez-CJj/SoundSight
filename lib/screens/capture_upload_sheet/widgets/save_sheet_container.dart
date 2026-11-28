@@ -23,6 +23,9 @@ class SaveSheetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progress = isPreparingAudio || uploadProgress == 0
+        ? null
+        : uploadProgress;
     return SafeArea(
       child: Container(
         padding: EdgeInsets.fromLTRB(
@@ -44,11 +47,12 @@ class SaveSheetContainer extends StatelessWidget {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                      value: isPreparingAudio || uploadProgress == 0
-                          ? null
-                          : uploadProgress,
+                      value: progress,
                       strokeWidth: 2.5,
                       color: colors.backgroundColor,
+                      backgroundColor: progress == null
+                          ? null
+                          : colors.backgroundColor.withValues(alpha: 0.25),
                     ),
                   )
                 : Icon(Icons.cloud_upload_outlined, size: 21),

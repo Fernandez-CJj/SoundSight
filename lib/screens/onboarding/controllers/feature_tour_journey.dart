@@ -88,11 +88,12 @@ class FeatureTourJourneyProgress {
 }
 
 const featureTourParents = <String, String>{
+  'sight_reading_controls': 'sight_reading_player',
+  'synthesia_controls': 'synthesia_player',
+  'ar_player_controls': 'ar_player',
   'music_sheet_viewer': 'music_sheets',
   'library_piece': 'music_library',
   'composition_details': 'my_compositions',
-  'manual_composition': 'my_compositions',
-  'recording_composition': 'my_compositions',
   'published_details': 'published_compositions',
   'practice_result_details': 'practice_results',
   'lesson_content': 'lessons',

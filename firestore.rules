@@ -303,6 +303,8 @@ service cloud.firestore {
             'saved_compositions', 'lessons', 'assessment',
             'sight_reading', 'synthesia', 'ar_setup',
             'piano_calibration', 'ar_practice', 'practice_results',
+            'sight_reading_player', 'synthesia_player', 'ar_player',
+            'ar_calibration', 'ar_calibration_review',
             'practice_result_details', 'profile', 'assessment_instructions',
             'assessment_questions', 'assessment_notation', 'assessment_piano',
             'assessment_results'
@@ -327,6 +329,11 @@ service cloud.firestore {
                  && data.get('ar_setup', false) is bool
                  && data.get('piano_calibration', false) is bool
                  && data.get('ar_practice', false) is bool
+                 && data.get('sight_reading_player', false) is bool
+                 && data.get('synthesia_player', false) is bool
+                 && data.get('ar_player', false) is bool
+                 && data.get('ar_calibration', false) is bool
+                 && data.get('ar_calibration_review', false) is bool
                  && data.get('practice_results', false) is bool
                  && data.get('practice_result_details', false) is bool
                  && data.get('profile', false) is bool

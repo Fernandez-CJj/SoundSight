@@ -172,6 +172,15 @@ class _CaptureUploadSheetScreenState extends State<CaptureUploadSheetScreen> {
           elevation: 0,
           scrolledUnderElevation: 0,
           foregroundColor: colors.primaryColor,
+          leading: isSavingSheet &&
+                  ModalRoute.of(context)?.impliesAppBarDismissal == true
+              ? IconButton(
+                  onPressed: null,
+                  disabledColor: colors.secondaryTextColor,
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  icon: const BackButtonIcon(),
+                )
+              : null,
           centerTitle: true,
           title: Text(
             context.l10n.addSheet,

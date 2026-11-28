@@ -101,12 +101,15 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
         ),
         actions: [
           if (deletingAllResults)
-            const Padding(
-              padding: EdgeInsets.all(AppSpacing.md),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: colors.primaryColor,
+                ),
               ),
             )
           else

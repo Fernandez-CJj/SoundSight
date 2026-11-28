@@ -80,6 +80,7 @@
           <a href="#features">Features</a>
           <a href="#how-it-works">Get started</a>
           <a href="#installation">Install</a>
+          <a href="#help">Help</a>
         </nav>
         <button
           class="button button-dark header-download"
@@ -97,7 +98,7 @@
           <div class="hero-copy">
             <h1 id="hero-title">Music sheets and piano made simple.</h1>
             <p class="hero-description">
-              Video lessons and quizzes in one app<br />help you put each note
+              Video lessons and quizzes in one app help you put each note
               into practice.
             </p>
             <div class="hero-actions">
@@ -324,13 +325,13 @@
         aria-labelledby="testimonials-title"
       >
         <div class="section-heading">
-          <div><h2 id="testimonials-title">What our testers say</h2></div>
+          <div><h2 id="testimonials-title">What our users say</h2></div>
           <div class="testimonial-controls" data-testimonial-controls hidden>
             <button
               class="testimonial-arrow testimonial-previous"
               type="button"
               data-testimonial-previous
-              aria-label="Previous reviews"
+              aria-label="Previous page of reviews"
               aria-controls="testimonials-list"
               disabled
             >
@@ -340,7 +341,7 @@
               class="testimonial-arrow"
               type="button"
               data-testimonial-next
-              aria-label="Next reviews"
+              aria-label="Next page of reviews"
               aria-controls="testimonials-list"
             >
               <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
@@ -350,8 +351,10 @@
         <ul
           class="testimonials-list"
           id="testimonials-list"
+          data-review-limit="10"
           tabindex="0"
-          aria-label="Reviews from our testers"
+          aria-label="Reviews from our users"
+          aria-describedby="testimonial-pagination"
         >
           <li class="testimonial-card">
             <blockquote class="testimonial-quote">
@@ -568,7 +571,7 @@
               </div>
             </div>
           </li>
-          <li class="testimonial-card">
+          <li class="testimonial-card" hidden>
             <blockquote class="testimonial-quote" lang="fil">
               <p class="testimonial-preview">
                 Unique yung mga features niya, lalo na yung AR, pero pa-improve
@@ -584,6 +587,12 @@
             </div>
           </li>
         </ul>
+        <div class="testimonial-footer" data-testimonial-footer hidden>
+          <p class="testimonial-pagination" id="testimonial-pagination" role="status" aria-atomic="true"></p>
+          <button class="button button-outline" type="button" data-show-more-reviews hidden>
+            Show more reviews
+          </button>
+        </div>
       </section>
 
       <section
@@ -602,20 +611,28 @@
         </div>
         <ol class="steps-grid">
           <li>
-            <span class="step-number">01</span>
-            <h3>Get the app</h3>
+            <div class="step-heading">
+              <span class="step-number">01</span>
+              <h3>Get the app</h3>
+            </div>
             <p>Download SoundSight and install it on your Android phone.</p>
+            <span class="step-connector" aria-hidden="true"><svg class="icon"><use href="#i-arrow" /></svg></span>
           </li>
           <li>
-            <span class="step-number">02</span>
-            <h3>Make an account</h3>
+            <div class="step-heading">
+              <span class="step-number">02</span>
+              <h3>Make an account</h3>
+            </div>
             <p>
               Confirm your email, then take a test to find your starting level.
             </p>
+            <span class="step-connector" aria-hidden="true"><svg class="icon"><use href="#i-arrow" /></svg></span>
           </li>
           <li>
-            <span class="step-number">03</span>
-            <h3>Start a lesson</h3>
+            <div class="step-heading">
+              <span class="step-number">03</span>
+              <h3>Start a lesson</h3>
+            </div>
             <p>Learn the notes, then try a piano activity.</p>
           </li>
         </ol>
@@ -686,6 +703,7 @@
 
       <section
         class="section faq-section"
+        id="help"
         aria-labelledby="faq-title"
       >
         <div class="section-heading faq-heading">
@@ -765,6 +783,71 @@
               is ready.
             </p>
           </details>
+          <details>
+            <summary>
+              What if the download stops?<span class="faq-plus" aria-hidden="true"></span>
+            </summary>
+            <p>
+              Use a stable internet connection and check that your phone has
+              enough free storage for the <span data-file-size>378 MB</span>
+              app file. If the file did not finish downloading, download it
+              again before following the <a href="#installation">install steps</a>.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Why won&#x27;t the app install?<span class="faq-plus" aria-hidden="true"></span>
+            </summary>
+            <p>
+              Confirm that your phone runs Android <span data-android>7.0</span>+
+              and has free storage. Make sure the APK finished downloading.
+              If Android asks, allow the browser or Files app you used to
+              install the file. If installation still fails,
+              <a href="#contact">contact us</a> with the exact message shown.
+            </p>
+          </details>
+          <details>
+            <summary>
+              How do I report a problem or ask a question?<span class="faq-plus" aria-hidden="true"></span>
+            </summary>
+            <p>
+              Use the support link in <a href="#contact">Contact us</a>.
+              Include your SoundSight version, phone model, Android version,
+              and the steps that led to the problem so we can understand it.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <section class="section contact-section" id="contact" aria-labelledby="contact-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="contact-title">Contact us</h2>
+            <p class="contact-intro">Need a hand with SoundSight? Ask a question or report a problem.</p>
+          </div>
+        </div>
+        <div class="contact-grid">
+          <article class="contact-card">
+            <h3>Project support</h3>
+            <p>Open a support request on our GitHub project. A GitHub account is needed to post.</p>
+            <a class="button button-dark" data-support-link
+              href="https://github.com/Fernandez-CJj/SoundSight/issues"
+              target="_blank" rel="noopener noreferrer">Open project support</a>
+          </article>
+          <article class="contact-card" data-support-email-card hidden>
+            <h3>Email us</h3>
+            <p>Send your question or describe the issue you encountered.</p>
+            <a class="text-link" data-support-email></a>
+          </article>
+          <article class="contact-card">
+            <h3>Help us understand the issue</h3>
+            <ul class="contact-details">
+              <li>SoundSight version <span data-version>1.0.2</span></li>
+              <li>Your phone model and Android version</li>
+              <li>What happened and the message shown</li>
+              <li>The steps to reproduce the problem</li>
+            </ul>
+          </article>
         </div>
       </section>
     </main>

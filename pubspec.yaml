@@ -81,6 +81,23 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/help_assets/ar_player/
+    - assets/help_assets/assessment/
+    - assets/help_assets/calibration/
+    - assets/help_assets/homescreen/
+    - assets/help_assets/manual_composition/
+    - assets/help_assets/music_library/
+    - assets/help_assets/music_sheet/
+    - assets/help_assets/my_compositions/
+    - assets/help_assets/practice/
+    - assets/help_assets/practice_results/
+    - assets/help_assets/profile/
+    - assets/help_assets/published_compositions/
+    - assets/help_assets/recording_composition/
+    - assets/help_assets/saved_composition/
+    - assets/help_assets/sight_reading/
+    - assets/help_assets/synthesia/
+    - assets/help_assets/upload/
     - assets/images/
     - assets/badge/
     - assets/calibration/

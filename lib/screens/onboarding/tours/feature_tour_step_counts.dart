@@ -39,11 +39,4 @@ class FeatureTourStepCounts {
       featureTourCatalog['composition_details']!.length -
       (composition.hasActiveJob && !composition.generatedFilesAreCurrent ? 1 : 0);
 
-  static int compositionEditor(Composition composition) =>
-      composition.creationMethod == Composition.recordingCreationMethod ||
-          composition.hasActiveJob
-      ? 0 : featureTourCatalog['manual_composition']!.length;
-
-  static int compositionJourney(Composition composition) =>
-      compositionDetails(composition) + compositionEditor(composition);
 }

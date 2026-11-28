@@ -147,52 +147,29 @@ class _FundamentalsScreenState extends State<FundamentalsScreen> {
         onDarkModeChanged: (value) => setState(() => _isDarkMode = value),
       ),
       backgroundColor: colors.backgroundColor,
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: colors.backgroundColor,
+        foregroundColor: colors.primaryColor,
+        surfaceTintColor: colors.backgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: FeatureTourTarget(
+          id: 'menu',
+          child: IconButton(
+            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            icon: const Icon(Icons.menu_rounded),
+          ),
+        ),
+        title: Text(
+          context.l10n.drawerPractice,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 20, 4),
-              child: Row(
-                children: [
-                  FeatureTourTarget(id: 'menu', child: IconButton(
-                    tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    icon: Icon(Icons.menu_rounded, color: colors.primaryColor),
-                  )),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      context.l10n.drawerPractice,
-                      style: TextStyle(
-                        color: colors.primaryColor,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  if (_practiceLevel != null)
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          context.l10n.lessonCompactProgress(
-                            _completedCount(),
-                            practiceStages.length,
-                          ),
-                          style: TextStyle(
-                            color: _completedCount() > 0
-                                ? colors.completedStageColor
-                                : colors.secondaryTextColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-],
-              ),
-            ),
             if (_practiceLevel != null)
               _buildProgressHeader(colors, horizontal),
             if (_pendingPassedStage != null) _buildSaveBanner(colors),

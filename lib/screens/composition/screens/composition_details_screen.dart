@@ -1,5 +1,4 @@
 import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
-import 'package:soundsight/screens/onboarding/tours/feature_tour_step_counts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:soundsight/services/processing_job_service.dart';
 import 'package:soundsight/widgets/processing_job_card.dart';
@@ -97,13 +96,7 @@ class _CompositionDetailsScreenState extends State<CompositionDetailsScreen> {
   Widget build(BuildContext context) {
     final colors = widget.colors;
 
-    return ScreenFeatureTour(featureId: 'composition_details', key: ValueKey('composition_details'), colors: widget.colors, canStart: () => !isLoading && !isDeleting && !isPublishing && !isPlaying && !isPreparingPlayback, openNext: () async {
-        await editComposition();
-        return null;
-      }, nextScreens: const {'manual_composition'},
-      remainingStepCount: () => FeatureTourStepCounts.compositionEditor(composition),
-      canContinue: () => composition.creationMethod != Composition.recordingCreationMethod &&
-          !composition.hasActiveJob && !isPlaying && !isPublishing,
+    return ScreenFeatureTour(featureId: 'composition_details', key: ValueKey('composition_details'), colors: widget.colors, canStart: () => !isLoading && !isDeleting && !isPublishing && !isPlaying && !isPreparingPlayback,
       child: PopScope(
       canPop: !isDeleting && !isPublishing,
       child: Scaffold(

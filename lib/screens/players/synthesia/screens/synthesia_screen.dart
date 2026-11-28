@@ -1,3 +1,5 @@
+import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
+import 'package:soundsight/screens/onboarding/controllers/feature_tour_controller.dart';
 import 'dart:async';
 
 import 'package:soundsight/screens/players/services/performance_recording_controller.dart';
@@ -52,6 +54,11 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   static const Duration approachDuration = Duration(seconds: 4);
   static const Duration waitReleaseGrace = Duration(milliseconds: 40);
   static const Duration waitOverholdTolerance = Duration(milliseconds: 300);
+
+  bool _playerTourResolved = false;
+  bool _tourControlsPending = false;
+  bool get _playerTourBlocksInput => !_playerTourResolved ||
+      _tourControlsPending || FeatureTourController.isAnyTourActive;
 
   final SynthesiaScoreLoader scoreLoader = SynthesiaScoreLoader();
   final ScoreAudioPlaybackService scoreAudioPlaybackService =
@@ -116,7 +123,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     activeNotesSubscription = midiInputService.activeNotesStream.listen((
       notes,
     ) {
-      if (!mounted) return;
+      if (!mounted || _playerTourBlocksInput) return;
       setState(() {
         activeMidiNotes = Set<int>.from(notes);
         if (requireReleaseAfterSeek && activeMidiNotes.isEmpty) {
@@ -156,6 +163,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
 
     noteOnSubscription = midiInputService.noteOnStream.listen((midiNote) {
       if (!mounted ||
+          _playerTourBlocksInput ||
           !hasStarted ||
           isPaused ||
           isComplete ||
@@ -231,6 +239,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
 
     noteEventSubscription = midiInputService.noteEventStream.listen((event) {
       if (!mounted ||
+          _playerTourBlocksInput ||
           event.type != MidiNoteEventType.noteOff ||
           !hasStarted ||
           isPaused ||
@@ -470,14 +479,16 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   }
 
   void _scheduleMidiReconnectControls() {
-    if (!mounted || midiReconnectSheetScheduled || practiceControlsSheetOpen) {
+    if (!mounted || _playerTourBlocksInput ||
+        midiReconnectSheetScheduled || practiceControlsSheetOpen) {
       return;
     }
 
     midiReconnectSheetScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       midiReconnectSheetScheduled = false;
-      if (!mounted || practiceControlsSheetOpen || isMidiConnected) return;
+      if (!mounted || _playerTourBlocksInput ||
+          practiceControlsSheetOpen || isMidiConnected) return;
       unawaited(_showPracticeControlsSheet());
     });
   }
@@ -503,6 +514,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   }
 
   Future<void> _startOrResume() async {
+    if (_playerTourBlocksInput) return;
     if (recordingSetupPending) return;
     setState(() => recordingSetupPending = true);
     try {
@@ -2065,7 +2077,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
+            CircularProgressIndicator(color: widget.colors.primaryColor),
             const SizedBox(height: 16),
             Text(context.l10n.synthesiaPreparing),
           ],
@@ -2106,7 +2118,26 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
     final range = pianoRange!;
     final controller = timelineController!;
 
-    return PopScope(
+    return ScreenFeatureTour(
+      featureId: 'synthesia_player',
+      colors: widget.colors,
+      canStart: () => !isLoading && loadingError == null &&
+          score != null && pianoRange != null && timelineController != null &&
+          !hasStarted && !recordingSetupPending && !isScrubbing &&
+          !scorePreviewPreparing && !scorePreviewPlaying &&
+          !completionDialogOpen && !practiceControlsSheetOpen,
+      onAutoStartResolved: () => setState(() => _playerTourResolved = true),
+      openNext: () async {
+        _tourControlsPending = true;
+        try {
+          await _showPracticeControlsSheet();
+        } finally {
+          _tourControlsPending = false;
+        }
+        return null;
+      },
+      nextScreens: const {'synthesia_controls'},
+      child: PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           unawaited(performanceRecording.discard());
@@ -2141,7 +2172,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                             SizedBox(
                               width: double.infinity,
                               height: fallingHeight,
-                              child: GestureDetector(
+                              child: FeatureTourTarget(id: 'notes', child: GestureDetector(
                                 behavior: HitTestBehavior.opaque,
                                 onVerticalDragStart: _beginScrub,
                                 onVerticalDragUpdate: (details) {
@@ -2208,16 +2239,16 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                                     if (isScrubbing) _buildScrubOverlay(),
                                   ],
                                 ),
-                              ),
+                              )),
                             ),
                             SizedBox(
                               width: double.infinity,
                               height: keyboardHeight,
-                              child: SynthesiaKeyboard(
+                              child: FeatureTourTarget(id: 'keyboard', child: SynthesiaKeyboard(
                                 range: range,
                                 activeMidiNotes: activeMidiNotes,
                                 expectedMidiNotes: _expectedMidiNotes,
-                              ),
+                              )),
                             ),
                           ],
                         ),
@@ -2235,7 +2266,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
           ),
         ),
       ),
-    );
+    ));
   }
 
   bool _shouldShowStartButton() {
@@ -2247,7 +2278,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
   }
 
   bool _canStartPractice() {
-    return !recordingSetupPending &&
+    return !_playerTourBlocksInput && !recordingSetupPending &&
         _shouldShowStartButton() &&
         timelineController != null &&
         !isConnectingMidi &&
@@ -2267,7 +2298,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 220, minHeight: 48),
-          child: FilledButton.icon(
+          child: FeatureTourTarget(id: 'start', child: FilledButton.icon(
             onPressed: _canStartPractice()
                 ? () {
                     unawaited(_handleStartPressed());
@@ -2288,7 +2319,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
               softWrap: true,
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-          ),
+          )),
         ),
       ),
     );
@@ -2397,7 +2428,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
             ),
           ],
           const Gap(AppSpacing.sm),
-          PracticeModeToggle<SynthesiaMode>(
+          FeatureTourTarget(id: 'modes', child: PracticeModeToggle<SynthesiaMode>(
             firstValue: SynthesiaMode.wait,
             firstLabel: context.l10n.synthesiaWait,
             secondValue: SynthesiaMode.performance,
@@ -2409,7 +2440,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                     unawaited(_changeMode(selectedMode));
                   }
                 : null,
-          ),
+          )),
           const Gap(AppSpacing.sm),
           if (showProgress)
             Expanded(
@@ -2464,7 +2495,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
             ),
           ),
           const Gap(AppSpacing.sm),
-          OutlinedButton.icon(
+          FeatureTourTarget(id: 'controls', child: OutlinedButton.icon(
             onPressed: () => unawaited(_showPracticeControlsSheet()),
             style: _secondaryButtonStyle(colors).copyWith(
               visualDensity: VisualDensity.compact,
@@ -2474,7 +2505,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
             ),
             icon: const Icon(Icons.tune_rounded, size: 18),
             label: Text(context.l10n.synthesiaControls),
-          ),
+          )),
 ],
       ),
     );
@@ -2652,7 +2683,14 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
         enableDrag: false,
         isScrollControlled: true,
         builder: (sheetContext) {
-          return StatefulBuilder(
+          return ScreenFeatureTour(
+            featureId: 'synthesia_controls',
+            colors: widget.colors,
+            canStart: () => !hasStarted && !recordingSetupPending,
+            onSeen: () {
+              if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+            },
+            child: StatefulBuilder(
             builder: (sheetContext, refreshControls) {
               final feedback = _feedbackAppearance(colors);
               final canTogglePreview =
@@ -2700,7 +2738,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
+                        FeatureTourTarget(id: 'feedback', child: Row(
                           children: [
                             Container(
                               width: 36,
@@ -2793,7 +2831,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                               icon: const Icon(Icons.close_rounded),
                             ),
                           ],
-                        ),
+                        )),
                         if (showMidiReconnectPrompt) ...[
                           const Gap(AppSpacing.sm),
                           Container(
@@ -2839,7 +2877,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: FeatureTourTarget(id: 'listen', enabled: score?.audioUrl?.isNotEmpty == true, child: OutlinedButton.icon(
                                 onPressed: canTogglePreview
                                     ? () => unawaited(
                                         runAndRefresh(_toggleScorePreview),
@@ -2847,11 +2885,12 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                                     : null,
                                 style: _secondaryButtonStyle(colors),
                                 icon: scorePreviewPreparing
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 16,
                                         height: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
+                                          color: colors.primaryColor,
                                         ),
                                       )
                                     : Icon(
@@ -2868,22 +2907,23 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                                   textAlign: TextAlign.center,
                                   softWrap: true,
                                 ),
-                              ),
+                              )),
                             ),
                             const Gap(AppSpacing.sm),
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: FeatureTourTarget(id: 'midi', child: OutlinedButton.icon(
                                 onPressed: canConnectMidi
                                     ? () =>
                                           unawaited(runAndRefresh(_connectMidi))
                                     : null,
                                 style: _secondaryButtonStyle(colors),
                                 icon: isConnectingMidi
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 16,
                                         height: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
+                                          color: colors.primaryColor,
                                         ),
                                       )
                                     : Icon(
@@ -2900,11 +2940,11 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                                   textAlign: TextAlign.center,
                                   softWrap: true,
                                 ),
-                              ),
+                              )),
                             ),
                             const Gap(AppSpacing.sm),
                             Expanded(
-                              child: FilledButton.icon(
+                              child: FeatureTourTarget(id: 'session', child: FilledButton.icon(
                                 onPressed: canStart
                                     ? () {
                                         Navigator.of(sheetContext).pop();
@@ -2920,7 +2960,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                                   textAlign: TextAlign.center,
                                   softWrap: true,
                                 ),
-                              ),
+                              )),
                             ),
                             const Gap(AppSpacing.sm),
                             Expanded(
@@ -2948,7 +2988,7 @@ class _SynthesiaScreenState extends State<SynthesiaScreen>
                 ),
               );
             },
-          );
+          ));
         },
       );
     } finally {

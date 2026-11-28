@@ -9,11 +9,8 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get featureTourReplay => 'Help';
-
-  @override
   String get featureTourReplayBody =>
-      'Need help? Tap here to watch this guide again, from the first step.';
+      'Open the Help Center, choose a feature, and follow its guide one step at a time.';
 
   @override
   String get featureTourSheetsAddBody =>
@@ -5436,4 +5433,584 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get performanceVideoUnmute => 'Unmute recording';
+
+  @override
+  String get helpHomeTitle => 'Home & navigation';
+
+  @override
+  String get helpManualCompositionTitle => 'Manual composition';
+
+  @override
+  String get helpManualCompositionDescription =>
+      'Write, play, and save your own notes.';
+
+  @override
+  String get helpRecordingCompositionTitle => 'Recording composition';
+
+  @override
+  String get helpRecordingCompositionDescription =>
+      'Record your piano playing to create a composition.';
+
+  @override
+  String get helpArPlayerTitle => 'AR player';
+
+  @override
+  String get helpArPlayerDescription =>
+      'Follow notes aligned with your real piano keys.';
+
+  @override
+  String get helpCenterEnlargeScreenshot => 'View screenshot full screen';
+
+  @override
+  String get helpHomeDescription => 'Find your way around SoundSight.';
+
+  @override
+  String get helpHomeStep1Title => 'Start at Home';
+
+  @override
+  String get helpHomeStep1Description =>
+      'See your progress and use Quick Actions to open your music, upload a sheet, or view your results.';
+
+  @override
+  String get helpHomeStep2Title => 'Open the side menu';
+
+  @override
+  String get helpHomeStep2Description =>
+      'Tap the menu icon at the top left to find lessons, compositions, and your saved music.';
+
+  @override
+  String get helpHomeStep3Title => 'Make it yours';
+
+  @override
+  String get helpHomeStep3Description =>
+      'Use the menu to change the language or switch between light and dark mode. Open Help whenever you need a guide.';
+
+  @override
+  String get helpMusicLibraryTitle => 'Music Library';
+
+  @override
+  String get helpMusicLibraryDescription => 'Search for a song to learn.';
+
+  @override
+  String get helpMusicLibraryStep1Title => 'Find a song';
+
+  @override
+  String get helpMusicLibraryStep1Description =>
+      'Tap the search icon on Home. Type a song title, or browse the available pieces.';
+
+  @override
+  String get helpMusicLibraryStep2Title => 'Look inside';
+
+  @override
+  String get helpMusicLibraryStep2Description =>
+      'Select a song to view its music pages. Tap Play and choose how you want to practice.';
+
+  @override
+  String get helpUploadTitle => 'Upload a music sheet';
+
+  @override
+  String get helpUploadDescription => 'Add a PDF, photo, or piano recording.';
+
+  @override
+  String get helpUploadStep1Title => 'Choose your source';
+
+  @override
+  String get helpUploadStep1Description =>
+      'Open Upload Sheet from the menu, or tap the plus sign in My Music Sheets. Choose a PDF, take photos, or select a piano recording.';
+
+  @override
+  String get helpUploadStep2Title => 'Check your selection';
+
+  @override
+  String get helpUploadStep2Description =>
+      'Preview each page or listen to your recording. Use clear, well-lit photos with all the notes visible.';
+
+  @override
+  String get helpUploadStep3Title => 'Save your music';
+
+  @override
+  String get helpUploadStep3Description =>
+      'Tap Save Sheet or Save Audio, enter a title, and wait for confirmation. Your upload appears in My Music Sheets.';
+
+  @override
+  String get helpMusicSheetsTitle => 'My Music Sheets';
+
+  @override
+  String get helpMusicSheetsDescription =>
+      'Open and manage your uploaded music.';
+
+  @override
+  String get helpMusicSheetsStep1Title => 'Your music collection';
+
+  @override
+  String get helpMusicSheetsStep1Description =>
+      'Open My Music Sheets to see your uploads, with the newest first. Tap a card to open it.';
+
+  @override
+  String get helpMusicSheetsStep2Title => 'Preview and process';
+
+  @override
+  String get helpMusicSheetsStep2Description =>
+      'View the music pages or listen to the audio. Check the processing status and wait until your music is ready before practicing.';
+
+  @override
+  String get helpMusicSheetsStep3Title => 'Rename or remove a sheet';
+
+  @override
+  String get helpMusicSheetsStep3Description =>
+      'Use the card menu to rename a sheet. Swipe right on a card to request deletion, then confirm your choice.';
+
+  @override
+  String get helpLessonsTitle => 'Lessons';
+
+  @override
+  String get helpLessonsDescription =>
+      'Learn the basics, one lesson at a time.';
+
+  @override
+  String get helpLessonsStep1Title => 'Choose a lesson';
+
+  @override
+  String get helpLessonsStep1Description =>
+      'Open Practice from the menu. Check your progress and select a lesson to see what you will learn.';
+
+  @override
+  String get helpLessonsStep2Title => 'Learn at your pace';
+
+  @override
+  String get helpLessonsStep2Description =>
+      'Read the instructions and start when you are ready. You can pause a lesson video or watch a part again.';
+
+  @override
+  String get helpAssessmentTitle => 'Starting assessment';
+
+  @override
+  String get helpAssessmentDescription => 'Understand your starting level.';
+
+  @override
+  String get helpAssessmentStep1Title => 'Read before starting';
+
+  @override
+  String get helpAssessmentStep1Description =>
+      'Open your assessment from your profile. Read the rules and prepare your piano before starting a timed attempt.';
+
+  @override
+  String get helpAssessmentStep2Title => 'Complete each section';
+
+  @override
+  String get helpAssessmentStep2Description =>
+      'Follow the questions, note-reading tasks, and piano instructions. Watch the timer; opening Help does not pause an active assessment.';
+
+  @override
+  String get helpAssessmentStep3Title => 'Review your result';
+
+  @override
+  String get helpAssessmentStep3Description =>
+      'Review your starting level and section results to see what to practice next.';
+
+  @override
+  String get helpSightReadingTitle => 'Sight Reading';
+
+  @override
+  String get helpSightReadingDescription =>
+      'Practice reading notes on a music sheet.';
+
+  @override
+  String get helpSightReadingStep1Title => 'Choose your music';
+
+  @override
+  String get helpSightReadingStep1Description =>
+      'Open a ready song, tap Play, and choose Sight Reading from the available practice modes.';
+
+  @override
+  String get helpSightReadingStep2Title => 'Follow the notes';
+
+  @override
+  String get helpSightReadingStep2Description =>
+      'Follow the setup instructions on the practice screen. Read the notes on the sheet and play along on your piano.';
+
+  @override
+  String get helpSynthesiaTitle => 'Synthesia';
+
+  @override
+  String get helpSynthesiaDescription => 'Follow falling notes as you play.';
+
+  @override
+  String get helpSynthesiaStep1Title => 'Open Synthesia';
+
+  @override
+  String get helpSynthesiaStep1Description =>
+      'Open a ready song, tap Play, and choose Synthesia from the available practice modes.';
+
+  @override
+  String get helpSynthesiaStep2Title => 'Play with the falling notes';
+
+  @override
+  String get helpSynthesiaStep2Description =>
+      'Complete the setup shown on the screen. Follow the falling notes toward the keyboard and play the matching keys.';
+
+  @override
+  String get helpArTitle => 'AR piano setup';
+
+  @override
+  String get helpArDescription => 'Help the camera recognize your piano.';
+
+  @override
+  String get helpArStep1Title => 'Prepare your camera';
+
+  @override
+  String get helpArStep1Description =>
+      'When using AR practice, follow the piano setup instructions. Allow camera access and keep the keyboard clearly in view.';
+
+  @override
+  String get helpArStep2Title => 'Keep your setup steady';
+
+  @override
+  String get helpArStep2Description =>
+      'Keep your phone and piano in place while the app finds the keys. Set up again if you move either one.';
+
+  @override
+  String get helpPracticeResultsTitle => 'Practice results';
+
+  @override
+  String get helpPracticeResultsDescription =>
+      'Review your scores and progress.';
+
+  @override
+  String get helpPracticeResultsStep1Title => 'Find a past session';
+
+  @override
+  String get helpPracticeResultsStep1Description =>
+      'Open Practice Results from the menu. Use the available filters to find the song or session you want to review.';
+
+  @override
+  String get helpPracticeResultsStep2Title => 'See what to improve';
+
+  @override
+  String get helpPracticeResultsStep2Description =>
+      'Tap a result to see its score, note breakdown, and practice suggestions.';
+
+  @override
+  String get helpCompositionsTitle => 'My Compositions';
+
+  @override
+  String get helpCompositionsDescription => 'Create and save your own music.';
+
+  @override
+  String get helpCompositionsStep1Title => 'Start a composition';
+
+  @override
+  String get helpCompositionsStep1Description =>
+      'Open My Compositions and tap the plus sign. Name your song and choose how you want to create it.';
+
+  @override
+  String get helpCompositionsStep2Title => 'Add notes or record';
+
+  @override
+  String get helpCompositionsStep2Description =>
+      'Add notes in the editor, or follow the recording instructions to capture your playing. Use playback to listen to your work.';
+
+  @override
+  String get helpCompositionsStep3Title => 'Keep your work';
+
+  @override
+  String get helpCompositionsStep3Description =>
+      'Save your composition and wait for it to finish. Open it from your list to listen, edit, or share.';
+
+  @override
+  String get helpPublishedTitle => 'Published Compositions';
+
+  @override
+  String get helpPublishedDescription =>
+      'Discover music shared by the community.';
+
+  @override
+  String get helpPublishedStep1Title => 'Explore shared music';
+
+  @override
+  String get helpPublishedStep1Description =>
+      'Open Published Compositions. Sort the list and tap a song to see its creator and music pages.';
+
+  @override
+  String get helpPublishedStep2Title => 'Listen, like, and save';
+
+  @override
+  String get helpPublishedStep2Description =>
+      'Use Play to listen, the heart to like a song, and the bookmark to save it. You can also leave a kind comment.';
+
+  @override
+  String get helpSavedTitle => 'Saved music';
+
+  @override
+  String get helpSavedDescription => 'Find your bookmarked compositions.';
+
+  @override
+  String get helpSavedStep1Title => 'Save a song you like';
+
+  @override
+  String get helpSavedStep1Description =>
+      'In Published Compositions, tap a song’s bookmark to add it to your saved collection.';
+
+  @override
+  String get helpSavedStep2Title => 'Come back to your favorites';
+
+  @override
+  String get helpSavedStep2Description =>
+      'Open Saved Sheets from the menu to find your saved songs. Tap a card to open it, or its bookmark to request removal.';
+
+  @override
+  String get helpProfileTitle => 'Profile & preferences';
+
+  @override
+  String get helpProfileDescription =>
+      'Manage your profile, language, and theme.';
+
+  @override
+  String get helpProfileStep1Title => 'Open your profile';
+
+  @override
+  String get helpProfileStep1Description =>
+      'Tap your profile card at the top of the menu. View your progress, achievements, and starting assessment.';
+
+  @override
+  String get helpProfileStep2Title => 'Update your details';
+
+  @override
+  String get helpProfileStep2Description =>
+      'Choose Edit to update your name or picture, then save your changes.';
+
+  @override
+  String get helpProfileStep3Title => 'Choose your preferences';
+
+  @override
+  String get helpProfileStep3Description =>
+      'Change the language or light and dark theme in your preferences or the side menu. Help Center follows your selected theme.';
+
+  @override
+  String get helpCenterTitle => 'Help Center';
+
+  @override
+  String get helpCenterHeading => 'How can we help?';
+
+  @override
+  String get helpCenterIntroduction =>
+      'Find a feature and learn at your own pace.';
+
+  @override
+  String get helpCenterSearchHint => 'Search features or topics';
+
+  @override
+  String get helpCenterClearSearch => 'Clear search';
+
+  @override
+  String get helpCenterBrowse => 'Explore features';
+
+  @override
+  String get helpCenterSearchResults => 'Search results';
+
+  @override
+  String get helpCenterEmptyTitle => 'No guides found';
+
+  @override
+  String get helpCenterEmptyBody =>
+      'Try another search or choose a different category.';
+
+  @override
+  String get helpCenterReset => 'Show all guides';
+
+  @override
+  String get helpCenterPrevious => 'Previous';
+
+  @override
+  String get helpCenterNext => 'Next';
+
+  @override
+  String get helpCenterDone => 'Done';
+
+  @override
+  String get helpCenterClose => 'Close guide';
+
+  @override
+  String get helpCenterScreenshotPending => 'Guide screenshot coming soon';
+
+  @override
+  String get helpCenterScreenshotUnavailable =>
+      'This image is unavailable. Follow the instructions below.';
+
+  @override
+  String helpCenterGuideCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count guides',
+      one: '1 guide',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String helpCenterStepCount(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String helpCenterScreenshotLabel(String title) {
+    return 'Guide screenshot: $title';
+  }
+
+  @override
+  String get helpCategoryAll => 'All';
+
+  @override
+  String get helpCategoryGettingStarted => 'Getting started';
+
+  @override
+  String get helpCategoryMusicSheets => 'Music Sheets';
+
+  @override
+  String get helpCategoryPractice => 'Practice';
+
+  @override
+  String get helpCategoryCompositions => 'Compositions';
+
+  @override
+  String get helpCategoryAccount => 'Account';
+
+  @override
+  String get helpCenterGuidesTab => 'Guides';
+
+  @override
+  String get helpCenterContactTab => 'Contact Us';
+
+  @override
+  String get helpCenterContactHeading => 'Get in touch';
+
+  @override
+  String get helpCenterContactIntroduction =>
+      'Have a question or need a hand with SoundSight? You will be able to reach us here.';
+
+  @override
+  String get helpCenterCustomerService => 'Customer Service';
+
+  @override
+  String get helpCenterFacebook => 'Facebook';
+
+  @override
+  String get helpCenterGmail => 'Gmail';
+
+  @override
+  String get helpCenterContactPending => 'Contact details coming soon';
+
+  @override
+  String get playerTourScoreTitle => 'Read your music';
+
+  @override
+  String get playerTourScoreBody =>
+      'Follow the highlighted position and cursor on the sheet. In Wait mode, hold the expected notes for their full length and release them when needed.';
+
+  @override
+  String get playerTourModesTitle => 'Choose a practice mode';
+
+  @override
+  String get playerTourModesBody =>
+      'Wait mode lets you learn at your own pace. Performance mode follows a continuous timeline and evaluates your notes and timing. Choose a mode before starting.';
+
+  @override
+  String get playerTourControlsTitle => 'Your session controls';
+
+  @override
+  String get playerTourControlsBody =>
+      'Open Controls to listen, connect your piano, and find the session actions. Tap Next to look inside together.';
+
+  @override
+  String get playerTourListenTitle => 'Listen before you play';
+
+  @override
+  String get playerTourListenBody =>
+      'Use Listen to preview the music. Stop the preview before starting your own attempt.';
+
+  @override
+  String get playerTourMidiTitle => 'Connect your piano';
+
+  @override
+  String get playerTourMidiBody =>
+      'Use this control to connect your MIDI piano. Check the connection status before you start. Finish this guide before connecting.';
+
+  @override
+  String get playerTourFeedbackTitle => 'Understand the feedback';
+
+  @override
+  String get playerTourFeedbackBody =>
+      'This area shows your connection and playing feedback. During practice, use it to check the notes you played and what to try next.';
+
+  @override
+  String get playerTourSightStartTitle => 'Start when you are ready';
+
+  @override
+  String get playerTourSightStartBody =>
+      'In Performance mode, tap Start and then play the first key to begin the timed attempt. In Wait mode, play the highlighted notes to advance. During Performance, Stop in the app bar resets the attempt.';
+
+  @override
+  String get playerTourSynthStartTitle => 'Start your session';
+
+  @override
+  String get playerTourSynthStartBody =>
+      'After connecting your piano, tap Start for your chosen mode. During a session, use Stop to reset the attempt. Wait-mode timeline dragging lets you return to a part you want to practice.';
+
+  @override
+  String get playerTourNotesTitle => 'Follow the falling notes';
+
+  @override
+  String get playerTourNotesBody =>
+      'Notes move toward the keyboard. Play each matching key as the note reaches it, and hold it for the length shown.';
+
+  @override
+  String get playerTourKeyboardTitle => 'Match the piano keys';
+
+  @override
+  String get playerTourKeyboardBody =>
+      'This keyboard helps you match the music to your piano. Highlighted keys show the notes to play.';
+
+  @override
+  String get playerTourSessionTitle => 'Finish the guide, then play';
+
+  @override
+  String get playerTourSessionBody =>
+      'Done closes these controls. Connect your piano and choose your mode before starting. Restart returns to the beginning. In Performance mode, Stop resets an unfinished attempt.';
+
+  @override
+  String get playerTourCameraTitle => 'Keep your piano in view';
+
+  @override
+  String get playerTourCameraBody =>
+      'Show the whole keyboard in good light and keep the phone steady. Move objects away from the keys before detection starts.';
+
+  @override
+  String get playerTourCalibrationInstructionsTitle =>
+      'Follow the setup instructions';
+
+  @override
+  String get playerTourCalibrationInstructionsBody =>
+      'This area explains the current setup step. Adjust the keyboard area and follow the Middle C guide when asked. For a saved setup, align the saved shapes with your piano.';
+
+  @override
+  String get playerTourCalibrationActionsTitle => 'Review and save your setup';
+
+  @override
+  String get playerTourCalibrationActionsBody =>
+      'Use the controls below the camera to confirm each step. Review the key outlines, then save or use the setup. Set up again if you move the piano or phone.';
+
+  @override
+  String get playerTourArOverlayTitle => 'Match the notes to your piano';
+
+  @override
+  String get playerTourArOverlayBody =>
+      'The overlay lines up the music with your real keys. Keep the phone in the same position after setup.';
+
+  @override
+  String get playerTourArStartTitle => 'Begin AR practice';
+
+  @override
+  String get playerTourArStartBody =>
+      'Connect your MIDI piano, choose Wait or Performance, and tap Start. Use Stop to reset the attempt. Keep your camera and piano steady while playing.';
 }

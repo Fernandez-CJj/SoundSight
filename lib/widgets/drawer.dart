@@ -14,13 +14,13 @@ import 'package:soundsight/screens/composition/screens/my_compositions_screen.da
 import 'package:soundsight/screens/composition/screens/published_compositions_screen.dart';
 import 'package:soundsight/screens/composition/screens/saved_compositions_screen.dart';
 import 'package:soundsight/screens/homescreen/screens/home_screen.dart';
+import 'package:soundsight/screens/help_center/screens/help_center_screen.dart';
 import 'package:soundsight/screens/music_sheet/screens/music_sheet_screen.dart';
 import 'package:soundsight/screens/lessons/screens/fundamentals_screen.dart';
 import 'package:soundsight/screens/practice_result/screens/practice_results_screen.dart';
 import 'package:soundsight/screens/profile/screens/profile_screen.dart';
 import 'package:soundsight/theme/app_theme_colors.dart';
 import 'package:soundsight/widgets/drawer_profile_header.dart';
-import 'package:soundsight/screens/onboarding/widgets/screen_feature_tour.dart';
 
 enum DrawerItem {
   home,
@@ -65,11 +65,6 @@ class AppDrawer extends StatelessWidget {
     final colors = AppThemeColors.fromDarkMode(isDarkMode);
     final l10n = context.l10n;
     final selectedLanguage = AppLocaleScope.of(context).language;
-    final screenTour = ScreenFeatureTour.maybeOf(context);
-    final replayTutorial = onReplayTutorial ?? (screenTour == null ? null : () {
-      Scaffold.maybeOf(context)?.closeDrawer();
-      screenTour.replay();
-    });
 
     return Drawer(
       backgroundColor: colors.surfaceColor,
@@ -85,6 +80,7 @@ class AppDrawer extends StatelessWidget {
               navigationGuideBuilder,
               Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
             DrawerProfileHeader(
               colors: colors,
@@ -309,15 +305,13 @@ class AppDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            if (replayTutorial != null)
               _guided(replayGuideBuilder, ListTile(
-                enabled: screenTour?.canReplay ?? true,
                 leading: Icon(Icons.help_outline_rounded, color: colors.primaryColor),
                 title: Text(
-                  l10n.featureTourReplay,
+                  l10n.helpCenterTitle,
                   style: TextStyle(color: colors.primaryColor, fontSize: AppTextSizes.body),
                 ),
-                onTap: replayTutorial,
+                onTap: () => _openHelpCenter(context),
               )),
             ListTile(
               leading: const Icon(Icons.logout, color: _logoutColor),
@@ -358,6 +352,16 @@ class AppDrawer extends StatelessWidget {
 
   Widget _guided(Widget Function(Widget)? builder, Widget child) =>
       builder?.call(child) ?? child;
+
+  void _openHelpCenter(BuildContext context) {
+    final navigator = Navigator.of(context);
+    Scaffold.maybeOf(context)?.closeDrawer();
+    navigator.push<void>(
+      MaterialPageRoute(
+        builder: (_) => HelpCenterScreen(isDarkMode: isDarkMode),
+      ),
+    );
+  }
 
   Future<void> _updateTheme(bool value) async {
     onDarkModeChanged(value);

@@ -71,6 +71,7 @@ class FeatureTourController extends ChangeNotifier with WidgetsBindingObserver {
   late final ShowcaseView _showcase;
 
   static FeatureTourController? _activeTour;
+  static bool get isAnyTourActive => _activeTour?.isActive ?? false;
   Timer? _visibilityTimer;
   String? _tourUserId;
   bool _active = false;
@@ -93,7 +94,14 @@ class FeatureTourController extends ChangeNotifier with WidgetsBindingObserver {
   bool get canReturnToPrevious => returnToPrevious != null;
   int get stepIndex => _stepIndex;
   int get presentationId => _runId;
-  int? get visibleStepCount => journeyProgress.totalSteps;
+  int? get visibleStepCount {
+    // Keep an unknown journey total unknown, but do not reuse a count taken
+    // before an orientation change or delayed controls finished laying out.
+    if (journeyProgress.totalSteps == null) return null;
+    final remaining = hasContinuation ? remainingStepCount?.call() : 0;
+    if (remaining == null) return null;
+    return stepOffset + steps.where((step) => step.available).length + remaining;
+  }
 
   int visibleStepNumber(int index) =>
       stepOffset + steps.take(index + 1).where((step) => step.available).length;
@@ -250,6 +258,9 @@ class FeatureTourController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _dismissCurrent() {
+    // ShowcaseView shares one overlay across scopes. Dismissing an idle scope
+    // would also hide a newer screen's guide while leaving its taps blocked.
+    if (!_showcase.isShowcaseRunning) return;
     _ignoringDismiss = true;
     try {
       _showcase.dismiss();
